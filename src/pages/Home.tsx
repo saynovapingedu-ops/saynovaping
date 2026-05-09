@@ -1,13 +1,26 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
 import { SCENARIO_META, isStageUnlocked, CERT_STAGE_COUNT } from '../scenarios';
+import { SHOP_ITEMS } from '../lib/shopItems';
 import XPBar from '../components/XPBar';
 import Avatar from '../components/Avatar';
+import { sfx } from '../lib/sound';
 
 export default function Home() {
   const nav = useNavigate();
   const player = usePlayerStore();
+  const pingDailyPlay = usePlayerStore(s => s.pingDailyPlay);
+
+  // ping daily ครั้งเดียวต่อวัน — ให้เหรียญโบนัส + อัพเดท streak
+  useEffect(() => {
+    pingDailyPlay();
+  }, [pingDailyPlay]);
+
+  const equippedFrameClass = player.equippedFrame
+    ? SHOP_ITEMS.find(i => i.id === player.equippedFrame)?.frameClass
+    : undefined;
   // ผ่าน Hero Arc 8 ด่าน = ได้ Certificate (Master Arc เป็น bonus)
   const heroDone = player.stagesCompleted.filter(id => id <= CERT_STAGE_COUNT).length;
   const certEligible = heroDone >= CERT_STAGE_COUNT || player.totalXP >= 1500;
@@ -29,21 +42,61 @@ export default function Home() {
         <div className="absolute bottom-3 left-8 text-white/20 text-xs">✦</div>
 
         <div className="flex items-center gap-3 relative">
-          <Avatar preset={player.avatar} customId={player.customAvatarId} size={56} ring />
+          <Avatar
+            preset={player.avatar}
+            customId={player.customAvatarId}
+            size={56}
+            ring={!equippedFrameClass}
+            className={equippedFrameClass}
+          />
           <div className="flex-1 min-w-0">
-            <p className="text-detective-100 text-xs">🔍 นักสืบสุขภาพ</p>
+            <p className="text-detective-100 text-xs">
+              {player.equippedTitle ? `⭐ ${player.equippedTitle}` : '🔍 นักสืบสุขภาพ'}
+            </p>
             <h2 className="font-display font-bold text-xl truncate">
               {player.nickname || 'ผู้เล่น'}
             </h2>
+            {(player.streakDays || 0) > 0 && (
+              <p className="text-warning-100 text-[11px] flex items-center gap-1">
+                🔥 streak {player.streakDays} วัน
+              </p>
+            )}
           </div>
-          <button
-            onClick={() => nav('/profile')}
-            className="bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full p-2.5
-                       transition-all active:scale-95"
-          >
-            <span className="text-xl">⚙️</span>
-          </button>
+          <div className="flex flex-col gap-1.5">
+            <button
+              onClick={() => { sfx.click(); nav('/profile'); }}
+              className="bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full p-2
+                         transition-all active:scale-95"
+              aria-label="โปรไฟล์"
+            >
+              <span className="text-base">👤</span>
+            </button>
+            <button
+              onClick={() => { sfx.click(); nav('/settings'); }}
+              className="bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full p-2
+                         transition-all active:scale-95"
+              aria-label="ตั้งค่า"
+            >
+              <span className="text-base">⚙️</span>
+            </button>
+          </div>
         </div>
+
+        {/* Coin + Shop strip */}
+        <button
+          onClick={() => { sfx.click(); nav('/shop'); }}
+          className="mt-4 w-full flex items-center justify-between bg-white/15 backdrop-blur-sm
+                     border border-white/15 rounded-2xl px-4 py-2.5 active:scale-[0.99] transition-all"
+        >
+          <span className="flex items-center gap-2">
+            <span className="text-xl">🪙</span>
+            <span className="font-bold">{player.coins || 0}</span>
+            <span className="text-xs text-detective-100">เหรียญ</span>
+          </span>
+          <span className="text-xs font-semibold flex items-center gap-1">
+            🛍 ร้านค้า <span className="text-base">→</span>
+          </span>
+        </button>
 
         <div className="mt-5 bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-3.5 shadow-inner">
           <XPBar variant="dark" />
@@ -143,13 +196,15 @@ export default function Home() {
                           : 'bg-white/70'
                       }`}
                     >
-                      {playable && !completed && (
+                      {playable && (
                         <span className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          isMaster
-                            ? 'text-warning-600 bg-warning-100'
-                            : 'text-detective-600 bg-detective-100'
+                          completed
+                            ? 'text-success-600 bg-success-50 border border-success-500/30'
+                            : isMaster
+                              ? 'text-warning-600 bg-warning-100'
+                              : 'text-detective-600 bg-detective-100'
                         }`}>
-                          {isMaster ? 'MASTER' : 'NEW'}
+                          {completed ? '🔄 REPLAY' : isMaster ? 'MASTER' : 'NEW'}
                         </span>
                       )}
 
@@ -192,7 +247,7 @@ export default function Home() {
         })}
 
         <div className="mt-4 text-center text-xs text-gray-400">
-          v0.4.0 — 12 ด่าน Hero+Master • 4 มินิเกม • แชทสองทาง
+          v0.5.0 — 12 ด่าน • ร้านค้า • เหรียญ • streak • เสียง • confetti
         </div>
       </main>
     </div>

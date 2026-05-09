@@ -126,8 +126,15 @@ export interface PlayerProfile {
   customAvatarId?: string;  // ถ้า set แปลว่ากำลังใช้รูปที่อัปโหลด (จาก avatarStore)
   totalXP: number;
   level: number;            // 1-5
+  coins: number;            // เหรียญสำหรับใช้ในร้านค้า — ได้แยกจาก XP
   stagesCompleted: number[];
   badges: string[];
+  ownedItems: string[];     // id ของ item ที่ซื้อจากร้านค้า
+  equippedTitle?: string;   // ตำแหน่งโชว์หน้าโปรไฟล์ เช่น "นักสืบทอง"
+  equippedFrame?: string;   // กรอบ avatar
+  // streak / daily
+  streakDays?: number;
+  lastPlayDate?: string;    // ISO date YYYY-MM-DD
   certificateNo?: string;
   certificateIssuedAt?: string;
   createdAt: string;

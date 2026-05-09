@@ -11,6 +11,9 @@ import SpotTheLie from '../components/minigames/SpotTheLie';
 import OrderCards from '../components/minigames/OrderCards';
 import WordMatch from '../components/minigames/WordMatch';
 import FillBlank from '../components/minigames/FillBlank';
+import Confetti from '../components/Confetti';
+import { sfx, vibrate } from '../lib/sound';
+import { useProgressStore } from '../store/progressStore';
 import type { Choice, ScenarioNode } from '../types';
 
 export default function ScenarioPage() {
@@ -27,13 +30,85 @@ export default function ScenarioPage() {
   const [showIntro, setShowIntro] = useState(true);
   const [history, setHistory] = useState<ScenarioNode[]>([]);
   const [currentNodeId, setCurrentNodeId] = useState<string>(scenario?.startNode || '');
+  const [confettiActive, setConfettiActive] = useState(false);
+  const [askResume, setAskResume] = useState(false);
 
-  // reset state เมื่อเปลี่ยน stage (กดไปด่านถัดไป)
+  const saveProgress  = useProgressStore(s => s.saveProgress);
+  const getProgress   = useProgressStore(s => s.getProgress);
+  const clearProgress = useProgressStore(s => s.clearProgress);
+
+  // reset state เมื่อเปลี่ยน stage + เช็คว่ามี save ค้างไว้ไหม
   useEffect(() => {
+    setHistory([]);
+    setCurrentNodeId(scenario?.startNode || '');
+    const saved = getProgress(stageId);
+    if (saved && scenario) {
+      // ตรวจสอบว่า save ยัง valid (node ยังอยู่)
+      const nodeExists = scenario.nodes.some(n => n.id === saved.currentNodeId);
+      if (nodeExists && saved.currentNodeId !== scenario.startNode) {
+        setAskResume(true);
+        setShowIntro(true);
+        return;
+      }
+    }
+    setAskResume(false);
+    setShowIntro(true);
+  }, [stageId, scenario, getProgress]);
+
+  // กดเล่นต่อจาก save
+  const handleResume = () => {
+    const saved = getProgress(stageId);
+    if (!saved || !scenario) return;
+    // คืน history จาก historyIds + reconstruct player echoes
+    const restored: ScenarioNode[] = [];
+    for (const id of saved.historyIds) {
+      if (id.startsWith('__pick_')) {
+        // re-create player echo
+        const sourceNodeId = id.split('_')[2];
+        const text = saved.pickedChoices[sourceNodeId];
+        if (text) {
+          restored.push({
+            type: 'dialogue', id, speaker: 'player', text, next: '',
+          });
+        }
+      } else {
+        const n = scenario.nodes.find(node => node.id === id);
+        if (n) restored.push(n);
+      }
+    }
+    setHistory(restored);
+    setCurrentNodeId(saved.currentNodeId);
+    setShowIntro(false);
+    setAskResume(false);
+    sfx.click();
+  };
+
+  const handleStartFresh = () => {
+    clearProgress(stageId);
+    setAskResume(false);
     setShowIntro(true);
     setHistory([]);
     setCurrentNodeId(scenario?.startNode || '');
-  }, [stageId, scenario]);
+  };
+
+  // auto-save ทุกครั้งที่ history เปลี่ยน (ยกเว้นเมื่อจบด่าน)
+  useEffect(() => {
+    if (!scenario || showIntro || history.length === 0) return;
+    const cur = scenario.nodes.find(n => n.id === currentNodeId);
+    if (!cur || cur.type === 'end') return;
+    saveProgress({
+      stageId,
+      currentNodeId,
+      historyIds: history.map(h => h.id),
+      pickedChoices: history.reduce<Record<string, string>>((acc, h) => {
+        if (h.id.startsWith('__pick_') && h.type === 'dialogue') {
+          const sourceNodeId = h.id.split('_')[2];
+          acc[sourceNodeId] = h.text;
+        }
+        return acc;
+      }, {}),
+    });
+  }, [history, currentNodeId, stageId, scenario, showIntro, saveProgress]);
 
   useEffect(() => {
     if (!scenario) return;
@@ -45,6 +120,18 @@ export default function ScenarioPage() {
       }
     }
   }, [showIntro, scenario, history.length]);
+
+  // ตอนเข้าหน้า end → เล่น confetti + เสียงชัยชนะ
+  useEffect(() => {
+    const node = scenario?.nodes.find(n => n.id === currentNodeId);
+    if (node?.type === 'end') {
+      setConfettiActive(true);
+      sfx.victory();
+      vibrate([30, 50, 30, 50, 60]);
+      const t = setTimeout(() => setConfettiActive(false), 2600);
+      return () => clearTimeout(t);
+    }
+  }, [currentNodeId, scenario]);
 
   if (!scenario) {
     return (
@@ -65,14 +152,21 @@ export default function ScenarioPage() {
   };
 
   const handleChoice = (choice: Choice) => {
+    sfx.pick();
+    vibrate(15);
     if (choice.xp && choice.xp > 0) {
       addXP(choice.xp);
       pushXP(choice.xp);
+      sfx.xp();
     }
     if (choice.badge) {
       const newly = awardBadge(choice.badge);
       const b = getBadge(choice.badge);
-      if (newly && b) pushBadge(b.name, b.emoji);
+      if (newly && b) {
+        pushBadge(b.name, b.emoji);
+        sfx.badge();
+        vibrate([20, 40, 20]);
+      }
     }
     // แสดง choice ที่เลือก เป็น bubble ฝั่งผู้เล่น (เหมือนแชท Messenger/LINE)
     const playerEcho: ScenarioNode = {
@@ -92,14 +186,21 @@ export default function ScenarioPage() {
   const handleMinigameComplete = (success: boolean) => {
     if (!currentNode || currentNode.type !== 'minigame') return;
     if (success) {
+      sfx.correct();
+      vibrate([20, 30, 20]);
       addXP(currentNode.xpOnSuccess);
       pushXP(currentNode.xpOnSuccess);
       if (currentNode.badge) {
         const newly = awardBadge(currentNode.badge);
         const b = getBadge(currentNode.badge);
-        if (newly && b) pushBadge(b.name, b.emoji);
+        if (newly && b) {
+          pushBadge(b.name, b.emoji);
+          sfx.badge();
+        }
       }
     } else {
+      sfx.wrong();
+      vibrate(50);
       // ตอบไม่ครบ — ให้ XP บางส่วน
       const partial = Math.floor(currentNode.xpOnSuccess / 2);
       addXP(partial);
@@ -119,6 +220,7 @@ export default function ScenarioPage() {
       if (newly && b) pushBadge(b.name, b.emoji);
     }
     completeStage(stageId);
+    clearProgress(stageId);  // ลบ save mid-stage หลังจบ
   };
 
   // ไปด่านถัดไป — useEffect บน stageId จะ reset state ให้อัตโนมัติ
@@ -201,9 +303,27 @@ export default function ScenarioPage() {
             ))}
           </div>
         </div>
-        <button onClick={() => setShowIntro(false)} className="btn-primary w-full text-base">
-          เริ่มภารกิจ →
-        </button>
+        {askResume ? (
+          <div className="space-y-2">
+            <div className="card-hero text-center">
+              <p className="text-sm text-detective-700 font-semibold mb-1">💾 พบข้อมูลที่บันทึกไว้</p>
+              <p className="text-xs text-gray-500">เล่นต่อจากตำแหน่งล่าสุด หรือเริ่มใหม่ทั้งด่าน?</p>
+            </div>
+            <button onClick={handleResume} className="btn-primary w-full text-base">
+              ▶ เล่นต่อจากที่ค้างไว้
+            </button>
+            <button onClick={handleStartFresh} className="btn-secondary w-full">
+              🔄 เริ่มใหม่ทั้งด่าน
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => { sfx.click(); setShowIntro(false); }}
+            className="btn-primary w-full text-base"
+          >
+            เริ่มภารกิจ →
+          </button>
+        )}
       </div>
     );
   }
@@ -211,6 +331,7 @@ export default function ScenarioPage() {
   // ---- Game loop ----
   return (
     <div className="min-h-full pb-8 relative">
+      <Confetti active={confettiActive} count={100} duration={2600} />
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-20 -right-32 w-80 h-80 bg-detective-300/20 rounded-full blur-3xl" />
         <div className="absolute bottom-0 -left-20 w-64 h-64 bg-warning-500/15 rounded-full blur-3xl" />

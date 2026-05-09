@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { initLiff, getUserIdHash } from './lib/liff';
 import { flushQueue } from './lib/cloudSync';
 import { usePlayerStore } from './store/playerStore';
+import { useSettingsStore } from './store/settingsStore';
 import Toaster from './components/Toaster';
 import Onboarding from './pages/Onboarding';
 import Home from './pages/Home';
@@ -10,10 +11,21 @@ import ScenarioPage from './pages/ScenarioPage';
 import Profile from './pages/Profile';
 import Certificate from './pages/Certificate';
 import Verify from './pages/Verify';
+import Shop from './pages/Shop';
+import Settings from './pages/Settings';
 
 export default function App() {
   const [ready, setReady] = useState(false);
   const setUserHash = usePlayerStore(s => s.setUserHash);
+  const fontSize = useSettingsStore(s => s.fontSize);
+
+  // apply font-size global ผ่าน <html> font-size
+  useEffect(() => {
+    const sizeMap: Record<typeof fontSize, string> = {
+      sm: '14px', md: '16px', lg: '18px',
+    };
+    document.documentElement.style.fontSize = sizeMap[fontSize] || '16px';
+  }, [fontSize]);
 
   useEffect(() => {
     (async () => {
@@ -46,6 +58,8 @@ export default function App() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/scenario/:id" element={<ScenarioPage />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/shop" element={<Shop />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/certificate" element={<Certificate />} />
         <Route path="/verify" element={<Verify />} />
         <Route path="*" element={<Navigate to="/" replace />} />
