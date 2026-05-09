@@ -13,6 +13,7 @@ interface PlayerState extends PlayerProfile {
   initProfile: (data: Partial<PlayerProfile>) => void;
   updateNickname: (nickname: string) => void;
   setUserHash: (hash: string) => void;
+  setAvatar: (preset: number, customId?: string) => void;
   addXP: (amount: number) => void;
   awardBadge: (id: string) => boolean;
   completeStage: (stageId: number) => void;
@@ -63,6 +64,15 @@ export const usePlayerStore = create<PlayerState>()(
 
       updateNickname: (nickname) => {
         set({ nickname, lastActiveAt: new Date().toISOString() });
+        get().syncIfReady();
+      },
+
+      setAvatar: (preset, customId) => {
+        set({
+          avatar: preset,
+          customAvatarId: customId,
+          lastActiveAt: new Date().toISOString(),
+        });
         get().syncIfReady();
       },
 
@@ -133,6 +143,7 @@ export const usePlayerStore = create<PlayerState>()(
         grade: s.grade,
         school: s.school,
         avatar: s.avatar,
+        customAvatarId: s.customAvatarId,
         totalXP: s.totalXP,
         level: s.level,
         stagesCompleted: s.stagesCompleted,

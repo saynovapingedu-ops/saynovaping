@@ -103,23 +103,65 @@ export default function ScenarioPage() {
   // ---- Intro screen ----
   if (showIntro) {
     return (
-      <div className="h-full flex flex-col p-6 max-w-md mx-auto">
-        <button onClick={() => nav('/')} className="self-start text-detective-500 mb-4">← กลับ</button>
+      <div className="h-full flex flex-col p-6 max-w-md mx-auto relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute top-10 -right-20 w-72 h-72 bg-detective-300/30 rounded-full blur-3xl animate-pulse-slow" />
+          <div className="absolute bottom-10 -left-16 w-64 h-64 bg-warning-500/20 rounded-full blur-3xl" />
+        </div>
+
+        <button
+          onClick={() => nav('/')}
+          className="self-start text-detective-500 font-semibold mb-4 active:opacity-70"
+        >
+          ← กลับ
+        </button>
+
         <div className="flex-1 flex flex-col justify-center">
-          <p className="text-detective-300 text-sm mb-1">ด่านที่ {scenario.id}</p>
-          <h1 className="text-3xl font-display font-bold text-detective-700 mb-2">{scenario.title}</h1>
-          {scenario.subtitle && <p className="text-gray-600 mb-6">{scenario.subtitle}</p>}
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 200 }}
+            className="self-start mb-3 inline-flex items-center gap-2 bg-gradient-to-r from-detective-500
+                       to-detective-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-glow"
+          >
+            <span>🎯</span> ด่านที่ {scenario.id}
+          </motion.div>
+          <motion.h1
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-3xl font-display font-bold text-detective-700 mb-2 leading-tight"
+          >
+            {scenario.title}
+          </motion.h1>
+          {scenario.subtitle && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-gray-600 mb-6"
+            >
+              {scenario.subtitle}
+            </motion.p>
+          )}
+
           <div className="space-y-3 mb-6">
             {(scenario.intro || []).map((line, i) => (
-              <motion.p key={i} initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.4 }}
-                className="text-gray-700 leading-relaxed border-l-4 border-detective-500 pl-3">
-                {line}
-              </motion.p>
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 + i * 0.35 }}
+                className="card-hero relative pl-5"
+              >
+                <span className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b
+                                 from-detective-500 to-warning-500 rounded-l-2xl" />
+                <p className="text-gray-700 leading-relaxed">{line}</p>
+              </motion.div>
             ))}
           </div>
         </div>
-        <button onClick={() => setShowIntro(false)} className="btn-primary w-full">
+        <button onClick={() => setShowIntro(false)} className="btn-primary w-full text-base">
           เริ่มภารกิจ →
         </button>
       </div>
@@ -128,12 +170,22 @@ export default function ScenarioPage() {
 
   // ---- Game loop ----
   return (
-    <div className="min-h-full bg-detective-50 pb-8">
-      <header className="sticky top-0 bg-white shadow-sm p-3 flex items-center gap-3 z-10">
-        <button onClick={() => nav('/')} className="text-detective-500 px-2">←</button>
-        <div className="flex-1">
-          <p className="text-xs text-gray-500">ด่าน {scenario.id}</p>
-          <p className="font-semibold text-sm text-detective-700">{scenario.title}</p>
+    <div className="min-h-full pb-8 relative">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute top-20 -right-32 w-80 h-80 bg-detective-300/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 -left-20 w-64 h-64 bg-warning-500/15 rounded-full blur-3xl" />
+      </div>
+      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md shadow-sm border-b border-detective-100/50
+                         p-3 flex items-center gap-3">
+        <button
+          onClick={() => nav('/')}
+          className="text-detective-500 px-3 py-1.5 rounded-lg hover:bg-detective-50 active:scale-95"
+        >
+          ←
+        </button>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] text-detective-400 font-semibold">ด่าน {scenario.id}</p>
+          <p className="font-semibold text-sm text-detective-700 truncate">{scenario.title}</p>
         </div>
       </header>
 
@@ -223,14 +275,31 @@ export default function ScenarioPage() {
               )}
 
               {currentNode.type === 'end' && (
-                <div className="card text-center py-8">
-                  <div className="text-6xl mb-3">🎉</div>
-                  <h2 className="font-display text-2xl font-bold text-detective-700 mb-2">
+                <div className="relative card-hero text-center py-10 overflow-hidden">
+                  <div className="absolute -top-10 -left-10 w-40 h-40 bg-warning-500/20 rounded-full blur-2xl" />
+                  <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-detective-300/30 rounded-full blur-2xl" />
+                  <motion.div
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
+                    className="text-7xl mb-3 relative inline-block"
+                  >
+                    🎉
+                  </motion.div>
+                  <h2 className="font-display text-2xl font-bold text-detective-700 mb-2 relative">
                     {currentNode.title}
                   </h2>
-                  <p className="text-gray-600 mb-6 leading-relaxed">{currentNode.message}</p>
-                  <p className="text-warning-500 font-bold text-xl mb-6">+{currentNode.xp} XP</p>
-                  <button onClick={handleEnd} className="btn-primary w-full">
+                  <p className="text-gray-600 mb-6 leading-relaxed relative">{currentNode.message}</p>
+                  <motion.p
+                    initial={{ scale: 0.7, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.4, type: 'spring' }}
+                    className="inline-block bg-gradient-to-r from-warning-400 to-warning-500
+                               text-white font-bold text-xl px-6 py-2 rounded-full shadow-glow mb-6 relative"
+                  >
+                    +{currentNode.xp} XP
+                  </motion.p>
+                  <button onClick={handleEnd} className="btn-primary w-full relative">
                     กลับหน้าแรก
                   </button>
                 </div>

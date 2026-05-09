@@ -1,17 +1,20 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlayerStore } from '../store/playerStore';
-import { BADGES, getBadge } from '../lib/badges';
+import { BADGES } from '../lib/badges';
 import { getLevelByXP } from '../lib/levels';
 import XPBar from '../components/XPBar';
-
-const AVATAR_EMOJI = ['🧒', '👧', '👦', '🧑'];
+import Avatar from '../components/Avatar';
+import AvatarFolder from '../components/AvatarFolder';
 
 export default function Profile() {
   const nav = useNavigate();
   const player = usePlayerStore();
   const reset = usePlayerStore(s => s.reset);
+  const setAvatar = usePlayerStore(s => s.setAvatar);
   const lv = getLevelByXP(player.totalXP);
   const earned = new Set(player.badges);
+  const [editAvatar, setEditAvatar] = useState(false);
 
   const handleReset = () => {
     if (!confirm('แน่ใจไหมว่าต้องการลบข้อมูลทั้งหมดและเริ่มใหม่? — การกระทำนี้กลับคืนไม่ได้')) return;
@@ -31,14 +34,38 @@ export default function Profile() {
       <main className="max-w-md mx-auto p-4 space-y-4">
         <div className="card">
           <div className="flex items-center gap-3 mb-4">
-            <div className="bg-detective-100 rounded-full w-16 h-16 flex items-center justify-center text-4xl">
-              {AVATAR_EMOJI[player.avatar - 1] || '🧒'}
-            </div>
-            <div>
+            <button
+              onClick={() => setEditAvatar(v => !v)}
+              className="rounded-full active:scale-95"
+              aria-label="เปลี่ยนอวตาร"
+            >
+              <Avatar preset={player.avatar} customId={player.customAvatarId} size={64} ring />
+            </button>
+            <div className="flex-1">
               <h3 className="font-display font-bold text-xl text-detective-700">{player.nickname}</h3>
               <p className="text-sm text-gray-500">{player.grade} {player.school && `• ${player.school}`}</p>
+              <button
+                onClick={() => setEditAvatar(v => !v)}
+                className="text-xs text-detective-500 font-semibold mt-1 active:opacity-70"
+              >
+                {editAvatar ? '✕ ปิด' : '✏️ เปลี่ยนอวตาร'}
+              </button>
             </div>
           </div>
+
+          {editAvatar && (
+            <div className="mb-4 p-3 rounded-xl bg-detective-50/60">
+              <AvatarFolder
+                preset={player.avatar}
+                customId={player.customAvatarId}
+                onPick={(preset, customId) => {
+                  if (customId) setAvatar(player.avatar || 1, customId);
+                  else setAvatar(preset, undefined);
+                }}
+              />
+            </div>
+          )}
+
           <XPBar />
         </div>
 

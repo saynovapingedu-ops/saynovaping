@@ -106,7 +106,8 @@ export interface PlayerProfile {
   nickname: string;
   grade: string;
   school?: string;
-  avatar: number;           // 1-4
+  avatar: number;           // 1-4 (preset emoji avatars)
+  customAvatarId?: string;  // ถ้า set แปลว่ากำลังใช้รูปที่อัปโหลด (จาก avatarStore)
   totalXP: number;
   level: number;            // 1-5
   stagesCompleted: number[];
@@ -116,4 +117,12 @@ export interface PlayerProfile {
   createdAt: string;
   lastActiveAt: string;
   consentAt?: string;
+}
+
+// รูปอวตารที่ผู้เล่นอัปโหลด — เก็บเป็น base64 data URL ใน localStorage
+export interface CustomAvatar {
+  id: string;
+  name: string;
+  dataUrl: string;          // base64 data URL ของรูป
+  createdAt: string;
 }

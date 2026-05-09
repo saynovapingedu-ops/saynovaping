@@ -8,23 +8,72 @@
     overscroll-behavior: none;
   }
   body {
-    @apply font-sans bg-detective-50 text-gray-800 antialiased;
+    @apply font-sans text-gray-800 antialiased;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(168, 157, 236, 0.18), transparent 40%),
+      radial-gradient(circle at 80% 100%, rgba(229, 151, 60, 0.12), transparent 45%),
+      linear-gradient(180deg, #F8F7FE 0%, #F1EFFD 100%);
+    background-attachment: fixed;
   }
   h1, h2, h3 {
     @apply font-display;
   }
+
+  /* selection สีน่ารัก */
+  ::selection {
+    background: rgba(95, 82, 204, 0.2);
+  }
+
+  /* scrollbar สวยขึ้นใน Chromium */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(95, 82, 204, 0.25);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(95, 82, 204, 0.45); }
 }
 
 @layer components {
+  /* ปุ่มหลัก — มี gradient + glow */
   .btn-primary {
-    @apply bg-detective-500 text-white font-semibold rounded-xl px-5 py-3 shadow-md
-           active:scale-95 transition-transform disabled:opacity-50;
+    @apply relative bg-gradient-to-br from-detective-500 to-detective-600 text-white font-semibold
+           rounded-xl px-5 py-3 shadow-glow active:scale-95 transition-all
+           hover:shadow-glow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0;
   }
+
+  /* ปุ่มรอง — ขาว + ขอบม่วง */
   .btn-secondary {
-    @apply bg-white text-detective-700 border-2 border-detective-200 font-semibold
-           rounded-xl px-5 py-3 active:scale-95 transition-transform;
+    @apply bg-white/90 backdrop-blur text-detective-700 border-2 border-detective-200
+           font-semibold rounded-xl px-5 py-3 active:scale-95 transition-all
+           hover:border-detective-400 hover:shadow-md;
   }
+
+  /* การ์ดพื้นฐาน — โปร่งแสงเล็กน้อย + เงานุ่ม */
   .card {
-    @apply bg-white rounded-2xl shadow-sm p-4;
+    @apply bg-white/95 backdrop-blur-sm rounded-2xl shadow-glow-sm p-4 border border-white/60;
+  }
+
+  /* การ์ดเด่น — gradient อ่อนๆ */
+  .card-hero {
+    @apply rounded-2xl p-5 border border-white/60 shadow-glow
+           bg-gradient-to-br from-white to-detective-50;
+  }
+
+  /* shimmer effect สำหรับ loading / certificate */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.6) 50%,
+      rgba(255,255,255,0) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2.5s linear infinite;
+  }
+
+  /* badge เล็กๆ ใช้ติดมุมการ์ด */
+  .pill {
+    @apply inline-flex items-center gap-1 text-[10px] font-bold rounded-full px-2 py-0.5;
   }
 }
