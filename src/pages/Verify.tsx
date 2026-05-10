@@ -64,7 +64,7 @@ export default function Verify() {
                   <p><b>ด่านที่จบ:</b> {result.stagesCount}/8</p>
                 </div>
                 <p className="text-xs text-gray-500 mt-4">
-                  Certificate นี้ออกโดย Health Detective Project • Walailak University
+                  Certificate นี้ออกโดย Walailak University - SayNo:สู้บุหรี่ไฟฟ้า
                 </p>
               </div>
             ) : (

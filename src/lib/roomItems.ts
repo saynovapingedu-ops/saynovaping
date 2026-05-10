@@ -112,7 +112,7 @@ export const ROOM_ITEMS: RoomItem[] = [
     position: { x: 30, y: 75 },
     size: 38,
     unlockAtXP: 1300,
-    thanks: 'เมี้ยว! เพื่อนใหม่มาแล้ว — ฉันมีคนคุยตอนคิดคดีหนักๆ แล้ว 💜',
+    thanks: 'เมี้ยว! เพื่อนใหม่มาแล้ว — ฉันมีคนคุยตอนคิดคดีหนักๆ แล้ว',
     hint: 'สัตว์เลี้ยงประจำห้อง',
   },
   {
@@ -127,13 +127,13 @@ export const ROOM_ITEMS: RoomItem[] = [
   },
   {
     id: 'rm-poster-2',
-    name: 'โปสเตอร์ Walailak',
-    emoji: '💜',
+    name: 'โปสเตอร์ SayNo',
+    emoji: '🚭',
     zone: 'wall',
     position: { x: 12, y: 32 },
     size: 36,
     unlockAtXP: 2000,
-    thanks: 'โปสเตอร์ ม.วลัยลักษณ์! ฉันภูมิใจมาก',
+    thanks: 'โปสเตอร์รณรงค์ปฏิเสธบุหรี่ไฟฟ้า — ภูมิใจมากที่มีในห้อง!',
   },
   {
     id: 'rm-trophy-master',
@@ -172,7 +172,7 @@ export const ROOM_ITEMS: RoomItem[] = [
     position: { x: 50, y: 4 },
     size: 60,
     unlockAtXP: 3500,
-    thanks: 'นี่คือสุดยอดของห้อง! ตอนนี้ฉันคือตำนานนักสืบสุขภาพอย่างแท้จริง 🏆💜',
+    thanks: 'นี่คือสุดยอดของห้อง! ตอนนี้ฉันคือตำนานนักสืบสุขภาพอย่างแท้จริง 🏆',
     hint: 'รางวัลสูงสุด — ห้องเสร็จสมบูรณ์',
   },
 ];

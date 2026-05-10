@@ -73,7 +73,7 @@ export const scenario15: Scenario = {
     },
     {
       type: 'dialogue', id: 'd-end', speaker: 'doctor', next: 'end1',
-      text: 'นักสืบ — บันทึกเล่มนี้เป็นของคุณแล้ว ส่งต่อให้รุ่นน้องคนต่อไปด้วยนะ 💜',
+      text: 'นักสืบ — บันทึกเล่มนี้เป็นของคุณแล้ว ส่งต่อให้รุ่นน้องคนต่อไปด้วยนะ',
     },
     {
       type: 'end', id: 'end1',

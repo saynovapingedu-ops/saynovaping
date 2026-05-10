@@ -300,7 +300,7 @@ export default function Certificate() {
                             <p className="font-display font-bold text-detective-700 text-sm leading-tight">
                               Walailak University
                             </p>
-                            <p className="text-[10px] text-gray-500">โครงการ Health Detective</p>
+                            <p className="text-[10px] text-gray-500">SayNo:สู้บุหรี่ไฟฟ้า</p>
                           </div>
                           {/* WU monogram seal */}
                           <SealStamp />

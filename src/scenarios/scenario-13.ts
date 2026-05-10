@@ -91,7 +91,7 @@ export const scenario13: Scenario = {
     },
     {
       type: 'dialogue', id: 'd-end', speaker: 'baitoey', next: 'end1',
-      text: 'พี่อธิบายดีมาก! หนูจะเอาไปเล่าให้เพื่อนฟัง — ขอบคุณนะพี่นักสืบ 💜',
+      text: 'พี่อธิบายดีมาก! หนูจะเอาไปเล่าให้เพื่อนฟัง — ขอบคุณนะพี่นักสืบ',
     },
     {
       type: 'end', id: 'end1',

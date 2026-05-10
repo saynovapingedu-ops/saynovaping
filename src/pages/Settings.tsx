@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useSettingsStore } from '../store/settingsStore';
 import { sfx } from '../lib/sound';
+import { startBgm, stopBgm } from '../lib/bgm';
 
 interface ToggleProps {
   label: string;
@@ -69,9 +70,14 @@ export default function Settings() {
         <Toggle
           emoji="🎵"
           label="เพลงประกอบ (BGM)"
-          description="เปิดเสียงเบาๆ ตอนเล่นด่าน — Coming soon"
+          description="เพลงนักสืบเบาๆ ขณะเล่น — สังเคราะห์ในเครื่อง ไม่กินเน็ต"
           value={s.musicEnabled}
-          onToggle={s.toggleMusic}
+          onToggle={() => {
+            const next = !s.musicEnabled;
+            s.toggleMusic();
+            if (next) startBgm();
+            else stopBgm();
+          }}
         />
         <Toggle
           emoji="📳"
@@ -118,19 +124,14 @@ export default function Settings() {
 
         <p className="text-xs text-gray-500 px-1 pt-3">เกี่ยวกับ</p>
         <div className="card text-sm text-gray-700 space-y-1">
-          <p className="flex justify-between"><span>เวอร์ชัน</span><span className="font-mono">v0.6.0</span></p>
-          <p className="flex justify-between"><span>มินิเกม</span><span>4 แบบ</span></p>
-          <p className="flex justify-between"><span>ด่านทั้งหมด</span><span>12 ด่าน</span></p>
-          <p className="flex justify-between"><span>ธีมสี</span><span>ม่วง-ทอง WU</span></p>
+          <p className="flex justify-between"><span>เวอร์ชัน</span><span className="font-mono">v0.7.1</span></p>
+          <p className="flex justify-between"><span>มินิเกม</span><span>7 แบบ</span></p>
+          <p className="flex justify-between"><span>ด่านทั้งหมด</span><span>15 ด่าน</span></p>
         </div>
 
-        {/* WU credit */}
         <div className="card-hero text-center mt-2">
-          <div className="text-3xl mb-1">💜</div>
-          <p className="font-display font-bold text-detective-700">มหาวิทยาลัยวลัยลักษณ์</p>
-          <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-            Walailak University<br/>
-            ธีมสีและจิตวิญญาณ "ม่วง-ทอง" ของชาว WU
+          <p className="font-display font-bold text-detective-700 text-sm">
+            Walailak University - SayNo:สู้บุหรี่ไฟฟ้า
           </p>
         </div>
 

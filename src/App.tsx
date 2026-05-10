@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { initLiff, getUserIdHash } from './lib/liff';
 import { flushQueue } from './lib/cloudSync';
+import { startBgm } from './lib/bgm';
 import { usePlayerStore } from './store/playerStore';
 import { useSettingsStore } from './store/settingsStore';
 import Toaster from './components/Toaster';
@@ -21,6 +22,7 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const setUserHash = usePlayerStore(s => s.setUserHash);
   const fontSize = useSettingsStore(s => s.fontSize);
+  const musicEnabled = useSettingsStore(s => s.musicEnabled);
 
   // apply font-size global ผ่าน <html> font-size
   useEffect(() => {
@@ -29,6 +31,22 @@ export default function App() {
     };
     document.documentElement.style.fontSize = sizeMap[fontSize] || '16px';
   }, [fontSize]);
+
+  // BGM auto-start หลัง user gesture แรก (browsers ห้าม autoplay ก่อน gesture)
+  useEffect(() => {
+    if (!musicEnabled) return;
+    const onGesture = () => {
+      startBgm();
+      window.removeEventListener('pointerdown', onGesture);
+      window.removeEventListener('keydown', onGesture);
+    };
+    window.addEventListener('pointerdown', onGesture, { once: true });
+    window.addEventListener('keydown', onGesture, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', onGesture);
+      window.removeEventListener('keydown', onGesture);
+    };
+  }, [musicEnabled]);
 
   useEffect(() => {
     (async () => {

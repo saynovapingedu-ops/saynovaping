@@ -284,12 +284,9 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="mt-4 text-center space-y-1">
-          <p className="text-xs text-gray-400">
-            v0.7.0 — 12 ด่าน • ร้านค้า • streak • แรงค์ ROV-style
-          </p>
-          <p className="text-[10px] text-detective-400 font-semibold">
-            💜 ธีม Walailak University
+        <div className="mt-4 text-center">
+          <p className="text-[11px] text-detective-400 font-semibold">
+            Walailak University - SayNo:สู้บุหรี่ไฟฟ้า
           </p>
         </div>
       </main>
