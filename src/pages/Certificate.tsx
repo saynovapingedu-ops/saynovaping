@@ -137,109 +137,121 @@ export default function Certificate() {
             {/* === Certificate artwork === */}
             <div
               id="cert-card"
-              className="relative rounded-3xl overflow-hidden shadow-2xl
-                         bg-gradient-to-br from-white via-detective-50 to-warning-50"
+              className="relative rounded-3xl overflow-hidden shadow-2xl bg-white"
             >
-              {/* corner ribbons */}
-              <div className="absolute -top-10 -left-10 w-40 h-40 bg-warning-400/30 rounded-full blur-2xl" />
-              <div className="absolute -bottom-12 -right-12 w-44 h-44 bg-detective-400/30 rounded-full blur-2xl" />
-              {/* decorative diagonal stripes */}
-              <div className="absolute inset-0 opacity-10 pointer-events-none"
+              {/* === Background decorations === */}
+              {/* gold corner glows */}
+              <div className="absolute -top-16 -left-16 w-48 h-48 bg-warning-400/25 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -top-16 -right-16 w-48 h-48 bg-detective-400/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-detective-400/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-warning-400/25 rounded-full blur-3xl pointer-events-none" />
+              {/* subtle dot pattern */}
+              <div className="absolute inset-0 opacity-[0.06] pointer-events-none"
                    style={{
                      backgroundImage:
-                       'repeating-linear-gradient(45deg, #6F2D8E 0 2px, transparent 2px 16px)',
+                       'radial-gradient(circle, #6F2D8E 1px, transparent 1px)',
+                     backgroundSize: '18px 18px',
                    }} />
 
-              {/* outer gold border + inner purple border */}
-              <div className="relative m-2 rounded-[1.4rem] border-[3px] border-warning-400 p-1">
-                <div className="rounded-[1.1rem] border-2 border-detective-400/40 bg-white/85 backdrop-blur-sm
-                                p-6 relative overflow-hidden">
-                  {/* large watermark trophy */}
-                  <div className="absolute -right-6 -top-6 text-[9rem] leading-none text-detective-100 select-none">
-                    🏆
-                  </div>
+              {/* === Triple-layered border (gold > purple > inner) === */}
+              <div className="relative m-2.5 rounded-[1.5rem] p-[3px] bg-gradient-to-br from-warning-400 via-warning-500 to-warning-400 shadow-inner">
+                <div className="rounded-[1.3rem] p-[2px] bg-gradient-to-br from-detective-400/70 via-detective-300/40 to-detective-400/70">
+                  <div className="rounded-[1.15rem] bg-white p-6 relative overflow-hidden">
 
-                  <div className="relative text-center">
-                    {/* top crest */}
-                    <div className="inline-flex items-center gap-1 bg-gradient-to-r from-warning-400 to-warning-500
-                                    text-white text-[10px] font-bold uppercase tracking-[0.2em]
-                                    rounded-full px-3 py-1 shadow-glow-gold">
-                      ✦ Health Detective ✦
-                    </div>
-                    <h1 className="font-display font-bold text-3xl text-detective-700 mt-3 leading-tight">
-                      เกียรติบัตร
-                    </h1>
-                    <p className="text-detective-500 text-xs uppercase tracking-widest font-semibold">
-                      Certificate of Completion
-                    </p>
+                    {/* corner ornaments — SVG flourishes ที่มุม */}
+                    <CornerFlourish className="absolute top-2 left-2 text-warning-500" />
+                    <CornerFlourish className="absolute top-2 right-2 text-warning-500 -scale-x-100" />
+                    <CornerFlourish className="absolute bottom-2 left-2 text-warning-500 -scale-y-100" />
+                    <CornerFlourish className="absolute bottom-2 right-2 text-warning-500 -scale-x-100 -scale-y-100" />
 
-                    {/* divider with sparkle */}
-                    <div className="flex items-center justify-center gap-2 my-3">
-                      <span className="h-px bg-gradient-to-r from-transparent via-warning-400 to-warning-400 flex-1" />
-                      <span className="text-warning-500 text-sm">✦</span>
-                      <span className="h-px bg-gradient-to-l from-transparent via-warning-400 to-warning-400 flex-1" />
-                    </div>
-
-                    <p className="text-gray-500 text-sm">มอบให้แก่</p>
-                    <h2 className="font-display text-3xl font-bold my-2
-                                   bg-gradient-to-r from-detective-600 to-detective-500
-                                   bg-clip-text text-transparent">
-                      {player.nickname}
-                    </h2>
-                    {player.school && (
-                      <p className="text-gray-500 text-sm">{player.grade} • {player.school}</p>
-                    )}
-
-                    <p className="text-gray-700 text-sm mt-4 leading-relaxed">
-                      ได้ผ่านการเรียนรู้ทักษะปฏิเสธบุหรี่ไฟฟ้า<br/>
-                      และภัยจากนิโคติน ครบทุกด่าน
-                    </p>
-
-                    {/* stat strip */}
-                    <div className="grid grid-cols-3 gap-2 mt-4">
-                      <div className="bg-white/80 border border-detective-100 rounded-xl py-2">
-                        <p className="text-[10px] text-gray-500">ด่านที่ผ่าน</p>
-                        <p className="font-bold text-detective-700">{player.stagesCompleted.length}</p>
+                    <div className="relative text-center">
+                      {/* === Top medallion — SVG laurel + star === */}
+                      <div className="flex justify-center mb-2">
+                        <Medallion />
                       </div>
-                      <div className="bg-white/80 border border-warning-200 rounded-xl py-2">
-                        <p className="text-[10px] text-gray-500">XP</p>
-                        <p className="font-bold text-warning-600">{player.totalXP}</p>
-                      </div>
-                      <div className="bg-white/80 border border-detective-100 rounded-xl py-2">
-                        <p className="text-[10px] text-gray-500">Badges</p>
-                        <p className="font-bold text-detective-700">{player.badges.length}</p>
-                      </div>
-                    </div>
 
-                    {/* QR + cert number row */}
-                    <div className="flex items-center gap-3 mt-5 text-left">
-                      {qrDataUrl && (
-                        <div className="flex-shrink-0 bg-white rounded-xl p-1.5 border border-detective-100 shadow-sm">
-                          <img src={qrDataUrl} alt="Verify QR" className="w-20 h-20" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] text-gray-400 uppercase">เลขที่</p>
-                        <p className="font-mono font-bold text-detective-700 text-sm truncate">{certNo}</p>
-                        <p className="text-[10px] text-gray-400 uppercase mt-1">ออกเมื่อ</p>
-                        <p className="font-semibold text-detective-700 text-xs">
-                          {issueDate && new Date(issueDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </p>
-                        {verifyCode && (
-                          <p className="text-[10px] font-mono text-detective-500 mt-1 truncate">
-                            ✓ {verifyCode}
-                          </p>
-                        )}
+                      {/* top tag */}
+                      <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-warning-400 to-warning-500
+                                      text-white text-[10px] font-bold uppercase tracking-[0.25em]
+                                      rounded-full px-3 py-1 shadow-glow-gold">
+                        Health Detective
                       </div>
-                    </div>
 
-                    {/* signature bottom strip */}
-                    <div className="mt-5 pt-3 border-t border-dashed border-detective-200/60">
-                      <p className="text-[10px] text-gray-500">รับรองโดย</p>
-                      <p className="font-display font-bold text-detective-700 text-sm">
-                        Walailak University
+                      <h1 className="font-display font-bold text-3xl text-detective-700 mt-3 leading-tight">
+                        เกียรติบัตร
+                      </h1>
+                      <p className="text-detective-500 text-[11px] uppercase tracking-[0.2em] font-semibold">
+                        Certificate of Completion
                       </p>
-                      <p className="text-[10px] text-gray-500">โครงการ Health Detective</p>
+
+                      {/* divider — แบบ scrollwork */}
+                      <FancyDivider className="my-4" />
+
+                      <p className="text-gray-500 text-sm font-medium">มอบให้แก่</p>
+                      <h2 className="font-display text-[2rem] font-bold my-2 leading-tight
+                                     bg-gradient-to-r from-detective-700 via-detective-500 to-detective-700
+                                     bg-clip-text text-transparent">
+                        {player.nickname}
+                      </h2>
+                      {player.school && (
+                        <p className="text-gray-500 text-sm">{player.grade} • {player.school}</p>
+                      )}
+
+                      <p className="text-gray-700 text-sm mt-4 leading-relaxed">
+                        ได้ผ่านการเรียนรู้ทักษะปฏิเสธบุหรี่ไฟฟ้า<br/>
+                        และภัยจากนิโคติน ครบทุกด่าน
+                      </p>
+
+                      {/* === Stat strip === */}
+                      <div className="grid grid-cols-3 gap-2 mt-5">
+                        <StatCell label="ด่านที่ผ่าน" value={player.stagesCompleted.length} accent="detective" />
+                        <StatCell label="XP" value={player.totalXP} accent="warning" featured />
+                        <StatCell label="Badges" value={player.badges.length} accent="detective" />
+                      </div>
+
+                      {/* === QR + Cert info === */}
+                      <div className="flex items-stretch gap-3 mt-5 text-left">
+                        {qrDataUrl && (
+                          <div className="flex-shrink-0 bg-white rounded-xl p-2 border-2 border-detective-200 shadow-sm">
+                            <img src={qrDataUrl} alt="Verify QR" className="w-20 h-20" />
+                            <p className="text-[8px] text-gray-400 mt-1 text-center font-semibold uppercase tracking-wider">
+                              Scan to verify
+                            </p>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0 flex flex-col justify-between">
+                          <div>
+                            <p className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold">เลขที่</p>
+                            <p className="font-mono font-bold text-detective-700 text-sm truncate">{certNo}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold mt-1">ออกเมื่อ</p>
+                            <p className="font-semibold text-detective-700 text-xs">
+                              {issueDate && new Date(issueDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            </p>
+                          </div>
+                          {verifyCode && (
+                            <div className="bg-detective-50 rounded-md px-2 py-0.5 mt-1 inline-block self-start">
+                              <p className="text-[10px] font-mono text-detective-600 truncate">✓ {verifyCode}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* === Signature footer === */}
+                      <div className="mt-5 pt-3 border-t-2 border-dotted border-detective-200/70">
+                        <div className="flex items-end justify-between gap-2">
+                          <div className="text-left">
+                            <p className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold">รับรองโดย</p>
+                            <p className="font-display font-bold text-detective-700 text-sm leading-tight">
+                              Walailak University
+                            </p>
+                            <p className="text-[10px] text-gray-500">โครงการ Health Detective</p>
+                          </div>
+                          {/* WU monogram seal */}
+                          <SealStamp />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -304,5 +316,110 @@ export default function Certificate() {
         )}
       </main>
     </div>
+  );
+}
+
+// ===== Decorative sub-components =====
+
+function CornerFlourish({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      width="36" height="36" viewBox="0 0 36 36" fill="none"
+      className={className} aria-hidden
+    >
+      <path
+        d="M2 2 H 14 M2 2 V 14 M2 2 Q 10 4, 14 14 M2 2 Q 4 10, 14 14"
+        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"
+        opacity="0.85"
+      />
+      <circle cx="14" cy="14" r="1.6" fill="currentColor" />
+      <circle cx="6"  cy="6"  r="1"   fill="currentColor" opacity="0.6" />
+    </svg>
+  );
+}
+
+function Medallion() {
+  return (
+    <svg width="68" height="68" viewBox="0 0 68 68" aria-hidden>
+      {/* outer ring */}
+      <circle cx="34" cy="34" r="28" fill="url(#mg-gold)" />
+      <circle cx="34" cy="34" r="28" fill="none" stroke="#C49B00" strokeWidth="1.5" />
+      {/* inner ring */}
+      <circle cx="34" cy="34" r="22" fill="#FFF7E0" stroke="#E8B500" strokeWidth="1" />
+      {/* star */}
+      <path
+        d="M34 18 L37.5 29 L49 29 L39.7 35.7 L43.2 46.7 L34 40 L24.8 46.7 L28.3 35.7 L19 29 L30.5 29 Z"
+        fill="#6F2D8E"
+      />
+      {/* laurel left */}
+      <path d="M10 34 Q 14 22, 22 18 M10 34 Q 14 46, 22 50"
+            stroke="#5B2475" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.85" />
+      <ellipse cx="14" cy="26" rx="3" ry="1.6" fill="#5B2475" opacity="0.6" transform="rotate(-30 14 26)" />
+      <ellipse cx="14" cy="42" rx="3" ry="1.6" fill="#5B2475" opacity="0.6" transform="rotate(30 14 42)" />
+      {/* laurel right */}
+      <path d="M58 34 Q 54 22, 46 18 M58 34 Q 54 46, 46 50"
+            stroke="#5B2475" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.85" />
+      <ellipse cx="54" cy="26" rx="3" ry="1.6" fill="#5B2475" opacity="0.6" transform="rotate(30 54 26)" />
+      <ellipse cx="54" cy="42" rx="3" ry="1.6" fill="#5B2475" opacity="0.6" transform="rotate(-30 54 42)" />
+      <defs>
+        <linearGradient id="mg-gold" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#FFE7A6" />
+          <stop offset="55%" stopColor="#FFC72C" />
+          <stop offset="100%" stopColor="#C49B00" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function FancyDivider({ className = '' }: { className?: string }) {
+  return (
+    <div className={`flex items-center justify-center gap-2 ${className}`}>
+      <span className="h-px bg-gradient-to-r from-transparent to-warning-400 flex-1" />
+      <svg width="60" height="10" viewBox="0 0 60 10" aria-hidden>
+        <path d="M0 5 H 24" stroke="#E8B500" strokeWidth="1" />
+        <path d="M36 5 H 60" stroke="#E8B500" strokeWidth="1" />
+        <path d="M30 1 L 32 5 L 30 9 L 28 5 Z" fill="#E8B500" />
+        <circle cx="24" cy="5" r="1.5" fill="#E8B500" />
+        <circle cx="36" cy="5" r="1.5" fill="#E8B500" />
+      </svg>
+      <span className="h-px bg-gradient-to-l from-transparent to-warning-400 flex-1" />
+    </div>
+  );
+}
+
+function StatCell({
+  label, value, accent, featured = false,
+}: {
+  label: string;
+  value: number;
+  accent: 'detective' | 'warning';
+  featured?: boolean;
+}) {
+  const cls = accent === 'warning'
+    ? 'border-warning-300 bg-gradient-to-b from-warning-50 to-white'
+    : 'border-detective-200 bg-gradient-to-b from-detective-50 to-white';
+  const valCls = accent === 'warning' ? 'text-warning-600' : 'text-detective-700';
+  return (
+    <div className={`rounded-xl border-2 ${cls} ${featured ? 'shadow-glow-sm scale-105' : ''} py-2 px-1`}>
+      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">{label}</p>
+      <p className={`font-display font-bold text-lg ${valCls} leading-none mt-0.5`}>{value}</p>
+    </div>
+  );
+}
+
+function SealStamp() {
+  return (
+    <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden className="opacity-90">
+      {/* ring */}
+      <circle cx="28" cy="28" r="24" fill="none" stroke="#6F2D8E" strokeWidth="1.5" />
+      <circle cx="28" cy="28" r="20" fill="none" stroke="#6F2D8E" strokeWidth="0.8" strokeDasharray="2 2" />
+      {/* WU monogram */}
+      <text x="28" y="32" textAnchor="middle" fontSize="14" fontWeight="800" fill="#6F2D8E" fontFamily="serif">
+        WU
+      </text>
+      {/* corner stars */}
+      <path d="M28 4 L 29.2 6.2 L 31.5 6.5 L 29.8 8.3 L 30.2 11 L 28 9.7 L 25.8 11 L 26.2 8.3 L 24.5 6.5 L 26.8 6.2 Z" fill="#E8B500" />
+    </svg>
   );
 }
