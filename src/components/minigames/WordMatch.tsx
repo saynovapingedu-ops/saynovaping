@@ -20,6 +20,19 @@ function shuffle<T>(arr: T[]): T[] {
 interface ItemL { side: 'L'; pairIdx: number; text: string }
 interface ItemR { side: 'R'; pairIdx: number; text: string }
 
+// สีประจำลำดับการจับคู่ (คู่ที่ 1 เขียว, คู่ที่ 2 ฟ้า, ...)
+// ใช้สำหรับมาร์คคู่ที่จับแล้ว (ก่อน submit) เพื่อให้เด็กตรวจตัวเองได้ง่าย
+const PAIR_COLORS = [
+  { bg: 'bg-emerald-100',  border: 'border-emerald-500',  text: 'text-emerald-700',  dot: 'bg-emerald-500'  },
+  { bg: 'bg-sky-100',      border: 'border-sky-500',      text: 'text-sky-700',      dot: 'bg-sky-500'      },
+  { bg: 'bg-pink-100',     border: 'border-pink-500',     text: 'text-pink-700',     dot: 'bg-pink-500'     },
+  { bg: 'bg-amber-100',    border: 'border-amber-500',    text: 'text-amber-700',    dot: 'bg-amber-500'    },
+  { bg: 'bg-violet-100',   border: 'border-violet-500',   text: 'text-violet-700',   dot: 'bg-violet-500'   },
+  { bg: 'bg-orange-100',   border: 'border-orange-500',   text: 'text-orange-700',   dot: 'bg-orange-500'   },
+  { bg: 'bg-teal-100',     border: 'border-teal-500',     text: 'text-teal-700',     dot: 'bg-teal-500'     },
+  { bg: 'bg-rose-100',     border: 'border-rose-500',     text: 'text-rose-700',     dot: 'bg-rose-500'     },
+];
+
 // จับคู่คำ — แตะคำซ้าย แล้วแตะคำขวาที่จับคู่กัน
 export default function WordMatch({ title, pairs, onComplete }: Props) {
   const lefts = useMemo<ItemL[]>(
@@ -33,21 +46,30 @@ export default function WordMatch({ title, pairs, onComplete }: Props) {
 
   // เก็บการจับคู่: leftPairIdx -> rightPairIdx (ถ้าตรง = ถูก)
   const [matches, setMatches] = useState<Record<number, number>>({});
+  // ลำดับการจับคู่ — ใช้กำหนดสีประจำคู่ (คู่ที่ 1 เขียว, คู่ที่ 2 ฟ้า, ...)
+  const [matchOrder, setMatchOrder] = useState<number[]>([]);
   const [pendingLeft, setPendingLeft] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const matchedLefts  = new Set(Object.keys(matches).map(Number));
   const matchedRights = new Set(Object.values(matches));
 
+  // สีของคู่ leftPairIdx (ตามลำดับที่จับ) — undefined ถ้ายังไม่ได้จับ
+  const colorOf = (leftPairIdx: number) => {
+    const idx = matchOrder.indexOf(leftPairIdx);
+    return idx === -1 ? undefined : PAIR_COLORS[idx % PAIR_COLORS.length];
+  };
+
   const handleLeft = (pairIdx: number) => {
     if (submitted || matchedLefts.has(pairIdx)) return;
-    setPendingLeft(pairIdx);
+    setPendingLeft(p => (p === pairIdx ? null : pairIdx));
   };
 
   const handleRight = (pairIdx: number) => {
     if (submitted || matchedRights.has(pairIdx)) return;
     if (pendingLeft === null) return;
     setMatches(m => ({ ...m, [pendingLeft]: pairIdx }));
+    setMatchOrder(o => (o.includes(pendingLeft) ? o : [...o, pendingLeft]));
     setPendingLeft(null);
   };
 
@@ -56,6 +78,15 @@ export default function WordMatch({ title, pairs, onComplete }: Props) {
     const next = { ...matches };
     delete next[leftPairIdx];
     setMatches(next);
+    setMatchOrder(o => o.filter(i => i !== leftPairIdx));
+  };
+
+  // ยกเลิกคู่จากฝั่งขวา — หา left ที่ map ไป pairIdx นี้แล้วเคลียร์
+  const handleClearRight = (rightPairIdx: number) => {
+    if (submitted) return;
+    const leftKey = Object.entries(matches).find(([, r]) => r === rightPairIdx)?.[0];
+    if (leftKey === undefined) return;
+    handleClear(Number(leftKey));
   };
 
   const allMatched = Object.keys(matches).length === pairs.length;
@@ -78,7 +109,7 @@ export default function WordMatch({ title, pairs, onComplete }: Props) {
     <div className="space-y-3">
       <h3 className="font-display font-bold text-lg text-detective-700">🔗 {title}</h3>
       <p className="text-sm text-gray-600">
-        แตะคำฝั่งซ้ายก่อน แล้วแตะคำฝั่งขวาที่จับคู่กัน — กดซ้ำเพื่อยกเลิก
+        แตะคำฝั่งซ้ายก่อน แล้วแตะคำฝั่งขวาที่จับคู่กัน — แต่ละคู่จะได้สีของตัวเอง (กดซ้ำเพื่อยกเลิก)
       </p>
 
       <div className="grid grid-cols-2 gap-3">
@@ -89,20 +120,29 @@ export default function WordMatch({ title, pairs, onComplete }: Props) {
             const pending = pendingLeft === item.pairIdx;
             const correct = isCorrect(item.pairIdx);
             const wrong   = isWrong(item.pairIdx);
+            const color   = colorOf(item.pairIdx);
+            const orderNum = matchOrder.indexOf(item.pairIdx) + 1;
             return (
               <motion.button
                 key={`L${item.pairIdx}`}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => matched ? handleClear(item.pairIdx) : handleLeft(item.pairIdx)}
                 disabled={submitted}
-                className={`w-full text-left p-3 rounded-xl border-2 text-sm transition-all ${
+                className={`relative w-full text-left p-3 pl-9 rounded-xl border-2 text-sm transition-all ${
                   correct ? 'bg-success-50 border-success-500 text-success-600'
                   : wrong  ? 'bg-danger-50 border-danger-500 text-danger-600'
-                  : matched ? 'bg-detective-100 border-detective-400 text-detective-700'
+                  : matched && color ? `${color.bg} ${color.border} ${color.text}`
                   : pending ? 'bg-warning-50 border-warning-500 ring-2 ring-warning-300'
                   : 'bg-white border-detective-100'
                 }`}
               >
+                {matched && color && !submitted && (
+                  <span className={`absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full
+                                    ${color.dot} text-white text-[11px] font-bold
+                                    flex items-center justify-center shadow`}>
+                    {orderNum}
+                  </span>
+                )}
                 {item.text}
                 {matched && !submitted && <span className="float-right opacity-60">✕</span>}
               </motion.button>
@@ -114,24 +154,35 @@ export default function WordMatch({ title, pairs, onComplete }: Props) {
         <div className="space-y-2">
           {rights.map(item => {
             const matched = matchedRights.has(item.pairIdx);
-            const fromLeft = Object.entries(matches).find(([, r]) => r === item.pairIdx)?.[0];
-            const correct = submitted && fromLeft !== undefined && Number(fromLeft) === item.pairIdx;
+            const fromLeftKey = Object.entries(matches).find(([, r]) => r === item.pairIdx)?.[0];
+            const linkedLeft = fromLeftKey !== undefined ? Number(fromLeftKey) : undefined;
+            const correct = submitted && linkedLeft !== undefined && linkedLeft === item.pairIdx;
             const wrong   = submitted && matched && !correct;
+            const color   = linkedLeft !== undefined ? colorOf(linkedLeft) : undefined;
+            const orderNum = linkedLeft !== undefined ? matchOrder.indexOf(linkedLeft) + 1 : 0;
             return (
               <motion.button
                 key={`R${item.pairIdx}`}
                 whileTap={{ scale: 0.97 }}
-                onClick={() => handleRight(item.pairIdx)}
-                disabled={submitted || matched}
-                className={`w-full text-left p-3 rounded-xl border-2 text-sm transition-all ${
+                onClick={() => matched ? handleClearRight(item.pairIdx) : handleRight(item.pairIdx)}
+                disabled={submitted}
+                className={`relative w-full text-left p-3 pl-9 rounded-xl border-2 text-sm transition-all ${
                   correct ? 'bg-success-50 border-success-500 text-success-600'
                   : wrong  ? 'bg-danger-50 border-danger-500 text-danger-600'
-                  : matched ? 'bg-detective-100 border-detective-400 text-detective-700 opacity-70'
+                  : matched && color ? `${color.bg} ${color.border} ${color.text}`
                   : pendingLeft !== null ? 'bg-white border-detective-300 hover:border-detective-500'
                   : 'bg-white border-detective-100'
                 }`}
               >
+                {matched && color && !submitted && (
+                  <span className={`absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full
+                                    ${color.dot} text-white text-[11px] font-bold
+                                    flex items-center justify-center shadow`}>
+                    {orderNum}
+                  </span>
+                )}
                 {item.text}
+                {matched && !submitted && <span className="float-right opacity-60">✕</span>}
               </motion.button>
             );
           })}

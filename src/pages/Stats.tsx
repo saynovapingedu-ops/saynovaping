@@ -1,0 +1,217 @@
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { usePlayerStore } from '../store/playerStore';
+import { getLevelByXP, getNextLevel, getProgressToNextLevel, LEVELS, TIER_INFO } from '../lib/levels';
+import { BADGES } from '../lib/badges';
+import { SCENARIO_META } from '../scenarios';
+import Avatar from '../components/Avatar';
+import { sfx } from '../lib/sound';
+
+export default function Stats() {
+  const nav = useNavigate();
+  const player = usePlayerStore();
+
+  const lv = getLevelByXP(player.totalXP);
+  const next = getNextLevel(player.totalXP);
+  const progress = getProgressToNextLevel(player.totalXP);
+  const tier = TIER_INFO[lv.tier];
+
+  const earnedBadges = new Set(player.badges);
+  const heroDone = player.stagesCompleted.filter(id => id <= 8).length;
+  const masterDone = player.stagesCompleted.filter(id => id >= 9 && id <= 12).length;
+  const proDone = player.stagesCompleted.filter(id => id >= 13).length;
+
+  return (
+    <div className="min-h-full pb-10 relative">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-20 -left-20 w-72 h-72 bg-detective-300/30 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute bottom-0 right-0 w-64 h-64 bg-warning-500/20 rounded-full blur-3xl" />
+      </div>
+
+      <header className="sticky top-0 z-10 bg-white/85 backdrop-blur-md shadow-sm border-b border-detective-100/50
+                         p-3 flex items-center gap-3">
+        <button
+          onClick={() => { sfx.click(); nav('/'); }}
+          className="text-detective-500 px-3 py-1.5 rounded-lg hover:bg-detective-50 active:scale-95"
+        >←</button>
+        <div className="flex-1 min-w-0">
+          <h2 className="font-display font-bold text-detective-700 text-base">📊 คะแนนของฉัน</h2>
+          <p className="text-[11px] text-gray-500">ความคืบหน้าและรางวัลทั้งหมด</p>
+        </div>
+      </header>
+
+      <main className="max-w-md mx-auto px-4 pt-4 space-y-4">
+        {/* Player card */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card-hero flex items-center gap-3"
+        >
+          <Avatar
+            preset={player.avatar}
+            customId={player.customAvatarId}
+            size={64}
+            ring
+          />
+          <div className="flex-1 min-w-0">
+            <p className="font-display font-bold text-detective-700 text-lg truncate">
+              {player.nickname || 'ผู้เล่น'}
+            </p>
+            {player.equippedTitle && (
+              <p className="text-xs text-warning-500 font-semibold">⭐ {player.equippedTitle}</p>
+            )}
+            {player.school && (
+              <p className="text-[11px] text-gray-500 truncate">{player.grade} • {player.school}</p>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Rank card */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="card relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 text-7xl opacity-10 -mr-2 -mt-1">{lv.emoji}</div>
+          <div className="relative">
+            <div className="flex items-baseline gap-2 mb-1">
+              <span
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
+                style={{ backgroundColor: tier.color }}
+              >
+                {tier.label}
+              </span>
+              <span className="text-xs text-gray-500">Lv. {lv.level}/{LEVELS.length}</span>
+            </div>
+            <p className="font-display font-bold text-2xl text-detective-700 leading-tight">
+              {lv.emoji} {lv.name}
+            </p>
+            <p className="text-xs text-gray-600 mt-0.5">{lv.description}</p>
+
+            <div className="mt-3">
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-gray-600">{player.totalXP} XP</span>
+                {next ? (
+                  <span className="text-warning-600 font-semibold">
+                    อีก {next.minXP - player.totalXP} XP → {next.name}
+                  </span>
+                ) : (
+                  <span className="text-success-600 font-semibold">🏆 ระดับสูงสุดแล้ว!</span>
+                )}
+              </div>
+              <div className="relative h-3 rounded-full overflow-hidden bg-detective-100">
+                <div
+                  className="h-full bg-gradient-to-r from-warning-400 via-warning-500 to-detective-400
+                             transition-all duration-700"
+                  style={{ width: `${progress * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Quick stats grid */}
+        <div className="grid grid-cols-3 gap-2">
+          <StatBox emoji="🏁" label="ด่านที่ผ่าน" value={`${player.stagesCompleted.length}/${SCENARIO_META.length}`} />
+          <StatBox emoji="🪙" label="เหรียญ" value={String(player.coins || 0)} />
+          <StatBox emoji="🎖" label="แบดจ์" value={`${player.badges.length}/${BADGES.length}`} />
+          <StatBox emoji="🦸" label="Hero Arc" value={`${heroDone}/8`} />
+          <StatBox emoji="🎓" label="Master Arc" value={`${masterDone}/4`} />
+          <StatBox emoji="🎯" label="Pro Arc" value={`${proDone}/3`} />
+        </div>
+
+        {(player.streakDays || 0) > 0 && (
+          <div className="card-hero flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500">เล่นต่อเนื่อง</p>
+              <p className="text-2xl font-bold text-warning-500">🔥 {player.streakDays} วัน</p>
+            </div>
+            <p className="text-[11px] text-gray-500 max-w-[55%] text-right">
+              เล่นทุกวันรับโบนัสเหรียญ + บวกตามจำนวนวันต่อเนื่อง
+            </p>
+          </div>
+        )}
+
+        {/* Stages list */}
+        <section>
+          <h3 className="font-display font-bold text-detective-700 mb-2 flex items-center gap-2">
+            <span>📍</span> ด่านที่ผ่าน
+          </h3>
+          <div className="card p-2 space-y-1.5">
+            {SCENARIO_META.map(meta => {
+              const done = player.stagesCompleted.includes(meta.id);
+              return (
+                <div
+                  key={meta.id}
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded-lg ${
+                    done ? 'bg-success-50' : 'bg-gray-50/60'
+                  }`}
+                >
+                  <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                    done ? 'bg-success-500 text-white' : 'bg-gray-200 text-gray-500'
+                  }`}>
+                    {done ? '✓' : meta.id}
+                  </span>
+                  <span className={`text-sm flex-1 truncate ${done ? 'text-success-700 font-semibold' : 'text-gray-500'}`}>
+                    {meta.title}
+                  </span>
+                  {meta.arc === 'master' && (
+                    <span className="text-[10px] font-bold text-warning-600">MASTER</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Badges grid */}
+        <section>
+          <h3 className="font-display font-bold text-detective-700 mb-2 flex items-center gap-2">
+            <span>🎖</span> แบดจ์ ({player.badges.length}/{BADGES.length})
+          </h3>
+          <div className="grid grid-cols-4 gap-2">
+            {BADGES.map(b => {
+              const earned = earnedBadges.has(b.id);
+              return (
+                <div
+                  key={b.id}
+                  title={b.description}
+                  className={`relative card p-2 text-center transition-all ${
+                    earned ? '' : 'opacity-35 grayscale'
+                  }`}
+                >
+                  <div className="text-2xl">{b.emoji}</div>
+                  <p className={`text-[10px] font-semibold leading-tight mt-0.5 ${
+                    earned ? 'text-detective-700' : 'text-gray-500'
+                  }`}>
+                    {b.name}
+                  </p>
+                  {!earned && (
+                    <div className="absolute top-1 right-1 text-[10px]">🔒</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <div className="text-center pt-2">
+          <button onClick={() => { sfx.click(); nav('/'); }} className="btn-secondary">
+            ← กลับหน้าแรก
+          </button>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function StatBox({ emoji, label, value }: { emoji: string; label: string; value: string }) {
+  return (
+    <div className="card p-3 text-center">
+      <div className="text-xl">{emoji}</div>
+      <p className="text-[10px] text-gray-500 mt-0.5">{label}</p>
+      <p className="font-bold text-detective-700 text-sm">{value}</p>
+    </div>
+  );
+}

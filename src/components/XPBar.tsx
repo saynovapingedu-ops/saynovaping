@@ -1,5 +1,5 @@
 import { usePlayerStore } from '../store/playerStore';
-import { getLevelByXP, getNextLevel, getProgressToNextLevel } from '../lib/levels';
+import { getLevelByXP, getNextLevel, getProgressToNextLevel, TIER_INFO } from '../lib/levels';
 
 interface Props {
   /** 'dark' = อยู่บนพื้นมืด/ม่วง (เช่น Home header), 'light' = อยู่บนการ์ดขาว */
@@ -21,13 +21,19 @@ export default function XPBar({ variant = 'light' }: Props) {
   return (
     <div className="w-full">
       <div className="flex justify-between items-baseline mb-1.5">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <span className="text-xl">{lv.emoji}</span>
-          <span className={`font-semibold ${labelText}`}>
+          <span className={`font-semibold truncate ${labelText}`}>
             Lv.{lv.level} <span className="opacity-90">{lv.name}</span>
           </span>
+          <span
+            className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/30 text-white shadow-sm flex-shrink-0"
+            style={isDark ? undefined : { backgroundColor: TIER_INFO[lv.tier].color, color: 'white' }}
+          >
+            {TIER_INFO[lv.tier].label}
+          </span>
         </div>
-        <span className={`text-sm font-semibold ${xpText}`}>{xp} XP</span>
+        <span className={`text-sm font-semibold ${xpText} flex-shrink-0`}>{xp} XP</span>
       </div>
       <div className={`relative h-3 rounded-full overflow-hidden ${trackBg}`}>
         <div

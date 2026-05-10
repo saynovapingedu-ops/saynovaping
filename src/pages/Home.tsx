@@ -82,21 +82,32 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Coin + Shop strip */}
-        <button
-          onClick={() => { sfx.click(); nav('/shop'); }}
-          className="mt-4 w-full flex items-center justify-between bg-white/15 backdrop-blur-sm
-                     border border-white/15 rounded-2xl px-4 py-2.5 active:scale-[0.99] transition-all"
-        >
-          <span className="flex items-center gap-2">
-            <span className="text-xl">🪙</span>
-            <span className="font-bold">{player.coins || 0}</span>
-            <span className="text-xs text-detective-100">เหรียญ</span>
-          </span>
-          <span className="text-xs font-semibold flex items-center gap-1">
-            🛍 ร้านค้า <span className="text-base">→</span>
-          </span>
-        </button>
+        {/* Coin + Shop + Room strip */}
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button
+            onClick={() => { sfx.click(); nav('/shop'); }}
+            className="flex items-center justify-between bg-white/15 backdrop-blur-sm
+                       border border-white/15 rounded-2xl px-3 py-2.5 active:scale-[0.99] transition-all"
+          >
+            <span className="flex items-center gap-1.5">
+              <span className="text-lg">🪙</span>
+              <span className="font-bold text-sm">{player.coins || 0}</span>
+            </span>
+            <span className="text-[11px] font-semibold flex items-center gap-1">
+              🛍 ร้านค้า →
+            </span>
+          </button>
+          <button
+            onClick={() => { sfx.click(); nav('/room'); }}
+            className="flex items-center justify-between bg-white/15 backdrop-blur-sm
+                       border border-white/15 rounded-2xl px-3 py-2.5 active:scale-[0.99] transition-all"
+          >
+            <span className="text-[11px] font-semibold flex items-center gap-1">
+              🏠 ห้องของฉัน
+            </span>
+            <span className="text-base">→</span>
+          </button>
+        </div>
 
         <div className="mt-5 bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-3.5 shadow-inner">
           <XPBar variant="dark" />
@@ -144,11 +155,13 @@ export default function Home() {
           </span>
         </div>
 
-        {(['hero', 'master'] as const).map((arc) => {
+        {(['hero', 'master', 'pro'] as const).map((arc) => {
           const stages = SCENARIO_META.filter(m => (m.arc || 'hero') === arc);
-          const arcLabel = arc === 'hero'
-            ? { name: 'บทที่ 1: เส้นทางนักสืบ', emoji: '🦸', desc: 'ด่าน 1-8 — จบรับ Certificate' }
-            : { name: 'บทที่ 2: Master Class', emoji: '🎓', desc: 'ด่าน 9-12 — ขั้นสูง สำหรับนักสืบระดับครู' };
+          if (stages.length === 0) return null;
+          const arcLabel =
+            arc === 'hero'   ? { name: 'บทที่ 1: เส้นทางนักสืบ', emoji: '🦸', desc: 'ด่าน 1-8 — จบรับ Certificate' }
+          : arc === 'master' ? { name: 'บทที่ 2: Master Class',   emoji: '🎓', desc: 'ด่าน 9-12 — ขั้นสูง สำหรับนักสืบระดับครู' }
+          :                    { name: 'บทที่ 3: Pro Arc',         emoji: '🎯', desc: 'ด่าน 13-15 — เกมเพลย์ใหม่ ปัด/จัดอันดับ/จับคู่ความจำ' };
           const arcCompleted = stages.filter(m => player.stagesCompleted.includes(m.id)).length;
 
           return (
@@ -246,9 +259,34 @@ export default function Home() {
           );
         })}
 
+        {/* Quick access — เหมือน rich menu ใน LINE */}
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <button
+            onClick={() => { sfx.click(); nav('/stats'); }}
+            className="card p-3 text-center active:scale-95 transition-all hover:shadow-md"
+          >
+            <div className="text-2xl">📊</div>
+            <p className="text-xs font-semibold text-detective-700 mt-1">คะแนนของฉัน</p>
+          </button>
+          <button
+            onClick={() => { sfx.click(); nav('/knowledge'); }}
+            className="card p-3 text-center active:scale-95 transition-all hover:shadow-md"
+          >
+            <div className="text-2xl">📖</div>
+            <p className="text-xs font-semibold text-detective-700 mt-1">ความรู้</p>
+          </button>
+          <button
+            onClick={() => { sfx.click(); nav('/certificate'); }}
+            className="card p-3 text-center active:scale-95 transition-all hover:shadow-md"
+          >
+            <div className="text-2xl">🏆</div>
+            <p className="text-xs font-semibold text-detective-700 mt-1">ใบประกาศ</p>
+          </button>
+        </div>
+
         <div className="mt-4 text-center space-y-1">
           <p className="text-xs text-gray-400">
-            v0.6.0 — 12 ด่าน • ร้านค้า • streak • ธีมม่วง-ทอง
+            v0.7.0 — 12 ด่าน • ร้านค้า • streak • แรงค์ ROV-style
           </p>
           <p className="text-[10px] text-detective-400 font-semibold">
             💜 ธีม Walailak University

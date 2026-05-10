@@ -31,6 +31,11 @@ export default function Shop() {
   const [purchaseMsg, setPurchaseMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  // ลองสวม (preview) — ทับการสวมจริงชั่วคราวบน Avatar ด้านบน
+  const [previewFrameId, setPreviewFrameId] = useState<string | null>(null);
+  const [previewTitle, setPreviewTitle] = useState<string | null>(null);
+  // popup ยืนยันซื้อ
+  const [confirmItem, setConfirmItem] = useState<ShopItem | null>(null);
 
   const owned = new Set(player.ownedItems || []);
   const coins = player.coins || 0;
@@ -39,7 +44,24 @@ export default function Shop() {
   const isUnlockedByStage = (item: ShopItem) =>
     !item.unlockAfterStage || stagesDone >= item.unlockAfterStage;
 
-  const handleBuy = (item: ShopItem) => {
+  // เปลี่ยนแท็บ → เคลียร์ preview ทุกครั้ง (กันสับสนข้ามหมวด)
+  const switchTab = (next: ItemCategory | 'custom') => {
+    sfx.click();
+    setTab(next);
+    setPreviewFrameId(null);
+    setPreviewTitle(null);
+  };
+
+  const handlePreview = (item: ShopItem) => {
+    sfx.click();
+    if (item.category === 'frame') {
+      setPreviewFrameId(p => (p === item.id ? null : item.id));
+    } else if (item.category === 'title' && item.titleText) {
+      setPreviewTitle(p => (p === item.titleText ? null : item.titleText!));
+    }
+  };
+
+  const askBuy = (item: ShopItem) => {
     if (owned.has(item.id)) return;
     if (!isUnlockedByStage(item)) {
       setPurchaseMsg(`🔒 ต้องผ่านด่าน ${item.unlockAfterStage} ก่อน`);
@@ -53,6 +75,13 @@ export default function Shop() {
       setTimeout(() => setPurchaseMsg(null), 2200);
       return;
     }
+    sfx.click();
+    setConfirmItem(item);
+  };
+
+  const confirmBuy = () => {
+    const item = confirmItem;
+    if (!item) return;
     if (spendCoins(item.price)) {
       awardItem(item.id);
       sfx.buy();
@@ -60,6 +89,7 @@ export default function Shop() {
       setPurchaseMsg(`✓ ซื้อ "${item.name}" สำเร็จ!`);
       setTimeout(() => setPurchaseMsg(null), 2200);
     }
+    setConfirmItem(null);
   };
 
   const handleEquip = (item: ShopItem) => {
@@ -114,6 +144,12 @@ export default function Shop() {
           <h2 className="font-display font-bold text-detective-700 text-base">🛍 ร้านค้านักสืบ</h2>
           <p className="text-[11px] text-gray-500">แลกของรางวัลด้วยเหรียญ</p>
         </div>
+        <button
+          onClick={() => { sfx.click(); nav('/room'); }}
+          className="text-xs bg-detective-100 text-detective-700 font-semibold rounded-full px-2.5 py-1.5 active:scale-95"
+        >
+          🏠 ห้อง
+        </button>
         <div className="flex items-center gap-1.5 bg-gradient-to-br from-warning-400 to-warning-500
                         text-white font-bold rounded-full px-3 py-1.5 shadow-glow-sm">
           <span className="text-base">🪙</span>
@@ -122,34 +158,53 @@ export default function Shop() {
       </header>
 
       <main className="max-w-md mx-auto px-4 pt-4">
-        {/* Avatar preview */}
-        <div className="card-hero flex items-center gap-3 mb-4">
-          <Avatar
-            preset={player.avatar}
-            customId={player.customAvatarId}
-            size={56}
-            ring={!!player.equippedFrame}
-            className={
-              player.equippedFrame
-                ? SHOP_ITEMS.find(i => i.id === player.equippedFrame)?.frameClass || ''
-                : ''
-            }
-          />
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-detective-700 truncate">{player.nickname}</p>
-            {player.equippedTitle && (
-              <p className="text-xs text-warning-500 font-semibold">⭐ {player.equippedTitle}</p>
-            )}
-            <p className="text-[11px] text-gray-500">ตัวอย่างหน้าโปรไฟล์</p>
-          </div>
-        </div>
+        {/* Avatar preview — ใช้ preview ทับ equipped ถ้ากำลังลอง */}
+        {(() => {
+          const shownFrameId = previewFrameId ?? player.equippedFrame;
+          const shownTitle   = previewTitle   ?? player.equippedTitle;
+          const shownFrameClass = shownFrameId
+            ? SHOP_ITEMS.find(i => i.id === shownFrameId)?.frameClass || ''
+            : '';
+          const isPreviewing = previewFrameId !== null || previewTitle !== null;
+          return (
+            <div className={`card-hero flex items-center gap-3 mb-4 transition-all ${
+              isPreviewing ? 'border-2 border-warning-400 bg-warning-50/30' : ''
+            }`}>
+              <Avatar
+                preset={player.avatar}
+                customId={player.customAvatarId}
+                size={56}
+                ring={!!shownFrameId}
+                className={shownFrameClass}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-detective-700 truncate">{player.nickname}</p>
+                {shownTitle && (
+                  <p className="text-xs text-warning-500 font-semibold">⭐ {shownTitle}</p>
+                )}
+                <p className="text-[11px] text-gray-500">
+                  {isPreviewing ? '👁 กำลังลอง — ยังไม่ได้ซื้อ' : 'ตัวอย่างหน้าโปรไฟล์'}
+                </p>
+              </div>
+              {isPreviewing && (
+                <button
+                  onClick={() => { sfx.click(); setPreviewFrameId(null); setPreviewTitle(null); }}
+                  className="text-xs text-detective-600 bg-white border border-detective-200
+                             rounded-full px-2.5 py-1 active:scale-95"
+                >
+                  เลิกลอง ✕
+                </button>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Tabs */}
         <div className="grid grid-cols-4 gap-1.5 mb-4">
           {CATS.map(c => (
             <button
               key={c.id}
-              onClick={() => { sfx.click(); setTab(c.id); }}
+              onClick={() => switchTab(c.id)}
               className={`py-2 rounded-xl text-xs font-semibold transition-all ${
                 tab === c.id
                   ? 'bg-gradient-to-br from-detective-500 to-detective-600 text-white shadow-glow-sm'
@@ -197,13 +252,20 @@ export default function Shop() {
               const canBuy = !isOwned && !locked && coins >= item.price;
               const canEquip = (item.category === 'title' || item.category === 'frame') && isOwned;
 
+              const canPreview = !locked && (item.category === 'frame' || item.category === 'title');
+              const isPreviewingThis =
+                (item.category === 'frame' && previewFrameId === item.id) ||
+                (item.category === 'title' && previewTitle === item.titleText);
+
               return (
                 <motion.div
                   key={item.id}
                   whileHover={{ y: -2 }}
                   className={`relative card flex flex-col items-center text-center p-3 ${
                     locked ? 'opacity-60' : ''
-                  } ${isEquipped ? 'border-2 border-success-500' : ''}`}
+                  } ${isEquipped ? 'border-2 border-success-500' : ''} ${
+                    isPreviewingThis ? 'border-2 border-warning-400 bg-warning-50/40' : ''
+                  }`}
                 >
                   <div className="text-4xl mb-1">{item.emoji}</div>
                   <p className="font-semibold text-sm leading-tight">{item.name}</p>
@@ -231,17 +293,31 @@ export default function Shop() {
                       </span>
                     )
                   ) : (
-                    <button
-                      onClick={() => handleBuy(item)}
-                      disabled={!canBuy}
-                      className={`w-full text-xs font-bold py-1.5 rounded-lg flex items-center justify-center gap-1 ${
-                        canBuy
-                          ? 'bg-gradient-to-r from-warning-400 to-warning-500 text-white shadow-glow-sm'
-                          : 'bg-gray-200 text-gray-500'
-                      }`}
-                    >
-                      🪙 {item.price}
-                    </button>
+                    <div className="w-full space-y-1.5">
+                      {canPreview && (
+                        <button
+                          onClick={() => handlePreview(item)}
+                          className={`w-full text-xs font-semibold py-1.5 rounded-lg border transition-all ${
+                            isPreviewingThis
+                              ? 'bg-warning-100 border-warning-400 text-warning-600'
+                              : 'bg-white border-detective-200 text-detective-600 hover:border-detective-400'
+                          }`}
+                        >
+                          {isPreviewingThis ? '👁 กำลังลอง' : '👁 ลองสวม'}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => askBuy(item)}
+                        disabled={!canBuy}
+                        className={`w-full text-xs font-bold py-1.5 rounded-lg flex items-center justify-center gap-1 ${
+                          canBuy
+                            ? 'bg-gradient-to-r from-warning-400 to-warning-500 text-white shadow-glow-sm'
+                            : 'bg-gray-200 text-gray-500'
+                        }`}
+                      >
+                        🪙 {item.price}
+                      </button>
+                    </div>
                   )}
                 </motion.div>
               );
@@ -273,6 +349,63 @@ export default function Shop() {
           💡 เก็บเหรียญด้วยการเล่นด่าน — XP ทุก 5 จะได้ 1 เหรียญ
         </p>
       </main>
+
+      {/* Buy confirmation modal */}
+      <AnimatePresence>
+        {confirmItem && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
+            onClick={() => setConfirmItem(null)}
+          >
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 30, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 240, damping: 24 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white rounded-3xl w-full max-w-sm p-5 shadow-xl"
+            >
+              <div className="text-center">
+                <div className="text-5xl mb-2">{confirmItem.emoji}</div>
+                <p className="font-display font-bold text-lg text-detective-700">{confirmItem.name}</p>
+                <p className="text-xs text-gray-500 mt-1">{confirmItem.description}</p>
+                <div className="my-4 inline-flex items-center gap-2 bg-warning-50 border border-warning-400
+                                rounded-full px-3 py-1.5">
+                  <span className="text-base">🪙</span>
+                  <span className="font-bold text-warning-600">{confirmItem.price}</span>
+                  <span className="text-[11px] text-gray-500">เหรียญ</span>
+                </div>
+                <p className="text-sm text-gray-700 mb-1">
+                  ยืนยันแลกของชิ้นนี้ไหม?
+                </p>
+                <p className="text-[11px] text-gray-500 mb-4">
+                  เหลือเหรียญหลังซื้อ: <strong className="text-detective-700">
+                    {Math.max(0, coins - confirmItem.price)}
+                  </strong>
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => { sfx.click(); setConfirmItem(null); }}
+                  className="py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold active:scale-95"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={confirmBuy}
+                  className="py-2.5 rounded-xl bg-gradient-to-r from-warning-400 to-warning-500
+                             text-white font-bold shadow-glow-sm active:scale-95"
+                >
+                  ✓ ยืนยันซื้อ
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

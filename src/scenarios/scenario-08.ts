@@ -157,9 +157,26 @@ export const scenario08: Scenario = {
           reveal: 'Listen-Validate-Care-Lead — "ฟัง" คือก้าวแรกที่เปิดประตูให้เพื่อนรับฟังเรา',
         },
       ],
-      next: 'final-dialogue',
+      next: 'taunt1',
       xpOnSuccess: 120,
       badge: 'wise-words',
+    },
+    // === ฉากขิงคนร้าย — หลังตอบครบแล้ว ผู้เล่นได้สวนกลับ ===
+    {
+      type: 'dialogue', id: 'taunt1', speaker: 'player', next: 'vapor-shock',
+      text: 'เป็นไงล่ะ! ฉันรู้นะว่าคุณใช้สูตรอะไรหลอกเด็กๆ — กลิ่นผลไม้ คำโฆษณาฟอกขาว ฉันถอดรหัสคุณหมดแล้ว 😎',
+    },
+    {
+      type: 'dialogue', id: 'vapor-shock', speaker: 'vapor', next: 'taunt2',
+      text: 'แก... แกรู้ลึกขนาดนี้ได้ยังไง? ไม่... ไม่มีเด็กคนไหนที่...',
+    },
+    {
+      type: 'dialogue', id: 'taunt2', speaker: 'player', next: 'taunt3',
+      text: 'หลอกฉันไม่ได้หรอก! ทุกคำพูดที่คุณใช้ มันคือกับดักเดิมๆ ที่ฉันฝึกมาแล้ว 8 ด่าน',
+    },
+    {
+      type: 'dialogue', id: 'taunt3', speaker: 'player', next: 'final-dialogue',
+      text: 'และเด็กคนต่อไปที่คุณจะเข้าหา — เขาจะรู้ทันคุณเหมือนฉัน เพราะฉันจะส่งต่อทุกอย่างที่เรียนมา 🔍',
     },
     {
       type: 'dialogue', id: 'final-dialogue', speaker: 'vapor', next: 'final-choice',

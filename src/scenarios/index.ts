@@ -11,6 +11,9 @@ import { scenario09 } from './scenario-09';
 import { scenario10 } from './scenario-10';
 import { scenario11 } from './scenario-11';
 import { scenario12 } from './scenario-12';
+import { scenario13 } from './scenario-13';
+import { scenario14 } from './scenario-14';
+import { scenario15 } from './scenario-15';
 
 export interface ScenarioMeta {
   id: number;
@@ -20,7 +23,7 @@ export interface ScenarioMeta {
   available: boolean;
   unlockAfter?: number;
   /** กลุ่มของด่าน — ใช้แบ่งบนแผนที่ */
-  arc?: 'hero' | 'master';
+  arc?: 'hero' | 'master' | 'pro';
 }
 
 export const SCENARIO_META: ScenarioMeta[] = [
@@ -38,6 +41,10 @@ export const SCENARIO_META: ScenarioMeta[] = [
   { id: 10, arc: 'master', title: 'รหัสลับใน TikTok',     subtitle: 'Master 2 — รู้เท่าทันสื่อ',     estMinutes: 7,  available: true, unlockAfter: 9 },
   { id: 11, arc: 'master', title: 'พี่ในครอบครัวสูบ',      subtitle: 'Master 3 — รับมือคนในบ้าน',   estMinutes: 7,  available: true, unlockAfter: 10 },
   { id: 12, arc: 'master', title: 'นักสืบระดับครู',         subtitle: 'Master Final — ส่งต่อรุ่นน้อง', estMinutes: 10, available: true, unlockAfter: 11 },
+  // === Pro Arc (13-15) — ทักษะเสริม + เกมเพลย์รูปแบบใหม่ ===
+  { id: 13, arc: 'pro', title: 'ฉลาดเสี่ยง',             subtitle: 'Pro 1 — จัดอันดับความเสี่ยง',   estMinutes: 7, available: true, unlockAfter: 12 },
+  { id: 14, arc: 'pro', title: 'TikTok ขุดความจริง',     subtitle: 'Pro 2 — ปัดจริง/เท็จแบบเร็ว',   estMinutes: 6, available: true, unlockAfter: 13 },
+  { id: 15, arc: 'pro', title: 'บันทึกนักสืบรุ่นเก่า',     subtitle: 'Pro 3 — จับคู่ความจำ',         estMinutes: 7, available: true, unlockAfter: 14 },
 ];
 
 export const TOTAL_STAGES = SCENARIO_META.length;
@@ -58,6 +65,9 @@ export function getScenarioById(id: number): Scenario | null {
     case 10: return scenario10;
     case 11: return scenario11;
     case 12: return scenario12;
+    case 13: return scenario13;
+    case 14: return scenario14;
+    case 15: return scenario15;
     default: return null;
   }
 }

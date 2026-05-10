@@ -78,3 +78,19 @@
     @apply inline-flex items-center gap-1 text-[10px] font-bold rounded-full px-2 py-0.5;
   }
 }
+
+/* ========== Print: เปิด print เพื่อบันทึก Certificate เป็น PDF ========== */
+@media print {
+  body { background: white !important; }
+  /* ซ่อน UI ทั้งหมด ยกเว้น cert card */
+  body * { visibility: hidden; }
+  #cert-card, #cert-card * { visibility: visible; }
+  #cert-card {
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%;
+    page-break-inside: avoid;
+  }
+  /* บังคับสีพื้นและสี text ให้ออกตอน print */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}

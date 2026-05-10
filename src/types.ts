@@ -51,10 +51,45 @@ export interface FillBlankQuestion {
   reveal?: string;              // คำอธิบายหลังตอบ
 }
 
+// ========= Stage 13+ minigame types =========
+
+export interface SwipeCard {
+  /** ข้อความหรือสถานการณ์ */
+  text: string;
+  /** จริง = ปัดขวา, เท็จ = ปัดซ้าย */
+  isTrue: boolean;
+  reveal?: string;
+  emoji?: string;
+}
+
+export interface MemoryPair {
+  /** ทั้งสองด้านจะกลายเป็นการ์ดแยกกัน */
+  a: string;
+  b: string;
+  /** ใช้แสดงตอนจับคู่สำเร็จ (อธิบายความสัมพันธ์) */
+  reveal?: string;
+}
+
+export interface RiskBucket {
+  id: string;
+  label: string;
+  /** สีของช่อง: low/mid/high/extreme */
+  level: 'low' | 'mid' | 'high' | 'extreme';
+}
+
+export interface RiskItem {
+  id: string;
+  text: string;
+  /** id ของ bucket ที่ถูกต้อง */
+  bucketId: string;
+}
+
 export interface MinigameNode {
   type: 'minigame';
   id: string;
-  game: 'spot-the-lie' | 'order-cards' | 'word-match' | 'fill-blank';
+  game:
+    | 'spot-the-lie' | 'order-cards' | 'word-match' | 'fill-blank'
+    | 'swipe-decide' | 'memory-match' | 'risk-rank';
   title: string;
   // สำหรับ spot-the-lie
   claims?: SpotTheLieClaim[];
@@ -65,6 +100,13 @@ export interface MinigameNode {
   pairs?: WordMatchPair[];
   // สำหรับ fill-blank
   questions?: FillBlankQuestion[];
+  // สำหรับ swipe-decide
+  swipeCards?: SwipeCard[];
+  // สำหรับ memory-match
+  memoryPairs?: MemoryPair[];
+  // สำหรับ risk-rank
+  buckets?: RiskBucket[];
+  riskItems?: RiskItem[];
   next: string;
   xpOnSuccess: number;
   badge?: string;

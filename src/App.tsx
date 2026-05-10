@@ -13,6 +13,9 @@ import Certificate from './pages/Certificate';
 import Verify from './pages/Verify';
 import Shop from './pages/Shop';
 import Settings from './pages/Settings';
+import Stats from './pages/Stats';
+import Knowledge from './pages/Knowledge';
+import Room from './pages/Room';
 
 export default function App() {
   const [ready, setReady] = useState(false);
@@ -62,6 +65,9 @@ export default function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/certificate" element={<Certificate />} />
         <Route path="/verify" element={<Verify />} />
+        <Route path="/stats" element={<Stats />} />
+        <Route path="/knowledge" element={<Knowledge />} />
+        <Route path="/room" element={<Room />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />

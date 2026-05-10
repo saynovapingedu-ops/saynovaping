@@ -11,6 +11,9 @@ import SpotTheLie from '../components/minigames/SpotTheLie';
 import OrderCards from '../components/minigames/OrderCards';
 import WordMatch from '../components/minigames/WordMatch';
 import FillBlank from '../components/minigames/FillBlank';
+import SwipeDecide from '../components/minigames/SwipeDecide';
+import MemoryMatch from '../components/minigames/MemoryMatch';
+import RiskRank from '../components/minigames/RiskRank';
 import Confetti from '../components/Confetti';
 import { sfx, vibrate } from '../lib/sound';
 import { useProgressStore } from '../store/progressStore';
@@ -421,6 +424,22 @@ export default function ScenarioPage() {
 
               {currentNode.type === 'minigame' && currentNode.game === 'fill-blank' && currentNode.questions && (
                 <FillBlank title={currentNode.title} questions={currentNode.questions}
+                  onComplete={handleMinigameComplete} />
+              )}
+
+              {currentNode.type === 'minigame' && currentNode.game === 'swipe-decide' && currentNode.swipeCards && (
+                <SwipeDecide title={currentNode.title} cards={currentNode.swipeCards}
+                  onComplete={handleMinigameComplete} />
+              )}
+
+              {currentNode.type === 'minigame' && currentNode.game === 'memory-match' && currentNode.memoryPairs && (
+                <MemoryMatch title={currentNode.title} pairs={currentNode.memoryPairs}
+                  onComplete={handleMinigameComplete} />
+              )}
+
+              {currentNode.type === 'minigame' && currentNode.game === 'risk-rank' && currentNode.buckets && currentNode.riskItems && (
+                <RiskRank title={currentNode.title} buckets={currentNode.buckets}
+                  items={currentNode.riskItems}
                   onComplete={handleMinigameComplete} />
               )}
 
