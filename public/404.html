@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <title>นักสืบสุขภาพ</title>
+    <script>
+      // SPA fallback for GitHub Pages
+      // เก็บ path เดิมไว้ใน sessionStorage แล้ว redirect กลับ root
+      // index.html จะอ่านค่านี้แล้ว replaceState กลับไปที่ path ที่ต้องการ
+      (function () {
+        var basePath = '/health-detective';
+        var loc = window.location;
+        var pathname = loc.pathname;
+        var search = loc.search || '';
+        var hash = loc.hash || '';
+
+        // ถ้าอยู่นอก basePath ออกไปแล้ว redirect ไปหน้าหลัก
+        if (pathname.indexOf(basePath) !== 0) {
+          loc.replace(basePath + '/');
+          return;
+        }
+
+        // เก็บ path ที่ user ตั้งใจจะเข้า (เช่น /profile, /certificate)
+        var redirect = pathname.slice(basePath.length) + search + hash;
+        sessionStorage.setItem('hd_spa_redirect', redirect || '/');
+        loc.replace(basePath + '/');
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>

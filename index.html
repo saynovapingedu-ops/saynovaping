@@ -12,6 +12,16 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // อ่าน redirect path ที่ 404.html เก็บไว้ แล้วคืนกลับให้ React Router
+      (function () {
+        var redirect = sessionStorage.getItem('hd_spa_redirect');
+        if (redirect && redirect !== '/') {
+          sessionStorage.removeItem('hd_spa_redirect');
+          history.replaceState(null, '', '/health-detective' + redirect);
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
