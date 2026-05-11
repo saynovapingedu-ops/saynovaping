@@ -147,7 +147,7 @@ export default function Certificate() {
 
   if (!eligible) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
         <div className="text-6xl mb-4">🔒</div>
         <h2 className="text-xl font-display font-bold text-detective-700 mb-2">ยังไม่ถึงเกณฑ์</h2>
         <p className="text-gray-600 mb-6">

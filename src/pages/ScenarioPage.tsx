@@ -138,7 +138,7 @@ export default function ScenarioPage() {
 
   if (!scenario) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
         <p className="text-gray-600 mb-4">ด่านนี้ยังไม่พร้อมเล่น</p>
         <button onClick={() => nav('/')} className="btn-primary">กลับหน้าแรก</button>
       </div>
@@ -248,8 +248,8 @@ export default function ScenarioPage() {
   // ---- Intro screen ----
   if (showIntro) {
     return (
-      <div className="h-full flex flex-col p-6 max-w-md mx-auto relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 -z-10">
+      <div className="min-h-screen flex flex-col p-6 max-w-md mx-auto relative">
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute top-10 -right-20 w-72 h-72 bg-detective-300/30 rounded-full blur-3xl animate-pulse-slow" />
           <div className="absolute bottom-10 -left-16 w-64 h-64 bg-warning-500/20 rounded-full blur-3xl" />
         </div>

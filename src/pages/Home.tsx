@@ -26,7 +26,7 @@ export default function Home() {
   const certEligible = heroDone >= CERT_STAGE_COUNT || player.totalXP >= 1500;
 
   return (
-    <div className="min-h-full pb-10 relative overflow-hidden">
+    <div className="min-h-full pb-10 relative">
       {/* พื้นหลัง gradient + blob blur สำหรับความสวย */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-24 -left-20 w-72 h-72 bg-detective-300/40 rounded-full blur-3xl animate-pulse-slow" />

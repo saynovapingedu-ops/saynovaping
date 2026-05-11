@@ -40,8 +40,8 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="h-full flex flex-col p-6 max-w-md mx-auto relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 -z-10">
+    <div className="min-h-screen flex flex-col p-6 max-w-md mx-auto relative">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-20 -left-20 w-72 h-72 bg-detective-300/30 rounded-full blur-3xl animate-pulse-slow" />
         <div className="absolute bottom-0 -right-20 w-64 h-64 bg-warning-500/20 rounded-full blur-3xl" />
       </div>

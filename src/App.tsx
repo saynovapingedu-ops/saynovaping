@@ -65,7 +65,7 @@ export default function App() {
 
   if (!ready) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center p-6">
+      <div className="min-h-screen flex flex-col items-center justify-center text-center p-6">
         <div className="text-5xl mb-4 animate-pulse">🔍</div>
         <p className="text-detective-700 font-semibold">กำลังเตรียมเกม...</p>
       </div>
