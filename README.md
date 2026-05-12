@@ -2,7 +2,7 @@
 
 เกม chatbot สอนทักษะปฏิเสธบุหรี่ไฟฟ้าสำหรับเยาวชน ม.ต้น
 
-🌐 **เล่นเกม:** https://wuvapeedu-gif.github.io/health-detective/
+🌐 **เล่นเกม:** https://saynovapingedu-ops.github.io/saynovaping/
 
 ## 📦 Stack
 

@@ -1,6 +1,6 @@
 # 🚀 คู่มือ Deploy เกมขึ้น GitHub Pages
 
-> สำหรับ wu.vape.edu@gmail.com / wuvapeedu-gif
+> สำหรับ saynovaping.edu@gmail.com / saynovapingedu-ops
 > ใช้เวลาประมาณ 20-30 นาที
 
 ## 📋 สิ่งที่ทำเสร็จแล้ว ✅
@@ -8,7 +8,7 @@
 - ✅ Apps Script Backend deploy แล้ว
 - ✅ Google Sheet สร้างแล้ว มี 3 tabs
 - ✅ URL Backend ใส่ใน `.env` ของโปรเจกต์เรียบร้อย
-- ✅ GitHub Account สมัครแล้ว: `wuvapeedu-gif`
+- ✅ GitHub Account สมัครแล้ว: `saynovapingedu-ops`
 
 ## 🎯 สิ่งที่ต้องทำต่อ
 
@@ -16,7 +16,7 @@
 
 1. ไปที่ https://github.com/new
 2. กรอก:
-   - **Repository name:** `health-detective` (สำคัญ — ต้องตรงเป๊ะ)
+   - **Repository name:** `saynovaping` (สำคัญ — ต้องตรงเป๊ะ)
    - **Description:** เกมสอนปฏิเสธบุหรี่ไฟฟ้า
    - **Public** (ไม่ใช่ Private — เพราะ GitHub Pages ฟรีต้อง public)
    - **อย่าติ๊ก** "Add a README" / "Add .gitignore" / "Choose a license"
@@ -74,7 +74,7 @@
 หลัง build สำเร็จ:
 
 ```
-https://wuvapeedu-gif.github.io/health-detective/
+https://saynovapingedu-ops.github.io/saynovaping/
 ```
 
 เปิดใน browser → ควรเห็นหน้า onboarding "นักสืบสุขภาพ"
@@ -116,7 +116,7 @@ https://wuvapeedu-gif.github.io/health-detective/
 | GitHub Actions ❌ | ลืมตั้ง Variables | ทำขั้น 4 แล้ว Re-run |
 | เปิด URL ขึ้น 404 | Pages ยังไม่เปิด | ทำขั้น 3 + รอ build |
 | ข้อมูลไม่เข้า Sheet | URL Backend ผิด | เช็ค `VITE_SYNC_URL` ใน Variables |
-| หน้าจอขาวเปล่า | base path ผิด | ตรวจชื่อ repo = `health-detective` |
+| หน้าจอขาวเปล่า | base path ผิด | ตรวจชื่อ repo = `saynovaping` |
 | Cert ออกไม่ได้ | ยังไม่ครบเงื่อนไข | ใช้วิธี cheat ด้านบน |
 
 ## 📞 ติดต่อช่วยเหลือ
