@@ -52,7 +52,7 @@ export default function Certificate() {
   // สร้าง QR code
   useEffect(() => {
     if (!verifyCode) return;
-    const verifyUrl = `${location.origin}/health-detective/verify?code=${verifyCode}`;
+    const verifyUrl = `${location.origin}/saynovaping/verify?code=${verifyCode}`;
     QRCode.toDataURL(verifyUrl, { width: 220, margin: 1, color: { dark: '#534AB7', light: '#FFFFFF' } })
       .then(setQrDataUrl)
       .catch(() => { /* ignore */ });
@@ -60,7 +60,7 @@ export default function Certificate() {
 
   const eligible = player.stagesCompleted.length >= 8 || player.totalXP >= 1500;
 
-  const verifyUrl = verifyCode ? `${location.origin}/health-detective/verify?code=${verifyCode}` : '';
+  const verifyUrl = verifyCode ? `${location.origin}/saynovaping/verify?code=${verifyCode}` : '';
 
   const [saving, setSaving] = useState(false);
 
