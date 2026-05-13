@@ -13,8 +13,14 @@
   <body>
     <div id="root"></div>
     <script>
-      // อ่าน redirect path ที่ 404.html เก็บไว้ แล้วคืนกลับให้ React Router
+      // LIFF deep link + GitHub Pages SPA fallback → forward path ให้ React Router
       (function () {
+        var params = new URLSearchParams(window.location.search);
+        var liffState = params.get('liff.state');
+        if (liffState) {
+          history.replaceState(null, '', '/saynovaping' + liffState);
+          return;
+        }
         var redirect = sessionStorage.getItem('hd_spa_redirect');
         if (redirect && redirect !== '/') {
           sessionStorage.removeItem('hd_spa_redirect');
