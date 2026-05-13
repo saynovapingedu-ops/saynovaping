@@ -62,7 +62,7 @@ export const ROOM_ITEMS: RoomItem[] = [
     position: { x: 38, y: 88 },
     size: 64,
     unlockAtXP: 300,
-    thanks: 'พรม WU! ห้องดูอบอุ่นขึ้นเยอะ — ขอบคุณนักสืบสุดที่รัก',
+    thanks: 'พรมใหม่! ห้องดูอบอุ่นขึ้นเยอะ — ขอบคุณนักสืบสุดที่รัก',
   },
   {
     id: 'rm-bookshelf',

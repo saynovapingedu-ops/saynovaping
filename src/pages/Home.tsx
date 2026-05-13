@@ -19,23 +19,23 @@ interface IntroSection {
 const INTRO_SECTIONS: IntroSection[] = [
   {
     emoji: '🎯',
-    title: 'เกมนี้เกี่ยวกับอะไร?',
-    body: 'เกมสนุกสอนน้องๆ ม.ต้น ให้รู้ทันภัยจาก "บุหรี่ไฟฟ้า" — เรียนรู้พิษภัย ฝึกทักษะปฏิเสธเพื่อน และจับเท็จโฆษณาแบบนักสืบ',
+    title: 'เกี่ยวกับอะไร?',
+    body: 'รู้ทันภัย "บุหรี่ไฟฟ้า" ฝึกทักษะปฏิเสธ จับเท็จโฆษณา',
   },
   {
     emoji: '🕹️',
     title: 'เล่นยังไง?',
-    body: 'แต่ละด่านเป็นสถานการณ์จำลอง น้องเลือกคำตอบ + เล่นมินิเกมสนุกๆ เช่น จับโกหก เรียงลำดับ ปัดการ์ด จับคู่ภาพ',
+    body: 'อ่านเหตุการณ์ → เลือกคำตอบ → เล่นมินิเกมสนุกๆ',
   },
   {
     emoji: '🏆',
-    title: 'ได้อะไรจากการเล่น?',
-    body: 'เก็บ XP & เหรียญ → ซื้อของแต่งห้อง เปลี่ยนกรอบโปรไฟล์ และจบครบรับ Certificate น่ารักๆ ไว้อวดเพื่อน',
+    title: 'ได้อะไร?',
+    body: 'เก็บ XP & เหรียญ ซื้อของแต่งห้อง จบครบรับ Certificate',
   },
   {
     emoji: '⏱️',
-    title: 'ใช้เวลานานไหม?',
-    body: 'แต่ละด่านสั้นๆ 5-8 นาที เล่นทีละด่านสบายๆ ไม่ต้องเล่นรวดเดียวจบ มี save ค้างไว้ได้',
+    title: 'นานแค่ไหน?',
+    body: 'ด่านละ 5-8 นาที เล่นทีละด่านสบายๆ มี save ค้างไว้',
   },
 ];
 
@@ -70,7 +70,7 @@ export default function Home() {
   // ===== Intro / Tutorial overlay =====
   if (showIntro) {
     return (
-      <div className="min-h-screen flex flex-col p-6 max-w-md mx-auto relative">
+      <div className="min-h-screen flex flex-col p-4 max-w-md mx-auto relative">
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute -top-20 -left-20 w-72 h-72 bg-candy-200/40 rounded-full blur-3xl animate-pulse-slow" />
           <div className="absolute top-1/3 -right-20 w-64 h-64 bg-warning-200/40 rounded-full blur-3xl" />
@@ -81,53 +81,56 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col gap-4 pb-6"
+            className="flex-1 flex flex-col gap-3"
           >
-            {/* Hero */}
-            <div className="card-hero text-center py-6">
+            {/* Hero — compact horizontal */}
+            <div className="card-hero flex items-center gap-3 py-3">
               <motion.div
-                animate={{ y: [0, -8, 0], rotate: [0, 5, -5, 0] }}
+                animate={{ y: [0, -6, 0], rotate: [0, 5, -5, 0] }}
                 transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-                className="text-7xl mb-3 inline-block drop-shadow-lg"
+                className="text-5xl flex-shrink-0"
               >
                 🔍
               </motion.div>
-              <h1 className="text-3xl font-display font-bold bg-gradient-to-r from-detective-600 via-candy-500
-                             to-warning-500 bg-clip-text text-transparent mb-1">
-                ก่อนเริ่มเล่น
-              </h1>
-              <p className="text-sm text-gray-600">มาทำความรู้จักเกมกันก่อนนะ!</p>
+              <div className="flex-1">
+                <h1 className="text-xl font-display font-bold bg-gradient-to-r from-detective-600 via-candy-500
+                               to-warning-500 bg-clip-text text-transparent leading-tight">
+                  ก่อนเริ่มเล่น
+                </h1>
+                <p className="text-xs text-gray-600">ทำความรู้จักเกมกันก่อน!</p>
+              </div>
             </div>
 
-            {/* Tutorial sections */}
-            {INTRO_SECTIONS.map((s, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.08 * i }}
-                className="card flex items-start gap-3"
-              >
-                <div className="text-4xl">{s.emoji}</div>
-                <div className="flex-1">
-                  <h3 className="font-display font-bold text-detective-700 mb-1">{s.title}</h3>
-                  <p className="text-sm text-gray-700 leading-relaxed">{s.body}</p>
-                </div>
-              </motion.div>
-            ))}
+            {/* Tutorial sections — 2x2 grid compact */}
+            <div className="grid grid-cols-2 gap-2">
+              {INTRO_SECTIONS.map((s, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.06 * i }}
+                  className="card p-3"
+                >
+                  <div className="text-3xl mb-1">{s.emoji}</div>
+                  <h3 className="font-display font-bold text-detective-700 text-sm leading-tight mb-1">{s.title}</h3>
+                  <p className="text-[11px] text-gray-700 leading-snug">{s.body}</p>
+                </motion.div>
+              ))}
+            </div>
 
-            <div className="card border-2 border-warning-200 bg-gradient-to-br from-warning-50 to-white">
-              <p className="text-sm text-gray-700 leading-relaxed">
-                <b className="text-warning-600">💡 เคล็ดลับ:</b> ก่อนเริ่มเกม ลองดู
+            <div className="card py-2.5 border-2 border-warning-200 bg-gradient-to-br from-warning-50 to-white">
+              <p className="text-xs text-gray-700 leading-relaxed">
+                <b className="text-warning-600">💡 เคล็ดลับ:</b> ดู
                 <button
                   onClick={() => { sfx.click(); nav('/knowledge'); }}
                   className="text-detective-500 font-bold underline mx-1"
                 >หน้าความรู้</button>
-                เพื่อรู้พิษภัยของบุหรี่ไฟฟ้าก่อนนะ — มีคลิปวิดีโอด้วย!
+                เพื่อรู้พิษภัยของบุหรี่ไฟฟ้าก่อน — มีคลิปวิดีโอด้วย!
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="grid grid-cols-2 gap-2 mt-auto sticky bottom-0
+                            pb-[max(0.5rem,env(safe-area-inset-bottom))]">
               <button
                 onClick={() => { sfx.click(); nav('/knowledge'); }}
                 className="btn-secondary"
@@ -416,7 +419,7 @@ export default function Home() {
 
         <div className="mt-4 text-center">
           <p className="text-[11px] text-detective-400 font-semibold">
-            🎓 Walailak University — SayNo:สู้บุหรี่ไฟฟ้า
+            🚭 SayNo:สู้บุหรี่ไฟฟ้า
           </p>
         </div>
       </main>

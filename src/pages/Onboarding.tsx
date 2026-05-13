@@ -1,8 +1,38 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
 import AvatarFolder from '../components/AvatarFolder';
+
+function PDPAAccordion({ title, children }: { title: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="bg-white/90 rounded-2xl border border-detective-100 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="w-full text-left p-3 flex items-center gap-2 active:bg-detective-50"
+      >
+        <span className="text-detective-400 text-sm transition-transform"
+              style={{ transform: open ? 'rotate(90deg)' : 'rotate(0)' }}>▸</span>
+        <span className="font-semibold text-sm text-detective-700 flex-1">{title}</span>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-3 pb-3 text-xs text-gray-700 leading-relaxed">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
@@ -82,7 +112,7 @@ export default function Onboarding() {
                 เล่นจบรับ Certificate น่ารักๆ 🏆
               </p>
               <p className="text-[11px] text-detective-500 font-semibold mt-3">
-                🎓 Walailak University — SayNo:สู้บุหรี่ไฟฟ้า
+                🚭 SayNo:สู้บุหรี่ไฟฟ้า
               </p>
             </div>
             <button onClick={() => setStep(1)} className="btn-primary mt-8 w-full text-base">
@@ -128,60 +158,53 @@ export default function Onboarding() {
           <motion.div key="2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
             className="flex-1 flex flex-col">
             <h2 className="text-xl font-display font-bold text-detective-700 mb-1">🛡️ ความเป็นส่วนตัว (PDPA)</h2>
-            <p className="text-sm text-gray-500 mb-4">อ่านสบายๆ ก่อนเริ่มเกม</p>
+            <p className="text-xs text-gray-500 mb-3">กดแถบเพื่ออ่านรายละเอียดแต่ละหัวข้อ</p>
 
-            <div className="card text-sm text-gray-700 leading-relaxed space-y-3 mb-4">
-              <div>
-                <p className="font-bold text-detective-700 mb-1">🎮 เกมนี้คืออะไร?</p>
-                <p>เกมนี้เป็นเกมเพื่อการศึกษา <b>เกี่ยวกับบุหรี่ไฟฟ้า</b> โดยเฉพาะ
-                ออกแบบให้น้องๆ ม.ต้น ได้เรียนรู้พิษภัยและฝึกทักษะปฏิเสธอย่างสนุกสนาน</p>
-              </div>
+            {/* TL;DR ใหญ่ๆ อยู่ด้านบน — เห็นทันทีไม่ต้อง scroll */}
+            <div className="card-hero mb-3 py-3">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                <b className="text-detective-700">🚫 เราไม่เก็บข้อมูลส่วนตัว</b><br/>
+                เกมเพื่อการศึกษาเรื่อง <b>บุหรี่ไฟฟ้า</b> สำหรับ ม.ต้น
+                เก็บแค่ "ชื่อเล่น" และ "คะแนน" เพื่อบันทึก progress
+              </p>
+            </div>
 
-              <div>
-                <p className="font-bold text-detective-700 mb-1">🚫 เราไม่เก็บข้อมูลอะไรของน้องเลย</p>
-                <ul className="space-y-1 pl-2">
-                  <li>• <b>ไม่เก็บ</b> ชื่อจริง นามสกุล อายุ ชั้นปี</li>
-                  <li>• <b>ไม่เก็บ</b> เบอร์โทร อีเมล ที่อยู่ โรงเรียน</li>
-                  <li>• <b>ไม่เก็บ</b> รูปถ่าย หรือเอกสารยืนยันตัวตน</li>
-                  <li>• <b>ไม่ขาย</b> ข้อมูลให้บุคคลที่สาม</li>
+            <div className="space-y-1.5 mb-3">
+              <PDPAAccordion title="🚫 ไม่เก็บอะไรของน้อง?">
+                <ul className="space-y-0.5 pl-1">
+                  <li>• ชื่อจริง นามสกุล อายุ ชั้นปี</li>
+                  <li>• เบอร์โทร อีเมล ที่อยู่ โรงเรียน</li>
+                  <li>• รูปถ่าย เอกสารยืนยันตัวตน</li>
+                  <li>• ไม่ขายข้อมูลให้บุคคลที่สาม</li>
                 </ul>
-              </div>
+              </PDPAAccordion>
 
-              <div>
-                <p className="font-bold text-detective-700 mb-1">📦 แล้วเก็บอะไรบ้าง?</p>
-                <ul className="space-y-1 pl-2">
-                  <li>• <b>ชื่อเล่นในเกม</b> ที่น้องตั้งเอง (เป็นชื่อสมมุติได้)</li>
-                  <li>• <b>คะแนนเกม</b> และด่านที่ผ่านแล้ว — เพื่อให้กลับมาเล่นต่อได้</li>
-                  <li>• User ID ถูก <b>เข้ารหัสด้วย SHA-256</b> ระบุตัวตนกลับไม่ได้</li>
+              <PDPAAccordion title="📦 เก็บแค่อะไร?">
+                <ul className="space-y-0.5 pl-1">
+                  <li>• <b>ชื่อเล่น</b> ที่น้องตั้งเอง (เป็นชื่อสมมุติได้)</li>
+                  <li>• <b>คะแนนเกม</b> และด่านที่ผ่าน</li>
+                  <li>• User ID เข้ารหัส SHA-256 ระบุตัวตนไม่ได้</li>
                 </ul>
-              </div>
+              </PDPAAccordion>
 
-              <div>
-                <p className="font-bold text-detective-700 mb-1">🎯 ใช้ข้อมูลทำอะไร?</p>
-                <ul className="space-y-1 pl-2">
+              <PDPAAccordion title="🎯 ใช้ข้อมูลทำอะไร?">
+                <ul className="space-y-0.5 pl-1">
                   <li>• บันทึก progress ของเกม</li>
                   <li>• ออก Certificate น่ารักๆ ตอนเล่นจบ</li>
-                  <li>• ไม่ใช้เพื่อการตลาด หรือส่งข้อความรบกวน</li>
+                  <li>• ไม่ใช้เพื่อการตลาด/ส่งข้อความรบกวน</li>
                 </ul>
-              </div>
+              </PDPAAccordion>
 
-              <div>
-                <p className="font-bold text-detective-700 mb-1">🗑️ อยากลบข้อมูลออก?</p>
+              <PDPAAccordion title="🗑️ อยากลบข้อมูลออก?">
                 <p>กดปุ่ม "ลบข้อมูล" ในหน้าโปรไฟล์ได้ตลอด ข้อมูลจะหายทันที</p>
-              </div>
-
-              <p className="text-[11px] text-gray-500 italic pt-2 border-t border-detective-100">
-                เว็บนี้เป็นเครื่องมือเพื่อการศึกษาเท่านั้น ไม่มีการขาย/โฆษณาสินค้า
-                ผลิตโดย Walailak University เพื่อรณรงค์ "สู้บุหรี่ไฟฟ้า"
-              </p>
+              </PDPAAccordion>
             </div>
 
             <label className="flex items-start gap-3 mb-24 cursor-pointer bg-detective-50/70 rounded-2xl p-3 border-2 border-detective-100">
               <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)}
                 className="mt-1 w-5 h-5 accent-detective-500" />
               <span className="text-sm text-gray-700 font-medium">
-                ฉันอ่านและเข้าใจ <b>ยินยอม</b>ให้เก็บเฉพาะข้อมูลที่ระบุข้างต้น
-                เพื่อใช้กับเกมนี้เท่านั้น
+                ฉันเข้าใจ <b>ยินยอม</b>ให้เก็บข้อมูลตามที่ระบุ เพื่อใช้กับเกมนี้เท่านั้น
               </span>
             </label>
 

@@ -304,9 +304,9 @@ export default function Certificate() {
                           <div className="text-left">
                             <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold">รับรองโดย 💝</p>
                             <p className="font-display font-bold text-detective-700 text-sm leading-tight">
-                              🎓 Walailak University
+                              🚭 SayNo
                             </p>
-                            <p className="text-[10px] text-gray-500">SayNo:สู้บุหรี่ไฟฟ้า</p>
+                            <p className="text-[10px] text-gray-500">สู้บุหรี่ไฟฟ้า</p>
                           </div>
                           <CuteSeal />
                         </div>
@@ -428,8 +428,8 @@ function CuteSeal() {
         fill="#EC4899"
         opacity="0.85"
       />
-      <text x="30" y="32" textAnchor="middle" fontSize="10" fontWeight="900" fill="#FFFFFF">
-        WU
+      <text x="30" y="32" textAnchor="middle" fontSize="9" fontWeight="900" fill="#FFFFFF">
+        SAY NO
       </text>
     </svg>
   );

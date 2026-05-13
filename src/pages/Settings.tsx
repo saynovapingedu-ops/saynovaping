@@ -131,7 +131,7 @@ export default function Settings() {
 
         <div className="card-hero text-center mt-2">
           <p className="font-display font-bold text-detective-700 text-sm">
-            Walailak University - SayNo:สู้บุหรี่ไฟฟ้า
+            🚭 SayNo:สู้บุหรี่ไฟฟ้า
           </p>
         </div>
 

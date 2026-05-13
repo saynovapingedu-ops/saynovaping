@@ -247,35 +247,50 @@ export default function ScenarioPage() {
 
   // ---- Intro screen ----
   if (showIntro) {
+    // ตรวจรูปแบบเกมในด่านนี้ — จะแสดงเป็น chips ให้ผู้เล่นรู้ว่าจะเจออะไรบ้าง
+    const hasChoice    = scenario.nodes.some(n => n.type === 'choice');
+    const hasDialogue  = scenario.nodes.some(n => n.type === 'dialogue');
+    const minigameSet  = new Set<string>();
+    scenario.nodes.forEach(n => { if (n.type === 'minigame') minigameSet.add(n.game); });
+    const MINIGAME_LABEL: Record<string, { emoji: string; label: string }> = {
+      'spot-the-lie':  { emoji: '🕵️',  label: 'จับโกหก' },
+      'order-cards':   { emoji: '🃏',  label: 'เรียงลำดับ' },
+      'word-match':    { emoji: '🔗',  label: 'จับคู่คำ' },
+      'fill-blank':    { emoji: '✍️',  label: 'เติมคำ' },
+      'swipe-decide':  { emoji: '👆',  label: 'ปัดจริง-เท็จ' },
+      'memory-match':  { emoji: '🧠',  label: 'จับคู่ภาพ' },
+      'risk-rank':     { emoji: '📊',  label: 'จัดอันดับเสี่ยง' },
+    };
+
     return (
-      <div className="min-h-screen flex flex-col p-6 max-w-md mx-auto relative">
+      <div className="min-h-screen flex flex-col p-4 max-w-md mx-auto relative">
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute top-10 -right-20 w-72 h-72 bg-detective-300/30 rounded-full blur-3xl animate-pulse-slow" />
-          <div className="absolute bottom-10 -left-16 w-64 h-64 bg-warning-500/20 rounded-full blur-3xl" />
+          <div className="absolute top-10 -right-20 w-72 h-72 bg-candy-200/40 rounded-full blur-3xl animate-pulse-slow" />
+          <div className="absolute bottom-10 -left-16 w-64 h-64 bg-warning-200/40 rounded-full blur-3xl" />
         </div>
 
         <button
           onClick={() => nav('/')}
-          className="self-start text-detective-500 font-semibold mb-4 active:opacity-70"
+          className="self-start text-detective-500 font-semibold mb-3 active:opacity-70 px-2 py-1"
         >
           ← กลับ
         </button>
 
-        <div className="flex-1 flex flex-col justify-center">
+        <div className="flex-1 flex flex-col">
           <motion.div
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 200 }}
-            className="self-start mb-3 inline-flex items-center gap-2 bg-gradient-to-r from-detective-500
-                       to-detective-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-glow"
+            className="self-start mb-2 inline-flex items-center gap-1.5 bg-gradient-to-r from-detective-500
+                       to-candy-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-glow"
           >
-            <span>🎯</span> ด่านที่ {scenario.id}
+            <span>🎯</span> ด่าน {scenario.id} · ⏱ ~{scenario.estMinutes} นาที
           </motion.div>
           <motion.h1
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-3xl font-display font-bold text-detective-700 mb-2 leading-tight"
+            className="text-2xl font-display font-bold text-detective-700 mb-1 leading-tight"
           >
             {scenario.title}
           </motion.h1>
@@ -284,49 +299,93 @@ export default function ScenarioPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-gray-600 mb-6"
+              className="text-sm text-gray-600 mb-3"
             >
               {scenario.subtitle}
             </motion.p>
           )}
 
-          <div className="space-y-3 mb-6">
-            {(scenario.intro || []).map((line, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 + i * 0.35 }}
-                className="card-hero relative pl-5"
-              >
-                <span className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b
-                                 from-detective-500 to-warning-500 rounded-l-2xl" />
-                <p className="text-gray-700 leading-relaxed">{line}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-        {askResume ? (
-          <div className="space-y-2">
-            <div className="card-hero text-center">
-              <p className="text-sm text-detective-700 font-semibold mb-1">💾 พบข้อมูลที่บันทึกไว้</p>
-              <p className="text-xs text-gray-500">เล่นต่อจากตำแหน่งล่าสุด หรือเริ่มใหม่ทั้งด่าน?</p>
-            </div>
-            <button onClick={handleResume} className="btn-primary w-full text-base">
-              ▶ เล่นต่อจากที่ค้างไว้
-            </button>
-            <button onClick={handleStartFresh} className="btn-secondary w-full">
-              🔄 เริ่มใหม่ทั้งด่าน
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => { sfx.click(); setShowIntro(false); }}
-            className="btn-primary w-full text-base"
+          {/* === Pre-game briefing — เล่นยังไง + เจออะไร === */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="card mb-3 border-2 border-mint-200 bg-gradient-to-br from-mint-50 to-white"
           >
-            เริ่มภารกิจ →
-          </button>
-        )}
+            <p className="text-[11px] font-bold text-mint-600 uppercase tracking-wider mb-1.5">
+              📋 ในด่านนี้คุณจะเจอ
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {hasDialogue && (
+                <span className="pill bg-detective-100 text-detective-700">💬 บทสนทนา</span>
+              )}
+              {hasChoice && (
+                <span className="pill bg-candy-100 text-candy-600">✅ เลือกคำตอบ</span>
+              )}
+              {Array.from(minigameSet).map(g => {
+                const m = MINIGAME_LABEL[g];
+                if (!m) return null;
+                return (
+                  <span key={g} className="pill bg-warning-100 text-warning-600">
+                    {m.emoji} {m.label}
+                  </span>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-gray-600 mt-2 leading-relaxed">
+              อ่านสถานการณ์ → เลือกคำตอบหรือเล่นมินิเกม → รับ XP & เหรียญ 🪙
+            </p>
+          </motion.div>
+
+          {/* === Story intro lines === */}
+          {(scenario.intro || []).length > 0 && (
+            <div className="space-y-2 mb-3">
+              <p className="text-[11px] font-bold text-detective-500 uppercase tracking-wider">
+                📖 เรื่องราว
+              </p>
+              {(scenario.intro || []).map((line, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + i * 0.15 }}
+                  className="relative pl-4 bg-white/85 rounded-2xl p-3 border border-detective-100 shadow-glow-sm"
+                >
+                  <span className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b
+                                   from-detective-500 to-candy-500 rounded-l-2xl" />
+                  <p className="text-sm text-gray-700 leading-relaxed">{line}</p>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="sticky bottom-0 -mx-4 px-4 pt-3
+                        pb-[max(0.75rem,env(safe-area-inset-bottom))]
+                        bg-gradient-to-t from-white via-white/95 to-white/0
+                        backdrop-blur-sm">
+          {askResume ? (
+            <div className="space-y-2">
+              <div className="card text-center py-2 bg-detective-50">
+                <p className="text-sm text-detective-700 font-semibold">💾 พบข้อมูลที่บันทึกไว้</p>
+                <p className="text-[11px] text-gray-500">เล่นต่อจากที่ค้าง หรือเริ่มใหม่?</p>
+              </div>
+              <button onClick={handleResume} className="btn-primary w-full text-base">
+                ▶ เล่นต่อจากที่ค้างไว้
+              </button>
+              <button onClick={handleStartFresh} className="btn-secondary w-full">
+                🔄 เริ่มใหม่ทั้งด่าน
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => { sfx.click(); setShowIntro(false); }}
+              className="btn-primary w-full text-base"
+            >
+              เริ่มภารกิจ →
+            </button>
+          )}
+        </div>
       </div>
     );
   }
