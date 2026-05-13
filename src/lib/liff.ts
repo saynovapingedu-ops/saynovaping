@@ -28,19 +28,23 @@ export async function initLiff(): Promise<void> {
   if (MOCK_MODE) {
     cachedUserId = getOrCreateMockUserId();
     initialized = true;
-    console.info('[LIFF] Running in MOCK mode. UserID:', cachedUserId);
+    console.info('[LIFF] Forced MOCK mode. UserID:', cachedUserId);
     return;
   }
   try {
     await liff.init({ liffId: LIFF_ID });
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      // login จะ redirect — ฟังก์ชันนี้ไม่ continue
+    if (liff.isInClient() && liff.isLoggedIn()) {
+      const profile = await liff.getProfile();
+      cachedUserId = profile.userId;
+      initialized = true;
+      console.info('[LIFF] Real mode in LINE app. UserID:', cachedUserId);
       return;
     }
-    const profile = await liff.getProfile();
-    cachedUserId = profile.userId;
+    // นอกแอป LINE หรือยังไม่ login → ไม่เรียก liff.login() (กัน redirect loop)
+    // ใช้ mock user แทน เพื่อให้ทดสอบใน browser ปกติได้
+    cachedUserId = getOrCreateMockUserId();
     initialized = true;
+    console.info('[LIFF] External browser, using MOCK. UserID:', cachedUserId);
   } catch (err) {
     console.error('[LIFF] init failed, fallback to mock:', err);
     cachedUserId = getOrCreateMockUserId();

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { initLiff, getUserIdHash } from './lib/liff';
 import { flushQueue } from './lib/cloudSync';
 import { startBgm } from './lib/bgm';
@@ -20,6 +20,7 @@ import Room from './pages/Room';
 
 export default function App() {
   const [ready, setReady] = useState(false);
+  const navigate = useNavigate();
   const setUserHash = usePlayerStore(s => s.setUserHash);
   const fontSize = useSettingsStore(s => s.fontSize);
   const musicEnabled = useSettingsStore(s => s.musicEnabled);
@@ -49,29 +50,30 @@ export default function App() {
   }, [musicEnabled]);
 
   useEffect(() => {
-    console.info('[App] init starting, url:', window.location.href);
     const timer = setTimeout(() => {
       console.warn('[App] init timeout 5s — forcing ready');
       setReady(true);
     }, 5000);
     (async () => {
       try {
-        console.info('[App] calling initLiff');
         await initLiff();
-        console.info('[App] initLiff done');
         const hash = await getUserIdHash();
-        console.info('[App] got userHash');
         setUserHash(hash);
         flushQueue().catch(() => { /* silent */ });
+        // นำทางไปยังหน้าเป้าหมายจาก LIFF deep link (เก็บไว้โดย index.html)
+        const target = sessionStorage.getItem('hd_liff_target');
+        if (target && target !== '/') {
+          sessionStorage.removeItem('hd_liff_target');
+          navigate(target, { replace: true });
+        }
       } catch (err) {
         console.error('App init error:', err);
       } finally {
-        console.info('[App] init finished, ready=true');
         clearTimeout(timer);
         setReady(true);
       }
     })();
-  }, [setUserHash]);
+  }, [setUserHash, navigate]);
 
   if (!ready) {
     return (
