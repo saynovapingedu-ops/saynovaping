@@ -13,68 +13,82 @@
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
     @apply font-sans text-gray-800 antialiased;
-    /* ธีมสดใส — ม่วง + ชมพู + เหลือง + มินต์ (รุ้งอ่อนๆ) */
+    /* รุ้งพาสเทลอ่อนๆ — เบามือถือ ไม่ใช้ blur ใน background */
     background:
-      radial-gradient(circle at 15% 10%,  rgba(236, 72, 153, 0.18), transparent 40%),
-      radial-gradient(circle at 85% 20%,  rgba(245, 158, 11, 0.18), transparent 40%),
-      radial-gradient(circle at 20% 90%,  rgba(6, 182, 212, 0.16),  transparent 42%),
-      radial-gradient(circle at 90% 95%,  rgba(139, 92, 246, 0.22), transparent 45%),
-      linear-gradient(180deg, #FFF8FC 0%, #F4ECFF 100%);
+      linear-gradient(135deg,
+        #FFF0F7 0%,
+        #FFF8E8 25%,
+        #F0FBFF 55%,
+        #F4ECFF 100%);
     background-attachment: fixed;
   }
   h1, h2, h3 {
     @apply font-display;
   }
 
-  /* selection สีม่วงสด */
   ::selection {
     background: rgba(139, 92, 246, 0.25);
   }
 
-  /* scrollbar น่ารัก */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #8B5CF6, #EC4899);
+    background: linear-gradient(180deg, #A78BFA, #FF7AB6);
     border-radius: 999px;
   }
-  ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #7C3AED, #DB2777); }
+  ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #8B5CF6, #EC4899); }
+
+  /* ผู้ใช้ที่เปิด "reduced motion" — ตัด animation ทั้งหมด */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer components {
-  /* ปุ่มหลัก — gradient ม่วง→ชมพู สดใสและน่ากด */
+  /* ปุ่มหลัก — รุ้ง 3 stop */
   .btn-primary {
-    @apply relative bg-gradient-to-br from-detective-500 via-detective-500 to-candy-500
+    @apply relative bg-gradient-to-r from-detective-400 via-candy-400 to-warning-400
            text-white font-semibold rounded-2xl px-5 py-3 shadow-glow active:scale-95 transition-all
-           hover:shadow-glow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0;
+           hover:shadow-glow-lg disabled:opacity-50;
   }
 
-  /* ปุ่มรอง — ขาว + ขอบม่วง */
   .btn-secondary {
     @apply bg-white/95 backdrop-blur text-detective-700 border-2 border-detective-200
            font-semibold rounded-2xl px-5 py-3 active:scale-95 transition-all
-           hover:border-detective-400 hover:shadow-md;
+           hover:border-detective-400;
   }
 
-  /* ปุ่มเหลือง — สำหรับ action รอง */
   .btn-sunny {
-    @apply bg-gradient-to-br from-warning-400 to-warning-500 text-white font-semibold
-           rounded-2xl px-5 py-3 shadow-glow-gold active:scale-95 transition-all
-           hover:-translate-y-0.5;
+    @apply bg-gradient-to-r from-warning-400 to-candy-400 text-white font-semibold
+           rounded-2xl px-5 py-3 shadow-glow-gold active:scale-95 transition-all;
   }
 
-  /* การ์ดพื้นฐาน — โปร่งแสง + เงานุ่ม + ขอบมน */
+  /* การ์ดพื้นฐาน — ขาวล้วน ขอบมน เงาเบา */
   .card {
-    @apply bg-white/95 backdrop-blur-sm rounded-3xl shadow-glow-sm p-4 border border-white/70;
+    @apply bg-white/95 backdrop-blur-sm rounded-3xl shadow-glow-sm p-4 border border-white/80;
   }
 
-  /* การ์ดเด่น — gradient อ่อนๆ ชมพู-ม่วง */
+  /* การ์ดเด่น — gradient รุ้งอ่อน (พาสเทล) */
   .card-hero {
-    @apply rounded-3xl p-5 border border-white/70 shadow-glow
-           bg-gradient-to-br from-white via-detective-50 to-candy-50;
+    @apply rounded-3xl p-5 border border-white/80 shadow-glow-sm
+           bg-gradient-to-br from-candy-50 via-warning-50 to-mint-50;
   }
 
-  /* shimmer effect */
+  /* hero header — รุ้ง 4 stop พาสเทลกลาง (ไม่ใช่สีเข้ม) */
+  .rainbow-header {
+    background: linear-gradient(120deg,
+      #A78BFA 0%,
+      #FF7AB6 33%,
+      #FBBF24 66%,
+      #22D3EE 100%);
+  }
+
+  /* shimmer */
   .shimmer {
     background: linear-gradient(
       90deg,
@@ -86,19 +100,11 @@
     animation: shimmer 2.5s linear infinite;
   }
 
-  /* badge เล็กๆ */
   .pill {
     @apply inline-flex items-center gap-1 text-[10px] font-bold rounded-full px-2 py-0.5;
   }
-
-  /* sticker — เหมือนกล่องเอฟเฟค sticker */
-  .sticker {
-    @apply inline-flex items-center justify-center rounded-2xl px-3 py-2
-           shadow-glow-sm border-2 border-white/80;
-  }
 }
 
-/* ========== Print: Certificate ========== */
 @media print {
   body { background: white !important; }
   body * { visibility: hidden; }

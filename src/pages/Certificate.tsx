@@ -185,10 +185,8 @@ export default function Certificate() {
             >
               {/* === ฉากหลัง — gradient พาสเทล + ดอกไม้/หัวใจกระจาย === */}
               <div className="absolute inset-0 bg-gradient-to-br from-candy-50 via-warning-50 to-mint-50 pointer-events-none" />
-              <div className="absolute -top-12 -left-12 w-48 h-48 bg-candy-200/60 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -top-12 -right-12 w-48 h-48 bg-warning-200/60 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-mint-200/60 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-detective-200/60 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -top-10 -left-10 w-40 h-40 bg-candy-200/50 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-warning-200/50 rounded-full blur-2xl pointer-events-none" />
 
               {/* sticker decorations กระจายไปทั่ว */}
               <div className="absolute top-4  left-3   text-2xl opacity-80 select-none">⭐</div>

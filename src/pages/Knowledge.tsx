@@ -142,12 +142,6 @@ export default function Knowledge() {
 
   return (
     <div className="min-h-full pb-10 relative">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-72 h-72 bg-candy-200/40 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute top-1/3 -left-20 w-64 h-64 bg-warning-200/40 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 -right-20 w-72 h-72 bg-mint-200/40 rounded-full blur-3xl animate-pulse-slow" />
-      </div>
-
       <header className="sticky top-0 z-10 bg-white/90 backdrop-blur-md shadow-sm border-b border-detective-100/50
                          p-3 flex items-center gap-3">
         <button

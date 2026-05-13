@@ -68,12 +68,6 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen flex flex-col p-6 max-w-md mx-auto relative">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-20 -left-20 w-72 h-72 bg-candy-200/40 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute top-1/3 -right-20 w-64 h-64 bg-warning-200/40 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-mint-200/40 rounded-full blur-3xl animate-pulse-slow" />
-      </div>
-
       <div className="flex justify-center gap-2 mb-6">
         {[0, 1, 2].map(i => (
           <div

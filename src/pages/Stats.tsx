@@ -23,11 +23,6 @@ export default function Stats() {
 
   return (
     <div className="min-h-full pb-10 relative">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-20 -left-20 w-72 h-72 bg-detective-300/30 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-0 right-0 w-64 h-64 bg-warning-500/20 rounded-full blur-3xl" />
-      </div>
-
       <header className="sticky top-0 z-10 bg-white/85 backdrop-blur-md shadow-sm border-b border-detective-100/50
                          p-3 flex items-center gap-3">
         <button
