@@ -44,7 +44,7 @@ export default function Profile() {
             </button>
             <div className="flex-1">
               <h3 className="font-display font-bold text-xl text-detective-700">{player.nickname}</h3>
-              <p className="text-sm text-gray-500">{player.grade} {player.school && `• ${player.school}`}</p>
+              <p className="text-sm text-gray-500">🔍 นักสืบสุขภาพ</p>
               <button
                 onClick={() => setEditAvatar(v => !v)}
                 className="text-xs text-detective-500 font-semibold mt-1 active:opacity-70"

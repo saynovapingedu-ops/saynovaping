@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
 import { SCENARIO_META, isStageUnlocked, CERT_STAGE_COUNT } from '../scenarios';
 import { SHOP_ITEMS } from '../lib/shopItems';
@@ -8,38 +8,157 @@ import XPBar from '../components/XPBar';
 import Avatar from '../components/Avatar';
 import { sfx } from '../lib/sound';
 
+const INTRO_SEEN_KEY = 'hd_game_intro_seen_v1';
+
+interface IntroSection {
+  emoji: string;
+  title: string;
+  body: string;
+}
+
+const INTRO_SECTIONS: IntroSection[] = [
+  {
+    emoji: '🎯',
+    title: 'เกมนี้เกี่ยวกับอะไร?',
+    body: 'เกมสนุกสอนน้องๆ ม.ต้น ให้รู้ทันภัยจาก "บุหรี่ไฟฟ้า" — เรียนรู้พิษภัย ฝึกทักษะปฏิเสธเพื่อน และจับเท็จโฆษณาแบบนักสืบ',
+  },
+  {
+    emoji: '🕹️',
+    title: 'เล่นยังไง?',
+    body: 'แต่ละด่านเป็นสถานการณ์จำลอง น้องเลือกคำตอบ + เล่นมินิเกมสนุกๆ เช่น จับโกหก เรียงลำดับ ปัดการ์ด จับคู่ภาพ',
+  },
+  {
+    emoji: '🏆',
+    title: 'ได้อะไรจากการเล่น?',
+    body: 'เก็บ XP & เหรียญ → ซื้อของแต่งห้อง เปลี่ยนกรอบโปรไฟล์ และจบครบรับ Certificate น่ารักๆ ไว้อวดเพื่อน',
+  },
+  {
+    emoji: '⏱️',
+    title: 'ใช้เวลานานไหม?',
+    body: 'แต่ละด่านสั้นๆ 5-8 นาที เล่นทีละด่านสบายๆ ไม่ต้องเล่นรวดเดียวจบ มี save ค้างไว้ได้',
+  },
+];
+
 export default function Home() {
   const nav = useNavigate();
   const player = usePlayerStore();
   const pingDailyPlay = usePlayerStore(s => s.pingDailyPlay);
 
-  // ping daily ครั้งเดียวต่อวัน — ให้เหรียญโบนัส + อัพเดท streak
+  // แสดง intro ครั้งแรกที่เข้าเกม (หรือคนกดเปิดเอง)
+  const [showIntro, setShowIntro] = useState<boolean>(() => {
+    try { return localStorage.getItem(INTRO_SEEN_KEY) !== '1'; }
+    catch { return true; }
+  });
+
+  // ping daily ครั้งเดียวต่อวัน
   useEffect(() => {
     pingDailyPlay();
   }, [pingDailyPlay]);
 
+  const closeIntro = () => {
+    try { localStorage.setItem(INTRO_SEEN_KEY, '1'); } catch { /* ignore */ }
+    sfx.click();
+    setShowIntro(false);
+  };
+
   const equippedFrameClass = player.equippedFrame
     ? SHOP_ITEMS.find(i => i.id === player.equippedFrame)?.frameClass
     : undefined;
-  // ผ่าน Hero Arc 8 ด่าน = ได้ Certificate (Master Arc เป็น bonus)
   const heroDone = player.stagesCompleted.filter(id => id <= CERT_STAGE_COUNT).length;
   const certEligible = heroDone >= CERT_STAGE_COUNT || player.totalXP >= 1500;
 
+  // ===== Intro / Tutorial overlay =====
+  if (showIntro) {
+    return (
+      <div className="min-h-screen flex flex-col p-6 max-w-md mx-auto relative">
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute -top-20 -left-20 w-72 h-72 bg-candy-200/40 rounded-full blur-3xl animate-pulse-slow" />
+          <div className="absolute top-1/3 -right-20 w-64 h-64 bg-warning-200/40 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-mint-200/40 rounded-full blur-3xl animate-pulse-slow" />
+        </div>
+
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col gap-4 pb-6"
+          >
+            {/* Hero */}
+            <div className="card-hero text-center py-6">
+              <motion.div
+                animate={{ y: [0, -8, 0], rotate: [0, 5, -5, 0] }}
+                transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+                className="text-7xl mb-3 inline-block drop-shadow-lg"
+              >
+                🔍
+              </motion.div>
+              <h1 className="text-3xl font-display font-bold bg-gradient-to-r from-detective-600 via-candy-500
+                             to-warning-500 bg-clip-text text-transparent mb-1">
+                ก่อนเริ่มเล่น
+              </h1>
+              <p className="text-sm text-gray-600">มาทำความรู้จักเกมกันก่อนนะ!</p>
+            </div>
+
+            {/* Tutorial sections */}
+            {INTRO_SECTIONS.map((s, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.08 * i }}
+                className="card flex items-start gap-3"
+              >
+                <div className="text-4xl">{s.emoji}</div>
+                <div className="flex-1">
+                  <h3 className="font-display font-bold text-detective-700 mb-1">{s.title}</h3>
+                  <p className="text-sm text-gray-700 leading-relaxed">{s.body}</p>
+                </div>
+              </motion.div>
+            ))}
+
+            <div className="card border-2 border-warning-200 bg-gradient-to-br from-warning-50 to-white">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                <b className="text-warning-600">💡 เคล็ดลับ:</b> ก่อนเริ่มเกม ลองดู
+                <button
+                  onClick={() => { sfx.click(); nav('/knowledge'); }}
+                  className="text-detective-500 font-bold underline mx-1"
+                >หน้าความรู้</button>
+                เพื่อรู้พิษภัยของบุหรี่ไฟฟ้าก่อนนะ — มีคลิปวิดีโอด้วย!
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <button
+                onClick={() => { sfx.click(); nav('/knowledge'); }}
+                className="btn-secondary"
+              >
+                📖 อ่านก่อน
+              </button>
+              <button onClick={closeIntro} className="btn-primary">
+                เริ่มเลย! 🎮
+              </button>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // ===== Main game home =====
   return (
     <div className="min-h-full pb-10 relative">
-      {/* พื้นหลัง gradient + blob blur สำหรับความสวย */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-24 -left-20 w-72 h-72 bg-detective-300/40 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute top-40 -right-20 w-64 h-64 bg-warning-500/20 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-success-500/15 rounded-full blur-3xl" />
+        <div className="absolute -top-24 -left-20 w-72 h-72 bg-candy-200/50 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute top-40 -right-20 w-64 h-64 bg-warning-200/40 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-mint-200/40 rounded-full blur-3xl" />
       </div>
 
-      {/* Header */}
-      <header className="relative bg-gradient-to-br from-detective-600 via-detective-500 to-detective-700
-                         text-white px-5 pt-6 pb-8 rounded-b-[2rem] shadow-xl overflow-hidden">
-        {/* sparkle dots */}
-        <div className="absolute top-4 right-6 text-white/30 text-xs">✦</div>
-        <div className="absolute bottom-3 left-8 text-white/20 text-xs">✦</div>
+      {/* Header — gradient ม่วง→ชมพู สดใส */}
+      <header className="relative bg-gradient-to-br from-detective-500 via-detective-600 to-candy-500
+                         text-white px-5 pt-6 pb-8 rounded-b-[2.5rem] shadow-xl overflow-hidden">
+        <div className="absolute top-4 right-6 text-white/40 text-base">✨</div>
+        <div className="absolute bottom-3 left-8 text-white/30 text-base">⭐</div>
+        <div className="absolute top-10 left-1/2 text-white/20 text-xs">✦</div>
 
         <div className="flex items-center gap-3 relative">
           <Avatar
@@ -65,7 +184,7 @@ export default function Home() {
           <div className="flex flex-col gap-1.5">
             <button
               onClick={() => { sfx.click(); nav('/profile'); }}
-              className="bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full p-2
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-2
                          transition-all active:scale-95"
               aria-label="โปรไฟล์"
             >
@@ -73,7 +192,7 @@ export default function Home() {
             </button>
             <button
               onClick={() => { sfx.click(); nav('/settings'); }}
-              className="bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full p-2
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-2
                          transition-all active:scale-95"
               aria-label="ตั้งค่า"
             >
@@ -82,12 +201,11 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Coin + Shop + Room strip */}
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button
             onClick={() => { sfx.click(); nav('/shop'); }}
-            className="flex items-center justify-between bg-white/15 backdrop-blur-sm
-                       border border-white/15 rounded-2xl px-3 py-2.5 active:scale-[0.99] transition-all"
+            className="flex items-center justify-between bg-white/20 backdrop-blur-sm
+                       border border-white/20 rounded-2xl px-3 py-2.5 active:scale-[0.99] transition-all"
           >
             <span className="flex items-center gap-1.5">
               <span className="text-lg">🪙</span>
@@ -99,8 +217,8 @@ export default function Home() {
           </button>
           <button
             onClick={() => { sfx.click(); nav('/room'); }}
-            className="flex items-center justify-between bg-white/15 backdrop-blur-sm
-                       border border-white/15 rounded-2xl px-3 py-2.5 active:scale-[0.99] transition-all"
+            className="flex items-center justify-between bg-white/20 backdrop-blur-sm
+                       border border-white/20 rounded-2xl px-3 py-2.5 active:scale-[0.99] transition-all"
           >
             <span className="text-[11px] font-semibold flex items-center gap-1">
               🏠 ห้องของฉัน
@@ -109,24 +227,23 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="mt-5 bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-3.5 shadow-inner">
+        <div className="mt-5 bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-3.5 shadow-inner">
           <XPBar variant="dark" />
         </div>
       </header>
 
-      {/* Body */}
       <main className="max-w-md mx-auto px-4 mt-6">
         {certEligible && !player.certificateNo && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="card relative overflow-hidden mb-4 border-2 border-warning-500
-                       bg-gradient-to-br from-warning-50 to-amber-100"
+            className="card relative overflow-hidden mb-4 border-2 border-warning-400
+                       bg-gradient-to-br from-warning-50 to-candy-50"
           >
-            <div className="absolute -top-4 -right-4 text-7xl opacity-20">🏆</div>
+            <div className="absolute -top-4 -right-4 text-7xl opacity-25">🏆</div>
             <p className="text-warning-600 font-bold mb-2 relative">🏆 พร้อมรับ Certificate แล้ว!</p>
             <button onClick={() => nav('/certificate')} className="btn-primary w-full">
-              รับใบประกาศนียบัตร
+              รับใบประกาศนียบัตร ✨
             </button>
           </motion.div>
         )}
@@ -135,8 +252,8 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="card mb-4 border-2 border-success-500
-                       bg-gradient-to-br from-success-50 to-emerald-50"
+            className="card mb-4 border-2 border-success-400
+                       bg-gradient-to-br from-success-50 to-mint-50"
           >
             <p className="text-success-600 font-bold mb-1">🏆 Certificate ของคุณ</p>
             <p className="text-sm text-gray-600 mb-2">เลขที่ {player.certificateNo}</p>
@@ -150,18 +267,24 @@ export default function Home() {
           <h3 className="font-display font-bold text-detective-700 text-lg flex items-center gap-2">
             <span className="text-2xl">📍</span> แผนที่ภารกิจ
           </h3>
-          <span className="text-xs text-gray-500">
-            {player.stagesCompleted.length}/{SCENARIO_META.length} ด่าน
-          </span>
+          <button
+            onClick={() => { sfx.click(); setShowIntro(true); }}
+            className="text-[11px] text-detective-500 font-semibold hover:text-detective-700"
+          >
+            ℹ️ วิธีเล่น
+          </button>
         </div>
+        <p className="text-xs text-gray-500 mb-3">
+          {player.stagesCompleted.length}/{SCENARIO_META.length} ด่าน
+        </p>
 
         {(['hero', 'master', 'pro'] as const).map((arc) => {
           const stages = SCENARIO_META.filter(m => (m.arc || 'hero') === arc);
           if (stages.length === 0) return null;
           const arcLabel =
             arc === 'hero'   ? { name: 'บทที่ 1: เส้นทางนักสืบ', emoji: '🦸', desc: 'ด่าน 1-8 — จบรับ Certificate' }
-          : arc === 'master' ? { name: 'บทที่ 2: Master Class',   emoji: '🎓', desc: 'ด่าน 9-12 — ขั้นสูง สำหรับนักสืบระดับครู' }
-          :                    { name: 'บทที่ 3: Pro Arc',         emoji: '🎯', desc: 'ด่าน 13-15 — เกมเพลย์ใหม่ ปัด/จัดอันดับ/จับคู่ความจำ' };
+          : arc === 'master' ? { name: 'บทที่ 2: Master Class',   emoji: '🎓', desc: 'ด่าน 9-12 — ขั้นสูง' }
+          :                    { name: 'บทที่ 3: Pro Arc',         emoji: '🎯', desc: 'ด่าน 13-15 — มินิเกมใหม่' };
           const arcCompleted = stages.filter(m => player.stagesCompleted.includes(m.id)).length;
 
           return (
@@ -185,6 +308,7 @@ export default function Home() {
                   const completed = player.stagesCompleted.includes(meta.id);
                   const playable = meta.available && unlocked;
                   const isMaster = meta.arc === 'master';
+                  const isPro = meta.arc === 'pro';
 
                   return (
                     <motion.button
@@ -201,23 +325,27 @@ export default function Home() {
                           : 'active:scale-[0.98] hover:shadow-md hover:-translate-y-0.5'
                       } ${
                         completed
-                          ? 'border-2 border-success-500 bg-gradient-to-r from-success-50 to-white'
+                          ? 'border-2 border-success-400 bg-gradient-to-r from-success-50 to-white'
                           : playable
                           ? isMaster
-                            ? 'border border-warning-300 bg-gradient-to-r from-amber-50/50 to-white'
-                            : 'border border-detective-100 bg-white'
+                            ? 'border-2 border-warning-200 bg-gradient-to-r from-warning-50/60 to-white'
+                            : isPro
+                            ? 'border-2 border-mint-200 bg-gradient-to-r from-mint-50/60 to-white'
+                            : 'border-2 border-candy-100 bg-gradient-to-r from-candy-50/30 to-white'
                           : 'bg-white/70'
                       }`}
                     >
                       {playable && (
                         <span className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${
                           completed
-                            ? 'text-success-600 bg-success-50 border border-success-500/30'
+                            ? 'text-success-600 bg-success-50 border border-success-400/30'
                             : isMaster
                               ? 'text-warning-600 bg-warning-100'
-                              : 'text-detective-600 bg-detective-100'
+                              : isPro
+                              ? 'text-mint-600 bg-mint-100'
+                              : 'text-candy-600 bg-candy-100'
                         }`}>
-                          {completed ? '🔄 REPLAY' : isMaster ? 'MASTER' : 'NEW'}
+                          {completed ? '🔄 REPLAY' : isMaster ? 'MASTER' : isPro ? 'PRO' : 'NEW'}
                         </span>
                       )}
 
@@ -225,11 +353,13 @@ export default function Home() {
                         className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold flex-shrink-0
                                     shadow-sm ${
                           completed
-                            ? 'bg-gradient-to-br from-success-500 to-emerald-600 text-white'
+                            ? 'bg-gradient-to-br from-success-400 to-success-500 text-white'
                             : playable
                             ? isMaster
-                              ? 'bg-gradient-to-br from-warning-400 to-warning-600 text-white'
-                              : 'bg-gradient-to-br from-detective-500 to-detective-600 text-white'
+                              ? 'bg-gradient-to-br from-warning-400 to-warning-500 text-white'
+                              : isPro
+                              ? 'bg-gradient-to-br from-mint-400 to-mint-500 text-white'
+                              : 'bg-gradient-to-br from-detective-500 to-candy-500 text-white'
                             : 'bg-gray-200 text-gray-500'
                         }`}
                       >
@@ -259,34 +389,34 @@ export default function Home() {
           );
         })}
 
-        {/* Quick access — เหมือน rich menu ใน LINE */}
         <div className="grid grid-cols-3 gap-2 mt-4">
           <button
             onClick={() => { sfx.click(); nav('/stats'); }}
             className="card p-3 text-center active:scale-95 transition-all hover:shadow-md"
           >
             <div className="text-2xl">📊</div>
-            <p className="text-xs font-semibold text-detective-700 mt-1">คะแนนของฉัน</p>
+            <p className="text-xs font-semibold text-detective-700 mt-1">คะแนน</p>
           </button>
           <button
             onClick={() => { sfx.click(); nav('/knowledge'); }}
-            className="card p-3 text-center active:scale-95 transition-all hover:shadow-md"
+            className="card p-3 text-center active:scale-95 transition-all hover:shadow-md
+                       bg-gradient-to-br from-mint-50 to-white border-mint-200"
           >
             <div className="text-2xl">📖</div>
-            <p className="text-xs font-semibold text-detective-700 mt-1">ความรู้</p>
+            <p className="text-xs font-semibold text-mint-600 mt-1">ความรู้</p>
           </button>
           <button
             onClick={() => { sfx.click(); nav('/certificate'); }}
             className="card p-3 text-center active:scale-95 transition-all hover:shadow-md"
           >
             <div className="text-2xl">🏆</div>
-            <p className="text-xs font-semibold text-detective-700 mt-1">ใบประกาศ</p>
+            <p className="text-xs font-semibold text-warning-600 mt-1">ใบประกาศ</p>
           </button>
         </div>
 
         <div className="mt-4 text-center">
           <p className="text-[11px] text-detective-400 font-semibold">
-            Walailak University - SayNo:สู้บุหรี่ไฟฟ้า
+            🎓 Walailak University — SayNo:สู้บุหรี่ไฟฟ้า
           </p>
         </div>
       </main>

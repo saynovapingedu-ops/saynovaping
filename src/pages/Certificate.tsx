@@ -19,12 +19,10 @@ export default function Certificate() {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [shareMsg, setShareMsg] = useState<string | null>(null);
 
-  // ออก cert (ถ้ายังไม่มี)
   useEffect(() => {
     const eligible = player.stagesCompleted.length >= 8 || player.totalXP >= 1500;
     if (!eligible) return;
     if (player.certificateNo) {
-      // มีอยู่แล้ว ใช้ของเดิม — แต่ต้องเรียก backend เพื่อขอ verifyCode
       (async () => {
         const res = await issueCertificate(player.userIdHash);
         if (res.ok && res.certificateNo && res.verifyCode) {
@@ -49,22 +47,19 @@ export default function Certificate() {
     });
   }, [player.userIdHash, player.certificateNo, player.stagesCompleted.length, player.totalXP, setCertificate, player.certificateIssuedAt]);
 
-  // สร้าง QR code
   useEffect(() => {
     if (!verifyCode) return;
     const verifyUrl = `${location.origin}/saynovaping/verify?code=${verifyCode}`;
-    QRCode.toDataURL(verifyUrl, { width: 220, margin: 1, color: { dark: '#534AB7', light: '#FFFFFF' } })
+    QRCode.toDataURL(verifyUrl, { width: 220, margin: 1, color: { dark: '#8B5CF6', light: '#FFFFFF' } })
       .then(setQrDataUrl)
       .catch(() => { /* ignore */ });
   }, [verifyCode]);
 
   const eligible = player.stagesCompleted.length >= 8 || player.totalXP >= 1500;
-
   const verifyUrl = verifyCode ? `${location.origin}/saynovaping/verify?code=${verifyCode}` : '';
 
   const [saving, setSaving] = useState(false);
 
-  // ดึงไฟล์ PNG จาก data URL
   const downloadDataUrl = (dataUrl: string, filename: string) => {
     const a = document.createElement('a');
     a.href = dataUrl;
@@ -80,7 +75,6 @@ export default function Certificate() {
     if (!node) return;
     setSaving(true);
     try {
-      // render การ์ด cert เป็นรูป PNG ความละเอียดสูง (pixelRatio 2 = retina)
       const dataUrl = await toPng(node, {
         pixelRatio: 2,
         cacheBust: true,
@@ -89,7 +83,6 @@ export default function Certificate() {
       const safeName = (player.nickname || 'health-detective').replace(/[^\w฀-๿-]/g, '_');
       const filename = `Certificate-${safeName}-${certNo || 'cert'}.png`;
 
-      // มือถือ: ใช้ Web Share API ถ้ามี (แชร์ไป Photos / LINE / IG ได้)
       if (navigator.share && navigator.canShare) {
         try {
           const blob = await (await fetch(dataUrl)).blob();
@@ -97,18 +90,17 @@ export default function Certificate() {
           if (navigator.canShare({ files: [file] })) {
             await navigator.share({
               files: [file],
-              title: 'Certificate — Health Detective',
-              text: `${player.nickname} ผ่านภารกิจ Health Detective ครบ ${player.stagesCompleted.length} ด่าน 🏆`,
+              title: 'Certificate — นักสืบสุขภาพ',
+              text: `${player.nickname} ผ่านภารกิจสู้บุหรี่ไฟฟ้า ครบ ${player.stagesCompleted.length} ด่าน! 🏆✨`,
             });
             setSaving(false);
             return;
           }
         } catch {
-          // user cancelled หรือ share ไม่รองรับ → fallback ดาวน์โหลด
+          /* user cancelled */
         }
       }
 
-      // desktop / fallback: ดาวน์โหลดเป็นไฟล์ PNG
       downloadDataUrl(dataUrl, filename);
       setShareMsg('💾 บันทึกรูปเรียบร้อย — ตรวจในโฟลเดอร์ดาวน์โหลด');
       setTimeout(() => setShareMsg(null), 2400);
@@ -123,21 +115,19 @@ export default function Certificate() {
 
   const handleShare = async () => {
     sfx.click();
-    const text = `${player.nickname} ผ่านภารกิจ Health Detective ครบ ${player.stagesCompleted.length} ด่าน รวม ${player.totalXP} XP! 🏆`;
+    const text = `${player.nickname} ผ่านภารกิจสู้บุหรี่ไฟฟ้า ครบ ${player.stagesCompleted.length} ด่าน! 🏆✨`;
     if (navigator.share && verifyUrl) {
       try {
         await navigator.share({
-          title: 'Certificate — Health Detective',
+          title: 'Certificate — นักสืบสุขภาพ',
           text,
           url: verifyUrl,
         });
         return;
       } catch {
-        /* user cancelled — ไม่ต้อง fallback */
         return;
       }
     }
-    // fallback: ก๊อปลิงก์
     if (verifyUrl && navigator.clipboard) {
       await navigator.clipboard.writeText(`${text}\n${verifyUrl}`);
       setShareMsg('📋 ก๊อปลิงก์แล้ว — แชร์ไปที่ไลน์/เฟซได้เลย');
@@ -148,7 +138,7 @@ export default function Certificate() {
   if (!eligible) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-        <div className="text-6xl mb-4">🔒</div>
+        <div className="text-6xl mb-4 animate-float">🔒</div>
         <h2 className="text-xl font-display font-bold text-detective-700 mb-2">ยังไม่ถึงเกณฑ์</h2>
         <p className="text-gray-600 mb-6">
           ต้องจบครบ 8 ด่าน หรือเก็บ XP ครบ 1,500
@@ -165,21 +155,21 @@ export default function Certificate() {
                          p-3 flex items-center gap-3 z-10 print:hidden">
         <button
           onClick={() => nav('/')}
-          className="text-detective-500 px-3 py-1.5 rounded-lg hover:bg-detective-50 active:scale-95"
+          className="text-detective-500 px-3 py-1.5 rounded-xl hover:bg-detective-50 active:scale-95"
         >←</button>
-        <h2 className="font-display font-bold text-detective-700">เกียรติบัตรของฉัน</h2>
+        <h2 className="font-display font-bold text-detective-700">🏆 เกียรติบัตรของฉัน</h2>
       </header>
 
       <main className="max-w-md mx-auto p-4">
         {loading && (
           <div className="card text-center py-12">
             <div className="text-5xl mb-3 animate-pulse">🏆</div>
-            <p className="text-gray-600">กำลังออก Certificate...</p>
+            <p className="text-gray-600">กำลังออก Certificate น่ารักๆ ...</p>
           </div>
         )}
 
         {error && (
-          <div className="card border-2 border-danger-500 text-center">
+          <div className="card border-2 border-danger-400 text-center">
             <p className="text-danger-500 font-semibold mb-2">เกิดข้อผิดพลาด</p>
             <p className="text-sm text-gray-600 mb-4">{error}</p>
             <button onClick={() => location.reload()} className="btn-primary">ลองใหม่</button>
@@ -188,122 +178,137 @@ export default function Certificate() {
 
         {certNo && !loading && !error && (
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-            {/* === Certificate artwork === */}
+            {/* === Cert artwork — แบบน่ารัก สดใส === */}
             <div
               id="cert-card"
-              className="relative rounded-3xl overflow-hidden shadow-2xl bg-white"
+              className="relative rounded-[2rem] overflow-hidden shadow-2xl bg-white"
             >
-              {/* === Background decorations === */}
-              {/* gold corner glows */}
-              <div className="absolute -top-16 -left-16 w-48 h-48 bg-warning-400/25 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -top-16 -right-16 w-48 h-48 bg-detective-400/20 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-detective-400/20 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-warning-400/25 rounded-full blur-3xl pointer-events-none" />
-              {/* subtle dot pattern */}
-              <div className="absolute inset-0 opacity-[0.06] pointer-events-none"
-                   style={{
-                     backgroundImage:
-                       'radial-gradient(circle, #6F2D8E 1px, transparent 1px)',
-                     backgroundSize: '18px 18px',
-                   }} />
+              {/* === ฉากหลัง — gradient พาสเทล + ดอกไม้/หัวใจกระจาย === */}
+              <div className="absolute inset-0 bg-gradient-to-br from-candy-50 via-warning-50 to-mint-50 pointer-events-none" />
+              <div className="absolute -top-12 -left-12 w-48 h-48 bg-candy-200/60 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -top-12 -right-12 w-48 h-48 bg-warning-200/60 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-mint-200/60 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-detective-200/60 rounded-full blur-3xl pointer-events-none" />
 
-              {/* === Triple-layered border (gold > purple > inner) === */}
-              <div className="relative m-2.5 rounded-[1.5rem] p-[3px] bg-gradient-to-br from-warning-400 via-warning-500 to-warning-400 shadow-inner">
-                <div className="rounded-[1.3rem] p-[2px] bg-gradient-to-br from-detective-400/70 via-detective-300/40 to-detective-400/70">
-                  <div className="rounded-[1.15rem] bg-white p-6 relative overflow-hidden">
+              {/* sticker decorations กระจายไปทั่ว */}
+              <div className="absolute top-4  left-3   text-2xl opacity-80 select-none">⭐</div>
+              <div className="absolute top-6  right-4  text-2xl opacity-80 select-none">🌟</div>
+              <div className="absolute top-1/3 left-4   text-xl opacity-70 select-none">💖</div>
+              <div className="absolute top-1/3 right-3  text-xl opacity-70 select-none">🎀</div>
+              <div className="absolute bottom-1/3 left-3 text-xl opacity-70 select-none">🌈</div>
+              <div className="absolute bottom-1/3 right-3 text-xl opacity-70 select-none">✨</div>
+              <div className="absolute bottom-6 left-5  text-2xl opacity-80 select-none">🦋</div>
+              <div className="absolute bottom-4 right-5 text-2xl opacity-80 select-none">🍭</div>
 
-                    {/* corner ornaments — SVG flourishes ที่มุม */}
-                    <CornerFlourish className="absolute top-2 left-2 text-warning-500" />
-                    <CornerFlourish className="absolute top-2 right-2 text-warning-500 -scale-x-100" />
-                    <CornerFlourish className="absolute bottom-2 left-2 text-warning-500 -scale-y-100" />
-                    <CornerFlourish className="absolute bottom-2 right-2 text-warning-500 -scale-x-100 -scale-y-100" />
+              {/* === กรอบหลัก — เส้นประน่ารัก === */}
+              <div className="relative m-3 rounded-[1.75rem] p-[3px]
+                              bg-gradient-to-br from-candy-400 via-warning-400 to-mint-400 shadow-inner">
+                <div className="rounded-[1.6rem] p-[3px] bg-white">
+                  <div className="rounded-[1.4rem] bg-white/90 backdrop-blur-sm p-6 relative overflow-hidden
+                                  border-4 border-dashed border-detective-200/60">
+
+                    {/* corner stickers */}
+                    <div className="absolute top-1 left-2  text-3xl">🌸</div>
+                    <div className="absolute top-1 right-2 text-3xl">🌟</div>
+                    <div className="absolute bottom-1 left-2  text-3xl">🌈</div>
+                    <div className="absolute bottom-1 right-2 text-3xl">💫</div>
 
                     <div className="relative text-center">
-                      {/* === Top medallion — SVG laurel + star === */}
-                      <div className="flex justify-center mb-2">
-                        <Medallion />
+                      {/* === Top badge === */}
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
+                        className="text-7xl mb-2 inline-block"
+                      >
+                        🏆
+                      </motion.div>
+
+                      <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-candy-400 to-warning-400
+                                      text-white text-[11px] font-bold uppercase tracking-[0.2em]
+                                      rounded-full px-3 py-1 shadow-glow-pink">
+                        🎉 Health Detective 🎉
                       </div>
 
-                      {/* top tag */}
-                      <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-warning-400 to-warning-500
-                                      text-white text-[10px] font-bold uppercase tracking-[0.25em]
-                                      rounded-full px-3 py-1 shadow-glow-gold">
-                        Health Detective
-                      </div>
-
-                      <h1 className="font-display font-bold text-3xl text-detective-700 mt-3 leading-tight">
-                        เกียรติบัตร
-                      </h1>
-                      <p className="text-detective-500 text-[11px] uppercase tracking-[0.2em] font-semibold">
-                        Certificate of Completion
-                      </p>
-
-                      {/* divider — แบบ scrollwork */}
-                      <FancyDivider className="my-4" />
-
-                      <p className="text-gray-500 text-sm font-medium">มอบให้แก่</p>
-                      <h2 className="font-display text-[2rem] font-bold my-2 leading-tight
-                                     bg-gradient-to-r from-detective-700 via-detective-500 to-detective-700
+                      <h1 className="font-display font-extrabold text-3xl mt-3 leading-tight
+                                     bg-gradient-to-r from-candy-500 via-detective-500 to-warning-500
                                      bg-clip-text text-transparent">
-                        {player.nickname}
-                      </h2>
-                      {player.school && (
-                        <p className="text-gray-500 text-sm">{player.grade} • {player.school}</p>
-                      )}
-
-                      <p className="text-gray-700 text-sm mt-4 leading-relaxed">
-                        ได้ผ่านการเรียนรู้ทักษะปฏิเสธบุหรี่ไฟฟ้า<br/>
-                        และภัยจากนิโคติน ครบทุกด่าน
+                        เกียรติบัตรน่ารัก
+                      </h1>
+                      <p className="text-detective-500 text-[11px] uppercase tracking-[0.2em] font-bold">
+                        ✨ Certificate of Awesomeness ✨
                       </p>
 
-                      {/* === Stat strip === */}
-                      <div className="grid grid-cols-3 gap-2 mt-5">
-                        <StatCell label="ด่านที่ผ่าน" value={player.stagesCompleted.length} accent="detective" />
-                        <StatCell label="XP" value={player.totalXP} accent="warning" featured />
-                        <StatCell label="Badges" value={player.badges.length} accent="detective" />
+                      <div className="flex items-center justify-center gap-2 my-4">
+                        <span className="text-2xl">🌈</span>
+                        <span className="h-1 bg-gradient-to-r from-candy-400 via-warning-400 to-mint-400 flex-1 rounded-full" />
+                        <span className="text-2xl">💖</span>
+                        <span className="h-1 bg-gradient-to-r from-mint-400 via-detective-400 to-candy-400 flex-1 rounded-full" />
+                        <span className="text-2xl">⭐</span>
                       </div>
 
-                      {/* === QR + Cert info === */}
+                      <p className="text-gray-600 text-sm font-medium">มอบให้กับ</p>
+                      <h2 className="font-display text-[2.2rem] font-extrabold my-2 leading-tight
+                                     bg-gradient-to-r from-detective-600 via-candy-500 to-warning-500
+                                     bg-clip-text text-transparent">
+                        {player.nickname} 💫
+                      </h2>
+
+                      <div className="bg-white/80 rounded-2xl border-2 border-dashed border-candy-300 p-3 mt-3">
+                        <p className="text-gray-700 text-sm leading-relaxed">
+                          👍 ผ่านภารกิจสุดเจ๋ง<br/>
+                          <b className="text-detective-600">"นักสืบสู้บุหรี่ไฟฟ้า"</b><br/>
+                          อย่างยอดเยี่ยม! 🎊
+                        </p>
+                      </div>
+
+                      {/* === stat strip — น่ารักๆ === */}
+                      <div className="grid grid-cols-3 gap-2 mt-5">
+                        <StatCell label="ด่าน" emoji="🎯" value={player.stagesCompleted.length} color="detective" />
+                        <StatCell label="XP" emoji="⚡" value={player.totalXP} color="warning" featured />
+                        <StatCell label="Badge" emoji="🏅" value={player.badges.length} color="candy" />
+                      </div>
+
+                      {/* === QR + Info === */}
                       <div className="flex items-stretch gap-3 mt-5 text-left">
                         {qrDataUrl && (
-                          <div className="flex-shrink-0 bg-white rounded-xl p-2 border-2 border-detective-200 shadow-sm">
+                          <div className="flex-shrink-0 bg-white rounded-2xl p-2 border-2 border-mint-300 shadow-glow-mint">
                             <img src={qrDataUrl} alt="Verify QR" className="w-20 h-20" />
-                            <p className="text-[8px] text-gray-400 mt-1 text-center font-semibold uppercase tracking-wider">
-                              Scan to verify
+                            <p className="text-[8px] text-mint-600 mt-1 text-center font-bold uppercase tracking-wider">
+                              📱 สแกนเช็ค
                             </p>
                           </div>
                         )}
-                        <div className="flex-1 min-w-0 flex flex-col justify-between">
+                        <div className="flex-1 min-w-0 flex flex-col justify-between bg-white/70 rounded-2xl p-2.5 border border-detective-100">
                           <div>
-                            <p className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold">เลขที่</p>
+                            <p className="text-[9px] text-gray-500 uppercase tracking-wider font-bold">🎫 เลขที่</p>
                             <p className="font-mono font-bold text-detective-700 text-sm truncate">{certNo}</p>
                           </div>
                           <div>
-                            <p className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold mt-1">ออกเมื่อ</p>
+                            <p className="text-[9px] text-gray-500 uppercase tracking-wider font-bold mt-1">📅 ออกเมื่อ</p>
                             <p className="font-semibold text-detective-700 text-xs">
                               {issueDate && new Date(issueDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
                             </p>
                           </div>
                           {verifyCode && (
-                            <div className="bg-detective-50 rounded-md px-2 py-0.5 mt-1 inline-block self-start">
-                              <p className="text-[10px] font-mono text-detective-600 truncate">✓ {verifyCode}</p>
+                            <div className="bg-gradient-to-r from-candy-100 to-warning-100 rounded-md px-2 py-0.5 mt-1 inline-block self-start">
+                              <p className="text-[10px] font-mono text-candy-600 truncate">✓ {verifyCode}</p>
                             </div>
                           )}
                         </div>
                       </div>
 
-                      {/* === Signature footer === */}
-                      <div className="mt-5 pt-3 border-t-2 border-dotted border-detective-200/70">
-                        <div className="flex items-end justify-between gap-2">
+                      {/* === Signature === */}
+                      <div className="mt-5 pt-3 border-t-2 border-dotted border-candy-300/70">
+                        <div className="flex items-center justify-between gap-2">
                           <div className="text-left">
-                            <p className="text-[9px] text-gray-400 uppercase tracking-widest font-semibold">รับรองโดย</p>
+                            <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold">รับรองโดย 💝</p>
                             <p className="font-display font-bold text-detective-700 text-sm leading-tight">
-                              Walailak University
+                              🎓 Walailak University
                             </p>
                             <p className="text-[10px] text-gray-500">SayNo:สู้บุหรี่ไฟฟ้า</p>
                           </div>
-                          {/* WU monogram seal */}
-                          <SealStamp />
+                          <CuteSeal />
                         </div>
                       </div>
                     </div>
@@ -312,25 +317,25 @@ export default function Certificate() {
               </div>
             </div>
 
-            {/* === Action buttons === */}
+            {/* === Buttons === */}
             <div className="mt-5 grid grid-cols-2 gap-2 print:hidden">
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-gradient-to-br from-warning-400 to-warning-500 text-white font-bold
-                           rounded-xl py-3 shadow-glow-gold active:scale-95 transition-all
+                className="bg-gradient-to-br from-warning-400 to-candy-500 text-white font-bold
+                           rounded-2xl py-3 shadow-glow-gold active:scale-95 transition-all
                            disabled:opacity-60 disabled:cursor-wait
                            flex items-center justify-center gap-1.5"
               >
-                {saving ? '⏳ กำลังบันทึก...' : '💾 บันทึกเป็นรูป'}
+                {saving ? '⏳ กำลังบันทึก...' : '💾 บันทึกรูป'}
               </button>
               <button
                 onClick={handleShare}
-                className="bg-gradient-to-br from-detective-500 to-detective-600 text-white font-bold
-                           rounded-xl py-3 shadow-glow active:scale-95 transition-all
+                className="bg-gradient-to-br from-mint-500 to-detective-500 text-white font-bold
+                           rounded-2xl py-3 shadow-glow active:scale-95 transition-all
                            flex items-center justify-center gap-1.5"
               >
-                📤 แชร์
+                📤 แชร์ให้เพื่อน
               </button>
             </div>
 
@@ -355,7 +360,7 @@ export default function Certificate() {
                 <button
                   onClick={() => {
                     navigator.clipboard?.writeText(`รหัสยืนยัน Certificate: ${verifyCode}`);
-                    setShareMsg('📋 ก๊อปรหัสยืนยันแล้ว');
+                    setShareMsg('📋 ก๊อปรหัสแล้ว');
                     setTimeout(() => setShareMsg(null), 2000);
                   }}
                   className="btn-secondary w-full text-sm py-2"
@@ -366,7 +371,7 @@ export default function Certificate() {
             </div>
 
             <p className="text-[11px] text-center text-gray-400 mt-4 print:hidden">
-              💡 มือถือ: เลือกแอปที่จะแชร์/บันทึก (Photos, LINE, ฯลฯ) — คอม: ไฟล์ PNG จะถูกดาวน์โหลด
+              💡 มือถือ: เลือกแชร์ไป Photos / LINE / IG / TikTok ได้เลย
             </p>
           </motion.div>
         )}
@@ -375,107 +380,57 @@ export default function Certificate() {
   );
 }
 
-// ===== Decorative sub-components =====
-
-function CornerFlourish({ className = '' }: { className?: string }) {
-  return (
-    <svg
-      width="36" height="36" viewBox="0 0 36 36" fill="none"
-      className={className} aria-hidden
-    >
-      <path
-        d="M2 2 H 14 M2 2 V 14 M2 2 Q 10 4, 14 14 M2 2 Q 4 10, 14 14"
-        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"
-        opacity="0.85"
-      />
-      <circle cx="14" cy="14" r="1.6" fill="currentColor" />
-      <circle cx="6"  cy="6"  r="1"   fill="currentColor" opacity="0.6" />
-    </svg>
-  );
-}
-
-function Medallion() {
-  return (
-    <svg width="68" height="68" viewBox="0 0 68 68" aria-hidden>
-      {/* outer ring */}
-      <circle cx="34" cy="34" r="28" fill="url(#mg-gold)" />
-      <circle cx="34" cy="34" r="28" fill="none" stroke="#C49B00" strokeWidth="1.5" />
-      {/* inner ring */}
-      <circle cx="34" cy="34" r="22" fill="#FFF7E0" stroke="#E8B500" strokeWidth="1" />
-      {/* star */}
-      <path
-        d="M34 18 L37.5 29 L49 29 L39.7 35.7 L43.2 46.7 L34 40 L24.8 46.7 L28.3 35.7 L19 29 L30.5 29 Z"
-        fill="#6F2D8E"
-      />
-      {/* laurel left */}
-      <path d="M10 34 Q 14 22, 22 18 M10 34 Q 14 46, 22 50"
-            stroke="#5B2475" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.85" />
-      <ellipse cx="14" cy="26" rx="3" ry="1.6" fill="#5B2475" opacity="0.6" transform="rotate(-30 14 26)" />
-      <ellipse cx="14" cy="42" rx="3" ry="1.6" fill="#5B2475" opacity="0.6" transform="rotate(30 14 42)" />
-      {/* laurel right */}
-      <path d="M58 34 Q 54 22, 46 18 M58 34 Q 54 46, 46 50"
-            stroke="#5B2475" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.85" />
-      <ellipse cx="54" cy="26" rx="3" ry="1.6" fill="#5B2475" opacity="0.6" transform="rotate(30 54 26)" />
-      <ellipse cx="54" cy="42" rx="3" ry="1.6" fill="#5B2475" opacity="0.6" transform="rotate(-30 54 42)" />
-      <defs>
-        <linearGradient id="mg-gold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#FFE7A6" />
-          <stop offset="55%" stopColor="#FFC72C" />
-          <stop offset="100%" stopColor="#C49B00" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
-
-function FancyDivider({ className = '' }: { className?: string }) {
-  return (
-    <div className={`flex items-center justify-center gap-2 ${className}`}>
-      <span className="h-px bg-gradient-to-r from-transparent to-warning-400 flex-1" />
-      <svg width="60" height="10" viewBox="0 0 60 10" aria-hidden>
-        <path d="M0 5 H 24" stroke="#E8B500" strokeWidth="1" />
-        <path d="M36 5 H 60" stroke="#E8B500" strokeWidth="1" />
-        <path d="M30 1 L 32 5 L 30 9 L 28 5 Z" fill="#E8B500" />
-        <circle cx="24" cy="5" r="1.5" fill="#E8B500" />
-        <circle cx="36" cy="5" r="1.5" fill="#E8B500" />
-      </svg>
-      <span className="h-px bg-gradient-to-l from-transparent to-warning-400 flex-1" />
-    </div>
-  );
-}
+// ===== สวยๆ น่ารักๆ =====
 
 function StatCell({
-  label, value, accent, featured = false,
+  label, emoji, value, color, featured = false,
 }: {
   label: string;
+  emoji: string;
   value: number;
-  accent: 'detective' | 'warning';
+  color: 'detective' | 'warning' | 'candy';
   featured?: boolean;
 }) {
-  const cls = accent === 'warning'
-    ? 'border-warning-300 bg-gradient-to-b from-warning-50 to-white'
-    : 'border-detective-200 bg-gradient-to-b from-detective-50 to-white';
-  const valCls = accent === 'warning' ? 'text-warning-600' : 'text-detective-700';
+  const cls =
+    color === 'warning'   ? 'border-warning-300 bg-gradient-to-b from-warning-50 to-white' :
+    color === 'candy'     ? 'border-candy-300   bg-gradient-to-b from-candy-50   to-white' :
+                            'border-detective-300 bg-gradient-to-b from-detective-50 to-white';
+  const valCls =
+    color === 'warning'   ? 'text-warning-600' :
+    color === 'candy'     ? 'text-candy-600' :
+                            'text-detective-700';
   return (
-    <div className={`rounded-xl border-2 ${cls} ${featured ? 'shadow-glow-sm scale-105' : ''} py-2 px-1`}>
-      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">{label}</p>
-      <p className={`font-display font-bold text-lg ${valCls} leading-none mt-0.5`}>{value}</p>
+    <div className={`rounded-2xl border-2 ${cls} ${featured ? 'shadow-glow-sm scale-105' : ''} py-2 px-1`}>
+      <p className="text-[14px] leading-none">{emoji}</p>
+      <p className={`font-display font-extrabold text-lg ${valCls} leading-none mt-0.5`}>{value}</p>
+      <p className="text-[9px] text-gray-500 uppercase tracking-wider font-bold mt-0.5">{label}</p>
     </div>
   );
 }
 
-function SealStamp() {
+function CuteSeal() {
   return (
-    <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden className="opacity-90">
-      {/* ring */}
-      <circle cx="28" cy="28" r="24" fill="none" stroke="#6F2D8E" strokeWidth="1.5" />
-      <circle cx="28" cy="28" r="20" fill="none" stroke="#6F2D8E" strokeWidth="0.8" strokeDasharray="2 2" />
-      {/* WU monogram */}
-      <text x="28" y="32" textAnchor="middle" fontSize="14" fontWeight="800" fill="#6F2D8E" fontFamily="serif">
+    <svg width="60" height="60" viewBox="0 0 60 60" aria-hidden className="opacity-95">
+      <defs>
+        <linearGradient id="seal-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%"   stopColor="#EC4899" />
+          <stop offset="50%"  stopColor="#F59E0B" />
+          <stop offset="100%" stopColor="#06B6D4" />
+        </linearGradient>
+      </defs>
+      {/* ring น่ารัก wavy */}
+      <circle cx="30" cy="30" r="26" fill="url(#seal-grad)" />
+      <circle cx="30" cy="30" r="22" fill="#FFF" />
+      <circle cx="30" cy="30" r="20" fill="none" stroke="#8B5CF6" strokeWidth="1.2" strokeDasharray="3 3" />
+      {/* heart shape */}
+      <path
+        d="M30 42 C 18 34, 14 24, 22 20 C 26 18, 28 22, 30 25 C 32 22, 34 18, 38 20 C 46 24, 42 34, 30 42 Z"
+        fill="#EC4899"
+        opacity="0.85"
+      />
+      <text x="30" y="32" textAnchor="middle" fontSize="10" fontWeight="900" fill="#FFFFFF">
         WU
       </text>
-      {/* corner stars */}
-      <path d="M28 4 L 29.2 6.2 L 31.5 6.5 L 29.8 8.3 L 30.2 11 L 28 9.7 L 25.8 11 L 26.2 8.3 L 24.5 6.5 L 26.8 6.2 Z" fill="#E8B500" />
     </svg>
   );
 }

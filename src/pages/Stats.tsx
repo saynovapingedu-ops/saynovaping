@@ -60,9 +60,6 @@ export default function Stats() {
             {player.equippedTitle && (
               <p className="text-xs text-warning-500 font-semibold">⭐ {player.equippedTitle}</p>
             )}
-            {player.school && (
-              <p className="text-[11px] text-gray-500 truncate">{player.grade} • {player.school}</p>
-            )}
           </div>
         </motion.div>
 
