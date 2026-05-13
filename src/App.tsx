@@ -49,15 +49,25 @@ export default function App() {
   }, [musicEnabled]);
 
   useEffect(() => {
+    console.info('[App] init starting, url:', window.location.href);
+    const timer = setTimeout(() => {
+      console.warn('[App] init timeout 5s — forcing ready');
+      setReady(true);
+    }, 5000);
     (async () => {
       try {
+        console.info('[App] calling initLiff');
         await initLiff();
+        console.info('[App] initLiff done');
         const hash = await getUserIdHash();
+        console.info('[App] got userHash');
         setUserHash(hash);
         flushQueue().catch(() => { /* silent */ });
       } catch (err) {
         console.error('App init error:', err);
       } finally {
+        console.info('[App] init finished, ready=true');
+        clearTimeout(timer);
         setReady(true);
       }
     })();
