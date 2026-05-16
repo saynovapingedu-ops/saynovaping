@@ -165,6 +165,11 @@ export default function MemoryMatch({ title, pairs, onComplete }: Props) {
           >
             <p className="font-semibold text-success-600 text-sm mb-1">✓ จับคู่ได้!</p>
             <p className="text-xs text-gray-700 leading-relaxed">{revealing.reveal}</p>
+            {pairs[revealing.pairIdx]?.source && (
+              <p className="text-[10px] text-gray-500 mt-1.5 leading-snug">
+                📚 อ้างอิง: {pairs[revealing.pairIdx].source}
+              </p>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

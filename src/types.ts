@@ -42,6 +42,8 @@ export interface SpotTheLieClaim {
 export interface WordMatchPair {
   left: string;
   right: string;
+  /** แหล่งอ้างอิงของคู่นี้ (แสดงเป็น "อ้างอิง: ...") */
+  source?: string;
 }
 
 export interface FillBlankQuestion {
@@ -49,6 +51,7 @@ export interface FillBlankQuestion {
   options: [string, string];    // 2 ตัวเลือก กันพิมพ์ผิด
   correctIndex: 0 | 1;
   reveal?: string;              // คำอธิบายหลังตอบ
+  source?: string;              // แหล่งอ้างอิงของข้อนี้
 }
 
 // ========= Stage 13+ minigame types =========
@@ -60,6 +63,7 @@ export interface SwipeCard {
   isTrue: boolean;
   reveal?: string;
   emoji?: string;
+  source?: string;
 }
 
 export interface MemoryPair {
@@ -68,6 +72,7 @@ export interface MemoryPair {
   b: string;
   /** ใช้แสดงตอนจับคู่สำเร็จ (อธิบายความสัมพันธ์) */
   reveal?: string;
+  source?: string;
 }
 
 export interface RiskBucket {
@@ -82,6 +87,7 @@ export interface RiskItem {
   text: string;
   /** id ของ bucket ที่ถูกต้อง */
   bucketId: string;
+  source?: string;
 }
 
 export interface MinigameNode {
@@ -110,6 +116,8 @@ export interface MinigameNode {
   next: string;
   xpOnSuccess: number;
   badge?: string;
+  /** แหล่งอ้างอิงรวมของมินิเกม (ใช้กับ OrderCards/WordMatch/RiskRank ที่เนื้อหามาจากกรอบแนวคิดเดียวกัน) */
+  source?: string;
 }
 
 export interface FeedbackNode {
@@ -118,6 +126,8 @@ export interface FeedbackNode {
   title: string;
   body: string;
   next: string;
+  /** แหล่งอ้างอิง — ถ้า body มีข้อเท็จจริงเชิงวิชาการ */
+  source?: string;
 }
 
 export interface EduPopupNode {

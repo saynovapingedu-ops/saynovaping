@@ -143,6 +143,7 @@ export const scenario05: Scenario = {
       next: 'feedback1',
       xpOnSuccess: 90,
       badge: 'walk-away',
+      source: 'Common Sense Media — Online Safety for Teens / รายงาน กสทช. 2566',
     },
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',

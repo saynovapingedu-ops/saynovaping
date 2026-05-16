@@ -117,6 +117,11 @@ export default function SwipeDecide({ title, cards, onComplete }: Props) {
                 {revealing.reveal && (
                   <p className="text-xs mt-1 leading-relaxed text-gray-700">{revealing.reveal}</p>
                 )}
+                {current.source && (
+                  <p className="text-[10px] text-gray-500 mt-1.5 leading-snug">
+                    📚 อ้างอิง: {current.source}
+                  </p>
+                )}
               </div>
             </motion.div>
           )}

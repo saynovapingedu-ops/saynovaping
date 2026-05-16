@@ -7,6 +7,7 @@ interface Props {
   buckets: RiskBucket[];
   items: RiskItem[];
   onComplete: (allCorrect: boolean) => void;
+  source?: string;
 }
 
 const LEVEL_STYLE: Record<RiskBucket['level'], { bg: string; border: string; text: string; tag: string }> = {
@@ -26,7 +27,7 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 // จัดของลงช่อง risk levels — ผู้เล่นแตะของก่อน แล้วแตะช่องเป้าหมาย
-export default function RiskRank({ title, buckets, items, onComplete }: Props) {
+export default function RiskRank({ title, buckets, items, onComplete, source }: Props) {
   const [pool, setPool] = useState<RiskItem[]>(useMemo(() => shuffle(items), [items]));
   // mapping: itemId -> bucketId
   const [placed, setPlaced] = useState<Record<string, string>>({});
@@ -193,21 +194,42 @@ export default function RiskRank({ title, buckets, items, onComplete }: Props) {
 
       {submitted && (
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-          className={`card text-center ${
+          className={`card ${
             correctCount === items.length
               ? 'bg-success-50 border-l-4 border-success-500'
               : 'bg-warning-50 border-l-4 border-warning-500'
           }`}>
-          <p className={`font-bold text-sm mb-1 ${
+          <p className={`font-bold text-sm mb-1 text-center ${
             correctCount === items.length ? 'text-success-600' : 'text-warning-700'
           }`}>
             {correctCount === items.length
               ? '✓ จัดถูกหมดเลย!'
               : `จัดถูก ${correctCount}/${items.length} ชิ้น`}
           </p>
-          <p className="text-xs text-gray-600 mb-3 leading-relaxed">
+          <p className="text-xs text-gray-600 mb-3 leading-relaxed text-center">
             ดูช่องที่ขึ้น ✓ และ ✗ ก่อน แล้วทบทวนระดับความเสี่ยงที่ถูกในใจ
           </p>
+          {source && (
+            <p className="text-[10px] text-gray-500 mb-2 leading-snug text-center">
+              📚 อ้างอิงรวมของมินิเกม: {source}
+            </p>
+          )}
+          {/* แหล่งอ้างอิงรายข้อ */}
+          {items.some(it => it.source) && (
+            <details className="mb-3 text-left bg-white/70 rounded-xl border border-gray-200 p-2.5">
+              <summary className="cursor-pointer text-[11px] font-bold text-gray-700 select-none">
+                📚 แหล่งอ้างอิงรายข้อ ({items.filter(it => it.source).length})
+              </summary>
+              <ul className="mt-2 space-y-1.5">
+                {items.map(it => it.source && (
+                  <li key={it.id} className="text-[10px] text-gray-600 leading-snug">
+                    <b>{it.text}</b><br/>
+                    <span className="text-gray-500">อ้างอิง: {it.source}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
           <button onClick={() => onComplete(correctCount === items.length)} className="btn-primary w-full">
             ไปต่อ →
           </button>

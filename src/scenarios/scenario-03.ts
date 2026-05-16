@@ -121,6 +121,7 @@ export const scenario03: Scenario = {
       next: 'feedback1',
       xpOnSuccess: 90,
       badge: 'reasoning',
+      source: 'Miller & Rollnick — Motivational Interviewing (3rd Ed.) / WHO Adolescent Health',
     },
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',

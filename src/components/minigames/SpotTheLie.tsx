@@ -58,7 +58,11 @@ export default function SpotTheLie({ title, claims, onComplete }: Props) {
                   {answers[i] === claim.isLie ? '✓ ถูกต้อง!' : '✗ ลองคิดอีกครั้ง'}
                 </p>
                 <p className="text-sm text-gray-700">{claim.reveal}</p>
-                {claim.source && <p className="text-xs text-gray-500 mt-1">📚 {claim.source}</p>}
+                {claim.source && (
+                  <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">
+                    📚 อ้างอิง: {claim.source}
+                  </p>
+                )}
               </motion.div>
             </AnimatePresence>
           )}

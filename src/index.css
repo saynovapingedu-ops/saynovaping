@@ -12,14 +12,9 @@
   body {
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
-    @apply font-sans text-gray-800 antialiased;
-    /* รุ้งพาสเทลอ่อนๆ — เบามือถือ ไม่ใช้ blur ใน background */
-    background:
-      linear-gradient(135deg,
-        #FFF0F7 0%,
-        #FFF8E8 25%,
-        #F0FBFF 55%,
-        #F4ECFF 100%);
+    @apply font-sans text-slate-800 antialiased;
+    /* minimal: soft lavender single-tone bg, ไม่ใช้ gradient รุ้ง */
+    background: #F6F4FA;
     background-attachment: fixed;
   }
   h1, h2, h3 {
@@ -27,16 +22,17 @@
   }
 
   ::selection {
-    background: rgba(139, 92, 246, 0.25);
+    background: rgba(139, 92, 246, 0.2);
   }
 
+  /* scrollbar เรียบ — สีเดียวเทาๆ ไม่รุ้ง */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #A78BFA, #FF7AB6);
+    background: #CBC4D8;
     border-radius: 999px;
   }
-  ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #8B5CF6, #EC4899); }
+  ::-webkit-scrollbar-thumb:hover { background: #A78BFA; }
 
   /* ผู้ใช้ที่เปิด "reduced motion" — ตัด animation ทั้งหมด */
   @media (prefers-reduced-motion: reduce) {
@@ -50,42 +46,46 @@
 }
 
 @layer components {
-  /* ปุ่มหลัก — รุ้ง 3 stop */
+  /* ===========================================================================
+     Minimal palette — เลือกใช้แค่ 2 สีหลัก:
+       1) detective (ม่วง #8B5CF6) เป็น primary action / accent
+       2) warning (ทอง #F59E0B) สำหรับ achievement-only (Certificate, badges)
+     สีอื่นใช้เฉพาะเชิงฟังก์ชัน: success=ถูก, danger=ผิด
+     ============================================================================ */
+
+  /* ปุ่มหลัก — solid detective (เดียว) ไม่ใช้ gradient รุ้ง */
   .btn-primary {
-    @apply relative bg-gradient-to-r from-detective-400 via-candy-400 to-warning-400
-           text-white font-semibold rounded-2xl px-5 py-3 shadow-glow active:scale-95 transition-all
-           hover:shadow-glow-lg disabled:opacity-50;
+    @apply relative bg-detective-600 hover:bg-detective-700
+           text-white font-semibold rounded-2xl px-5 py-3 shadow-sm active:scale-95 transition-all
+           disabled:opacity-50;
   }
 
   .btn-secondary {
-    @apply bg-white/95 backdrop-blur text-detective-700 border-2 border-detective-200
+    @apply bg-white text-detective-700 border border-slate-200
            font-semibold rounded-2xl px-5 py-3 active:scale-95 transition-all
-           hover:border-detective-400;
+           hover:border-detective-400 hover:bg-detective-50;
   }
 
+  /* ปุ่มสีทอง — เก็บไว้ใช้กับ achievement ที่ต้องโดดเด่นเท่านั้น (Certificate ฯลฯ) */
   .btn-sunny {
-    @apply bg-gradient-to-r from-warning-400 to-candy-400 text-white font-semibold
-           rounded-2xl px-5 py-3 shadow-glow-gold active:scale-95 transition-all;
+    @apply bg-warning-500 hover:bg-warning-600 text-white font-semibold
+           rounded-2xl px-5 py-3 shadow-sm active:scale-95 transition-all;
   }
 
-  /* การ์ดพื้นฐาน — ขาวล้วน ขอบมน เงาเบา */
+  /* การ์ดพื้นฐาน — ขาวล้วน ขอบเทาบาง */
   .card {
-    @apply bg-white/95 backdrop-blur-sm rounded-3xl shadow-glow-sm p-4 border border-white/80;
+    @apply bg-white rounded-3xl shadow-sm p-4 border border-slate-200;
   }
 
-  /* การ์ดเด่น — gradient รุ้งอ่อน (พาสเทล) */
+  /* การ์ดเด่น — โทนเดียว ม่วงอ่อนมาก ไม่ใช่รุ้ง */
   .card-hero {
-    @apply rounded-3xl p-5 border border-white/80 shadow-glow-sm
-           bg-gradient-to-br from-candy-50 via-warning-50 to-mint-50;
+    @apply rounded-3xl p-5 border border-slate-200 shadow-sm
+           bg-gradient-to-br from-detective-50/60 to-white;
   }
 
-  /* hero header — รุ้ง 4 stop พาสเทลกลาง (ไม่ใช่สีเข้ม) */
+  /* hero header — โทนม่วงเดียว ไล่เฉดเข้มขึ้น (single-hue) ไม่รุ้ง */
   .rainbow-header {
-    background: linear-gradient(120deg,
-      #A78BFA 0%,
-      #FF7AB6 33%,
-      #FBBF24 66%,
-      #22D3EE 100%);
+    background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
   }
 
   /* shimmer */

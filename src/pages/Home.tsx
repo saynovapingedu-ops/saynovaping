@@ -193,21 +193,20 @@ export default function Home() {
 
       <main className="max-w-md mx-auto px-4 mt-5">
         {certEligible && !player.certificateNo && (
-          <div className="card relative overflow-hidden mb-4 border-2 border-warning-300
-                          bg-gradient-to-r from-warning-50 via-candy-50 to-warning-50">
-            <div className="absolute -top-3 -right-3 text-6xl opacity-20">🏆</div>
-            <p className="text-warning-600 font-bold mb-2 relative">🏆 พร้อมรับ Certificate แล้ว!</p>
-            <button onClick={() => nav('/certificate')} className="btn-primary w-full">
+          <div className="card relative overflow-hidden mb-4 border border-warning-300
+                          bg-warning-50">
+            <div className="absolute -top-3 -right-3 text-6xl opacity-15">🏆</div>
+            <p className="text-warning-700 font-bold mb-2 relative">🏆 พร้อมรับ Certificate แล้ว!</p>
+            <button onClick={() => nav('/certificate')} className="btn-sunny w-full">
               รับใบประกาศนียบัตร ✨
             </button>
           </div>
         )}
 
         {player.certificateNo && (
-          <div className="card mb-4 border-2 border-success-300
-                          bg-gradient-to-r from-mint-50 to-success-50">
-            <p className="text-success-600 font-bold mb-1">🏆 Certificate ของคุณ</p>
-            <p className="text-sm text-gray-600 mb-2">เลขที่ {player.certificateNo}</p>
+          <div className="card mb-4 border border-success-300 bg-success-50">
+            <p className="text-success-700 font-bold mb-1">🏆 Certificate ของคุณ</p>
+            <p className="text-sm text-slate-600 mb-2">เลขที่ {player.certificateNo}</p>
             <button onClick={() => nav('/certificate')} className="btn-secondary w-full">
               ดู Certificate
             </button>
@@ -291,10 +290,10 @@ export default function Home() {
                         className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold flex-shrink-0
                                     shadow-sm ${
                           completed
-                            ? 'bg-gradient-to-br from-success-400 to-success-500 text-white'
+                            ? 'bg-success-500 text-white'
                             : playable
-                            ? 'bg-gradient-to-br from-detective-400 via-candy-400 to-warning-400 text-white'
-                            : 'bg-gray-200 text-gray-500'
+                            ? 'bg-detective-600 text-white'
+                            : 'bg-slate-200 text-slate-500'
                         }`}
                       >
                         {completed ? '✓' : meta.id}

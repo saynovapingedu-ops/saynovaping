@@ -6,6 +6,8 @@ interface Props {
   title: string;
   pairs: WordMatchPair[];
   onComplete: (allCorrect: boolean) => void;
+  /** แหล่งอ้างอิงรวมของมินิเกม (เสริมจาก pair.source) */
+  source?: string;
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -34,7 +36,7 @@ const PAIR_COLORS = [
 ];
 
 // จับคู่คำ — แตะคำซ้าย แล้วแตะคำขวาที่จับคู่กัน
-export default function WordMatch({ title, pairs, onComplete }: Props) {
+export default function WordMatch({ title, pairs, onComplete, source }: Props) {
   const lefts = useMemo<ItemL[]>(
     () => shuffle(pairs.map((p, i) => ({ side: 'L' as const, pairIdx: i, text: p.left }))),
     [pairs]
@@ -201,21 +203,42 @@ export default function WordMatch({ title, pairs, onComplete }: Props) {
 
       {submitted && (
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-          className={`card text-center ${
+          className={`card ${
             correctCount === pairs.length
               ? 'bg-success-50 border-l-4 border-success-500'
               : 'bg-warning-50 border-l-4 border-warning-500'
           }`}>
-          <p className={`font-bold text-sm mb-1 ${
+          <p className={`font-bold text-sm mb-1 text-center ${
             correctCount === pairs.length ? 'text-success-600' : 'text-warning-700'
           }`}>
             {correctCount === pairs.length
               ? '✓ จับคู่ถูกหมดเลย!'
               : `จับคู่ถูก ${correctCount}/${pairs.length} คู่`}
           </p>
-          <p className="text-xs text-gray-600 mb-3 leading-relaxed">
+          <p className="text-xs text-gray-600 mb-3 leading-relaxed text-center">
             ดูคู่ที่ขึ้น ✓ และ ✗ ก่อน แล้วลองทบทวนคู่ที่ถูกในใจ
           </p>
+          {source && (
+            <p className="text-[10px] text-gray-500 mb-2 leading-snug text-center">
+              📚 อ้างอิงรวมของมินิเกม: {source}
+            </p>
+          )}
+          {/* แหล่งอ้างอิงของแต่ละคู่ — แสดงเฉพาะคู่ที่มี source */}
+          {pairs.some(p => p.source) && (
+            <details className="mb-3 text-left bg-white/70 rounded-xl border border-gray-200 p-2.5">
+              <summary className="cursor-pointer text-[11px] font-bold text-gray-700 select-none">
+                📚 แหล่งอ้างอิงรายคู่ ({pairs.filter(p => p.source).length})
+              </summary>
+              <ul className="mt-2 space-y-1.5">
+                {pairs.map((p, i) => p.source && (
+                  <li key={i} className="text-[10px] text-gray-600 leading-snug">
+                    <b>{p.left}</b> ↔ <b>{p.right}</b><br/>
+                    <span className="text-gray-500">อ้างอิง: {p.source}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
           <button onClick={() => onComplete(correctCount === pairs.length)} className="btn-primary w-full">
             ไปต่อ →
           </button>

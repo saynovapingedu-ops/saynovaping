@@ -112,12 +112,14 @@ const VIDEOS: VideoEntry[] = [
   },
 ];
 
+// minimal palette — การ์ดทั้งหมด bg ขาวขอบเทา ให้ text color ของ title
+// เป็นตัวบอกประเภท (ไม่ใช้ bg หลากสีให้รบกวนสายตา)
 const COLOR_MAP: Record<DangerCard['color'], { bg: string; border: string; text: string }> = {
-  detective: { bg: 'from-detective-50 to-white', border: 'border-detective-200', text: 'text-detective-700' },
-  candy:     { bg: 'from-candy-50 to-white',     border: 'border-candy-200',     text: 'text-candy-600'     },
-  warning:   { bg: 'from-warning-50 to-white',   border: 'border-warning-200',   text: 'text-warning-600'   },
-  mint:      { bg: 'from-mint-50 to-white',      border: 'border-mint-200',      text: 'text-mint-600'     },
-  danger:    { bg: 'from-danger-50 to-white',    border: 'border-danger-100',    text: 'text-danger-500'   },
+  detective: { bg: 'bg-white', border: 'border-slate-200', text: 'text-detective-700' },
+  candy:     { bg: 'bg-white', border: 'border-slate-200', text: 'text-detective-700' },
+  warning:   { bg: 'bg-white', border: 'border-slate-200', text: 'text-warning-700'   },
+  mint:      { bg: 'bg-white', border: 'border-slate-200', text: 'text-success-700'   },
+  danger:    { bg: 'bg-white', border: 'border-slate-200', text: 'text-danger-600'    },
 };
 
 // ===== Video Card: คลิ๊กแล้วเปิด YouTube จริง — แก้ปัญหา iframe block ใน in-app browser =====
@@ -234,8 +236,8 @@ export default function Knowledge() {
               onClick={() => { sfx.click(); setTab(t.id); }}
               className={`rounded-2xl py-2 px-1 text-center transition-all active:scale-95 ${
                 tab === t.id
-                  ? 'bg-gradient-to-br from-detective-500 to-candy-500 text-white shadow-glow-sm'
-                  : 'bg-white/85 text-gray-600 border border-detective-100 hover:border-detective-300'
+                  ? 'bg-detective-600 text-white shadow-sm'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:border-detective-300'
               }`}
             >
               <div className="text-lg leading-none">{t.emoji}</div>
@@ -259,7 +261,7 @@ export default function Knowledge() {
                 return (
                   <div
                     key={i}
-                    className={`rounded-2xl p-3 border-2 ${c.border} bg-gradient-to-br ${c.bg} shadow-glow-sm`}
+                    className={`rounded-2xl p-3 border ${c.border} ${c.bg} shadow-sm`}
                   >
                     <div className="flex items-start gap-2.5">
                       <div className="text-3xl flex-shrink-0">{d.emoji}</div>
@@ -336,31 +338,31 @@ export default function Knowledge() {
             >
               <a
                 href="tel:1600"
-                className="flex items-center gap-3 rounded-2xl p-3 border-2 border-mint-200 bg-gradient-to-br from-mint-50 to-white shadow-glow-sm active:scale-95"
+                className="flex items-center gap-3 rounded-2xl p-3 border border-slate-200 bg-white shadow-sm active:scale-95"
               >
-                <div className="w-11 h-11 rounded-2xl bg-mint-100 flex items-center justify-center text-2xl">📱</div>
+                <div className="w-11 h-11 rounded-2xl bg-detective-50 border border-detective-200 flex items-center justify-center text-2xl">📱</div>
                 <div className="flex-1">
-                  <p className="font-bold text-mint-600 text-base">1600</p>
-                  <p className="text-[11px] text-gray-600">สายเลิกบุหรี่ — โทรฟรี 24 ชั่วโมง</p>
+                  <p className="font-bold text-detective-700 text-base">1600</p>
+                  <p className="text-[11px] text-slate-600">สายเลิกบุหรี่ — โทรฟรี 24 ชั่วโมง</p>
                 </div>
-                <span className="text-mint-500">→</span>
+                <span className="text-slate-400">→</span>
               </a>
               <a
                 href="tel:1422"
-                className="flex items-center gap-3 rounded-2xl p-3 border-2 border-warning-200 bg-gradient-to-br from-warning-50 to-white shadow-glow-sm active:scale-95"
+                className="flex items-center gap-3 rounded-2xl p-3 border border-slate-200 bg-white shadow-sm active:scale-95"
               >
-                <div className="w-11 h-11 rounded-2xl bg-warning-100 flex items-center justify-center text-2xl">☎️</div>
+                <div className="w-11 h-11 rounded-2xl bg-detective-50 border border-detective-200 flex items-center justify-center text-2xl">☎️</div>
                 <div className="flex-1">
-                  <p className="font-bold text-warning-600 text-base">1422</p>
-                  <p className="text-[11px] text-gray-600">สายด่วน สสส. — แจ้งเบาะแสร้านขาย</p>
+                  <p className="font-bold text-detective-700 text-base">1422</p>
+                  <p className="text-[11px] text-slate-600">สายด่วน สสส. — แจ้งเบาะแสร้านขาย</p>
                 </div>
-                <span className="text-warning-500">→</span>
+                <span className="text-slate-400">→</span>
               </a>
-              <div className="flex items-center gap-3 rounded-2xl p-3 border-2 border-candy-200 bg-gradient-to-br from-candy-50 to-white shadow-glow-sm">
-                <div className="w-11 h-11 rounded-2xl bg-candy-100 flex items-center justify-center text-2xl">👨‍⚕️</div>
+              <div className="flex items-center gap-3 rounded-2xl p-3 border border-slate-200 bg-white shadow-sm">
+                <div className="w-11 h-11 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-2xl">👨‍⚕️</div>
                 <div className="flex-1">
-                  <p className="font-bold text-candy-600 text-sm">บอกผู้ใหญ่ที่เชื่อใจ</p>
-                  <p className="text-[11px] text-gray-600">พ่อแม่ ครู หมอ — ไม่ต้องอาย</p>
+                  <p className="font-bold text-slate-700 text-sm">บอกผู้ใหญ่ที่เชื่อใจ</p>
+                  <p className="text-[11px] text-slate-600">พ่อแม่ ครู หมอ — ไม่ต้องอาย</p>
                 </div>
               </div>
               <p className="text-[10px] text-center text-gray-500 mt-2 leading-relaxed">

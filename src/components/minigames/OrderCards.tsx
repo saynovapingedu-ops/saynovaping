@@ -6,6 +6,8 @@ interface Props {
   cards: { id: string; text: string }[];
   correctOrder: string[];
   onComplete: (correct: boolean) => void;
+  /** แหล่งอ้างอิงของกรอบแนวคิด/ลำดับนี้ */
+  source?: string;
 }
 
 // สลับการ์ดด้วย Fisher-Yates (deterministic เพื่อ test ได้)
@@ -18,7 +20,7 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-export default function OrderCards({ title, cards, correctOrder, onComplete }: Props) {
+export default function OrderCards({ title, cards, correctOrder, onComplete, source }: Props) {
   // เริ่มต้น: แสดงเรียงแบบสุ่ม
   const initial = useMemo(() => shuffle(cards), [cards]);
   const [order, setOrder] = useState(initial);
@@ -119,6 +121,11 @@ export default function OrderCards({ title, cards, correctOrder, onComplete }: P
               ? 'จำลำดับนี้ไว้ — ใช้ได้จริงในชีวิตประจำวัน'
               : 'ดูใบที่ขึ้น ✓ และ ✗ ก่อน แล้วลองทบทวนลำดับที่ถูกต้องในใจ'}
           </p>
+          {source && (
+            <p className="text-[10px] text-gray-500 mb-3 leading-snug">
+              📚 อ้างอิง: {source}
+            </p>
+          )}
           <button onClick={() => onComplete(allCorrect)} className="btn-primary w-full">
             ไปต่อ →
           </button>

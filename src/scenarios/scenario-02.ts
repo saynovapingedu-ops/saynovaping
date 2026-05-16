@@ -126,6 +126,7 @@ export const scenario02: Scenario = {
       next: 'feedback1',
       xpOnSuccess: 80,
       badge: 'direct-refusal',
+      source: 'NIDA — Refusal Skills for Adolescents (2022) / สสส. คู่มือป้องกันสารเสพติดเยาวชน 2566',
     },
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',

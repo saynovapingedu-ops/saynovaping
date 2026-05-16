@@ -137,6 +137,7 @@ export const scenario06: Scenario = {
       next: 'feedback1',
       xpOnSuccess: 100,
       badge: 'buddy-saver',
+      source: 'Mental Health First Aid (MHFA) Youth Module / สสส. คู่มือเพื่อนช่วยเพื่อน 2566',
     },
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',

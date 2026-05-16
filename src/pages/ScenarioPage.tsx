@@ -415,13 +415,18 @@ export default function ScenarioPage() {
                   className="card bg-warning-50 border-l-4 border-warning-500 mb-3">
                   <p className="font-semibold text-warning-600 mb-1">{node.title}</p>
                   <p className="text-sm text-gray-700 leading-relaxed">{node.body}</p>
+                  {node.source && (
+                    <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">
+                      📚 อ้างอิง: {node.source}
+                    </p>
+                  )}
                 </motion.div>
               ) : node.type === 'educationalPopup' ? (
                 <motion.div key={node.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                   className="card bg-success-50 border-l-4 border-success-500 mb-3">
                   <p className="font-semibold text-success-600 mb-1">💡 รู้หรือไม่?</p>
                   <p className="text-sm text-gray-700 leading-relaxed">{node.fact}</p>
-                  <p className="text-xs text-gray-500 mt-1">📚 {node.source}</p>
+                  <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">📚 อ้างอิง: {node.source}</p>
                 </motion.div>
               ) : null
             ))}
@@ -464,11 +469,13 @@ export default function ScenarioPage() {
               {currentNode.type === 'minigame' && currentNode.game === 'order-cards' && currentNode.cards && currentNode.correctOrder && (
                 <OrderCards title={currentNode.title} cards={currentNode.cards}
                   correctOrder={currentNode.correctOrder}
+                  source={currentNode.source}
                   onComplete={handleMinigameComplete} />
               )}
 
               {currentNode.type === 'minigame' && currentNode.game === 'word-match' && currentNode.pairs && (
                 <WordMatch title={currentNode.title} pairs={currentNode.pairs}
+                  source={currentNode.source}
                   onComplete={handleMinigameComplete} />
               )}
 
@@ -490,6 +497,7 @@ export default function ScenarioPage() {
               {currentNode.type === 'minigame' && currentNode.game === 'risk-rank' && currentNode.buckets && currentNode.riskItems && (
                 <RiskRank title={currentNode.title} buckets={currentNode.buckets}
                   items={currentNode.riskItems}
+                  source={currentNode.source}
                   onComplete={handleMinigameComplete} />
               )}
 
@@ -498,6 +506,11 @@ export default function ScenarioPage() {
                   <div className="card bg-warning-50 border-l-4 border-warning-500 mb-3">
                     <p className="font-semibold text-warning-600 mb-1">{currentNode.title}</p>
                     <p className="text-sm text-gray-700 leading-relaxed">{currentNode.body}</p>
+                    {currentNode.source && (
+                      <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">
+                        📚 อ้างอิง: {currentNode.source}
+                      </p>
+                    )}
                   </div>
                   <button onClick={() => goToNext(currentNode.next)} className="btn-primary w-full">
                     ต่อไป →
@@ -510,7 +523,9 @@ export default function ScenarioPage() {
                   <div className="card bg-success-50 border-l-4 border-success-500 mb-3">
                     <p className="font-semibold text-success-600 mb-1">💡 รู้หรือไม่?</p>
                     <p className="text-sm text-gray-700 leading-relaxed">{currentNode.fact}</p>
-                    <p className="text-xs text-gray-500 mt-1">📚 {currentNode.source}</p>
+                    <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">
+                      📚 อ้างอิง: {currentNode.source}
+                    </p>
                   </div>
                   <button onClick={() => goToNext(currentNode.next)} className="btn-primary w-full">
                     ต่อไป →

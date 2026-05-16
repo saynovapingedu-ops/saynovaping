@@ -92,6 +92,11 @@ export default function FillBlank({ title, questions, onComplete }: Props) {
                     : `✗ คำตอบที่ถูกคือ "${q.options[q.correctIndex]}"`}
                 </p>
                 {q.reveal && <p className="text-xs text-gray-600 leading-relaxed">{q.reveal}</p>}
+                {q.source && (
+                  <p className="text-[10px] text-gray-500 mt-1.5 leading-snug">
+                    📚 อ้างอิง: {q.source}
+                  </p>
+                )}
               </motion.div>
             </AnimatePresence>
           )}
