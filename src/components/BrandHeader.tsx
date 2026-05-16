@@ -16,29 +16,29 @@ interface Props {
 
 export default function BrandHeader({ variant = 'bar' }: Props) {
   if (variant === 'pill') {
-    // Floating Pill — ออกแบบให้ลอยอยู่บนพื้นหลังสีฟ้า ตามสเปคใหม่
+    // Floating Pill — กะทัดรัด ลอยกึ่งกลางบนพื้นหลังสีฟ้า
     return (
-      <div className="inline-flex items-center gap-3 bg-white rounded-[28px]
-                      pl-4 pr-3 py-2
+      <div className="inline-flex items-center gap-2.5 bg-white rounded-full
+                      pl-3 pr-2.5 py-1.5
                       shadow-[0_8px_20px_-4px_rgba(0,0,0,0.18)]">
         {/* ฝั่งซ้าย: SayNo (ข้อความสไตล์โลโก้) */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-2xl leading-none">🚭</span>
+        <div className="flex items-center gap-1">
+          <span className="text-lg leading-none">🚭</span>
           <div className="leading-none">
-            <p className="font-display font-extrabold text-detective-700 text-lg leading-none">
+            <p className="font-display font-extrabold text-detective-700 text-sm leading-none">
               SayNo
             </p>
-            <p className="text-[10px] font-semibold text-slate-500 mt-0.5 leading-none">
+            <p className="text-[9px] font-semibold text-slate-500 mt-0.5 leading-none">
               สู้บุหรี่ไฟฟ้า
             </p>
           </div>
         </div>
 
         {/* เส้นคั่นแนวตั้ง */}
-        <div className="w-px h-9 bg-slate-200" />
+        <div className="w-px h-7 bg-slate-200" />
 
         {/* ฝั่งขวา: โลโก้กองทุนฯ */}
-        <TMFLogo variant="bare" width={68} />
+        <TMFLogo variant="bare" width={56} />
       </div>
     );
   }

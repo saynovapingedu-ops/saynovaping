@@ -114,17 +114,17 @@ export default function Home() {
 
   // ===== Main game home =====
   return (
-    <div className="min-h-screen pb-24 relative bg-white">
-      {/* ===== Blue zone — ขยายขึ้นสุด ไม่มี white bar กั้นอีกแล้ว ===== */}
+    <div className="min-h-screen pb-24 relative bg-[#008FFF]">
+      {/* ===== Blue zone — ขยายขึ้นสุด ไม่มี white gap (outer bg ก็เป็นสีฟ้า) ===== */}
       <section className="rainbow-header text-white relative overflow-hidden
-                          pt-[max(1.25rem,env(safe-area-inset-top))]
-                          px-5 pb-14">
+                          pt-[max(2rem,calc(env(safe-area-inset-top)+1rem))]
+                          px-5 pb-16">
         {/* subtle sparkle */}
-        <div className="absolute top-20 right-6 text-white/40 text-base pointer-events-none">✨</div>
+        <div className="absolute top-24 right-6 text-white/40 text-base pointer-events-none">✨</div>
         <div className="absolute bottom-16 left-6 text-white/30 text-sm pointer-events-none">⭐</div>
 
-        {/* ===== Floating Pill (รวมโลโก้สองตัว) — ชิดขวา ===== */}
-        <div className="flex justify-end mb-6">
+        {/* ===== Floating Pill — กึ่งกลาง ขนาดกะทัดรัด ===== */}
+        <div className="flex justify-center mb-8">
           <BrandHeader variant="pill" />
         </div>
 
@@ -154,8 +154,8 @@ export default function Home() {
             <div className="flex flex-col gap-1.5">
               <button
                 onClick={() => { sfx.click(); nav('/profile'); }}
-                className="bg-white/15 hover:bg-white/25 backdrop-blur-md
-                           border border-white/25 rounded-2xl p-2
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-md
+                           border border-white/30 rounded-2xl p-2
                            transition-all active:scale-95"
                 aria-label="โปรไฟล์"
               >
@@ -163,8 +163,8 @@ export default function Home() {
               </button>
               <button
                 onClick={() => { sfx.click(); nav('/settings'); }}
-                className="bg-white/15 hover:bg-white/25 backdrop-blur-md
-                           border border-white/25 rounded-2xl p-2
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-md
+                           border border-white/30 rounded-2xl p-2
                            transition-all active:scale-95"
                 aria-label="ตั้งค่า"
               >
@@ -178,8 +178,8 @@ export default function Home() {
             <button
               onClick={() => { sfx.click(); nav('/shop'); }}
               className="flex items-center justify-between
-                         bg-white/15 hover:bg-white/20 backdrop-blur-md
-                         border border-white/25 rounded-2xl px-3 py-2.5
+                         bg-white/10 hover:bg-white/20 backdrop-blur-md
+                         border border-white/30 rounded-2xl px-3 py-2.5
                          active:scale-[0.99] transition-all"
             >
               <span className="flex items-center gap-1.5">
@@ -193,8 +193,8 @@ export default function Home() {
             <button
               onClick={() => { sfx.click(); nav('/room'); }}
               className="flex items-center justify-between
-                         bg-white/15 hover:bg-white/20 backdrop-blur-md
-                         border border-white/25 rounded-2xl px-3 py-2.5
+                         bg-white/10 hover:bg-white/20 backdrop-blur-md
+                         border border-white/30 rounded-2xl px-3 py-2.5
                          active:scale-[0.99] transition-all"
             >
               <span className="text-[11px] font-semibold flex items-center gap-1">
@@ -205,7 +205,7 @@ export default function Home() {
           </div>
 
           {/* ===== Glass: หลอด XP ===== */}
-          <div className="mt-3 bg-white/15 backdrop-blur-md border border-white/25
+          <div className="mt-3 bg-white/10 backdrop-blur-md border border-white/30
                           rounded-2xl p-3 shadow-inner">
             <XPBar variant="dark" />
           </div>
