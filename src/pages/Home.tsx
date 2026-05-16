@@ -123,53 +123,41 @@ export default function Home() {
         <div className="absolute top-24 right-6 text-white/40 text-base pointer-events-none">✨</div>
         <div className="absolute bottom-16 left-6 text-white/30 text-sm pointer-events-none">⭐</div>
 
-        {/* ===== Floating Pill — กึ่งกลาง ขนาดกะทัดรัด ===== */}
-        <div className="flex justify-center mb-8">
-          <BrandHeader variant="pill" />
-        </div>
-
-        {/* ===== โซนโปรไฟล์ ===== */}
+        {/* ===== Top row: Profile (ซ้าย) + Pill (ขวา) บรรทัดเดียวกัน ===== */}
         <div className="max-w-md mx-auto">
-          <div className="flex items-center gap-3 relative">
-            <Avatar
-              preset={player.avatar}
-              customId={player.customAvatarId}
-              size={56}
-              ring={!equippedFrameClass}
-              className={equippedFrameClass}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-white/85 text-xs">
-                {player.equippedTitle ? `⭐ ${player.equippedTitle}` : '🔍 นักสืบสุขภาพ'}
-              </p>
-              <h2 className="font-display font-extrabold text-xl truncate drop-shadow">
-                {player.nickname || 'ผู้เล่น'}
-              </h2>
-              {(player.streakDays || 0) > 0 && (
-                <p className="text-white/85 text-[11px] flex items-center gap-1">
-                  🔥 streak {player.streakDays} วัน
+          <div className="flex items-center gap-2 relative">
+            {/* Profile — ซ้าย, แตะ avatar/ชื่อ ไปหน้าโปรไฟล์ */}
+            <button
+              onClick={() => { sfx.click(); nav('/profile'); }}
+              className="flex items-center gap-3 flex-1 min-w-0 text-left
+                         rounded-2xl active:scale-[0.99] transition-transform"
+              aria-label="โปรไฟล์"
+            >
+              <Avatar
+                preset={player.avatar}
+                customId={player.customAvatarId}
+                size={56}
+                ring={!equippedFrameClass}
+                className={equippedFrameClass}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-white/85 text-xs">
+                  {player.equippedTitle ? `⭐ ${player.equippedTitle}` : '🔍 นักสืบสุขภาพ'}
                 </p>
-              )}
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <button
-                onClick={() => { sfx.click(); nav('/profile'); }}
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-md
-                           border border-white/30 rounded-2xl p-2
-                           transition-all active:scale-95"
-                aria-label="โปรไฟล์"
-              >
-                <span className="text-base">👤</span>
-              </button>
-              <button
-                onClick={() => { sfx.click(); nav('/settings'); }}
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-md
-                           border border-white/30 rounded-2xl p-2
-                           transition-all active:scale-95"
-                aria-label="ตั้งค่า"
-              >
-                <span className="text-base">⚙️</span>
-              </button>
+                <h2 className="font-display font-extrabold text-xl truncate drop-shadow">
+                  {player.nickname || 'ผู้เล่น'}
+                </h2>
+                {(player.streakDays || 0) > 0 && (
+                  <p className="text-white/85 text-[11px] flex items-center gap-1">
+                    🔥 streak {player.streakDays} วัน
+                  </p>
+                )}
+              </div>
+            </button>
+
+            {/* Sponsor badge — ขวา, ระนาบเดียวกับ profile */}
+            <div className="flex-shrink-0">
+              <BrandHeader variant="pill" />
             </div>
           </div>
 
@@ -354,7 +342,7 @@ export default function Home() {
       <nav className="fixed bottom-0 left-0 right-0 z-30
                       pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 px-3
                       bg-gradient-to-t from-white via-white/95 to-transparent">
-        <div className="max-w-md mx-auto grid grid-cols-3 gap-2 bg-white/95 backdrop-blur-md
+        <div className="max-w-md mx-auto grid grid-cols-4 gap-1.5 bg-white/95 backdrop-blur-md
                         rounded-2xl shadow-glow border border-detective-100 p-1.5">
           <button
             onClick={() => { sfx.click(); nav('/stats'); }}
@@ -379,6 +367,14 @@ export default function Home() {
           >
             <span className="text-xl">🏆</span>
             <span className="text-[11px] font-bold text-warning-600">ใบประกาศ</span>
+          </button>
+          <button
+            onClick={() => { sfx.click(); nav('/settings'); }}
+            className="flex flex-col items-center gap-0.5 py-1.5 rounded-xl
+                       active:scale-95 active:bg-slate-100 transition-all"
+          >
+            <span className="text-xl">⚙️</span>
+            <span className="text-[11px] font-bold text-slate-600">ตั้งค่า</span>
           </button>
         </div>
       </nav>

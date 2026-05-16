@@ -16,29 +16,26 @@ interface Props {
 
 export default function BrandHeader({ variant = 'bar' }: Props) {
   if (variant === 'pill') {
-    // Floating Pill — กะทัดรัด ลอยกึ่งกลางบนพื้นหลังสีฟ้า
+    // Sponsor Badge — TMF logo (ซ้าย) | SayNo text (ขวา) — สลิม ไม่มีไอคอน
     return (
-      <div className="inline-flex items-center gap-2.5 bg-white rounded-full
-                      pl-3 pr-2.5 py-1.5
+      <div className="inline-flex items-center gap-2 bg-white rounded-full
+                      pl-2.5 pr-3 py-1
                       shadow-[0_8px_20px_-4px_rgba(0,0,0,0.18)]">
-        {/* ฝั่งซ้าย: SayNo (ข้อความสไตล์โลโก้) */}
-        <div className="flex items-center gap-1">
-          <span className="text-lg leading-none">🚭</span>
-          <div className="leading-none">
-            <p className="font-display font-extrabold text-detective-700 text-sm leading-none">
-              SayNo
-            </p>
-            <p className="text-[9px] font-semibold text-slate-500 mt-0.5 leading-none">
-              สู้บุหรี่ไฟฟ้า
-            </p>
-          </div>
-        </div>
+        {/* ฝั่งซ้าย: โลโก้กองทุนฯ (มาเป็นอันดับแรก) */}
+        <TMFLogo variant="bare" width={48} />
 
         {/* เส้นคั่นแนวตั้ง */}
         <div className="w-px h-7 bg-slate-200" />
 
-        {/* ฝั่งขวา: โลโก้กองทุนฯ */}
-        <TMFLogo variant="bare" width={56} />
+        {/* ฝั่งขวา: SayNo ข้อความล้วน — หนา ชัด */}
+        <div className="leading-none">
+          <p className="font-display font-extrabold text-detective-700 text-sm leading-none tracking-tight">
+            SayNo
+          </p>
+          <p className="text-[10px] font-bold text-slate-600 mt-0.5 leading-none">
+            สู้บุหรี่ไฟฟ้า
+          </p>
+        </div>
       </div>
     );
   }
