@@ -8,7 +8,6 @@ import { getLevelByXP } from '../lib/levels';
 import XPBar from '../components/XPBar';
 import Avatar from '../components/Avatar';
 import AvatarFolder from '../components/AvatarFolder';
-import TMFLogo from '../components/TMFLogo';
 
 // ============================================================================
 //  Profile — โทนสุภาพ คุมโทนเดียว (slate/lavender) ไม่มีรุ้ง
@@ -176,16 +175,10 @@ export default function Profile() {
           </div>
         </details>
 
-        {/* === Footer credit + โลโก้กองทุนพัฒนาสื่อฯ === */}
-        <div className="text-center pt-2 space-y-2">
-          <p className="text-[10px] text-slate-500 leading-relaxed px-2">
-            รับรองโดย <b className="text-slate-700">สำนักวิชาสาธารณสุขศาสตร์ ม.วลัยลักษณ์</b>
-          </p>
-          <div className="flex flex-col items-center">
-            <p className="text-[10px] text-slate-500 mb-1">สนับสนุนโดย</p>
-            <TMFLogo variant="block" width={130} />
-          </div>
-        </div>
+        {/* === Mini credit (เต็มอยู่ที่หน้าแรก + แท็บเครดิตในห้องสมุดความรู้) === */}
+        <p className="text-[10px] text-center text-slate-400 pt-2 leading-relaxed">
+          สนับสนุนโดย กองทุนพัฒนาสื่อฯ • รับรองโดย ม.วลัยลักษณ์
+        </p>
       </main>
     </div>
   );

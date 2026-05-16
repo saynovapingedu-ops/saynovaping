@@ -10,10 +10,12 @@
 //  → คัดลอกไว้ที่ public/brand/tmf-logo.png
 // ============================================================================
 
+import { asset } from '../lib/asset';
+
 interface Props {
-  /** 'inline' = แสดงคู่ข้อความ (Home footer), 'block' = แสดงเดี่ยวๆ ใหญ่ๆ (Certificate) */
-  variant?: 'inline' | 'block';
-  /** ความกว้างของกล่องโลโก้ (px) — height คำนวณจาก aspect ratio อัตโนมัติ */
+  /** 'inline' = กล่องขาวเล็กๆ, 'block' = ใหญ่กว่ามี border + caption ใต้, 'bare' = ไม่มีกล่อง (ใช้ใน header ที่ bg ขาวอยู่แล้ว) */
+  variant?: 'inline' | 'block' | 'bare';
+  /** ความกว้างของรูปโลโก้ (px) — height คำนวณจาก aspect ratio อัตโนมัติ */
   width?: number;
   /** caption ใต้โลโก้ */
   caption?: string;
@@ -21,9 +23,25 @@ interface Props {
 
 // aspect ratio ของไฟล์ต้นฉบับ 1778 x 1573 → 1.13:1
 const LOGO_ASPECT = 1778 / 1573;
+const LOGO_SRC = asset('brand/tmf-logo.png');
+const LOGO_ALT = 'กองทุนพัฒนาสื่อปลอดภัยและสร้างสรรค์ (Thai Media Fund)';
 
 export default function TMFLogo({ variant = 'inline', width = 120, caption }: Props) {
   const height = Math.round(width / LOGO_ASPECT);
+
+  if (variant === 'bare') {
+    // ไม่มีกล่อง — ใช้ใน header ที่พื้นเป็นขาวอยู่แล้ว (เลี่ยงกล่องซ้อนกล่อง)
+    return (
+      <img
+        src={LOGO_SRC}
+        alt={LOGO_ALT}
+        width={width}
+        height={height}
+        className="block flex-shrink-0"
+        loading="eager"
+      />
+    );
+  }
 
   if (variant === 'block') {
     return (
@@ -34,8 +52,8 @@ export default function TMFLogo({ variant = 'inline', width = 120, caption }: Pr
           style={{ width: width + 24 }}
         >
           <img
-            src="/brand/tmf-logo.png"
-            alt="กองทุนพัฒนาสื่อปลอดภัยและสร้างสรรค์ (Thai Media Fund)"
+            src={LOGO_SRC}
+            alt={LOGO_ALT}
             width={width}
             height={height}
             className="block w-full h-auto"
@@ -55,8 +73,8 @@ export default function TMFLogo({ variant = 'inline', width = 120, caption }: Pr
   return (
     <div className="inline-flex items-center gap-2 bg-white rounded-xl px-2.5 py-1.5 border border-slate-200">
       <img
-        src="/brand/tmf-logo.png"
-        alt="กองทุนพัฒนาสื่อปลอดภัยและสร้างสรรค์ (Thai Media Fund)"
+        src={LOGO_SRC}
+        alt={LOGO_ALT}
         width={width}
         height={height}
         className="block flex-shrink-0"

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
 import AvatarFolder from '../components/AvatarFolder';
+import TMFLogo from '../components/TMFLogo';
 
 function PDPAAccordion({ title, children }: { title: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -67,7 +68,23 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col p-6 max-w-md mx-auto relative">
+    <div className="min-h-screen flex flex-col max-w-md mx-auto relative">
+      {/* === Brand strip — โลโก้ TMF + ชื่อโปรเจกต์ ครั้งแรกที่เปิดแอป === */}
+      <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
+        <div className="flex-shrink-0">
+          <TMFLogo variant="bare" width={68} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-display font-extrabold text-detective-700 text-base leading-tight flex items-center gap-1">
+            🚭 SayNo<span className="text-slate-700">: สู้บุหรี่ไฟฟ้า</span>
+          </p>
+          <p className="text-[10px] text-slate-500 leading-snug mt-0.5">
+            สนับสนุนโดย <b className="text-detective-700">กองทุนพัฒนาสื่อปลอดภัยและสร้างสรรค์</b>
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-col flex-1 p-6">
       <div className="flex justify-center gap-2 mb-6">
         {[0, 1, 2].map(i => (
           <div
@@ -216,6 +233,7 @@ export default function Onboarding() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }

@@ -53,14 +53,29 @@ export default function Home() {
   // ===== Intro / Tutorial =====
   if (showIntro) {
     return (
-      <div className="min-h-screen flex flex-col p-4 max-w-md mx-auto">
+      <div className="min-h-screen flex flex-col max-w-md mx-auto">
+        {/* === Brand strip — ครั้งแรกที่ผู้ใช้เปิดแอป โลโก้ต้องเด่นตามคู่มือ CI === */}
+        <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
+          <div className="flex-shrink-0">
+            <TMFLogo variant="bare" width={68} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-display font-extrabold text-detective-700 text-base leading-tight flex items-center gap-1">
+              🚭 SayNo<span className="text-slate-700">: สู้บุหรี่ไฟฟ้า</span>
+            </p>
+            <p className="text-[10px] text-slate-500 leading-snug mt-0.5">
+              สนับสนุนโดย <b className="text-detective-700">กองทุนพัฒนาสื่อปลอดภัยและสร้างสรรค์</b>
+            </p>
+          </div>
+        </div>
+
         <AnimatePresence>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex-1 flex flex-col gap-3"
+            className="flex-1 flex flex-col gap-3 p-4"
           >
-            {/* Hero — รุ้งพาสเทล */}
+            {/* Hero — TMF blue */}
             <div className="rainbow-header rounded-3xl p-4 text-white shadow-glow flex items-center gap-3">
               <div className="text-5xl drop-shadow-lg">🔍</div>
               <div className="flex-1">
@@ -114,7 +129,24 @@ export default function Home() {
   // ===== Main game home =====
   return (
     <div className="min-h-full pb-24 relative">
-      {/* Header — รุ้ง 4 stop */}
+      {/* === Brand strip — ด้านบนสุด: โลโก้ TMF + ชื่อโปรเจกต์ ===
+           ตามคู่มือ CI ของกองทุนฯ: โลโก้ต้องโดดเด่น + รองพื้นขาว */}
+      <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
+        <div className="flex-shrink-0">
+          <TMFLogo variant="bare" width={68} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-display font-extrabold text-detective-700 text-base leading-tight flex items-center gap-1">
+            🚭 SayNo<span className="text-slate-700">: สู้บุหรี่ไฟฟ้า</span>
+          </p>
+          <p className="text-[10px] text-slate-500 leading-snug mt-0.5">
+            สนับสนุนโดย <b className="text-detective-700">กองทุนพัฒนาสื่อปลอดภัยและสร้างสรรค์</b><br/>
+            รับรองโดย ม.วลัยลักษณ์ • สำนักวิชาสาธารณสุขศาสตร์
+          </p>
+        </div>
+      </div>
+
+      {/* Header — TMF blue ไล่เฉด */}
       <header className="rainbow-header text-white px-5 pt-6 pb-7 rounded-b-[2rem] shadow-glow relative overflow-hidden">
         {/* subtle sparkle */}
         <div className="absolute top-4 right-5 text-white/50 text-base">✨</div>
@@ -323,19 +355,8 @@ export default function Home() {
           );
         })}
 
-        <div className="text-center mt-5 mb-2 space-y-2">
-          <p className="text-[11px] text-detective-600 font-bold">
-            🚭 SayNo:สู้บุหรี่ไฟฟ้า
-          </p>
-          <p className="text-[10px] text-slate-500 leading-relaxed px-4">
-            รับรองโดย <b className="text-slate-700">สำนักวิชาสาธารณสุขศาสตร์ ม.วลัยลักษณ์</b>
-          </p>
-          {/* === โลโก้กองทุนพัฒนาสื่อฯ — รองพื้นขาวตามคู่มือ CI === */}
-          <div className="flex flex-col items-center pt-1">
-            <p className="text-[10px] text-slate-500 mb-1">สนับสนุนโดย</p>
-            <TMFLogo variant="block" width={140} />
-          </div>
-        </div>
+        {/* footer ของ Home ตัดออก — แบรนด์ย้ายขึ้น header บนสุดแล้ว
+            (อาจารย์ทักว่าไม่ควรไว้ล่างสุด) */}
       </main>
 
       {/* ===== Sticky bottom nav — เห็นตลอดแม้ scroll ===== */}
