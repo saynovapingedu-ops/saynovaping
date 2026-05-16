@@ -6,7 +6,7 @@ import { SCENARIO_META, isStageUnlocked, CERT_STAGE_COUNT } from '../scenarios';
 import { SHOP_ITEMS } from '../lib/shopItems';
 import XPBar from '../components/XPBar';
 import Avatar from '../components/Avatar';
-import TMFLogo from '../components/TMFLogo';
+import BrandHeader from '../components/BrandHeader';
 import { sfx } from '../lib/sound';
 
 const INTRO_SEEN_KEY = 'hd_game_intro_seen_v1';
@@ -54,21 +54,7 @@ export default function Home() {
   if (showIntro) {
     return (
       <div className="min-h-screen flex flex-col max-w-md mx-auto">
-        {/* === Brand strip — ครั้งแรกที่ผู้ใช้เปิดแอป โลโก้ต้องเด่นตามคู่มือ CI === */}
-        <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
-          <div className="flex-shrink-0">
-            <TMFLogo variant="bare" width={68} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-display font-extrabold text-detective-700 text-base leading-tight flex items-center gap-1">
-              🚭 SayNo<span className="text-slate-700">: สู้บุหรี่ไฟฟ้า</span>
-            </p>
-            <p className="text-[10px] text-slate-500 leading-snug mt-0.5">
-              สนับสนุนโดย <b className="text-detective-700">กองทุนพัฒนาสื่อปลอดภัยและสร้างสรรค์</b>
-            </p>
-          </div>
-        </div>
-
+        <BrandHeader />
         <AnimatePresence>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -129,22 +115,7 @@ export default function Home() {
   // ===== Main game home =====
   return (
     <div className="min-h-full pb-24 relative">
-      {/* === Brand strip — ด้านบนสุด: โลโก้ TMF + ชื่อโปรเจกต์ ===
-           ตามคู่มือ CI ของกองทุนฯ: โลโก้ต้องโดดเด่น + รองพื้นขาว */}
-      <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
-        <div className="flex-shrink-0">
-          <TMFLogo variant="bare" width={68} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-display font-extrabold text-detective-700 text-base leading-tight flex items-center gap-1">
-            🚭 SayNo<span className="text-slate-700">: สู้บุหรี่ไฟฟ้า</span>
-          </p>
-          <p className="text-[10px] text-slate-500 leading-snug mt-0.5">
-            สนับสนุนโดย <b className="text-detective-700">กองทุนพัฒนาสื่อปลอดภัยและสร้างสรรค์</b><br/>
-            รับรองโดย ม.วลัยลักษณ์ • สำนักวิชาสาธารณสุขศาสตร์
-          </p>
-        </div>
-      </div>
+      <BrandHeader />
 
       {/* Header — TMF blue ไล่เฉด */}
       <header className="rainbow-header text-white px-5 pt-6 pb-7 rounded-b-[2rem] shadow-glow relative overflow-hidden">
