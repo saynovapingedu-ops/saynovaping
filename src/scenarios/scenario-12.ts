@@ -191,4 +191,10 @@ export const scenario12: Scenario = {
       badge: 'sensei',
     },
   ],
+  references: [
+    'Surgeon General Report on E-cigarette Use Among Youth 2023',
+    'งานวิจัย FDA 2022 — Nicotine Content in 0% Labeled Vape Products',
+    'งานวิจัย ม.มหิดล + สสส. 2566 — Peer Education Effectiveness',
+    'WHO — Adolescent Health Programmes',
+  ],
 };

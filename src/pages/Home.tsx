@@ -323,9 +323,13 @@ export default function Home() {
           );
         })}
 
-        <div className="text-center mt-4 mb-2">
+        <div className="text-center mt-4 mb-2 space-y-1">
           <p className="text-[11px] text-detective-400 font-semibold">
             🚭 SayNo:สู้บุหรี่ไฟฟ้า
+          </p>
+          <p className="text-[10px] text-gray-500 leading-relaxed px-4">
+            รับรองโดย <b>สำนักวิชาสาธารณสุขศาสตร์ ม.วลัยลักษณ์</b><br/>
+            สนับสนุนโดย <b className="text-warning-600">สำนักงานกองทุนสนับสนุนการสร้างเสริมสุขภาพ (สสส.)</b>
           </p>
         </div>
       </main>

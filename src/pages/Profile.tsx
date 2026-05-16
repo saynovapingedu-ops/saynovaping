@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
 import { BADGES } from '../lib/badges';
 import { TOTAL_STAGES } from '../scenarios';
@@ -7,6 +8,14 @@ import { getLevelByXP } from '../lib/levels';
 import XPBar from '../components/XPBar';
 import Avatar from '../components/Avatar';
 import AvatarFolder from '../components/AvatarFolder';
+
+// ============================================================================
+//  Profile — โทนสุภาพ คุมโทนเดียว (slate/lavender) ไม่มีรุ้ง
+//  - ใช้ min-h-screen + bg ทึบ → กลบ body background รุ้งพาสเทล
+//  - Accent เดียวคือ detective (ม่วงเข้ม) — ใช้เป็นจุดเน้นเฉพาะ
+//  - ทอง (warning) เก็บไว้ใช้แค่ปุ่ม Certificate ที่ต้องโดด
+//  - เหมาะทั้งเด็กและผู้ใหญ่ — ดูเรียบ ไม่ฉูดฉาด
+// ============================================================================
 
 export default function Profile() {
   const nav = useNavigate();
@@ -26,28 +35,44 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-full bg-detective-50 pb-8">
-      <header className="sticky top-0 bg-white shadow-sm p-3 flex items-center gap-3 z-10">
-        <button onClick={() => nav('/')} className="text-detective-500 px-2">←</button>
-        <h2 className="font-display font-bold text-detective-700">โปรไฟล์</h2>
+    // min-h-screen + bg ทึบ → กลบ body background รุ้ง
+    <div className="min-h-screen pb-10" style={{ background: '#F6F4FA' }}>
+      <header className="sticky top-0 bg-white border-b border-slate-200 px-3 py-3
+                         flex items-center gap-3 z-10">
+        <button
+          onClick={() => nav('/')}
+          className="text-slate-600 hover:text-detective-600 px-2 py-1.5 rounded-lg
+                     hover:bg-slate-100 active:scale-95 transition-colors"
+        >←</button>
+        <h2 className="font-display font-bold text-slate-800">โปรไฟล์</h2>
       </header>
 
-      <main className="max-w-md mx-auto p-4 space-y-4">
-        <div className="card">
-          <div className="flex items-center gap-3 mb-4">
+      <main className="max-w-md mx-auto p-4 space-y-3">
+        {/* === Hero card: solid white card, ไม่มี gradient รุ้ง === */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm"
+        >
+          <div className="flex items-center gap-4 mb-4">
             <button
               onClick={() => setEditAvatar(v => !v)}
-              className="rounded-full active:scale-95"
+              className="rounded-full active:scale-95 ring-2 ring-slate-200 ring-offset-2"
               aria-label="เปลี่ยนอวตาร"
             >
-              <Avatar preset={player.avatar} customId={player.customAvatarId} size={64} ring />
+              <Avatar preset={player.avatar} customId={player.customAvatarId} size={72} />
             </button>
-            <div className="flex-1">
-              <h3 className="font-display font-bold text-xl text-detective-700">{player.nickname}</h3>
-              <p className="text-sm text-gray-500">🔍 นักสืบสุขภาพ</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-display font-bold text-xl text-slate-800 truncate">
+                {player.nickname}
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {player.equippedTitle ? `⭐ ${player.equippedTitle}` : '🔍 นักสืบสุขภาพ'}
+              </p>
               <button
                 onClick={() => setEditAvatar(v => !v)}
-                className="text-xs text-detective-500 font-semibold mt-1 active:opacity-70"
+                className="text-[11px] text-detective-600 font-semibold mt-1.5 active:opacity-70
+                           bg-detective-50 border border-detective-100 rounded-full px-2 py-0.5"
               >
                 {editAvatar ? '✕ ปิด' : '✏️ เปลี่ยนอวตาร'}
               </button>
@@ -55,7 +80,11 @@ export default function Profile() {
           </div>
 
           {editAvatar && (
-            <div className="mb-4 p-3 rounded-xl bg-detective-50/60">
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mb-4 p-3 rounded-2xl bg-slate-50 border border-slate-200"
+            >
               <AvatarFolder
                 preset={player.avatar}
                 customId={player.customAvatarId}
@@ -64,60 +93,105 @@ export default function Profile() {
                   else setAvatar(preset, undefined);
                 }}
               />
-            </div>
+            </motion.div>
           )}
 
-          <XPBar />
+          {/* XPBar ใช้ variant light — track สีเทาอ่อน เข้ากับการ์ดขาว */}
+          <div className="pt-3 border-t border-slate-100">
+            <XPBar variant="light" />
+          </div>
+        </motion.div>
+
+        {/* === Stat row — การ์ดขาวล้วน ขอบเทาอ่อน เลขเป็นสีม่วงเดียว === */}
+        <div className="grid grid-cols-3 gap-2">
+          <StatCard label="Level" value={String(lv.level)} icon={lv.emoji} />
+          <StatCard label="ด่านที่จบ" value={`${player.stagesCompleted.length}/${TOTAL_STAGES}`} icon="🏁" />
+          <StatCard label="แบดจ์" value={`${earned.size}/${BADGES.length}`} icon="🎖" />
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
-          <div className="card text-center">
-            <p className="text-2xl font-bold text-detective-700">{lv.level}</p>
-            <p className="text-xs text-gray-500">Level</p>
+        {/* === Badges collection — ขาวล้วน ตัวที่ได้ปลด highlight ม่วงเบาๆ === */}
+        <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-display font-bold text-slate-800 flex items-center gap-1.5">
+              <span>🏅</span> Badges
+            </h4>
+            <span className="text-[11px] text-slate-500 bg-slate-100 rounded-full px-2 py-0.5">
+              {earned.size}/{BADGES.length}
+            </span>
           </div>
-          <div className="card text-center">
-            <p className="text-2xl font-bold text-success-600">{player.stagesCompleted.length}/{TOTAL_STAGES}</p>
-            <p className="text-xs text-gray-500">ด่านที่จบ</p>
-          </div>
-          <div className="card text-center">
-            <p className="text-2xl font-bold text-warning-500">{earned.size}</p>
-            <p className="text-xs text-gray-500">Badges</p>
-          </div>
-        </div>
-
-        <div className="card">
-          <h4 className="font-display font-bold text-detective-700 mb-3">🏅 Badges</h4>
+          <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+            ปลดล็อกจากการทำทักษะในด่านได้ครบ — แต่ละแบดจ์ตรงกับทักษะหนึ่งอย่าง
+          </p>
           <div className="grid grid-cols-3 gap-2">
             {BADGES.map(b => {
               const got = earned.has(b.id);
               return (
-                <div key={b.id} className={`p-2 rounded-xl text-center ${got ? 'bg-warning-50' : 'bg-gray-50 opacity-40'}`}>
-                  <div className="text-3xl">{b.emoji}</div>
-                  <p className="text-xs font-semibold mt-1">{b.name}</p>
+                <div
+                  key={b.id}
+                  title={b.description}
+                  className={`p-2 rounded-2xl text-center transition-all border ${
+                    got
+                      ? 'bg-detective-50 border-detective-200'
+                      : 'bg-slate-50 border-slate-100 opacity-50'
+                  }`}
+                >
+                  <div className={`text-3xl ${got ? '' : 'grayscale'}`}>{b.emoji}</div>
+                  <p className={`text-[10px] font-semibold mt-1 leading-tight ${
+                    got ? 'text-detective-700' : 'text-slate-500'
+                  }`}>
+                    {b.name}
+                  </p>
                 </div>
               );
             })}
           </div>
         </div>
 
+        {/* === Certificate button — ใช้สีทองเฉพาะตรงนี้เพื่อให้โดด === */}
         {player.certificateNo && (
-          <button onClick={() => nav('/certificate')} className="btn-secondary w-full">
-            🏆 ดู Certificate
+          <button
+            onClick={() => nav('/certificate')}
+            className="w-full rounded-2xl py-3 px-4 font-bold text-white shadow-sm active:scale-[0.99]
+                       bg-gradient-to-r from-warning-500 to-warning-600
+                       flex items-center justify-center gap-2 transition-transform"
+          >
+            <span>🏆</span> ดู Certificate
           </button>
         )}
 
-        <details className="card text-sm">
-          <summary className="font-semibold cursor-pointer">ข้อมูลความเป็นส่วนตัว</summary>
-          <div className="mt-3 space-y-2 text-gray-600">
-            <p>• User ID (hash): <code className="text-xs">{player.userIdHash.slice(0, 12)}...</code></p>
+        {/* === Privacy/data — ซ่อนใน details === */}
+        <details className="bg-white rounded-2xl border border-slate-200 text-sm">
+          <summary className="font-semibold cursor-pointer text-slate-700 px-4 py-3
+                              hover:bg-slate-50 rounded-2xl transition-colors">
+            🔒 ข้อมูลความเป็นส่วนตัว
+          </summary>
+          <div className="px-4 pb-4 pt-1 space-y-2 text-slate-600">
+            <p>• User ID (hash): <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">{player.userIdHash.slice(0, 12)}...</code></p>
             <p>• เริ่มเล่น: {player.createdAt && new Date(player.createdAt).toLocaleDateString('th-TH')}</p>
             <p>• เล่นล่าสุด: {player.lastActiveAt && new Date(player.lastActiveAt).toLocaleDateString('th-TH')}</p>
-            <button onClick={handleReset} className="text-danger-500 underline mt-2">
+            <button onClick={handleReset} className="text-danger-500 underline text-xs mt-1">
               ลบข้อมูลทั้งหมดและเริ่มใหม่
             </button>
           </div>
         </details>
+
+        {/* === Footer credit === */}
+        <p className="text-[10px] text-center text-slate-500 leading-relaxed pt-2 px-2">
+          รับรองโดย <b className="text-slate-700">สำนักวิชาสาธารณสุขศาสตร์ ม.วลัยลักษณ์</b><br/>
+          สนับสนุนโดย <b className="text-detective-700">สสส.</b>
+        </p>
       </main>
+    </div>
+  );
+}
+
+// ===== Stat card subcomponent — ขาวล้วน ตัวเลขสีม่วงเดียว =====
+function StatCard({ label, value, icon }: { label: string; value: string; icon: string }) {
+  return (
+    <div className="bg-white rounded-2xl p-3 text-center border border-slate-200 shadow-sm">
+      <div className="text-lg leading-none mb-1 opacity-80">{icon}</div>
+      <p className="text-xl font-bold leading-tight text-detective-700">{value}</p>
+      <p className="text-[10px] text-slate-500 mt-0.5">{label}</p>
     </div>
   );
 }

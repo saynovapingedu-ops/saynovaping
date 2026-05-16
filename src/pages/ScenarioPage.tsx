@@ -544,6 +544,23 @@ export default function ScenarioPage() {
                     +{currentNode.xp} XP
                   </motion.p>
 
+                  {/* === แหล่งอ้างอิงของด่าน — เพื่อความน่าเชื่อถือของเนื้อหา === */}
+                  {scenario.references && scenario.references.length > 0 && (
+                    <details className="relative text-left bg-white/70 rounded-xl border border-detective-100 p-3 mb-4">
+                      <summary className="cursor-pointer text-xs font-bold text-detective-700 flex items-center gap-1.5 select-none">
+                        <span>📚</span> แหล่งอ้างอิงของด่านนี้ ({scenario.references.length})
+                      </summary>
+                      <ul className="mt-2 space-y-1">
+                        {scenario.references.map((ref, i) => (
+                          <li key={i} className="text-[11px] text-gray-600 leading-relaxed flex gap-1.5">
+                            <span className="text-detective-400 flex-shrink-0">•</span>
+                            <span>{ref}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+
                   <div className="space-y-2 relative">
                     {canPlayNext && nextMeta && (
                       <button

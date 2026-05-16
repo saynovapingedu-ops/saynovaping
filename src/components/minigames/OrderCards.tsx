@@ -35,9 +35,11 @@ export default function OrderCards({ title, cards, correctOrder, onComplete }: P
 
   const handleSubmit = () => {
     setSubmitted(true);
-    const correct = order.every((c, i) => c.id === correctOrder[i]);
-    setTimeout(() => onComplete(correct), 1800);
+    // ไม่ auto-advance แล้ว — เด็กกดปุ่ม "ไปต่อ" เอง จะได้อ่านเฉลยทัน
   };
+
+  const allCorrect = order.every((c, i) => c.id === correctOrder[i]);
+  const correctCount = order.reduce((sum, c, i) => sum + (c.id === correctOrder[i] ? 1 : 0), 0);
 
   const isCardCorrect = (idx: number) => submitted && order[idx].id === correctOrder[idx];
   const isCardWrong   = (idx: number) => submitted && order[idx].id !== correctOrder[idx];
@@ -98,10 +100,29 @@ export default function OrderCards({ title, cards, correctOrder, onComplete }: P
         ))}
       </div>
 
-      {!submitted && (
+      {!submitted ? (
         <button onClick={handleSubmit} className="btn-primary w-full">
           ยืนยันลำดับ
         </button>
+      ) : (
+        <div className={`card text-center ${
+          allCorrect ? 'bg-success-50 border-l-4 border-success-500'
+                     : 'bg-warning-50 border-l-4 border-warning-500'
+        }`}>
+          <p className={`font-bold text-sm mb-1 ${
+            allCorrect ? 'text-success-600' : 'text-warning-700'
+          }`}>
+            {allCorrect ? '✓ เรียงถูกหมดเลย!' : `เรียงถูก ${correctCount}/${order.length} ใบ`}
+          </p>
+          <p className="text-xs text-gray-600 mb-3 leading-relaxed">
+            {allCorrect
+              ? 'จำลำดับนี้ไว้ — ใช้ได้จริงในชีวิตประจำวัน'
+              : 'ดูใบที่ขึ้น ✓ และ ✗ ก่อน แล้วลองทบทวนลำดับที่ถูกต้องในใจ'}
+          </p>
+          <button onClick={() => onComplete(allCorrect)} className="btn-primary w-full">
+            ไปต่อ →
+          </button>
+        </div>
       )}
     </div>
   );

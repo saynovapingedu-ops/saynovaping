@@ -83,4 +83,10 @@ export const scenario15: Scenario = {
       badge: 'sensei',
     },
   ],
+  references: [
+    'WHO Tobacco Cessation Guidelines 2023',
+    'ศจย. — Tobacco Control Research Center, Cohort Study 2024',
+    'สายด่วน 1600 — กระทรวงสาธารณสุข',
+    'WHO Behaviour Change Communication Framework',
+  ],
 };

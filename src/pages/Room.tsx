@@ -69,6 +69,15 @@ export default function Room() {
       </header>
 
       <main className="max-w-md mx-auto px-3 pt-3">
+        {/* === คำอธิบายสั้น — ครั้งแรกผู้เล่นจะรู้ว่าห้องนี้คืออะไร === */}
+        <div className="mb-3 rounded-2xl border-2 border-detective-200 bg-gradient-to-br from-detective-50 to-white p-2.5">
+          <p className="text-[11px] text-gray-700 leading-relaxed">
+            💡 <b className="text-detective-700">ห้องของคุณ</b> คือรางวัลสะสมจากการเล่น —
+            ยิ่งได้ <b>XP</b> เยอะ ยิ่งปลดล็อกของแต่งห้องได้มาก
+            (ไม่ต้องใช้เหรียญซื้อ — แตะของที่ปลดได้แล้วเพื่อรับ)
+          </p>
+        </div>
+
         {/* === Room visual === */}
         <div
           className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-xl mb-3 border-4 border-warning-300"

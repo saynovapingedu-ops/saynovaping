@@ -162,4 +162,9 @@ export const scenario05: Scenario = {
       badge: 'walk-away',
     },
   ],
+  references: [
+    'รายงานสำนักงาน กสทช. — Online Threats to Youth 2566',
+    'Common Sense Media — Online Safety for Teens',
+    'TikTok / Instagram / LINE — Community Guidelines',
+  ],
 };

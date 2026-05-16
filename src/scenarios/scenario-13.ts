@@ -101,4 +101,9 @@ export const scenario13: Scenario = {
       badge: 'media-literate',
     },
   ],
+  references: [
+    'Pediatrics 2023 — Youth Vape Use and Tobacco Initiation',
+    'National Academy of Sciences — Health Effects of E-Cigarettes',
+    'Harm Reduction Spectrum — UK Royal College of Physicians',
+  ],
 };

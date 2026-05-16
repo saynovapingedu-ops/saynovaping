@@ -193,6 +193,15 @@ export default function Shop() {
           );
         })()}
 
+        {/* คำอธิบายสั้น — เด็กจะรู้ว่าซื้อแล้วต้อง "สวมใส่" + "กำลังใช้" ต่างจาก "มีแล้ว" ยังไง */}
+        <div className="mb-3 rounded-2xl border border-detective-100 bg-detective-50/70 p-2.5">
+          <p className="text-[11px] text-gray-700 leading-relaxed">
+            💡 <b>การ์ดเหรียญ:</b> ปุ่ม <span className="font-semibold text-warning-600">🪙 ราคา</span> = ซื้อด้วยเหรียญ
+            • <span className="font-semibold text-detective-600">สวมใส่</span> = เอามาแต่งโปรไฟล์
+            • <span className="font-semibold text-success-600">✓ กำลังใช้</span> = ตอนนี้กำลังโชว์อยู่บนหน้าโปรไฟล์
+          </p>
+        </div>
+
         {/* Tabs */}
         <div className="grid grid-cols-4 gap-1.5 mb-4">
           {CATS.map(c => (

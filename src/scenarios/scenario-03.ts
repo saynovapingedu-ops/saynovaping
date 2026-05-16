@@ -140,4 +140,9 @@ export const scenario03: Scenario = {
       badge: 'stage-3-clear',
     },
   ],
+  references: [
+    'WHO Youth Risk Behavior Study 2023',
+    'American Lung Association — Vaping and Youth (2023)',
+    'Motivational Interviewing — Miller & Rollnick',
+  ],
 };

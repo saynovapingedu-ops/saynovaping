@@ -86,7 +86,7 @@ export const scenario14: Scenario = {
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'd-end',
-      fact: 'TikTok และ Reels รายงานว่ามีคลิปเกี่ยวกับ vape ที่ผ่านการ moderate ออกแล้วกว่า 1.4 ล้านคลิปในปี 2023 — แต่ยังเหลืออีกหลายแสนคลิปในระบบ',
+      fact: 'TikTok และ Reels รายงานว่ามีคลิปเกี่ยวกับ vape ที่ถูกตรวจสอบและลบออกจากระบบไปแล้วกว่า 1.4 ล้านคลิปในปี 2023 — แต่ก็ยังเหลืออีกหลายแสนคลิปที่ยังตรวจไม่พบ',
       source: 'TikTok Transparency Report 2023',
     },
     {
@@ -100,5 +100,12 @@ export const scenario14: Scenario = {
       xp: 90,
       badge: 'media-literate',
     },
+  ],
+  references: [
+    'TikTok Transparency Report 2023',
+    'CDC Youth Vaping Report 2023',
+    'Pediatrics 2023 — Vape to Cigarette Transition',
+    'รายงาน กสทช. 2566 — โฆษณาแฝงในโซเชียลมีเดีย',
+    'กระทรวงสาธารณสุข — สายด่วน 1600',
   ],
 };

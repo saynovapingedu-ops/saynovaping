@@ -97,7 +97,7 @@ export default function WordMatch({ title, pairs, onComplete }: Props) {
 
   const handleSubmit = () => {
     setSubmitted(true);
-    setTimeout(() => onComplete(correctCount === pairs.length), 1800);
+    // ไม่ auto-advance — รอเด็กกด "ไปต่อ" เอง จะได้เห็นเฉลยทุกคู่ก่อน
   };
 
   const isCorrect = (leftPairIdx: number) =>
@@ -200,10 +200,25 @@ export default function WordMatch({ title, pairs, onComplete }: Props) {
       )}
 
       {submitted && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center pt-2">
-          <p className="font-semibold">
-            จับคู่ถูก {correctCount}/{pairs.length}
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+          className={`card text-center ${
+            correctCount === pairs.length
+              ? 'bg-success-50 border-l-4 border-success-500'
+              : 'bg-warning-50 border-l-4 border-warning-500'
+          }`}>
+          <p className={`font-bold text-sm mb-1 ${
+            correctCount === pairs.length ? 'text-success-600' : 'text-warning-700'
+          }`}>
+            {correctCount === pairs.length
+              ? '✓ จับคู่ถูกหมดเลย!'
+              : `จับคู่ถูก ${correctCount}/${pairs.length} คู่`}
           </p>
+          <p className="text-xs text-gray-600 mb-3 leading-relaxed">
+            ดูคู่ที่ขึ้น ✓ และ ✗ ก่อน แล้วลองทบทวนคู่ที่ถูกในใจ
+          </p>
+          <button onClick={() => onComplete(correctCount === pairs.length)} className="btn-primary w-full">
+            ไปต่อ →
+          </button>
         </motion.div>
       )}
     </div>

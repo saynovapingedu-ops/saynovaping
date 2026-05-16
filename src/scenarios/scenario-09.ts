@@ -146,4 +146,10 @@ export const scenario09: Scenario = {
       badge: 'recovery-coach',
     },
   ],
+  references: [
+    'WHO Tobacco Cessation Guidelines 2023',
+    '5A Model — US Public Health Service Clinical Practice Guideline',
+    'สายด่วนเลิกบุหรี่ 1600 — กรมการแพทย์ กระทรวงสาธารณสุข',
+    'iCanQuit / Quitline — Cognitive Behavioral Apps for Smoking Cessation',
+  ],
 };

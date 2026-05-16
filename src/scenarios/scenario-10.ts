@@ -120,4 +120,11 @@ export const scenario10: Scenario = {
       badge: 'media-literate',
     },
   ],
+  references: [
+    'รายงานสำนักงาน กสทช. 2566',
+    'TikTok Community Guidelines / Meta Transparency Center',
+    'คณะแพทยศาสตร์ ม.มหิดล — งานวิจัยโลหะหนักใน vape',
+    'กรมควบคุมโรค — สายด่วน 1600',
+    'พ.ร.บ. ศุลกากร พ.ศ. 2560',
+  ],
 };

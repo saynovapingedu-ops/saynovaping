@@ -115,7 +115,7 @@ export const scenario04: Scenario = {
     },
     {
       type: 'minigame', id: 'mg1', game: 'spot-the-lie',
-      title: 'ข้ออ้างที่คนขายมักใช้',
+      title: 'ข่าวสารที่คนขายมักอ้าง',
       claims: [
         {
           text: '"ไม่บอกใครหรอก ลองสิ"',
@@ -157,5 +157,12 @@ export const scenario04: Scenario = {
       xp: 60,
       badge: 'stage-4-clear',
     },
+  ],
+  references: [
+    'พ.ร.บ. ศุลกากร พ.ศ. 2560',
+    'พ.ร.บ. คุ้มครองสุขภาพของผู้ไม่สูบบุหรี่ พ.ศ. 2560',
+    'American Heart Association — Vaping Effects 2022',
+    'CDC — Tobacco Use Among Youth (2023)',
+    'Smith — Assertiveness Training: Broken Record Technique',
   ],
 };

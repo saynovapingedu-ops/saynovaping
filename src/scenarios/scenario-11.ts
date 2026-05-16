@@ -157,4 +157,10 @@ export const scenario11: Scenario = {
       badge: 'family-care',
     },
   ],
+  references: [
+    'NIDA — Family-Based Treatment Research 2022',
+    'กรมสุขภาพจิต — แนวทางสื่อสารกับสมาชิกครอบครัวที่ใช้สารเสพติด',
+    'Secondhand Vapor Effects — American Lung Association',
+    'Harm Reduction International — Adolescent Approaches',
+  ],
 };

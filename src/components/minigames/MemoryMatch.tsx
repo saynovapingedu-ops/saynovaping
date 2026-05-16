@@ -24,6 +24,13 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+// ดึงอีโมจิตัวแรกออกมา — ใช้เป็น "คำใบ้" บนหลังการ์ดก่อนพลิก
+// regex ครอบคลุม emoji ทั่วไป รวมถึงตัวที่ใช้ ZWJ + Emoji Modifier
+function firstEmoji(text: string): string {
+  const match = text.match(/\p{Extended_Pictographic}(?:‍\p{Extended_Pictographic})*/u);
+  return match ? match[0] : '🔍';
+}
+
 // Concentration / memory match — เปิดทีละ 2 ใบ ถ้าเข้าคู่จะค้างเปิด
 export default function MemoryMatch({ title, pairs, onComplete }: Props) {
   const slots = useMemo<CardSlot[]>(() => {
@@ -55,23 +62,15 @@ export default function MemoryMatch({ title, pairs, onComplete }: Props) {
       const reveal = pairs[s1.pairIdx].reveal;
       setRevealing({ pairIdx: s1.pairIdx, reveal });
       setOpened([]);
-      const t = setTimeout(() => setRevealing(null), 900);
+      const t = setTimeout(() => setRevealing(null), 1600);  // เพิ่มเวลาอ่านเฉลย
       return () => clearTimeout(t);
     } else {
-      const t = setTimeout(() => setOpened([]), 600);
+      const t = setTimeout(() => setOpened([]), 900);  // เพิ่มเวลาให้จำตำแหน่งทัน
       return () => clearTimeout(t);
     }
   }, [opened, slots, pairs]);
 
-  useEffect(() => {
-    if (allMatched) {
-      const t = setTimeout(() => {
-        // win conditions: ใช้ครั้งน้อย = ครบ; ถือว่าผ่านเสมอเพราะจับครบ
-        onComplete(true);
-      }, 700);
-      return () => clearTimeout(t);
-    }
-  }, [allMatched, onComplete]);
+  // ไม่ auto-onComplete แล้ว — รอเด็กกดปุ่ม "ไปต่อ" เอง (อ่านเฉลยทุกคู่ทัน)
 
   const handleClick = (slot: CardSlot) => {
     if (matched.has(slot.uid)) return;
@@ -84,7 +83,10 @@ export default function MemoryMatch({ title, pairs, onComplete }: Props) {
     <div className="space-y-3">
       <h3 className="font-display font-bold text-lg text-detective-700">🧠 {title}</h3>
       <p className="text-sm text-gray-600">
-        เปิดทีละ 2 ใบ — จับคู่พฤติกรรมกับผลที่เกิดให้ถูก
+        เปิดทีละ 2 ใบ — จับ <b className="text-detective-700">พฤติกรรม (สีม่วง)</b> คู่กับ <b className="text-warning-600">ผลที่ตามมา (สีเหลือง)</b>
+      </p>
+      <p className="text-[11px] text-gray-500 leading-relaxed -mt-1">
+        💡 <b>คำใบ้:</b> ดูอีโมจิบนหลังการ์ดก่อนพลิก — ช่วยจำตำแหน่งง่ายขึ้น
       </p>
 
       <div className="flex justify-between text-xs px-1">
@@ -98,6 +100,9 @@ export default function MemoryMatch({ title, pairs, onComplete }: Props) {
         {slots.map(slot => {
           const isOpen = opened.includes(slot.uid) || matched.has(slot.uid);
           const isMatched = matched.has(slot.uid);
+          const hintEmoji = firstEmoji(slot.text);
+          // ฝั่ง a = พฤติกรรม (ฟ้า), ฝั่ง b = ผลที่ตามมา (เหลือง)
+          const isActionSide = slot.side === 'a';
           return (
             <button
               key={slot.uid}
@@ -112,13 +117,20 @@ export default function MemoryMatch({ title, pairs, onComplete }: Props) {
                 transition={{ duration: 0.25, ease: 'easeOut' }}
                 style={{ transformStyle: 'preserve-3d' }}
               >
-                {/* Card BACK (face down) */}
+                {/* Card BACK — โชว์อีโมจิ + ป้าย "พฤติกรรม/ผล" เป็นคำใบ้ */}
                 <div
-                  className="absolute inset-0 rounded-xl bg-gradient-to-br from-detective-500 to-detective-700
-                             flex items-center justify-center text-white text-2xl shadow-md border-2 border-detective-300"
+                  className={`absolute inset-0 rounded-xl
+                              flex flex-col items-center justify-center shadow-md border-2 ${
+                    isActionSide
+                      ? 'bg-gradient-to-br from-detective-400 to-detective-600 border-detective-300'
+                      : 'bg-gradient-to-br from-warning-400 to-warning-500 border-warning-300'
+                  }`}
                   style={{ backfaceVisibility: 'hidden' }}
                 >
-                  🔍
+                  <div className="text-3xl drop-shadow-sm">{hintEmoji}</div>
+                  <p className="text-[9px] font-bold text-white/95 mt-0.5 tracking-wide">
+                    {isActionSide ? 'พฤติกรรม' : 'ผลที่ตามมา'}
+                  </p>
                 </div>
                 {/* Card FRONT (face up) */}
                 <div
@@ -126,7 +138,9 @@ export default function MemoryMatch({ title, pairs, onComplete }: Props) {
                               text-center text-[11px] font-semibold leading-tight shadow-md border-2 ${
                     isMatched
                       ? 'bg-success-50 border-success-500 text-success-700'
-                      : 'bg-white border-warning-400 text-detective-700'
+                      : isActionSide
+                      ? 'bg-detective-50 border-detective-400 text-detective-700'
+                      : 'bg-warning-50 border-warning-400 text-warning-700'
                   }`}
                   style={{
                     backfaceVisibility: 'hidden',
@@ -156,11 +170,18 @@ export default function MemoryMatch({ title, pairs, onComplete }: Props) {
       </AnimatePresence>
 
       {allMatched && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card text-center">
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+          className="card text-center bg-success-50 border-l-4 border-success-500">
           <p className="text-2xl mb-1">🎉</p>
-          <p className="font-semibold text-detective-700">
+          <p className="font-bold text-success-600 text-sm mb-1">
             จับครบ {pairs.length} คู่ใน {attempts} ครั้ง
           </p>
+          <p className="text-xs text-gray-600 mb-3 leading-relaxed">
+            ทุกพฤติกรรมมีผลตามมา — นักสืบที่ดีเห็นทั้งสิ่งที่ทำและสิ่งที่ตามมา
+          </p>
+          <button onClick={() => onComplete(true)} className="btn-primary w-full">
+            ไปต่อ →
+          </button>
         </motion.div>
       )}
     </div>

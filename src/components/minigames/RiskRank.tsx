@@ -67,7 +67,7 @@ export default function RiskRank({ title, buckets, items, onComplete }: Props) {
 
   const handleSubmit = () => {
     setSubmitted(true);
-    setTimeout(() => onComplete(correctCount === items.length), 1800);
+    // ไม่ auto-advance — รอเด็กกด "ไปต่อ" จะได้อ่านเฉลยทันก่อน
   };
 
   const itemsInBucket = (bucketId: string) =>
@@ -192,10 +192,25 @@ export default function RiskRank({ title, buckets, items, onComplete }: Props) {
       )}
 
       {submitted && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card text-center">
-          <p className="font-semibold">
-            จัดถูก {correctCount}/{items.length}
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+          className={`card text-center ${
+            correctCount === items.length
+              ? 'bg-success-50 border-l-4 border-success-500'
+              : 'bg-warning-50 border-l-4 border-warning-500'
+          }`}>
+          <p className={`font-bold text-sm mb-1 ${
+            correctCount === items.length ? 'text-success-600' : 'text-warning-700'
+          }`}>
+            {correctCount === items.length
+              ? '✓ จัดถูกหมดเลย!'
+              : `จัดถูก ${correctCount}/${items.length} ชิ้น`}
           </p>
+          <p className="text-xs text-gray-600 mb-3 leading-relaxed">
+            ดูช่องที่ขึ้น ✓ และ ✗ ก่อน แล้วทบทวนระดับความเสี่ยงที่ถูกในใจ
+          </p>
+          <button onClick={() => onComplete(correctCount === items.length)} className="btn-primary w-full">
+            ไปต่อ →
+          </button>
         </motion.div>
       )}
     </div>

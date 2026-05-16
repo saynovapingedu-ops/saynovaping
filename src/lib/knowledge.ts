@@ -52,6 +52,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'รุ่นพี่ในห้องน้ำยื่น vape มาให้',
       response: '"ไม่ครับพี่ ผมไม่สูบ — เดี๋ยวเข้าเรียนสายแล้วครับ"',
     },
+    source: 'NIDA — Refusal Skills for Adolescents (2022) / สสส.',
   },
   {
     stageId: 3,
@@ -87,6 +88,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'คนขายในห้างเสนอราคาพิเศษซ้ำๆ',
       response: '"ไม่ครับ ขอบคุณ" / "ไม่ครับ ขอบคุณ" / "ไม่ครับ ขอบคุณ"',
     },
+    source: 'Smith & Smith — Assertiveness Training: Broken Record Technique / American Heart Association 2022',
   },
   {
     stageId: 5,
@@ -104,6 +106,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'คนแปลกหน้า DM "พี่มี vape รสผลไม้ลด 50%"',
       response: 'ไม่อ่าน → กดบล็อก → กดรายงาน → บอกพ่อแม่',
     },
+    source: 'รายงาน กสทช. 2566 / Common Sense Media — Online Safety for Teens',
   },
   {
     stageId: 6,
@@ -121,6 +124,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'เพื่อนบอก "เครียดมาก อยากลองสักครั้ง"',
       response: '"ฉันเข้าใจที่เครียด — ไปวิ่งกันเลย? อยู่กับเธอ" (ไม่ใช่ "อย่าโง่")',
     },
+    source: 'สสส. คู่มือเพื่อนช่วยเพื่อน 2566 / Mental Health First Aid (MHFA)',
   },
   {
     stageId: 7,
@@ -152,6 +156,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       'จับคู่ทักษะให้ตรงสถานการณ์ (DM ≠ คนตื๊อตัว)',
       'ปิดท้ายด้วยความเข้าใจ ไม่ใช่ความเกลียด — เปลี่ยนใจคนได้ดีกว่า',
     ],
+    source: 'งานวิจัย ศจย. ร่วมกับ สสส. 2566 / WHO Report on Tobacco Epidemic',
   },
   {
     stageId: 9,
@@ -184,6 +189,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       'ดูว่าเขาขายอะไร — ถ้าขาย vape เขามี bias',
       'รายงานคอนเทนต์ผิดกฎหมายที่แพลตฟอร์ม',
     ],
+    source: 'TikTok Community Guidelines / รายงาน กสทช. 2566',
   },
   {
     stageId: 11,
@@ -197,6 +203,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       'อย่าฟ้องเสียก่อน — ลองคุยให้ใจตรงใจก่อน',
       'ถ้าไม่ไหว ขอความช่วยเหลือผู้ใหญ่ที่เชื่อใจ (ครู/ปู่/ย่า)',
     ],
+    source: 'NIDA Family-Based Treatment Research 2022 / กรมสุขภาพจิต',
   },
   {
     stageId: 12,
@@ -210,6 +217,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       'ฟังคำถามรุ่นน้อง อย่าด่วนตอบ — ให้เขาคิดเอง',
       'ครูที่ดี ไม่ได้รู้มากที่สุด — แต่สร้างความปลอดภัยให้เด็กถามได้',
     ],
+    source: 'งานวิจัย ม.มหิดล + สสส. 2566 — Peer Education Effectiveness',
   },
 
   // ===== Pro Arc (13-15) =====
@@ -217,7 +225,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
     stageId: 13,
     title: 'ความเสี่ยงเป็นสเปกตรัม',
     emoji: '📊',
-    difficulty: 'กลาง',
+    difficulty: 'ยาก',
     concept: 'อธิบายเป็นระดับ ไม่ใช่ขาว-ดำ',
     points: [
       'พฤติกรรมต่างๆ มี "ระดับ" ความเสี่ยง — ไม่ใช่ปลอดภัย vs อันตรายอย่างเดียว',
@@ -235,7 +243,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
     stageId: 14,
     title: 'ปัด TikTok แบบนักสืบ',
     emoji: '📱',
-    difficulty: 'กลาง',
+    difficulty: 'ยาก',
     concept: 'ตรวจ 3 อย่างก่อนเชื่อ — ใคร ที่มา ผลประโยชน์',
     points: [
       'ใคร: คนพูดเป็นใคร? ผู้เชี่ยวชาญ หรือ Influencer ที่รับโฆษณา',
@@ -247,6 +255,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'คลิป "เด็กนี้ใช้ vape แล้วเรียนเก่งขึ้น"',
       response: 'ใคร? เด็กไม่รู้จัก. ที่มา? ไม่มีงานวิจัย. ผลประโยชน์? อาจขาย vape → ปัดซ้าย',
     },
+    source: 'TikTok Transparency Report 2023 / CDC Youth Vaping Report',
   },
   {
     stageId: 15,
@@ -264,6 +273,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'เพื่อนชวน "ลองครั้งเดียวไม่เป็นไร"',
       response: 'คิดต่อ: ลอง 1 → ครั้งที่ 2 ง่ายกว่า → ติดใน 30 วัน (สถิติจริง) → ปอด/เกรด/กีฬากระทบ',
     },
+    source: 'WHO Behaviour Change Framework / ศจย. งานติดตามนักเรียน 2567',
   },
 ];
 

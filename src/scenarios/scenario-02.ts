@@ -145,4 +145,9 @@ export const scenario02: Scenario = {
       badge: 'stage-2-clear',
     },
   ],
+  references: [
+    'สสส. — งานวิจัยพฤติกรรมเยาวชน 2566',
+    'NIDA — Refusal Skills for Adolescents (2022)',
+    'WHO Adolescent Health — Substance Use Prevention',
+  ],
 };

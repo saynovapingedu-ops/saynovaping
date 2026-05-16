@@ -149,6 +149,8 @@ export interface Scenario {
   startNode: string;
   intro?: string[];
   nodes: ScenarioNode[];
+  /** แหล่งอ้างอิงรวมของด่าน — แสดงตอนจบด่านเพื่อความน่าเชื่อถือของเนื้อหา */
+  references?: string[];
 }
 
 export interface Badge {

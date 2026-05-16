@@ -18,7 +18,7 @@ export const scenario01: Scenario = {
     },
     {
       type: 'dialogue', id: 'intro2', speaker: 'doctor', next: 'intro3',
-      text: 'หน้าที่ของเราคือดูว่าแต่ละข้ออ้าง — จริงหรือเท็จ พร้อมไหม?',
+      text: 'หน้าที่ของเราคือดูว่าแต่ละข่าวสาร — จริงหรือเท็จ พร้อมไหม?',
     },
     {
       type: 'choice', id: 'intro3', speaker: 'player',
@@ -58,7 +58,7 @@ export const scenario01: Scenario = {
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
       title: 'Detective\'s Note 📓',
-      body: 'จดไว้: เวลาเจอข้ออ้างเรื่องบุหรี่ไฟฟ้าในออนไลน์ — อย่าเพิ่งเชื่อทันที ลองหาแหล่งอ้างอิงที่น่าเชื่อถือก่อน เช่น ศจย., สสส., CDC',
+      body: 'จดไว้: เวลาเจอข่าวสารเรื่องบุหรี่ไฟฟ้าในออนไลน์ — อย่าเพิ่งเชื่อทันที ลองหาแหล่งอ้างอิงที่น่าเชื่อถือก่อน เช่น ศจย., สสส., CDC',
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'end1',
@@ -72,5 +72,12 @@ export const scenario01: Scenario = {
       xp: 50,
       badge: 'stage-1-clear',
     },
+  ],
+  references: [
+    'ศูนย์วิจัยและจัดการความรู้เพื่อการควบคุมยาสูบ (ศจย.)',
+    'CDC — Centers for Disease Control and Prevention',
+    'US National Library of Medicine — รายงาน EVALI',
+    'WHO Tobacco Free Initiative',
+    'พ.ร.บ. ศุลกากร พ.ศ. 2560 + คำสั่ง คสช.',
   ],
 };

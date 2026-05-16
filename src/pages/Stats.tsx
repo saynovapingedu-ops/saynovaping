@@ -162,6 +162,9 @@ export default function Stats() {
           <h3 className="font-display font-bold text-detective-700 mb-2 flex items-center gap-2">
             <span>🎖</span> แบดจ์ ({player.badges.length}/{BADGES.length})
           </h3>
+          <p className="text-[11px] text-gray-500 -mt-1 mb-2 leading-relaxed">
+            💡 ตัวเลข <b>{player.badges.length}/{BADGES.length}</b> = ได้แล้ว / มีให้สะสมทั้งหมด — แบดจ์ปลดล็อกตามทักษะที่ทำในด่าน
+          </p>
           <div className="grid grid-cols-4 gap-2">
             {BADGES.map(b => {
               const earned = earnedBadges.has(b.id);
@@ -193,6 +196,11 @@ export default function Stats() {
             ← กลับหน้าแรก
           </button>
         </div>
+
+        <p className="text-[10px] text-center text-gray-500 leading-relaxed mt-4 px-2">
+          รับรองโดย <b className="text-detective-700">สำนักวิชาสาธารณสุขศาสตร์ ม.วลัยลักษณ์</b><br/>
+          สนับสนุนโดย <b className="text-warning-600">สสส.</b>
+        </p>
       </main>
     </div>
   );

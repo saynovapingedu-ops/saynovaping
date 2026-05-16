@@ -96,7 +96,7 @@ export const scenario08: Scenario = {
         { left: 'รุ่นพี่ตื๊อในห้องน้ำ',     right: 'สูตรปฏิเสธ 3 ขั้น' },
         { left: 'พี่ Vapor ใน DM',          right: 'Walk Away — บล็อก/รายงาน' },
         { left: 'เพื่อนเครียดอยากลอง',    right: 'Listen-Validate-Care-Lead' },
-        { left: 'เจอข้ออ้างใน Facebook',   right: 'ตรวจสอบแหล่งอ้างอิง' },
+        { left: 'เจอข่าวสารใน Facebook',   right: 'ตรวจสอบแหล่งอ้างอิง' },
         { left: 'คุณลุงขายของผิดกฎหมาย', right: 'แจ้ง 1422 / สสส.' },
       ],
       next: 'phase4-intro',
@@ -224,5 +224,12 @@ export const scenario08: Scenario = {
       xp: 200,
       badge: 'health-legend',
     },
+  ],
+  references: [
+    'BMJ 2022 — Vaping vs Smoking Cessation Meta-Analysis',
+    'WHO Report on the Global Tobacco Epidemic 2023',
+    'CDC Youth Vaping Surveillance Report 2023',
+    'American Lung Association — Secondhand Vapor 2023',
+    'งานวิจัย ศจย. ร่วมกับ สสส. 2566',
   ],
 };

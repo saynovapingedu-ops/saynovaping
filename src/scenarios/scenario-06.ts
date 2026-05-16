@@ -43,8 +43,8 @@ export const scenario06: Scenario = {
     },
     {
       type: 'feedback', id: 'okay1', next: 'choice1',
-      title: 'อย่าเพิ่งสั่งสอน',
-      body: 'คนที่กำลังเครียด เมื่อโดนห้ามตรงๆ จะรู้สึกถูกตัดสิน — เริ่มจาก "ฟัง" ก่อน เขาถึงจะเปิดใจรับฟังเรา',
+      title: 'เริ่มจาก "ฟัง" ก่อน',
+      body: 'คนที่กำลังเครียด เมื่อโดนห้ามตรงๆ มักจะรู้สึกถูกตัดสิน — ลองเริ่มจาก "ฟัง" ก่อน เขาจะเปิดใจรับฟังเรามากขึ้น',
     },
     {
       type: 'feedback', id: 'okay2', next: 'choice1',
@@ -77,8 +77,8 @@ export const scenario06: Scenario = {
     },
     {
       type: 'feedback', id: 'wrong1', next: 'choice2',
-      title: 'อย่ามองเบาความรู้สึกเพื่อน',
-      body: '"แค่อดทน" คือประโยคที่ทำให้คนเครียดรู้สึกแย่ลง — ยอมรับความรู้สึกเขาก่อน แล้วค่อยเสนอทางออก',
+      title: 'ลองรับฟังความรู้สึกเพื่อนก่อน',
+      body: 'การพูดว่า "แค่อดทน" อาจทำให้เพื่อนรู้สึกว่าคนๆ นั้นไม่เข้าใจเขา — ลองยอมรับความรู้สึกเขาก่อน แล้วค่อยเสนอทางออกร่วมกัน',
     },
     {
       type: 'feedback', id: 'okay3', next: 'choice2',
@@ -155,5 +155,11 @@ export const scenario06: Scenario = {
       xp: 70,
       badge: 'buddy-saver',
     },
+  ],
+  references: [
+    'กรมสุขภาพจิต กระทรวงสาธารณสุข — สายด่วน 1323',
+    'Mental Health First Aid (MHFA) — Youth Module',
+    'สสส. — คู่มือเพื่อนช่วยเพื่อน 2566',
+    'Listen-Validate-Care-Lead — Adapted from clinical communication training',
   ],
 };

@@ -26,16 +26,13 @@ export default function SwipeDecide({ title, cards, onComplete }: Props) {
     const correct = chose === current.isTrue;
     setResults(r => [...r, correct]);
     setRevealing({ correct, reveal: current.reveal });
-    setTimeout(() => {
-      setRevealing(null);
-      if (idx + 1 >= cards.length) {
-        const allCorrect = correctCount + (correct ? 1 : 0) === cards.length;
-        setIdx(idx + 1);
-        setTimeout(() => onComplete(allCorrect), 600);
-      } else {
-        setIdx(idx + 1);
-      }
-    }, 1400);
+    // ไม่ auto-advance — รอเด็กกด "ถัดไป" จะได้อ่านเฉลยทัน
+  };
+
+  const next = () => {
+    if (!revealing) return;
+    setRevealing(null);
+    setIdx(idx + 1);
   };
 
   const handleDragEnd = (_: unknown, info: PanInfo) => {
@@ -145,12 +142,37 @@ export default function SwipeDecide({ title, cards, onComplete }: Props) {
         </div>
       )}
 
+      {/* ปุ่มถัดไป — กดเองหลังอ่านเฉลย */}
+      {!done && revealing && (
+        <button
+          onClick={next}
+          className="btn-primary w-full"
+        >
+          {idx + 1 >= cards.length ? '🎯 ดูคะแนนรวม →' : 'ถัดไป →'}
+        </button>
+      )}
+
       {done && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card text-center">
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+          className={`card text-center ${
+            correctCount === cards.length
+              ? 'bg-success-50 border-l-4 border-success-500'
+              : 'bg-warning-50 border-l-4 border-warning-500'
+          }`}>
           <p className="text-2xl mb-1">🎯</p>
-          <p className="font-semibold text-detective-700">
+          <p className={`font-bold text-sm mb-1 ${
+            correctCount === cards.length ? 'text-success-600' : 'text-warning-700'
+          }`}>
             ตอบถูก {correctCount}/{cards.length}
           </p>
+          <p className="text-xs text-gray-600 mb-3 leading-relaxed">
+            {correctCount === cards.length
+              ? 'ปัดเก่งทุกใบ — เป็น TikTok Detective ตัวจริงแล้ว'
+              : 'ลองทบทวนใบที่ปัดผิดในใจ ก่อนไปต่อ'}
+          </p>
+          <button onClick={() => onComplete(correctCount === cards.length)} className="btn-primary w-full">
+            ไปต่อ →
+          </button>
         </motion.div>
       )}
     </div>
