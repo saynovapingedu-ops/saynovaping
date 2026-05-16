@@ -114,88 +114,108 @@ export default function Home() {
 
   // ===== Main game home =====
   return (
-    <div className="min-h-full pb-24 relative">
-      <BrandHeader />
-
-      {/* Header — TMF blue ไล่เฉด */}
-      <header className="rainbow-header text-white px-5 pt-6 pb-7 rounded-b-[2rem] shadow-glow relative overflow-hidden">
+    <div className="min-h-screen pb-24 relative bg-white">
+      {/* ===== Blue zone — ขยายขึ้นสุด ไม่มี white bar กั้นอีกแล้ว ===== */}
+      <section className="rainbow-header text-white relative overflow-hidden
+                          pt-[max(1.25rem,env(safe-area-inset-top))]
+                          px-5 pb-14">
         {/* subtle sparkle */}
-        <div className="absolute top-4 right-5 text-white/50 text-base">✨</div>
-        <div className="absolute bottom-2 left-6 text-white/40 text-sm">⭐</div>
+        <div className="absolute top-20 right-6 text-white/40 text-base pointer-events-none">✨</div>
+        <div className="absolute bottom-16 left-6 text-white/30 text-sm pointer-events-none">⭐</div>
 
-        <div className="flex items-center gap-3 relative">
-          <Avatar
-            preset={player.avatar}
-            customId={player.customAvatarId}
-            size={56}
-            ring={!equippedFrameClass}
-            className={equippedFrameClass}
-          />
-          <div className="flex-1 min-w-0">
-            <p className="text-white/85 text-xs">
-              {player.equippedTitle ? `⭐ ${player.equippedTitle}` : '🔍 นักสืบสุขภาพ'}
-            </p>
-            <h2 className="font-display font-extrabold text-xl truncate drop-shadow">
-              {player.nickname || 'ผู้เล่น'}
-            </h2>
-            {(player.streakDays || 0) > 0 && (
-              <p className="text-white/85 text-[11px] flex items-center gap-1">
-                🔥 streak {player.streakDays} วัน
+        {/* ===== Floating Pill (รวมโลโก้สองตัว) — ชิดขวา ===== */}
+        <div className="flex justify-end mb-6">
+          <BrandHeader variant="pill" />
+        </div>
+
+        {/* ===== โซนโปรไฟล์ ===== */}
+        <div className="max-w-md mx-auto">
+          <div className="flex items-center gap-3 relative">
+            <Avatar
+              preset={player.avatar}
+              customId={player.customAvatarId}
+              size={56}
+              ring={!equippedFrameClass}
+              className={equippedFrameClass}
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-white/85 text-xs">
+                {player.equippedTitle ? `⭐ ${player.equippedTitle}` : '🔍 นักสืบสุขภาพ'}
               </p>
-            )}
+              <h2 className="font-display font-extrabold text-xl truncate drop-shadow">
+                {player.nickname || 'ผู้เล่น'}
+              </h2>
+              {(player.streakDays || 0) > 0 && (
+                <p className="text-white/85 text-[11px] flex items-center gap-1">
+                  🔥 streak {player.streakDays} วัน
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <button
+                onClick={() => { sfx.click(); nav('/profile'); }}
+                className="bg-white/15 hover:bg-white/25 backdrop-blur-md
+                           border border-white/25 rounded-2xl p-2
+                           transition-all active:scale-95"
+                aria-label="โปรไฟล์"
+              >
+                <span className="text-base">👤</span>
+              </button>
+              <button
+                onClick={() => { sfx.click(); nav('/settings'); }}
+                className="bg-white/15 hover:bg-white/25 backdrop-blur-md
+                           border border-white/25 rounded-2xl p-2
+                           transition-all active:scale-95"
+                aria-label="ตั้งค่า"
+              >
+                <span className="text-base">⚙️</span>
+              </button>
+            </div>
           </div>
-          <div className="flex flex-col gap-1.5">
+
+          {/* ===== Glass cards: เหรียญ + ห้อง ===== */}
+          <div className="mt-4 grid grid-cols-2 gap-2">
             <button
-              onClick={() => { sfx.click(); nav('/profile'); }}
-              className="bg-white/25 hover:bg-white/35 backdrop-blur-sm rounded-2xl p-2
-                         transition-all active:scale-95"
-              aria-label="โปรไฟล์"
+              onClick={() => { sfx.click(); nav('/shop'); }}
+              className="flex items-center justify-between
+                         bg-white/15 hover:bg-white/20 backdrop-blur-md
+                         border border-white/25 rounded-2xl px-3 py-2.5
+                         active:scale-[0.99] transition-all"
             >
-              <span className="text-base">👤</span>
+              <span className="flex items-center gap-1.5">
+                <span className="text-lg">🪙</span>
+                <span className="font-bold text-sm">{player.coins || 0}</span>
+              </span>
+              <span className="text-[11px] font-semibold flex items-center gap-1">
+                🛍 ร้านค้า →
+              </span>
             </button>
             <button
-              onClick={() => { sfx.click(); nav('/settings'); }}
-              className="bg-white/25 hover:bg-white/35 backdrop-blur-sm rounded-2xl p-2
-                         transition-all active:scale-95"
-              aria-label="ตั้งค่า"
+              onClick={() => { sfx.click(); nav('/room'); }}
+              className="flex items-center justify-between
+                         bg-white/15 hover:bg-white/20 backdrop-blur-md
+                         border border-white/25 rounded-2xl px-3 py-2.5
+                         active:scale-[0.99] transition-all"
             >
-              <span className="text-base">⚙️</span>
+              <span className="text-[11px] font-semibold flex items-center gap-1">
+                🏠 ห้องของฉัน
+              </span>
+              <span className="text-base">→</span>
             </button>
           </div>
-        </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <button
-            onClick={() => { sfx.click(); nav('/shop'); }}
-            className="flex items-center justify-between bg-white/25 backdrop-blur-sm
-                       border border-white/30 rounded-2xl px-3 py-2.5 active:scale-[0.99] transition-all"
-          >
-            <span className="flex items-center gap-1.5">
-              <span className="text-lg">🪙</span>
-              <span className="font-bold text-sm">{player.coins || 0}</span>
-            </span>
-            <span className="text-[11px] font-semibold flex items-center gap-1">
-              🛍 ร้านค้า →
-            </span>
-          </button>
-          <button
-            onClick={() => { sfx.click(); nav('/room'); }}
-            className="flex items-center justify-between bg-white/25 backdrop-blur-sm
-                       border border-white/30 rounded-2xl px-3 py-2.5 active:scale-[0.99] transition-all"
-          >
-            <span className="text-[11px] font-semibold flex items-center gap-1">
-              🏠 ห้องของฉัน
-            </span>
-            <span className="text-base">→</span>
-          </button>
+          {/* ===== Glass: หลอด XP ===== */}
+          <div className="mt-3 bg-white/15 backdrop-blur-md border border-white/25
+                          rounded-2xl p-3 shadow-inner">
+            <XPBar variant="dark" />
+          </div>
         </div>
+      </section>
 
-        <div className="mt-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl p-3 shadow-inner">
-          <XPBar variant="dark" />
-        </div>
-      </header>
-
-      <main className="max-w-md mx-auto px-4 mt-5">
+      {/* ===== White sheet ขอบโค้งซ้อนทับสีฟ้า ===== */}
+      <main className="max-w-md mx-auto px-4 pt-6 -mt-8 relative z-10
+                       bg-white rounded-t-[28px]
+                       shadow-[0_-6px_20px_-4px_rgba(0,0,0,0.08)]">
         {certEligible && !player.certificateNo && (
           <div className="card relative overflow-hidden mb-4 border border-warning-300
                           bg-warning-50">

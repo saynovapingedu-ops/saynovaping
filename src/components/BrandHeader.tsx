@@ -1,25 +1,56 @@
 // ============================================================================
-//  BrandHeader — แถบโลโก้ด้านบนสุดของแอป
-//  ใช้ร่วมกัน 3 จุด: Onboarding / Home intro / Home main
+//  BrandHeader — แถบโลโก้ของแอป (รองรับ 2 รูปแบบ)
+//    - variant 'bar'  : แถบเต็มกว้าง พื้นขาว ใช้ใน Onboarding / Home intro
+//    - variant 'pill' : Floating Pill สำหรับลอยบนพื้นหลังสี (ใช้ใน Home main)
 //
 //  ตามคู่มือ CI กองทุนพัฒนาสื่อฯ:
 //    - โลโก้รองพื้นขาว เด่นชัด
-//    - ไม่ใช้กรอบเส้น stroke
-//    - ไม่บีบ/ยืด/หมุน — ใช้ aspect ratio ของไฟล์จริง
+//    - ไม่ใช้กรอบเส้น stroke / ไม่บีบ/ยืด/หมุน
 // ============================================================================
 
 import TMFLogo from './TMFLogo';
 
-export default function BrandHeader() {
+interface Props {
+  variant?: 'bar' | 'pill';
+}
+
+export default function BrandHeader({ variant = 'bar' }: Props) {
+  if (variant === 'pill') {
+    // Floating Pill — ออกแบบให้ลอยอยู่บนพื้นหลังสีฟ้า ตามสเปคใหม่
+    return (
+      <div className="inline-flex items-center gap-3 bg-white rounded-[28px]
+                      pl-4 pr-3 py-2
+                      shadow-[0_8px_20px_-4px_rgba(0,0,0,0.18)]">
+        {/* ฝั่งซ้าย: SayNo (ข้อความสไตล์โลโก้) */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-2xl leading-none">🚭</span>
+          <div className="leading-none">
+            <p className="font-display font-extrabold text-detective-700 text-lg leading-none">
+              SayNo
+            </p>
+            <p className="text-[10px] font-semibold text-slate-500 mt-0.5 leading-none">
+              สู้บุหรี่ไฟฟ้า
+            </p>
+          </div>
+        </div>
+
+        {/* เส้นคั่นแนวตั้ง */}
+        <div className="w-px h-9 bg-slate-200" />
+
+        {/* ฝั่งขวา: โลโก้กองทุนฯ */}
+        <TMFLogo variant="bare" width={68} />
+      </div>
+    );
+  }
+
+  // default 'bar' — แถบเต็มกว้าง (Onboarding / Home intro)
   return (
     <header className="bg-white border-b border-slate-200 px-4 py-3
                        flex items-center justify-between gap-3">
-      {/* โลโก้กองทุนฯ — ใหญ่ ชัดเจน (left) */}
       <div className="flex-shrink-0">
         <TMFLogo variant="bare" width={120} />
       </div>
 
-      {/* ชื่อโปรเจกต์ — right, ขนาดสมดุลกับโลโก้ */}
       <div className="text-right">
         <p className="font-display font-extrabold text-detective-700 text-xl leading-tight">
           🚭 SayNo
