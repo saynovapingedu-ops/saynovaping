@@ -1,10 +1,10 @@
 import type { Scenario } from '../types';
 
-// ด่าน 8 (BOSS) — บุก Vapor Corp: รวมทุกทักษะ ผสมมินิเกม 4 แบบ
+// ด่าน 8 (บอสใหญ่) — บุก Vapor Corp: รวมทุกทักษะ ผสมมินิเกม 4 แบบ
 export const scenario08: Scenario = {
   id: 8,
   title: 'บุก Vapor Corp',
-  subtitle: 'BOSS — รวมพลังนักสืบสุขภาพทั้งหมด',
+  subtitle: 'ด่านบอสใหญ่ — รวมพลังนักสืบสุขภาพทั้งหมด',
   estMinutes: 12,
   startNode: 'intro1',
   intro: [
@@ -64,7 +64,7 @@ export const scenario08: Scenario = {
         {
           text: '"บุหรี่ไฟฟ้าช่วยให้คนเลิกบุหรี่มวนได้"',
           isLie: true,
-          reveal: 'เท็จ — งานวิจัยพบว่าผู้ใช้ vape มักกลายเป็นใช้ทั้งสองอย่าง (dual use) ไม่ใช่เลิกได้จริง',
+          reveal: 'เท็จ — งานวิจัยพบว่าผู้ใช้บุหรี่ไฟฟ้ามักกลายเป็นใช้ทั้งสองอย่าง (dual use = ใช้ทั้งบุหรี่ไฟฟ้าและบุหรี่ปกติคู่กัน) ไม่ใช่เลิกได้จริง',
           source: 'BMJ 2022 / WHO Report on Tobacco Epidemic',
         },
         {
@@ -95,9 +95,9 @@ export const scenario08: Scenario = {
       pairs: [
         { left: 'รุ่นพี่ตื๊อในห้องน้ำ',     right: 'สูตรปฏิเสธ 3 ขั้น',
           source: 'NIDA — Refusal Skills for Adolescents (2022)' },
-        { left: 'พี่ Vapor ใน DM',          right: 'Walk Away — บล็อก/รายงาน',
+        { left: 'พี่ Vapor ในข้อความส่วนตัว',  right: 'ถอย — บล็อก/รายงาน',
           source: 'Common Sense Media — Online Safety / รายงาน กสทช. 2566' },
-        { left: 'เพื่อนเครียดอยากลอง',    right: 'Listen-Validate-Care-Lead',
+        { left: 'เพื่อนเครียดอยากลอง',        right: 'ฟัง-ยอมรับ-ห่วงใย-นำพา',
           source: 'Mental Health First Aid (MHFA) Youth Module' },
         { left: 'เจอข่าวสารใน Facebook',   right: 'ตรวจสอบแหล่งอ้างอิง',
           source: 'CRAAP Test — California State University Library' },
@@ -150,21 +150,21 @@ export const scenario08: Scenario = {
           sentence: 'เมื่อโดนตื๊อต่อ — ใช้เทคนิค ___ Record',
           options: ['Broken', 'Music'],
           correctIndex: 0,
-          reveal: 'Broken Record = ยืนยันคำตอบเดิมซ้ำๆ จนเขาเลิกตื๊อเอง',
+          reveal: 'ยืนยันคำเดิม (Broken Record) = พูดคำตอบเดิมซ้ำๆ จนคนตื๊อเลิกตื๊อเอง',
           source: 'Smith — Assertiveness Training: Broken Record Technique',
         },
         {
           sentence: 'เมื่อเจอภัยออนไลน์ — หยุด → บล็อก → ___ → บอกผู้ใหญ่',
           options: ['รายงาน', 'แชร์ต่อ'],
           correctIndex: 0,
-          reveal: 'Walk Away 4 ขั้น — "รายงาน" บัญชีให้แพลตฟอร์มลบ ป้องกันคนต่อไปด้วย',
+          reveal: '"ถอย" 4 ขั้น (Walk Away) — "รายงาน" บัญชีให้แพลตฟอร์มลบ ป้องกันคนต่อไปด้วย',
           source: 'Common Sense Media — Online Safety for Teens',
         },
         {
           sentence: 'การช่วยเพื่อนเริ่มต้นจากการ ___ ก่อนการสั่งสอน',
           options: ['ฟัง', 'เถียง'],
           correctIndex: 0,
-          reveal: 'Listen-Validate-Care-Lead — "ฟัง" คือก้าวแรกที่เปิดประตูให้เพื่อนรับฟังเรา',
+          reveal: 'ฟัง-ยอมรับ-ห่วงใย-นำพา — "ฟัง" คือก้าวแรกที่เปิดประตูให้เพื่อนรับฟังเรา',
           source: 'Mental Health First Aid (MHFA) Youth Module',
         },
       ],
@@ -212,7 +212,7 @@ export const scenario08: Scenario = {
     {
       type: 'feedback', id: 'okay-final', next: 'final-choice',
       title: 'ลองอีกครั้ง',
-      body: 'BOSS ก็เคยเป็นคน — การปิดท้ายด้วยความเข้าใจ มีพลังเปลี่ยนใจคนได้มากกว่าการกล่าวโทษ',
+      body: 'ตัวร้ายก็เคยเป็นคน — การปิดท้ายด้วยความเข้าใจ มีพลังเปลี่ยนใจคนได้มากกว่าการกล่าวโทษ',
     },
     {
       type: 'dialogue', id: 'right-final', speaker: 'vapor', next: 'feedback1',

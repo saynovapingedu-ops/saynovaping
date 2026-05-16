@@ -1,9 +1,7 @@
 import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAvatarStore, fileToResizedDataUrl } from '../store/avatarStore';
-
-const PRESETS = [1, 2, 3, 4];
-const PRESET_EMOJI = ['🧒', '👧', '👦', '🧑'];
+import { PLAYER_CHARACTERS } from '../lib/characters';
 
 interface Props {
   preset: number;
@@ -11,7 +9,7 @@ interface Props {
   onPick: (preset: number, customId?: string) => void;
 }
 
-// โฟลเดอร์รูปอวตาร: รวม preset + รูปที่ผู้เล่นอัปโหลดเอง
+// โฟลเดอร์รูปอวตาร — 5 ตัวละครเริ่มต้น (PNG) + รูปที่ผู้เล่นอัปโหลดเอง
 export default function AvatarFolder({ preset, customId, onPick }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -39,7 +37,6 @@ export default function AvatarFolder({ preset, customId, onPick }: Props) {
         const baseName = file.name.replace(/\.[^.]+$/, '').slice(0, 24);
         last = addAvatar(baseName || 'อวตารใหม่', dataUrl);
       }
-      // ถ้าอัปโหลดสำเร็จ → เลือกใบล่าสุดให้อัตโนมัติ
       if (last) onPick(0, last.id);
     } catch (err: unknown) {
       setError((err as Error)?.message || 'อัปโหลดไม่สำเร็จ');
@@ -53,19 +50,23 @@ export default function AvatarFolder({ preset, customId, onPick }: Props) {
     e.stopPropagation();
     if (!confirm('ลบรูปอวตารนี้ไหม?')) return;
     removeAvatar(id);
-    // ถ้าลบรูปที่กำลังใช้อยู่ → กลับไป preset 1
     if (customId === id) onPick(1, undefined);
   };
+
+  // หาตัวละครที่ active เพื่อโชว์คำแนะนำตัว
+  const activeCharacter = !customId
+    ? PLAYER_CHARACTERS.find(c => c.preset === preset)
+    : undefined;
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-detective-700">📁 โฟลเดอร์อวตาร</p>
+        <p className="text-sm font-semibold text-detective-700">📁 เลือกตัวละคร</p>
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={busy}
-          className="text-xs font-semibold bg-gradient-to-r from-detective-500 to-detective-600
+          className="text-xs font-semibold bg-detective-600 hover:bg-detective-700
                      text-white rounded-lg px-3 py-1.5 active:scale-95 shadow-sm
                      disabled:opacity-60"
         >
@@ -88,23 +89,39 @@ export default function AvatarFolder({ preset, customId, onPick }: Props) {
         </p>
       )}
 
+      {/* แนะนำตัวละครที่เลือก — โทนเดียวกับตัวละคร */}
+      {activeCharacter && (
+        <div className="bg-detective-50 border border-detective-200 rounded-xl p-2.5 text-center">
+          <p className="text-xs font-bold text-detective-700">
+            ✨ {activeCharacter.label}
+          </p>
+          <p className="text-[11px] text-slate-600 mt-0.5">{activeCharacter.tagline}</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-4 gap-2">
-        {/* preset emoji avatars */}
-        {PRESETS.map(n => {
-          const active = !customId && preset === n;
+        {/* 5 ตัวละครหลัก — รูป PNG จริง */}
+        {PLAYER_CHARACTERS.map(c => {
+          const active = !customId && preset === c.preset;
           return (
             <button
-              key={`preset-${n}`}
+              key={c.id}
               type="button"
-              onClick={() => onPick(n, undefined)}
-              className={`relative aspect-square rounded-2xl text-3xl flex items-center justify-center
+              onClick={() => onPick(c.preset, undefined)}
+              title={`${c.label} — ${c.tagline}`}
+              className={`relative aspect-square rounded-2xl overflow-hidden
                           transition-all border-2 ${
                 active
-                  ? 'bg-gradient-to-br from-detective-400 to-detective-600 border-detective-500 shadow-md scale-105'
-                  : 'bg-white border-detective-100 active:scale-95'
+                  ? 'border-detective-500 shadow-md scale-105'
+                  : 'border-slate-200 active:scale-95 hover:border-detective-300'
               }`}
             >
-              {PRESET_EMOJI[n - 1]}
+              <img
+                src={c.src}
+                alt={c.label}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
               {active && (
                 <span className="absolute -top-1 -right-1 bg-success-500 text-white text-[10px]
                                  rounded-full w-5 h-5 flex items-center justify-center shadow">
@@ -115,7 +132,7 @@ export default function AvatarFolder({ preset, customId, onPick }: Props) {
           );
         })}
 
-        {/* custom uploaded avatars */}
+        {/* รูปที่ผู้เล่นอัปโหลด */}
         <AnimatePresence>
           {avatars.map(av => {
             const active = customId === av.id;
@@ -135,7 +152,7 @@ export default function AvatarFolder({ preset, customId, onPick }: Props) {
                               border-2 transition-all ${
                     active
                       ? 'border-detective-500 shadow-md scale-105'
-                      : 'border-detective-100 active:scale-95'
+                      : 'border-slate-200 active:scale-95'
                   }`}
                 >
                   <img src={av.dataUrl} alt={av.name} className="w-full h-full object-cover" />
@@ -161,13 +178,13 @@ export default function AvatarFolder({ preset, customId, onPick }: Props) {
           })}
         </AnimatePresence>
 
-        {/* upload tile */}
+        {/* tile อัปโหลดเพิ่ม */}
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={busy}
-          className="aspect-square rounded-2xl border-2 border-dashed border-detective-200
-                     bg-detective-50/50 text-detective-500 flex flex-col items-center justify-center
+          className="aspect-square rounded-2xl border-2 border-dashed border-slate-300
+                     bg-slate-50 text-slate-500 flex flex-col items-center justify-center
                      active:scale-95 disabled:opacity-50"
         >
           <span className="text-2xl leading-none">＋</span>
@@ -175,8 +192,8 @@ export default function AvatarFolder({ preset, customId, onPick }: Props) {
         </button>
       </div>
 
-      <p className="text-[11px] text-gray-500 leading-relaxed">
-        💡 อัปโหลดรูปอนิเมะหรือรูปที่คุณชอบเป็นอวตาร — รองรับ PNG / JPG / WEBP, สูงสุด 10MB ต่อรูป
+      <p className="text-[11px] text-slate-500 leading-relaxed">
+        💡 มี 5 ตัวละครให้เลือก แต่ละตัวมีบุคลิกของตัวเอง — หรืออัปโหลดรูปอนิเมะ/รูปที่ชอบเป็นอวตารก็ได้
         <br />
         ระบบจะย่อรูปให้อัตโนมัติ และเก็บไว้ในเครื่องของคุณเท่านั้น
       </p>

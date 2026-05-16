@@ -19,7 +19,7 @@ export const scenario12: Scenario = {
     },
     {
       type: 'dialogue', id: 'd2', speaker: 'narrator', next: 'choice1',
-      text: 'เอมตื่นเต้นและไว้ใจคุณ — แต่เธอเล่าว่าในห้องเรียนมีเพื่อนเริ่มลอง vape แล้ว',
+      text: 'เอมตื่นเต้นและไว้ใจคุณ — แต่เธอเล่าว่าในห้องเรียนมีเพื่อนเริ่มลองบุหรี่ไฟฟ้าแล้ว',
     },
     {
       type: 'choice', id: 'choice1', speaker: 'player',
@@ -51,7 +51,7 @@ export const scenario12: Scenario = {
       title: 'Phase 1 — ทดสอบเอม: จริงหรือเท็จ',
       claims: [
         {
-          text: '"พี่ในโรงเรียนบอกว่าใช้ vape ผ่อนคลาย ไม่อันตราย"',
+          text: '"พี่ในโรงเรียนบอกว่าใช้บุหรี่ไฟฟ้าผ่อนคลาย ไม่อันตราย"',
           isLie: true,
           reveal: 'เท็จ — นิโคตินรบกวนสมองวัยรุ่นที่ยังพัฒนา ทำให้สมาธิลดและเครียดง่ายขึ้น',
           source: 'Surgeon General Report 2023',
@@ -106,11 +106,11 @@ export const scenario12: Scenario = {
       pairs: [
         { left: 'ตื๊อในห้องน้ำ',         right: 'สูตรปฏิเสธ 3 ขั้น',
           source: 'NIDA Refusal Skills 2022' },
-        { left: 'รุ่นพี่ลดราคา + ตื๊อต่อ', right: 'Broken Record',
+        { left: 'รุ่นพี่ลดราคา + ตื๊อต่อ', right: 'ยืนยันคำเดิม (Broken Record)',
           source: 'Smith — Assertiveness Training' },
-        { left: 'คนแปลกหน้าใน DM',     right: 'Walk Away (บล็อก/รายงาน)',
+        { left: 'คนแปลกหน้าในข้อความส่วนตัว', right: 'ถอย (Walk Away — บล็อก/รายงาน)',
           source: 'Common Sense Media — Online Safety' },
-        { left: 'เพื่อนสนิทเครียด ',      right: 'Listen-Validate-Care-Lead',
+        { left: 'เพื่อนสนิทเครียด ',      right: 'ฟัง-ยอมรับ-ห่วงใย-นำพา',
           source: 'Mental Health First Aid (MHFA) Youth Module' },
         { left: 'เห็นโพสต์โฆษณาแฝง',   right: 'แยกแยะ + รายงาน',
           source: 'รายงาน กสทช. 2566 + TikTok Community Guidelines' },
@@ -189,7 +189,7 @@ export const scenario12: Scenario = {
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'end1',
-      fact: 'แนวคิด Peer Education พบว่ามีประสิทธิผลในการลดสารเสพติดในวัยรุ่นไทย — รุ่นพี่สอนรุ่นน้อง ลด vape ได้ 45% ในกลุ่มทดลอง',
+      fact: 'แนวคิด "เพื่อนสอนเพื่อน" (Peer Education) พบว่ามีประสิทธิผลในการลดสารเสพติดในวัยรุ่นไทย — รุ่นพี่สอนรุ่นน้อง ลดการใช้บุหรี่ไฟฟ้าได้ 45% ในกลุ่มทดลอง',
       source: 'งานวิจัย ม.มหิดล + สสส. 2566',
     },
     {

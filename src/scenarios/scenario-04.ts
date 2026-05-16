@@ -1,10 +1,10 @@
 import type { Scenario } from '../types';
 
-// ด่าน 4 — ห้างใหญ่หลังเลิกเรียน: Broken Record (ยืนยันคำตอบเดิมซ้ำๆ)
+// ด่าน 4 — ห้างใหญ่หลังเลิกเรียน: ยืนยันคำเดิม (เทคนิคพูดคำตอบเดิมซ้ำๆ จนคนตื๊อเลิก)
 export const scenario04: Scenario = {
   id: 4,
   title: 'ห้างใหญ่หลังเลิกเรียน',
-  subtitle: 'Broken Record — ยืนยันคำตอบเดิมไม่หวั่น',
+  subtitle: 'ยืนยันคำเดิม (Broken Record) — ยืนยันคำตอบเดิมไม่หวั่น',
   estMinutes: 6,
   startNode: 'intro1',
   intro: [
@@ -57,7 +57,7 @@ export const scenario04: Scenario = {
     },
     {
       type: 'choice', id: 'choice2', speaker: 'player',
-      prompt: 'พี่เขาตื๊อต่อ — Broken Record คือต้องยืนยัน "คำเดิม" ไม่เปลี่ยน',
+      prompt: 'พี่เขาตื๊อต่อ — ยืนยันคำเดิม (Broken Record) คือต้องยืนยัน "คำเดิม" ไม่เปลี่ยน',
       choices: [
         {
           label: 'ไม่ครับพี่ ผมไม่สูบ',
@@ -66,24 +66,24 @@ export const scenario04: Scenario = {
         {
           label: 'เอ่อ... ก็ลดเยอะนะ ลองนิดเดียวมั้ง',
           next: 'wrong2', xp: 0,
-          reflection: 'หลักการ Broken Record คือไม่หวั่นไหวกับข้อเสนอที่เพิ่มขึ้น',
+          reflection: 'หลักการ ยืนยันคำเดิม (Broken Record) คือไม่หวั่นไหวกับข้อเสนอที่เพิ่มขึ้น',
         },
         {
           label: 'งั้นขอเปลี่ยนเป็นเครื่องดื่มดีกว่า',
           next: 'okay2', xp: 15,
-          reflection: 'เปลี่ยนเรื่องได้ แต่ Broken Record ต้องการให้ยืนคำเดิมก่อน',
+          reflection: 'เปลี่ยนเรื่องได้ แต่ ยืนยันคำเดิม (Broken Record) ต้องการให้ยืนคำเดิมก่อน',
         },
       ],
     },
     {
       type: 'feedback', id: 'wrong2', next: 'choice2',
       title: '⚠️ อย่าใจอ่อน',
-      body: 'นิโคตินทำให้ "ลองครั้งเดียว" กลายเป็น "ครั้งต่อไป" — Broken Record ต้องคงคำเดิมเด็ดขาด',
+      body: 'นิโคตินทำให้ "ลองครั้งเดียว" กลายเป็น "ครั้งต่อไป" — ยืนยันคำเดิม (Broken Record) ต้องคงคำเดิมเด็ดขาด',
     },
     {
       type: 'feedback', id: 'okay2', next: 'choice2',
       title: 'ใจเย็นๆ',
-      body: 'เปลี่ยนเรื่องได้ก็จริง แต่ Broken Record คือ "พูดประโยคเดิม" ซ้ำจนเขาเลิกตื๊อ — ลองยืนยันอีกครั้ง',
+      body: 'เปลี่ยนเรื่องได้ก็จริง แต่ ยืนยันคำเดิม (Broken Record) คือ "พูดประโยคเดิม" ซ้ำจนเขาเลิกตื๊อ — ลองยืนยันอีกครั้ง',
     },
     {
       type: 'dialogue', id: 'attempt2', speaker: 'shopkeeper', next: 'choice3',
@@ -100,14 +100,14 @@ export const scenario04: Scenario = {
         {
           label: 'พี่อย่ามายุ่งกับผม',
           next: 'okay3', xp: 10,
-          reflection: 'หงุดหงิดได้ แต่ Broken Record คือสงบและคงคำเดิม',
+          reflection: 'หงุดหงิดได้ แต่ ยืนยันคำเดิม (Broken Record) คือสงบและคงคำเดิม',
         },
       ],
     },
     {
       type: 'feedback', id: 'okay3', next: 'choice3',
       title: 'ใจเย็น',
-      body: 'Broken Record ที่ทรงพลังที่สุด คือพูดประโยคเดิม ด้วยน้ำเสียงปกติ ไม่หงุดหงิด — เดี๋ยวเขาเลิกเอง',
+      body: 'ยืนยันคำเดิม (Broken Record) ที่ทรงพลังที่สุด คือพูดประโยคเดิม ด้วยน้ำเสียงปกติ ไม่หงุดหงิด — เดี๋ยวเขาเลิกเอง',
     },
     {
       type: 'dialogue', id: 'right1', speaker: 'shopkeeper', next: 'mg1',
@@ -120,7 +120,7 @@ export const scenario04: Scenario = {
         {
           text: '"ไม่บอกใครหรอก ลองสิ"',
           isLie: true,
-          reveal: 'เท็จ — กฎหมายไทยห้ามครอบครอง vape ไม่ว่าใครจะบอกหรือไม่ ก็ผิดกฎหมายอยู่ดี',
+          reveal: 'เท็จ — กฎหมายไทยห้ามครอบครองบุหรี่ไฟฟ้า ไม่ว่าใครจะบอกหรือไม่ ก็ผิดกฎหมายอยู่ดี',
           source: 'พ.ร.บ. ศุลกากร พ.ศ. 2560',
         },
         {
@@ -143,7 +143,7 @@ export const scenario04: Scenario = {
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
       title: 'Detective\'s Note 📓',
-      body: 'Broken Record คือเทคนิคยืนยันคำตอบเดิมโดยไม่ต้องโต้เถียง — สงบ ชัดเจน ไม่เปลี่ยน เดี๋ยวคนชวนเลิกตื๊อเอง',
+      body: 'ยืนยันคำเดิม (Broken Record) คือเทคนิคยืนยันคำตอบเดิมโดยไม่ต้องโต้เถียง — สงบ ชัดเจน ไม่เปลี่ยน เดี๋ยวคนชวนเลิกตื๊อเอง',
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'end1',
@@ -153,7 +153,7 @@ export const scenario04: Scenario = {
     {
       type: 'end', id: 'end1',
       title: 'จบด่าน 4!',
-      message: 'คุณยืนหยัดได้ในสถานการณ์กดดัน — ทักษะ "Broken Record" ปลดล็อก',
+      message: 'คุณยืนหยัดได้ในสถานการณ์กดดัน — ทักษะ "ยืนยันคำเดิม (Broken Record)" ปลดล็อก',
       xp: 60,
       badge: 'stage-4-clear',
     },

@@ -5,6 +5,7 @@ import { getLevelByXP, getNextLevel, getProgressToNextLevel, LEVELS, TIER_INFO }
 import { BADGES } from '../lib/badges';
 import { SCENARIO_META } from '../scenarios';
 import Avatar from '../components/Avatar';
+import TMFLogo from '../components/TMFLogo';
 import { sfx } from '../lib/sound';
 
 export default function Stats() {
@@ -197,10 +198,15 @@ export default function Stats() {
           </button>
         </div>
 
-        <p className="text-[10px] text-center text-gray-500 leading-relaxed mt-4 px-2">
-          รับรองโดย <b className="text-detective-700">สำนักวิชาสาธารณสุขศาสตร์ ม.วลัยลักษณ์</b><br/>
-          สนับสนุนโดย <b className="text-warning-600">สสส.</b>
-        </p>
+        <div className="text-center mt-5 space-y-2">
+          <p className="text-[10px] text-slate-500 leading-relaxed px-2">
+            รับรองโดย <b className="text-slate-700">สำนักวิชาสาธารณสุขศาสตร์ ม.วลัยลักษณ์</b>
+          </p>
+          <div className="flex flex-col items-center">
+            <p className="text-[10px] text-slate-500 mb-1">สนับสนุนโดย</p>
+            <TMFLogo variant="block" width={130} />
+          </div>
+        </div>
       </main>
     </div>
   );

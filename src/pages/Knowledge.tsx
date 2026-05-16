@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sfx } from '../lib/sound';
+import TMFLogo from '../components/TMFLogo';
 
 // ===== เนื้อหาความรู้เรื่องบุหรี่ไฟฟ้า — สำหรับ ม.ต้น =====
 
@@ -405,12 +406,15 @@ export default function Knowledge() {
                 </div>
               ))}
 
-              <div className="card-hero text-center py-3 mt-2">
-                <p className="text-[11px] text-gray-600 leading-relaxed">
+              <div className="card-hero text-center py-4 mt-2 space-y-2">
+                <p className="text-[11px] text-slate-600 leading-relaxed">
                   เนื้อหาผ่านการประเมินค่าความเที่ยงตรง (IOC) จากผู้เชี่ยวชาญ<br/>
-                  <span className="text-detective-700 font-semibold">รับรองโดย สำนักวิชาสาธารณสุขศาสตร์ มหาวิทยาลัยวลัยลักษณ์</span><br/>
-                  <span className="text-warning-600 font-semibold">สนับสนุนโดย สำนักงานกองทุนสนับสนุนการสร้างเสริมสุขภาพ (สสส.)</span>
+                  <span className="text-detective-700 font-semibold">รับรองโดย สำนักวิชาสาธารณสุขศาสตร์ ม.วลัยลักษณ์</span>
                 </p>
+                <div className="flex flex-col items-center pt-1">
+                  <p className="text-[10px] text-slate-500 mb-1.5">สนับสนุนโดย</p>
+                  <TMFLogo variant="block" width={160} />
+                </div>
               </div>
             </motion.div>
           )}
@@ -424,12 +428,11 @@ export default function Knowledge() {
         </button>
 
         <div className="mt-4 space-y-1 text-center">
-          <p className="text-[11px] text-detective-400 font-semibold">
+          <p className="text-[11px] text-detective-600 font-bold">
             🚭 SayNo:สู้บุหรี่ไฟฟ้า
           </p>
-          <p className="text-[10px] text-gray-500 leading-relaxed px-4">
-            รับรองโดย <b>สำนักวิชาสาธารณสุขศาสตร์ ม.วลัยลักษณ์</b><br/>
-            สนับสนุนโดย <b className="text-warning-600">สสส.</b>
+          <p className="text-[10px] text-slate-500 leading-relaxed px-4">
+            ดูเครดิตเนื้อหาทั้งหมดในแท็บ <b>📚 เครดิต</b>
           </p>
         </div>
       </main>

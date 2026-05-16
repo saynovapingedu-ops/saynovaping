@@ -19,7 +19,7 @@ export const scenario05: Scenario = {
     },
     {
       type: 'dialogue', id: 'intro2', speaker: 'dm-stranger', next: 'intro3',
-      text: 'พี่จะให้ skin ฟรี เอาไหม? แค่บอกที่อยู่ ส่ง vape เครื่องเล็กๆ ให้ลองด้วย ของขวัญ',
+      text: 'พี่จะให้ของแต่งตัวในเกมฟรี (skin) เอาไหม? แค่บอกที่อยู่ ส่งบุหรี่ไฟฟ้าเครื่องเล็กๆ ให้ลองด้วย ของขวัญ',
     },
     {
       type: 'dialogue', id: 'intro3', speaker: 'narrator', next: 'choice1',
@@ -132,7 +132,7 @@ export const scenario05: Scenario = {
     },
     {
       type: 'minigame', id: 'mg1', game: 'order-cards',
-      title: 'ขั้นตอน "Walk Away" ในโลกออนไลน์',
+      title: 'ขั้นตอน "ถอย" (Walk Away) ในโลกออนไลน์',
       cards: [
         { id: 'c1', text: 'หยุด — ไม่ตอบ ไม่ส่งข้อมูลใดๆ' },
         { id: 'c2', text: 'บล็อก — ตัดการติดต่อทันที' },
@@ -152,13 +152,13 @@ export const scenario05: Scenario = {
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'end1',
-      fact: 'มีรายงานคนขายบุหรี่ไฟฟ้าใน DM เกม/IG/TikTok เพิ่มขึ้น 300% ใน 2 ปีที่ผ่านมา — เป้าหมายหลักคือเยาวชน',
+      fact: 'มีรายงานคนขายบุหรี่ไฟฟ้าผ่านข้อความส่วนตัว (DM) ในเกม/IG/TikTok เพิ่มขึ้น 300% ใน 2 ปีที่ผ่านมา — เป้าหมายหลักคือเยาวชน',
       source: 'รายงานสำนักงาน กสทช. 2566',
     },
     {
       type: 'end', id: 'end1',
       title: 'จบด่าน 5!',
-      message: 'คุณรู้จักถอยจากภัยออนไลน์ — ทักษะ "Walk Away" ปลดล็อก',
+      message: 'คุณรู้จักถอยจากภัยออนไลน์ — ทักษะ "ถอย" (Walk Away) ปลดล็อก',
       xp: 60,
       badge: 'walk-away',
     },

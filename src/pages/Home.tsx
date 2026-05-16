@@ -6,6 +6,7 @@ import { SCENARIO_META, isStageUnlocked, CERT_STAGE_COUNT } from '../scenarios';
 import { SHOP_ITEMS } from '../lib/shopItems';
 import XPBar from '../components/XPBar';
 import Avatar from '../components/Avatar';
+import TMFLogo from '../components/TMFLogo';
 import { sfx } from '../lib/sound';
 
 const INTRO_SEEN_KEY = 'hd_game_intro_seen_v1';
@@ -322,14 +323,18 @@ export default function Home() {
           );
         })}
 
-        <div className="text-center mt-4 mb-2 space-y-1">
-          <p className="text-[11px] text-detective-400 font-semibold">
+        <div className="text-center mt-5 mb-2 space-y-2">
+          <p className="text-[11px] text-detective-600 font-bold">
             🚭 SayNo:สู้บุหรี่ไฟฟ้า
           </p>
-          <p className="text-[10px] text-gray-500 leading-relaxed px-4">
-            รับรองโดย <b>สำนักวิชาสาธารณสุขศาสตร์ ม.วลัยลักษณ์</b><br/>
-            สนับสนุนโดย <b className="text-warning-600">สำนักงานกองทุนสนับสนุนการสร้างเสริมสุขภาพ (สสส.)</b>
+          <p className="text-[10px] text-slate-500 leading-relaxed px-4">
+            รับรองโดย <b className="text-slate-700">สำนักวิชาสาธารณสุขศาสตร์ ม.วลัยลักษณ์</b>
           </p>
+          {/* === โลโก้กองทุนพัฒนาสื่อฯ — รองพื้นขาวตามคู่มือ CI === */}
+          <div className="flex flex-col items-center pt-1">
+            <p className="text-[10px] text-slate-500 mb-1">สนับสนุนโดย</p>
+            <TMFLogo variant="block" width={140} />
+          </div>
         </div>
       </main>
 

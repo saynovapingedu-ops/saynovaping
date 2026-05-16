@@ -9,13 +9,13 @@ export const scenario13: Scenario = {
   startNode: 'd1',
   intro: [
     '🎯 Pro Arc — ทักษะเสริมของนักสืบระดับสูง',
-    'น้องใบเตยมีคำถาม: "พี่ vape กับบุหรี่ปกติ อันไหนอันตรายกว่ากัน?"',
+    'น้องใบเตยมีคำถาม: "พี่ บุหรี่ไฟฟ้ากับบุหรี่ปกติ อันไหนอันตรายกว่ากัน?"',
     'นักสืบสุขภาพต้องตอบได้ — และอธิบายให้เพื่อนเข้าใจ "ระดับ" ของความเสี่ยง',
   ],
   nodes: [
     {
       type: 'dialogue', id: 'd1', speaker: 'baitoey', next: 'd2',
-      text: 'พี่... เพื่อนหนูบอกว่า "vape ปลอดภัยกว่าบุหรี่ไง" จริงมั้ยพี่?',
+      text: 'พี่... เพื่อนหนูบอกว่า "บุหรี่ไฟฟ้าปลอดภัยกว่าบุหรี่ปกตินะ" จริงมั้ยพี่?',
     },
     {
       type: 'dialogue', id: 'd2', speaker: 'narrator', next: 'choice1',
@@ -30,9 +30,9 @@ export const scenario13: Scenario = {
           next: 'd3', xp: 30,
         },
         {
-          label: 'ใช่ vape ปลอดภัยกว่า เลยลองได้',
+          label: 'ใช่ บุหรี่ไฟฟ้าปลอดภัยกว่า เลยลองได้',
           next: 'wrong1', xp: 0,
-          reflection: '"ปลอดภัยกว่า" ≠ "ปลอดภัย" — vape ก็มีนิโคติน + โลหะหนัก',
+          reflection: '"ปลอดภัยกว่า" ≠ "ปลอดภัย" — บุหรี่ไฟฟ้าก็มีนิโคติน + โลหะหนัก',
         },
         {
           label: 'ทั้งสองตายเหมือนกัน เลิกเลย',
@@ -72,13 +72,13 @@ export const scenario13: Scenario = {
           source: 'กรมอนามัย กระทรวงสาธารณสุข — โภชนาการเด็ก' },
         { id: 'i-soda',    text: 'ดื่มน้ำอัดลมทุกมื้อ',                bucketId: 'b-mid',
           source: 'AHA Sugar Recommendation for Children 2022' },
-        { id: 'i-2nd',     text: 'อยู่ใกล้คนสูบ vape (มือสอง)',          bucketId: 'b-mid',
+        { id: 'i-2nd',     text: 'อยู่ใกล้คนสูบบุหรี่ไฟฟ้า (มือสอง)',     bucketId: 'b-mid',
           source: 'American Lung Association — Secondhand Vapor 2023' },
-        { id: 'i-vape-occ',text: 'ลอง vape เป็นครั้งคราว',             bucketId: 'b-high',
+        { id: 'i-vape-occ',text: 'ลองบุหรี่ไฟฟ้าเป็นครั้งคราว',           bucketId: 'b-high',
           source: 'Pediatrics 2023 — Occasional Use & Addiction Risk' },
-        { id: 'i-cig-occ', text: 'สูบบุหรี่ปกติเป็นครั้งคราว',         bucketId: 'b-high',
+        { id: 'i-cig-occ', text: 'สูบบุหรี่ปกติเป็นครั้งคราว',           bucketId: 'b-high',
           source: 'WHO Report on the Global Tobacco Epidemic 2023' },
-        { id: 'i-vape-d',  text: 'ใช้ vape ทุกวัน',                    bucketId: 'b-ext',
+        { id: 'i-vape-d',  text: 'ใช้บุหรี่ไฟฟ้าทุกวัน',                  bucketId: 'b-ext',
           source: 'Surgeon General Report 2023 — Adolescent Vape Use' },
         { id: 'i-cig-d',   text: 'สูบบุหรี่ปกติทุกวัน',                bucketId: 'b-ext',
           source: 'WHO Tobacco Mortality Statistics 2023' },
@@ -95,7 +95,7 @@ export const scenario13: Scenario = {
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'd-end',
-      fact: 'การใช้ vape ทุกวันในวัยรุ่น เพิ่มโอกาสติดบุหรี่ปกติในอนาคตถึง 4 เท่า — ไม่ใช่ทางเลือกที่ปลอดภัยกว่า',
+      fact: 'การใช้บุหรี่ไฟฟ้าทุกวันในวัยรุ่น เพิ่มโอกาสติดบุหรี่ปกติในอนาคตถึง 4 เท่า — ไม่ใช่ทางเลือกที่ปลอดภัยกว่า',
       source: 'Pediatrics 2023 / National Academy of Sciences',
     },
     {

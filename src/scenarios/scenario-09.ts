@@ -4,11 +4,11 @@ import type { Scenario } from '../types';
 export const scenario09: Scenario = {
   id: 9,
   title: 'เพื่อนเริ่มติดแล้ว',
-  subtitle: 'Master 1 — สูตร 5A ช่วยเลิก',
+  subtitle: 'บทเรียนขั้นสูง 1 — สูตร 5 ขั้นช่วยเพื่อนเลิก (5A)',
   estMinutes: 8,
   startNode: 'mg-warmup',
   intro: [
-    '⚜️ Master Class เปิดแล้ว',
+    '⚜️ บทเรียนขั้นสูงเปิดแล้ว',
     'นักสืบสุขภาพไม่ได้แค่ปฏิเสธ — แต่ต้องช่วยคนที่หลงไปแล้วกลับมาด้วย',
     'น้องใบเตยส่งข้อความ: "พี่ช่วยหน่อย เพื่อนหนูเลิกไม่ได้"',
   ],
@@ -20,7 +20,7 @@ export const scenario09: Scenario = {
       questions: [
         {
           sentence: 'อาการขาดนิโคติน 4-24 ชม. แรก: หงุดหงิด สมาธิลด ___',
-          options: ['อยากใช้ vape', 'หิวข้าวมาก'],
+          options: ['อยากใช้บุหรี่ไฟฟ้า', 'หิวข้าวมาก'],
           correctIndex: 0,
           reveal: 'craving (อาการอยาก) คือสัญญาณหลักของการขาด — เกิดเร็วและรุนแรง',
           source: 'DSM-5 — Tobacco Withdrawal Criteria / NIDA',
@@ -38,7 +38,7 @@ export const scenario09: Scenario = {
     },
     {
       type: 'dialogue', id: 'd1', speaker: 'baitoey', next: 'd2',
-      text: 'พี่... เพื่อนหนูชื่อปาล์ม ลองครั้งเดียวเมื่อเดือนก่อน ตอนนี้ใช้ทุกวัน เขาเริ่มเครียด สั่นมือ',
+      text: 'พี่... เพื่อนหนูชื่อปาล์ม ลองครั้งเดียวเมื่อเดือนก่อน ตอนนี้ใช้ทุกวัน เขาเริ่มเครียด มือสั่น',
     },
     {
       type: 'dialogue', id: 'd2', speaker: 'baitoey', next: 'choice1',
@@ -46,7 +46,7 @@ export const scenario09: Scenario = {
     },
     {
       type: 'choice', id: 'choice1', speaker: 'player',
-      prompt: 'ขั้นแรก (Ask) — ถามอย่างไม่ตัดสิน',
+      prompt: 'ขั้นแรก: "ถาม" (Ask) — ถามอย่างไม่ตัดสิน',
       choices: [
         {
           label: 'ปาล์ม รู้สึกยังไงตอนนี้? ฉันอยู่ตรงนี้นะ',
@@ -60,7 +60,7 @@ export const scenario09: Scenario = {
         {
           label: 'อ่านบทความนี้ก่อน — มันอันตราย',
           next: 'wrong2', xp: 0,
-          reflection: 'ก่อนสอน ต้องฟัง — ขั้นแรกคือ Ask ไม่ใช่ Advise',
+          reflection: 'ก่อนสอน ต้องฟัง — ขั้นแรกคือ "ถาม" ไม่ใช่ "แนะนำ"',
         },
       ],
     },
@@ -80,7 +80,7 @@ export const scenario09: Scenario = {
     },
     {
       type: 'choice', id: 'choice2', speaker: 'player',
-      prompt: 'ขั้นที่ 2 (Advise) — ให้คำแนะนำกระชับ',
+      prompt: 'ขั้นที่ 2: "แนะนำ" (Advise) — ให้คำแนะนำกระชับ',
       choices: [
         {
           label: 'ฉันแนะนำให้เลิก เพราะมันทำลายปอดและสมองที่ยังพัฒนา',
@@ -96,22 +96,22 @@ export const scenario09: Scenario = {
     {
       type: 'feedback', id: 'okay1', next: 'choice2',
       title: 'อ่อนโยนกว่านี้',
-      body: 'Advise ที่ดี = ตรงไปตรงมา + ไม่บีบคั้น — บอกเหตุผลทางสุขภาพ ให้เขาเลือกเอง',
+      body: '"แนะนำ" ที่ดี = ตรงไปตรงมา + ไม่บีบคั้น — บอกเหตุผลทางสุขภาพ ให้เขาเลือกเอง',
     },
     {
       type: 'dialogue', id: 'd4', speaker: 'narrator', next: 'mg-5a',
-      text: 'ปาล์มฟังและคิดอยู่ — ขั้นต่อไปคือ Assess (ประเมินความพร้อม), Assist (ช่วยเหลือ), Arrange (ติดตาม)',
+      text: 'ปาล์มฟังและคิดอยู่ — ขั้นต่อไปคือ "ประเมิน" (Assess), "ช่วยเหลือ" (Assist), "ติดตาม" (Arrange)',
     },
     // มินิเกมหลัก: เรียงสูตร 5A
     {
       type: 'minigame', id: 'mg-5a', game: 'order-cards',
-      title: 'สูตร 5A — เรียงลำดับให้ถูก',
+      title: 'สูตร 5 ขั้นช่วยเพื่อนเลิก (5A) — เรียงลำดับให้ถูก',
       cards: [
-        { id: 'a1', text: 'Ask — ถามอย่างไม่ตัดสิน "รู้สึกยังไง"' },
-        { id: 'a2', text: 'Advise — แนะนำกระชับ ไม่กดดัน' },
-        { id: 'a3', text: 'Assess — ประเมินว่าเขาพร้อมเลิกขั้นไหน' },
-        { id: 'a4', text: 'Assist — ช่วยวางแผน + ติดต่อสายด่วน 1600' },
-        { id: 'a5', text: 'Arrange — นัดติดตามผล อยู่เป็นกำลังใจ' },
+        { id: 'a1', text: '1) ถาม (Ask) — ถามอย่างไม่ตัดสิน "รู้สึกยังไง"' },
+        { id: 'a2', text: '2) แนะนำ (Advise) — กระชับ ไม่กดดัน' },
+        { id: 'a3', text: '3) ประเมิน (Assess) — ดูว่าเขาพร้อมเลิกขั้นไหน' },
+        { id: 'a4', text: '4) ช่วยเหลือ (Assist) — วางแผน + ติดต่อสายด่วน 1600' },
+        { id: 'a5', text: '5) ติดตาม (Arrange) — นัดตามผล อยู่เป็นกำลังใจ' },
       ],
       correctOrder: ['a1', 'a2', 'a3', 'a4', 'a5'],
       next: 'mg-resources',

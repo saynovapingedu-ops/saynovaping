@@ -3,7 +3,7 @@ import type { Scenario } from '../types';
 export const scenario01: Scenario = {
   id: 1,
   title: 'ความจริงที่ถูกซ่อน',
-  subtitle: 'พี่หมอเก๋ชวนคุณค้นหาความจริงเกี่ยวกับ vape',
+  subtitle: 'พี่หมอเก๋ชวนคุณค้นหาความจริงเกี่ยวกับบุหรี่ไฟฟ้า',
   estMinutes: 5,
   startNode: 'intro1',
   intro: [
@@ -41,7 +41,7 @@ export const scenario01: Scenario = {
         {
           text: '"การสูบบุหรี่ไฟฟ้าทำลายปอดได้ ถึงแม้จะอ้างว่าเป็นแค่ไอน้ำ"',
           isLie: false,
-          reveal: 'จริง — ไอที่ออกมามีสารเคมีอันตราย เช่น formaldehyde, acrolein ที่ทำลายเนื้อปอด มีรายงานโรค EVALI (ปอดอักเสบจาก vape)',
+          reveal: 'จริง — ไอที่ออกมามีสารเคมีอันตราย เช่น ฟอร์มาลดีไฮด์ (formaldehyde) และอะโครลีน (acrolein) ที่ทำลายเนื้อปอด มีรายงานโรค EVALI (โรคปอดอักเสบเฉียบพลันจากบุหรี่ไฟฟ้า)',
           source: 'CDC, US National Library of Medicine',
         },
         {

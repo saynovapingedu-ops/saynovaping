@@ -6,6 +6,7 @@ import { toPng } from 'html-to-image';
 import { usePlayerStore } from '../store/playerStore';
 import { issueCertificate } from '../lib/cloudSync';
 import { sfx } from '../lib/sound';
+import TMFLogo from '../components/TMFLogo';
 
 export default function Certificate() {
   const nav = useNavigate();
@@ -50,7 +51,7 @@ export default function Certificate() {
   useEffect(() => {
     if (!verifyCode) return;
     const verifyUrl = `${location.origin}/saynovaping/verify?code=${verifyCode}`;
-    QRCode.toDataURL(verifyUrl, { width: 220, margin: 1, color: { dark: '#8B5CF6', light: '#FFFFFF' } })
+    QRCode.toDataURL(verifyUrl, { width: 220, margin: 1, color: { dark: '#008FFF', light: '#FFFFFF' } })
       .then(setQrDataUrl)
       .catch(() => { /* ignore */ });
   }, [verifyCode]);
@@ -212,6 +213,22 @@ export default function Certificate() {
                     <div className="absolute bottom-1 right-2 text-3xl">💫</div>
 
                     <div className="relative text-center">
+                      {/* === Logo strip — ตามคู่มือ CI กองทุนพัฒนาสื่อฯ:
+                             โลโก้กองทุนต้องอยู่ด้านบนสุดของใบประกาศ คู่กับโลโก้ผู้รับทุน === */}
+                      <div className="flex items-center justify-center gap-3 mb-3 pb-3
+                                      border-b border-dashed border-slate-200">
+                        <TMFLogo variant="block" width={88} />
+                        <div className="text-left">
+                          <p className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">
+                            ผู้รับทุน
+                          </p>
+                          <p className="font-display font-bold text-detective-700 text-sm leading-tight">
+                            สำนักวิชา<br/>สาธารณสุขศาสตร์
+                          </p>
+                          <p className="text-[10px] text-slate-600">ม.วลัยลักษณ์</p>
+                        </div>
+                      </div>
+
                       {/* === Top badge === */}
                       <motion.div
                         initial={{ scale: 0, rotate: -180 }}

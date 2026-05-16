@@ -15,7 +15,7 @@ export const scenario11: Scenario = {
   nodes: [
     {
       type: 'dialogue', id: 'd1', speaker: 'narrator', next: 'choice1',
-      text: 'พี่อายุ 19 — เครียดเรื่องเรียนมหาลัย และเริ่มใช้ vape ตั้งแต่ปีที่แล้ว ในบ้านมีน้องอายุ 8 ขวบ',
+      text: 'พี่อายุ 19 — เครียดเรื่องเรียนมหาลัย และเริ่มใช้บุหรี่ไฟฟ้าตั้งแต่ปีที่แล้ว ในบ้านมีน้องอายุ 8 ขวบ',
     },
     {
       type: 'choice', id: 'choice1', speaker: 'player',
@@ -109,7 +109,7 @@ export const scenario11: Scenario = {
           source: 'NIDA Family-Based Treatment Research 2022 / กรมสุขภาพจิต',
         },
         {
-          sentence: 'หาทางออกที่ดีกว่า vape — เช่น ___ ลดความเครียด',
+          sentence: 'หาทางออกที่ดีกว่าบุหรี่ไฟฟ้า — เช่น ___ ลดความเครียด',
           options: ['ออกกำลังกาย/เพลง', 'นั่งเฉยๆ ทนเอา'],
           correctIndex: 0,
           reveal: 'การหา substitute (สิ่งทดแทน) ช่วยลดอาการ craving ได้จริง',

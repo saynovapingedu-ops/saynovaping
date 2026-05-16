@@ -131,7 +131,7 @@ export const scenario02: Scenario = {
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
       title: 'Detective\'s Note 📓',
-      body: 'สูตรปฏิเสธ 3 ขั้น: "ไม่ → เพราะ → ไปทำอย่างอื่นแทน" — ใช้ได้ในหลายสถานการณ์ ไม่ใช่แค่เรื่อง vape',
+      body: 'สูตรปฏิเสธ 3 ขั้น: "ไม่ → เพราะ → ไปทำอย่างอื่นแทน" — ใช้ได้ในหลายสถานการณ์ ไม่ใช่แค่เรื่องบุหรี่ไฟฟ้า',
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'end1',
