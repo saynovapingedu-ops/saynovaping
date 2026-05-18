@@ -216,10 +216,7 @@ export default function Certificate() {
                   <div className="text-left">
                     <p className="text-[10px] text-slate-500 font-medium tracking-wide">ผู้รับทุน</p>
                     <p className="text-detective-800 font-bold text-sm leading-tight">
-                      สำนักวิชา<br/>สาธารณสุขศาสตร์
-                    </p>
-                    <p className="text-[11px] text-slate-600 font-medium leading-tight mt-0.5">
-                      มหาวิทยาลัยวลัยลักษณ์
+                      โครงการ SayNo<br/>สู้บุหรี่ไฟฟ้า
                     </p>
                   </div>
                 </div>

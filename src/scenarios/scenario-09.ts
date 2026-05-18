@@ -110,7 +110,7 @@ export const scenario09: Scenario = {
         { id: 'a1', text: '1) ถาม (Ask) — ถามอย่างไม่ตัดสิน "รู้สึกยังไง"' },
         { id: 'a2', text: '2) แนะนำ (Advise) — กระชับ ไม่กดดัน' },
         { id: 'a3', text: '3) ประเมิน (Assess) — ดูว่าเขาพร้อมเลิกขั้นไหน' },
-        { id: 'a4', text: '4) ช่วยเหลือ (Assist) — วางแผน + ติดต่อสายด่วน 1600' },
+        { id: 'a4', text: '4) ช่วยเหลือ (Assist) — วางแผน + ต่อสาย 1600 (Quit Line ปรึกษาเลิกบุหรี่/บุหรี่ไฟฟ้า ฟรี 24 ชม.)' },
         { id: 'a5', text: '5) ติดตาม (Arrange) — นัดตามผล อยู่เป็นกำลังใจ' },
       ],
       correctOrder: ['a1', 'a2', 'a3', 'a4', 'a5'],
@@ -124,8 +124,8 @@ export const scenario09: Scenario = {
       type: 'minigame', id: 'mg-resources', game: 'word-match',
       title: 'จับคู่แหล่งช่วยเหลือ',
       pairs: [
-        { left: 'สายด่วนเลิกบุหรี่',          right: 'โทร 1600 ปรึกษาฟรี ไม่มีค่าใช้จ่าย',
-          source: 'กรมการแพทย์ กระทรวงสาธารณสุข' },
+        { left: 'สายด่วนเลิกบุหรี่ 1600',     right: 'Quit Line ของศูนย์บริการเลิกบุหรี่แห่งชาติ — คุยกับนักจิตวิทยา ปรึกษาเลิก vape ฟรี 24 ชม. เก็บข้อมูลเป็นความลับ',
+          source: 'ศูนย์บริการเลิกบุหรี่ทางโทรศัพท์แห่งชาติ (กรมการแพทย์)' },
         { left: 'แอป Quitline / iCanQuit',    right: 'ติดตามอาการรายวัน',
           source: 'iCanQuit Clinical Trial — JMIR Mental Health 2020' },
         { left: 'นักจิตวิทยา รพ.รัฐ',         right: 'CBT บำบัดความเครียด',
@@ -139,7 +139,7 @@ export const scenario09: Scenario = {
     },
     {
       type: 'dialogue', id: 'd-end', speaker: 'baitoey', next: 'edu1',
-      text: 'พี่... ปาล์มยอมโทร 1600 แล้ว ขอบคุณนะที่อยู่เคียงข้าง',
+      text: 'พี่... ปาล์มยอมโทร 1600 (Quit Line) แล้ว นักจิตวิทยาให้คำปรึกษาแบบไม่ตัดสินดีมาก ขอบคุณนะที่อยู่เคียงข้าง',
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'end1',
