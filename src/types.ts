@@ -188,6 +188,7 @@ export interface PlayerProfile {
   ownedItems: string[];     // id ของ item ที่ซื้อจากร้านค้า
   equippedTitle?: string;   // ตำแหน่งโชว์หน้าโปรไฟล์ เช่น "นักสืบทอง"
   equippedFrame?: string;   // กรอบ avatar
+  equippedTheme?: string;   // ชุดสี confetti / accent
   // streak / daily
   streakDays?: number;
   lastPlayDate?: string;    // ISO date YYYY-MM-DD

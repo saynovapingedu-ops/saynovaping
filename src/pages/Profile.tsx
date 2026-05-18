@@ -9,6 +9,7 @@ import XPBar from '../components/XPBar';
 import Avatar from '../components/Avatar';
 import AvatarFolder from '../components/AvatarFolder';
 import PageHeader from '../components/PageHeader';
+import { SHOP_ITEMS } from '../lib/shopItems';
 
 // ============================================================================
 //  Profile — โทนสุภาพ คุมโทนเดียว (slate/lavender) ไม่มีรุ้ง
@@ -50,10 +51,16 @@ export default function Profile() {
           <div className="flex items-center gap-4 mb-4">
             <button
               onClick={() => setEditAvatar(v => !v)}
-              className="rounded-full active:scale-95 ring-2 ring-slate-200 ring-offset-2"
+              className="rounded-full active:scale-95"
               aria-label="เปลี่ยนอวตาร"
             >
-              <Avatar preset={player.avatar} customId={player.customAvatarId} size={72} />
+              <Avatar
+                preset={player.avatar}
+                customId={player.customAvatarId}
+                size={72}
+                ring={!player.equippedFrame}
+                className={player.equippedFrame ? SHOP_ITEMS.find(i => i.id === player.equippedFrame)?.frameClass : ''}
+              />
             </button>
             <div className="flex-1 min-w-0">
               <h3 className="font-display font-bold text-xl text-slate-800 truncate">
@@ -62,6 +69,22 @@ export default function Profile() {
               <p className="text-xs text-slate-500 mt-0.5">
                 {player.equippedTitle ? `⭐ ${player.equippedTitle}` : '🔍 นักสืบสุขภาพ'}
               </p>
+              {/* แสดงพาเลตต์ theme ที่สวมอยู่ */}
+              {player.equippedTheme && (() => {
+                const t = SHOP_ITEMS.find(i => i.id === player.equippedTheme);
+                if (!t?.themeColors) return null;
+                return (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="text-[10px] text-slate-500">🎨 {t.name}</span>
+                    <div className="flex gap-0.5">
+                      {t.themeColors.slice(0, 6).map((c, i) => (
+                        <span key={i} className="w-2.5 h-2.5 rounded-full border border-white shadow-sm"
+                              style={{ background: c }} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               <button
                 onClick={() => setEditAvatar(v => !v)}
                 className="text-[11px] text-detective-600 font-semibold mt-1.5 active:opacity-70

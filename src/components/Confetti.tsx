@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useSettingsStore } from '../store/settingsStore';
+import { usePlayerStore } from '../store/playerStore';
+import { SHOP_ITEMS } from '../lib/shopItems';
 
 interface Props {
   /** เริ่มยิง confetti เมื่อ active = true (one-shot) */
@@ -21,22 +23,20 @@ interface Particle {
   alpha: number;
 }
 
-// พาเลตต์สดใส — ม่วง/ชมพู/เหลือง/มินต์
-const COLORS = [
-  '#8B5CF6',  // ม่วงสด
-  '#A78BFA',  // ม่วงอ่อน
-  '#EC4899',  // ชมพูแคนดี้
-  '#FF7AB6',  // ชมพูพาสเทล
-  '#F59E0B',  // ส้มทอง
-  '#FBBF24',  // เหลืองสด
-  '#06B6D4',  // ฟ้ามินต์
-  '#22D3EE',  // ฟ้าอ่อน
+// palette default — ใช้เมื่อ player ไม่ได้สวม theme
+const DEFAULT_COLORS = [
+  '#008FFF', '#0072CC', '#ABDAFF', '#2BCAAB', '#F59E0B', '#FBBF24',
 ];
 
 // ดอกไม้ไฟ canvas — ไม่ต้อง dependency ใดๆ
 export default function Confetti({ active, count = 80, duration = 2400 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const reduced = useSettingsStore(s => s.reducedMotion);
+  // อ่าน theme ที่สวมอยู่ — ถ้าซื้อ theme แล้วสวม Confetti จะเปลี่ยนสีตาม
+  const equippedTheme = usePlayerStore(s => s.equippedTheme);
+  const COLORS = (equippedTheme
+    ? SHOP_ITEMS.find(i => i.id === equippedTheme)?.themeColors
+    : null) || DEFAULT_COLORS;
 
   useEffect(() => {
     if (!active || reduced) return;
@@ -110,7 +110,7 @@ export default function Confetti({ active, count = 80, duration = 2400 }: Props)
     raf = requestAnimationFrame(draw);
 
     return () => cancelAnimationFrame(raf);
-  }, [active, count, duration, reduced]);
+  }, [active, count, duration, reduced, COLORS]);
 
   if (!active) return null;
   return (

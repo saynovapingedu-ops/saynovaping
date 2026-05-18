@@ -20,6 +20,7 @@ interface PlayerState extends PlayerProfile {
   awardItem: (id: string) => boolean;
   equipTitle: (title: string | undefined) => void;
   equipFrame: (frame: string | undefined) => void;
+  equipTheme: (theme: string | undefined) => void;
   awardBadge: (id: string) => boolean;
   completeStage: (stageId: number) => void;
   setCertificate: (no: string, issuedAt: string) => void;
@@ -136,6 +137,7 @@ export const usePlayerStore = create<PlayerState>()(
 
       equipTitle: (title) => set({ equippedTitle: title }),
       equipFrame: (frame) => set({ equippedFrame: frame }),
+      equipTheme: (theme) => set({ equippedTheme: theme }),
 
       pingDailyPlay: () => {
         const cur = get();
@@ -221,6 +223,7 @@ export const usePlayerStore = create<PlayerState>()(
         ownedItems: s.ownedItems,
         equippedTitle: s.equippedTitle,
         equippedFrame: s.equippedFrame,
+        equippedTheme: s.equippedTheme,
         streakDays: s.streakDays,
         lastPlayDate: s.lastPlayDate,
         certificateNo: s.certificateNo,

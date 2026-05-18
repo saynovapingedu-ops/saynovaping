@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
 import { ROOM_ITEMS, type RoomItem } from '../lib/roomItems';
+import { SHOP_ITEMS } from '../lib/shopItems';
 import Avatar from '../components/Avatar';
 import PageHeader from '../components/PageHeader';
 import { sfx, vibrate } from '../lib/sound';
@@ -21,7 +22,6 @@ export default function Room() {
   const handleTap = (item: RoomItem) => {
     sfx.click();
     if (owned.has(item.id)) {
-      // ของที่ปลดล็อคแล้ว — โชว์บับเบิลขอบคุณซ้ำได้
       setThanksItem(item);
       setTimeout(() => setThanksItem(null), 2400);
       return;
@@ -39,13 +39,61 @@ export default function Room() {
     setTimeout(() => setThanksItem(null), 3200);
   };
 
-  // หาของชิ้นถัดไปที่ใกล้ปลด
   const nextToUnlock = useMemo(() => {
     const remaining = ROOM_ITEMS
       .filter(i => !owned.has(i.id))
       .sort((a, b) => a.unlockAtXP - b.unlockAtXP);
     return remaining[0];
   }, [owned]);
+
+  const equippedFrameClass = player.equippedFrame
+    ? SHOP_ITEMS.find(i => i.id === player.equippedFrame)?.frameClass
+    : undefined;
+
+  // จัดของตาม zone
+  const byZone = useMemo(() => {
+    const z: Record<string, RoomItem[]> = {
+      'wall-back': [], 'wall-side': [], 'floor': [], 'desk': [], 'pet': [],
+    };
+    ROOM_ITEMS.forEach(it => z[it.zone]?.push(it));
+    return z;
+  }, []);
+
+  // Render item — ใช้กับทุก zone
+  const renderItem = (item: RoomItem) => {
+    const isOwned = owned.has(item.id);
+    const canUnlock = player.totalXP >= item.unlockAtXP;
+    const size = item.size ?? 36;
+    return (
+      <motion.button
+        key={item.id}
+        whileTap={{ scale: 0.92 }}
+        onClick={() => handleTap(item)}
+        className={`absolute -translate-x-1/2 -translate-y-1/2 transition-all ${
+          isOwned
+            ? 'drop-shadow-[0_4px_4px_rgba(0,0,0,0.25)]'
+            : canUnlock
+              ? 'drop-shadow-[0_4px_6px_rgba(245,158,11,0.5)] animate-pulse-slow'
+              : 'opacity-25 grayscale'
+        }`}
+        style={{
+          left:    `${item.position.x}%`,
+          top:     `${item.position.y}%`,
+          fontSize: size,
+          lineHeight: 1,
+        }}
+        title={isOwned ? item.name : `🔒 ${item.unlockAtXP} XP — ${item.name}`}
+      >
+        <span className="block leading-none">{item.emoji}</span>
+        {!isOwned && (
+          <span className="absolute -top-1 -right-2 text-[10px] bg-white border border-detective-200
+                           rounded-full px-1.5 font-bold text-detective-600 shadow-sm">
+            {canUnlock ? '✨' : '🔒'}
+          </span>
+        )}
+      </motion.button>
+    );
+  };
 
   return (
     <div className="min-h-full pb-10 relative">
@@ -64,85 +112,128 @@ export default function Room() {
       </div>
 
       <main className="max-w-md mx-auto px-3 pt-3">
-        {/* === คำอธิบายสั้น — ครั้งแรกผู้เล่นจะรู้ว่าห้องนี้คืออะไร === */}
-        <div className="mb-3 rounded-2xl border-2 border-detective-200 bg-gradient-to-br from-detective-50 to-white p-2.5">
+        <div className="mb-3 rounded-2xl border border-detective-200 bg-detective-50/70 p-2.5">
           <p className="text-[11px] text-gray-700 leading-relaxed">
-            💡 <b className="text-detective-700">ห้องของคุณ</b> คือรางวัลสะสมจากการเล่น —
-            ยิ่งได้ <b>XP</b> เยอะ ยิ่งปลดล็อกของแต่งห้องได้มาก
-            (ไม่ต้องใช้เหรียญซื้อ — แตะของที่ปลดได้แล้วเพื่อรับ)
+            💡 <b className="text-detective-700">ห้องของคุณ</b> = รางวัลสะสม XP — แตะของที่เรืองแสง ✨
+            เพื่อปลดล็อค
           </p>
         </div>
 
-        {/* === Room visual === */}
-        <div
-          className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-xl mb-3 border-4 border-warning-300"
-          style={{
-            background:
-              'linear-gradient(180deg, #F4ECFA 0%, #F4ECFA 55%, #E9D2F0 55%, #D2A8E0 100%)',
-          }}
-        >
-          {/* wall pattern */}
-          <div className="absolute inset-0 opacity-20 pointer-events-none"
+        {/* === Isometric 3D Room === */}
+        <div className="relative aspect-[4/4.5] rounded-3xl overflow-hidden shadow-xl mb-3
+                        border-4 border-detective-200 bg-detective-50">
+
+          {/* ==== ผนังด้านหลัง (wall-back) — รูปสี่เหลี่ยมคางหมู perspective ==== */}
+          <div className="absolute inset-x-0 top-0 h-[55%]"
                style={{
-                 backgroundImage:
-                   'repeating-linear-gradient(135deg, rgba(111,45,142,.15) 0 2px, transparent 2px 20px)',
-                 maskImage: 'linear-gradient(180deg, black 55%, transparent 55%)',
-                 WebkitMaskImage: 'linear-gradient(180deg, black 55%, transparent 55%)',
+                 background: 'linear-gradient(180deg, #FFF8EA 0%, #FCEDD0 100%)',
+                 clipPath: 'polygon(0 0, 100% 0, 90% 100%, 10% 100%)',
+               }}>
+            {/* Pattern ลายผนัง */}
+            <div className="absolute inset-0 opacity-30"
+                 style={{
+                   backgroundImage:
+                     'repeating-linear-gradient(0deg, rgba(217,119,6,.15) 0 1px, transparent 1px 40px), repeating-linear-gradient(90deg, rgba(217,119,6,.10) 0 1px, transparent 1px 40px)',
+                 }} />
+          </div>
+
+          {/* ==== ผนังด้านข้าง (wall-side ขวา) ==== */}
+          <div className="absolute right-0 top-0 h-[68%] w-[18%]"
+               style={{
+                 background: 'linear-gradient(270deg, #E5C99B 0%, #F4D9AB 100%)',
+                 clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 85%)',
                }} />
 
-          {/* Floor wood grain */}
-          <div className="absolute left-0 right-0 bottom-0 h-[45%] opacity-25 pointer-events-none"
+          {/* ==== ผนังด้านข้าง (ซ้าย) — เงาเล็กให้ดูมีมิติ ==== */}
+          <div className="absolute left-0 top-0 h-[68%] w-[18%]"
                style={{
-                 backgroundImage:
-                   'repeating-linear-gradient(90deg, rgba(72,29,92,.20) 0 60px, rgba(72,29,92,.05) 60px 62px)',
+                 background: 'linear-gradient(90deg, #C8A876 0%, #E5C99B 100%)',
+                 clipPath: 'polygon(0 0, 100% 0, 100% 85%, 0 100%)',
+                 opacity: 0.85,
                }} />
 
-          {/* Room items */}
-          {ROOM_ITEMS.map(item => {
-            const isOwned = owned.has(item.id);
-            const canUnlock = player.totalXP >= item.unlockAtXP;
-            const size = item.size ?? 36;
-            return (
-              <motion.button
-                key={item.id}
-                whileTap={{ scale: 0.92 }}
-                onClick={() => handleTap(item)}
-                className={`absolute -translate-x-1/2 -translate-y-1/2 transition-all ${
-                  isOwned
-                    ? 'drop-shadow-md'
-                    : canUnlock
-                      ? 'drop-shadow-lg animate-pulse-slow'
-                      : 'opacity-30 grayscale'
-                }`}
-                style={{
-                  left:    `${item.position.x}%`,
-                  top:     `${item.position.y}%`,
-                  fontSize: size,
-                }}
-                title={isOwned ? item.name : `🔒 ${item.unlockAtXP} XP — ${item.name}`}
-              >
-                <span className="leading-none">{item.emoji}</span>
-                {!isOwned && (
-                  <span className="absolute -top-1 -right-2 text-[10px] bg-white border border-detective-200
-                                   rounded-full px-1.5 font-bold text-detective-600 shadow-sm">
-                    {canUnlock ? '✨' : '🔒'}
-                  </span>
-                )}
-              </motion.button>
-            );
-          })}
+          {/* ==== พื้นห้อง (floor) — รูปสี่เหลี่ยมคางหมูกลับด้าน ==== */}
+          <div className="absolute inset-x-0 bottom-0 h-[55%]"
+               style={{
+                 background:
+                   'linear-gradient(180deg, #B4855A 0%, #8B6240 100%)',
+                 clipPath: 'polygon(10% 0, 90% 0, 100% 100%, 0 100%)',
+               }}>
+            {/* Wood plank pattern */}
+            <div className="absolute inset-0 opacity-50"
+                 style={{
+                   backgroundImage:
+                     'repeating-linear-gradient(180deg, rgba(58,30,12,.30) 0 1px, transparent 1px 18px)',
+                 }} />
+            {/* แสงเงาตรงกลางพื้น */}
+            <div className="absolute inset-0"
+                 style={{
+                   background: 'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.15) 0%, transparent 60%)',
+                 }} />
+          </div>
 
-          {/* Avatar in the center */}
-          <div className="absolute left-1/2 top-[62%] -translate-x-1/2 -translate-y-1/2 z-10">
-            <div className="relative">
+          {/* ==== โต๊ะ (built-in desk ตรงมุมขวา-หลัง) ==== */}
+          <div className="absolute"
+               style={{
+                 right: '6%', top: '38%', width: '32%', height: '14%',
+                 background: 'linear-gradient(180deg, #5D3A1F 0%, #3B2510 100%)',
+                 clipPath: 'polygon(15% 0, 100% 0, 95% 100%, 0 100%)',
+                 boxShadow: '0 4px 8px rgba(0,0,0,0.25)',
+               }} />
+          {/* ขาโต๊ะ */}
+          <div className="absolute"
+               style={{
+                 right: '8%', top: '50%', width: '4px', height: '10%',
+                 background: '#3B2510',
+               }} />
+          <div className="absolute"
+               style={{
+                 right: '32%', top: '50%', width: '4px', height: '8%',
+                 background: '#3B2510',
+               }} />
+
+          {/* === Wall-back items (โปสเตอร์ นาฬิกา ผ้าม่าน) === */}
+          <div className="absolute inset-x-0 top-0 h-[55%]">
+            {byZone['wall-back'].map(renderItem)}
+          </div>
+
+          {/* === Wall-side items (ตู้ ฯลฯ) — อยู่ขวา === */}
+          <div className="absolute right-0 top-0 h-[68%] w-[35%]">
+            {byZone['wall-side'].map(renderItem)}
+          </div>
+
+          {/* === Desk items === */}
+          <div className="absolute"
+               style={{ right: '6%', top: '38%', width: '32%', height: '14%' }}>
+            {byZone['desk'].map(renderItem)}
+          </div>
+
+          {/* === Floor items === */}
+          <div className="absolute inset-x-0 bottom-0 h-[55%]">
+            {byZone['floor'].map(renderItem)}
+          </div>
+
+          {/* === Pet items === */}
+          <div className="absolute inset-x-0 bottom-0 h-[55%]">
+            {byZone['pet'].map(renderItem)}
+          </div>
+
+          {/* ==== ตัวละครยืนกลางห้อง — มีเงา ==== */}
+          <div className="absolute left-1/2 -translate-x-1/2 z-10"
+               style={{ top: '58%' }}>
+            <div className="relative flex flex-col items-center">
               <Avatar
                 preset={player.avatar}
                 customId={player.customAvatarId}
                 size={88}
-                ring
+                ring={!equippedFrameClass}
+                className={equippedFrameClass}
               />
-              {/* shadow under avatar */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-20 h-2 bg-black/20 rounded-full blur-sm" />
+              <p className="mt-1 text-[11px] font-bold text-white bg-detective-700/80 px-2 py-0.5 rounded-full shadow-sm backdrop-blur-sm">
+                {player.nickname}
+              </p>
+              {/* shadow under avatar (isometric ellipse) */}
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-3 bg-black/30 rounded-full blur-md" />
             </div>
           </div>
 
@@ -153,13 +244,12 @@ export default function Room() {
                 initial={{ opacity: 0, y: 10, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="absolute left-1/2 top-[40%] -translate-x-1/2 z-20 max-w-[78%]"
+                className="absolute left-1/2 top-[44%] -translate-x-1/2 z-20 max-w-[78%]"
               >
                 <div className="bg-white rounded-2xl shadow-xl border-2 border-warning-400 px-3 py-2 relative">
-                  <p className="text-xs text-detective-700 font-semibold">
+                  <p className="text-xs text-detective-700 font-semibold leading-snug">
                     {thanksItem.thanks}
                   </p>
-                  {/* tail */}
                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-r-2 border-b-2 border-warning-400 rotate-45" />
                 </div>
               </motion.div>

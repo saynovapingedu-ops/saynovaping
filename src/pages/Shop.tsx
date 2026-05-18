@@ -1,19 +1,16 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
-import { useItemStore } from '../store/itemStore';
-import { fileToResizedDataUrl } from '../store/avatarStore';
 import { SHOP_ITEMS, type ShopItem, type ItemCategory } from '../lib/shopItems';
 import { sfx, vibrate } from '../lib/sound';
 import Avatar from '../components/Avatar';
 import PageHeader from '../components/PageHeader';
 
-const CATS: { id: ItemCategory | 'custom'; label: string; emoji: string }[] = [
-  { id: 'title',       label: 'ตำแหน่ง', emoji: '🏷️' },
-  { id: 'frame',       label: 'กรอบ',    emoji: '🖼️' },
-  { id: 'theme',       label: 'ธีม',     emoji: '🎨' },
-  { id: 'custom',      label: 'ของฉัน',  emoji: '📁' },
+const CATS: { id: ItemCategory; label: string; emoji: string }[] = [
+  { id: 'title', label: 'ตำแหน่ง', emoji: '🏷️' },
+  { id: 'frame', label: 'กรอบ',    emoji: '🖼️' },
+  { id: 'theme', label: 'ธีมสี',   emoji: '🎨' },
 ];
 
 export default function Shop() {
@@ -23,18 +20,14 @@ export default function Shop() {
   const awardItem = usePlayerStore(s => s.awardItem);
   const equipTitle = usePlayerStore(s => s.equipTitle);
   const equipFrame = usePlayerStore(s => s.equipFrame);
+  const equipTheme = usePlayerStore(s => s.equipTheme);
 
-  const items = useItemStore(s => s.items);
-  const addItem = useItemStore(s => s.addItem);
-  const removeItem = useItemStore(s => s.removeItem);
-
-  const [tab, setTab] = useState<ItemCategory | 'custom'>('title');
+  const [tab, setTab] = useState<ItemCategory>('title');
   const [purchaseMsg, setPurchaseMsg] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
   // ลองสวม (preview) — ทับการสวมจริงชั่วคราวบน Avatar ด้านบน
   const [previewFrameId, setPreviewFrameId] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState<string | null>(null);
+  const [previewTheme, setPreviewTheme] = useState<string | null>(null);
   // popup ยืนยันซื้อ
   const [confirmItem, setConfirmItem] = useState<ShopItem | null>(null);
 
@@ -45,12 +38,12 @@ export default function Shop() {
   const isUnlockedByStage = (item: ShopItem) =>
     !item.unlockAfterStage || stagesDone >= item.unlockAfterStage;
 
-  // เปลี่ยนแท็บ → เคลียร์ preview ทุกครั้ง (กันสับสนข้ามหมวด)
-  const switchTab = (next: ItemCategory | 'custom') => {
+  const switchTab = (next: ItemCategory) => {
     sfx.click();
     setTab(next);
     setPreviewFrameId(null);
     setPreviewTitle(null);
+    setPreviewTheme(null);
   };
 
   const handlePreview = (item: ShopItem) => {
@@ -59,6 +52,8 @@ export default function Shop() {
       setPreviewFrameId(p => (p === item.id ? null : item.id));
     } else if (item.category === 'title' && item.titleText) {
       setPreviewTitle(p => (p === item.titleText ? null : item.titleText!));
+    } else if (item.category === 'theme') {
+      setPreviewTheme(p => (p === item.id ? null : item.id));
     }
   };
 
@@ -77,6 +72,14 @@ export default function Shop() {
       return;
     }
     sfx.click();
+    // ของฟรี (price = 0) → ปลดให้เลย ไม่ต้องยืนยัน
+    if (item.price === 0) {
+      awardItem(item.id);
+      sfx.buy();
+      setPurchaseMsg(`✓ ปลดล็อก "${item.name}" สำเร็จ!`);
+      setTimeout(() => setPurchaseMsg(null), 2200);
+      return;
+    }
     setConfirmItem(item);
   };
 
@@ -87,8 +90,8 @@ export default function Shop() {
       awardItem(item.id);
       sfx.buy();
       vibrate([20, 30, 20]);
-      setPurchaseMsg(`✓ ซื้อ "${item.name}" สำเร็จ!`);
-      setTimeout(() => setPurchaseMsg(null), 2200);
+      setPurchaseMsg(`✓ ซื้อ "${item.name}" สำเร็จ — กด "สวมใส่" เพื่อใช้งาน`);
+      setTimeout(() => setPurchaseMsg(null), 2600);
     }
     setConfirmItem(null);
   };
@@ -101,29 +104,17 @@ export default function Shop() {
     } else if (item.category === 'frame') {
       const isEquipped = player.equippedFrame === item.id;
       equipFrame(isEquipped ? undefined : item.id);
+    } else if (item.category === 'theme') {
+      const isEquipped = player.equippedTheme === item.id;
+      equipTheme(isEquipped ? undefined : item.id);
     }
   };
 
-  const handleUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    setUploading(true);
-    try {
-      for (const f of Array.from(files)) {
-        if (!f.type.startsWith('image/')) continue;
-        if (f.size > 10 * 1024 * 1024) continue;
-        const dataUrl = await fileToResizedDataUrl(f);
-        const baseName = f.name.replace(/\.[^.]+$/, '').slice(0, 24);
-        addItem(baseName, dataUrl, 'misc');
-      }
-      sfx.buy();
-    } catch { /* ignore */ }
-    finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = '';
-    }
-  };
+  const tabItems = SHOP_ITEMS.filter(i => i.category === tab);
 
-  const tabItems = tab === 'custom' ? null : SHOP_ITEMS.filter(i => i.category === tab);
+  // === Theme palette preview ===
+  const shownThemeId = previewTheme ?? player.equippedTheme;
+  const shownTheme = shownThemeId ? SHOP_ITEMS.find(i => i.id === shownThemeId) : null;
 
   return (
     <div className="min-h-full pb-8 relative">
@@ -144,14 +135,14 @@ export default function Shop() {
       </div>
 
       <main className="max-w-md mx-auto px-4 pt-4">
-        {/* Avatar preview — ใช้ preview ทับ equipped ถ้ากำลังลอง */}
+        {/* === Avatar preview — แสดงผลตามที่กำลังลอง / สวมอยู่ === */}
         {(() => {
           const shownFrameId = previewFrameId ?? player.equippedFrame;
           const shownTitle   = previewTitle   ?? player.equippedTitle;
           const shownFrameClass = shownFrameId
             ? SHOP_ITEMS.find(i => i.id === shownFrameId)?.frameClass || ''
             : '';
-          const isPreviewing = previewFrameId !== null || previewTitle !== null;
+          const isPreviewing = previewFrameId !== null || previewTitle !== null || previewTheme !== null;
           return (
             <div className={`card-hero flex items-center gap-3 mb-4 transition-all ${
               isPreviewing ? 'border-2 border-warning-400 bg-warning-50/30' : ''
@@ -169,12 +160,21 @@ export default function Shop() {
                   <p className="text-xs text-warning-500 font-semibold">⭐ {shownTitle}</p>
                 )}
                 <p className="text-[11px] text-gray-500">
-                  {isPreviewing ? '👁 กำลังลอง — ยังไม่ได้ซื้อ' : 'ตัวอย่างหน้าโปรไฟล์'}
+                  {isPreviewing ? '👁 กำลังลอง — ยังไม่ได้สวม' : 'ตัวอย่างหน้าโปรไฟล์'}
                 </p>
+                {/* แสดงพาเลตต์สีของ theme ที่สวม/ลอง */}
+                {shownTheme?.themeColors && (
+                  <div className="flex gap-1 mt-1.5">
+                    {shownTheme.themeColors.slice(0, 6).map((c, i) => (
+                      <span key={i} className="w-3 h-3 rounded-full border border-white/80 shadow-sm"
+                            style={{ background: c }} />
+                    ))}
+                  </div>
+                )}
               </div>
               {isPreviewing && (
                 <button
-                  onClick={() => { sfx.click(); setPreviewFrameId(null); setPreviewTitle(null); }}
+                  onClick={() => { sfx.click(); setPreviewFrameId(null); setPreviewTitle(null); setPreviewTheme(null); }}
                   className="text-xs text-detective-600 bg-white border border-detective-200
                              rounded-full px-2.5 py-1 active:scale-95"
                 >
@@ -185,24 +185,23 @@ export default function Shop() {
           );
         })()}
 
-        {/* คำอธิบายสั้น — เด็กจะรู้ว่าซื้อแล้วต้อง "สวมใส่" + "กำลังใช้" ต่างจาก "มีแล้ว" ยังไง */}
         <div className="mb-3 rounded-2xl border border-detective-100 bg-detective-50/70 p-2.5">
           <p className="text-[11px] text-gray-700 leading-relaxed">
-            💡 <b>การ์ดเหรียญ:</b> ปุ่ม <span className="font-semibold text-warning-600">🪙 ราคา</span> = ซื้อด้วยเหรียญ
-            • <span className="font-semibold text-detective-600">สวมใส่</span> = เอามาแต่งโปรไฟล์
-            • <span className="font-semibold text-success-600">✓ กำลังใช้</span> = ตอนนี้กำลังโชว์อยู่บนหน้าโปรไฟล์
+            💡 ซื้อด้วย <span className="font-semibold text-warning-600">🪙 เหรียญ</span>
+            • กด <span className="font-semibold text-detective-600">สวมใส่</span> เพื่อใช้บนหน้าโปรไฟล์
+            • <span className="font-semibold text-success-600">✓ กำลังใช้</span> = กำลังโชว์อยู่จริง
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="grid grid-cols-4 gap-1.5 mb-4">
+        <div className="grid grid-cols-3 gap-1.5 mb-4">
           {CATS.map(c => (
             <button
               key={c.id}
               onClick={() => switchTab(c.id)}
               className={`py-2 rounded-xl text-xs font-semibold transition-all ${
                 tab === c.id
-                  ? 'bg-gradient-to-br from-detective-500 to-detective-600 text-white shadow-glow-sm'
+                  ? 'bg-detective-600 text-white shadow-glow-sm'
                   : 'bg-white/80 text-gray-600 border border-detective-100'
               }`}
             >
@@ -226,108 +225,98 @@ export default function Shop() {
           )}
         </AnimatePresence>
 
-        {/* Items */}
-        {tab === 'custom' ? (
-          <CustomItemsTab
-            items={items}
-            uploading={uploading}
-            onUpload={() => fileRef.current?.click()}
-            onRemove={(id) => { sfx.click(); removeItem(id); }}
-          />
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {tabItems?.map(item => {
-              const isOwned = owned.has(item.id);
-              const isEquipped = item.category === 'title'
-                ? player.equippedTitle === item.titleText
-                : item.category === 'frame'
-                ? player.equippedFrame === item.id
-                : false;
-              const locked = !isUnlockedByStage(item);
-              const canBuy = !isOwned && !locked && coins >= item.price;
-              const canEquip = (item.category === 'title' || item.category === 'frame') && isOwned;
+        {/* Items grid */}
+        <div className="grid grid-cols-2 gap-3">
+          {tabItems.map(item => {
+            const isOwned = owned.has(item.id);
+            const isEquipped =
+              item.category === 'title' ? player.equippedTitle === item.titleText :
+              item.category === 'frame' ? player.equippedFrame === item.id :
+              item.category === 'theme' ? player.equippedTheme === item.id :
+              false;
+            const locked = !isUnlockedByStage(item);
+            const canBuy = !isOwned && !locked && coins >= item.price;
+            const canEquip = isOwned;
+            const isPreviewingThis =
+              (item.category === 'frame' && previewFrameId === item.id) ||
+              (item.category === 'title' && previewTitle === item.titleText) ||
+              (item.category === 'theme' && previewTheme === item.id);
+            const canPreview = !locked && !isOwned;
 
-              const canPreview = !locked && (item.category === 'frame' || item.category === 'title');
-              const isPreviewingThis =
-                (item.category === 'frame' && previewFrameId === item.id) ||
-                (item.category === 'title' && previewTitle === item.titleText);
-
-              return (
-                <motion.div
-                  key={item.id}
-                  whileHover={{ y: -2 }}
-                  className={`relative card flex flex-col items-center text-center p-3 ${
-                    locked ? 'opacity-60' : ''
-                  } ${isEquipped ? 'border-2 border-success-500' : ''} ${
-                    isPreviewingThis ? 'border-2 border-warning-400 bg-warning-50/40' : ''
-                  }`}
-                >
+            return (
+              <div
+                key={item.id}
+                className={`relative card flex flex-col items-center text-center p-3 ${
+                  locked ? 'opacity-60' : ''
+                } ${isEquipped ? 'border-2 border-success-500' : ''} ${
+                  isPreviewingThis ? 'border-2 border-warning-400 bg-warning-50/40' : ''
+                }`}
+              >
+                {/* preview ของ theme: แสดงแถบสี / preview กรอบ: avatar mini */}
+                {item.category === 'theme' && item.themeColors ? (
+                  <div className="flex gap-0.5 mb-1.5 rounded-lg overflow-hidden border border-slate-200">
+                    {item.themeColors.slice(0, 6).map((c, i) => (
+                      <span key={i} className="w-4 h-7" style={{ background: c }} />
+                    ))}
+                  </div>
+                ) : (
                   <div className="text-4xl mb-1">{item.emoji}</div>
-                  <p className="font-semibold text-sm leading-tight">{item.name}</p>
-                  <p className="text-[10px] text-gray-500 mb-2 line-clamp-2">{item.description}</p>
+                )}
+                <p className="font-semibold text-sm leading-tight">{item.name}</p>
+                <p className="text-[10px] text-gray-500 mb-2 line-clamp-2">{item.description}</p>
 
-                  {locked ? (
-                    <span className="pill bg-gray-200 text-gray-600">
-                      🔒 ด่าน {item.unlockAfterStage}
-                    </span>
-                  ) : isOwned ? (
-                    canEquip ? (
-                      <button
-                        onClick={() => handleEquip(item)}
-                        className={`w-full text-xs font-bold py-1.5 rounded-lg transition-all ${
-                          isEquipped
-                            ? 'bg-success-500 text-white'
-                            : 'bg-detective-100 text-detective-700 hover:bg-detective-200'
-                        }`}
-                      >
-                        {isEquipped ? '✓ กำลังใช้' : 'สวมใส่'}
-                      </button>
-                    ) : (
-                      <span className="pill bg-success-50 text-success-600 border border-success-500/30">
-                        ✓ มีแล้ว
-                      </span>
-                    )
+                {locked ? (
+                  <span className="pill bg-gray-200 text-gray-600">
+                    🔒 ด่าน {item.unlockAfterStage}
+                  </span>
+                ) : isOwned ? (
+                  canEquip ? (
+                    <button
+                      onClick={() => handleEquip(item)}
+                      className={`w-full text-xs font-bold py-1.5 rounded-lg transition-all ${
+                        isEquipped
+                          ? 'bg-success-500 text-white'
+                          : 'bg-detective-100 text-detective-700 hover:bg-detective-200'
+                      }`}
+                    >
+                      {isEquipped ? '✓ กำลังใช้' : 'สวมใส่'}
+                    </button>
                   ) : (
-                    <div className="w-full space-y-1.5">
-                      {canPreview && (
-                        <button
-                          onClick={() => handlePreview(item)}
-                          className={`w-full text-xs font-semibold py-1.5 rounded-lg border transition-all ${
-                            isPreviewingThis
-                              ? 'bg-warning-100 border-warning-400 text-warning-600'
-                              : 'bg-white border-detective-200 text-detective-600 hover:border-detective-400'
-                          }`}
-                        >
-                          {isPreviewingThis ? '👁 กำลังลอง' : '👁 ลองสวม'}
-                        </button>
-                      )}
+                    <span className="pill bg-success-50 text-success-600 border border-success-500/30">
+                      ✓ มีแล้ว
+                    </span>
+                  )
+                ) : (
+                  <div className="w-full space-y-1.5">
+                    {canPreview && (
                       <button
-                        onClick={() => askBuy(item)}
-                        disabled={!canBuy}
-                        className={`w-full text-xs font-bold py-1.5 rounded-lg flex items-center justify-center gap-1 ${
-                          canBuy
-                            ? 'bg-gradient-to-r from-warning-400 to-warning-500 text-white shadow-glow-sm'
-                            : 'bg-gray-200 text-gray-500'
+                        onClick={() => handlePreview(item)}
+                        className={`w-full text-xs font-semibold py-1.5 rounded-lg border transition-all ${
+                          isPreviewingThis
+                            ? 'bg-warning-100 border-warning-400 text-warning-600'
+                            : 'bg-white border-detective-200 text-detective-600 hover:border-detective-400'
                         }`}
                       >
-                        🪙 {item.price}
+                        {isPreviewingThis ? '👁 กำลังลอง' : '👁 ลองสวม'}
                       </button>
-                    </div>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
-
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={e => handleUpload(e.target.files)}
-        />
+                    )}
+                    <button
+                      onClick={() => askBuy(item)}
+                      disabled={!canBuy}
+                      className={`w-full text-xs font-bold py-1.5 rounded-lg flex items-center justify-center gap-1 ${
+                        canBuy
+                          ? 'bg-gradient-to-r from-warning-400 to-warning-500 text-white shadow-glow-sm'
+                          : 'bg-gray-200 text-gray-500'
+                      }`}
+                    >
+                      {item.price === 0 ? '✨ ฟรี' : `🪙 ${item.price}`}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
 
         {/* Daily streak hint */}
         {(player.streakDays || 0) > 0 && (
@@ -373,9 +362,7 @@ export default function Shop() {
                   <span className="font-bold text-warning-600">{confirmItem.price}</span>
                   <span className="text-[11px] text-gray-500">เหรียญ</span>
                 </div>
-                <p className="text-sm text-gray-700 mb-1">
-                  ยืนยันแลกของชิ้นนี้ไหม?
-                </p>
+                <p className="text-sm text-gray-700 mb-1">ยืนยันแลกของชิ้นนี้ไหม?</p>
                 <p className="text-[11px] text-gray-500 mb-4">
                   เหลือเหรียญหลังซื้อ: <strong className="text-detective-700">
                     {Math.max(0, coins - confirmItem.price)}
@@ -401,70 +388,6 @@ export default function Shop() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-// ===== Custom items tab =====
-function CustomItemsTab({
-  items,
-  uploading,
-  onUpload,
-  onRemove,
-}: {
-  items: ReturnType<typeof useItemStore.getState>['items'];
-  uploading: boolean;
-  onUpload: () => void;
-  onRemove: (id: string) => void;
-}) {
-  return (
-    <div>
-      <button
-        onClick={onUpload}
-        disabled={uploading}
-        className="btn-primary w-full mb-3"
-      >
-        {uploading ? 'กำลังอัป...' : '＋ อัปโหลดรูป/Sticker'}
-      </button>
-
-      {items.length === 0 ? (
-        <div className="card-hero text-center py-8">
-          <div className="text-5xl mb-2">📁</div>
-          <p className="text-sm text-gray-600 font-semibold">โฟลเดอร์ยังว่าง</p>
-          <p className="text-xs text-gray-500 mt-1">
-            อัปโหลดรูป sticker, item, หรือรูปอนิเมะที่ชอบ<br/>
-            ใช้แต่งโปรไฟล์ส่วนตัวได้
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-3 gap-2">
-          <AnimatePresence>
-            {items.map(it => (
-              <motion.div
-                key={it.id}
-                layout
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="relative aspect-square rounded-2xl border-2 border-detective-100 overflow-hidden bg-white"
-              >
-                <img src={it.dataUrl} alt={it.name} className="w-full h-full object-cover" />
-                <button
-                  onClick={() => onRemove(it.id)}
-                  className="absolute top-1 right-1 bg-danger-500 text-white text-[10px]
-                             rounded-full w-5 h-5 flex items-center justify-center shadow active:scale-90"
-                  aria-label="ลบ"
-                >
-                  ✕
-                </button>
-                <div className="absolute bottom-0 inset-x-0 bg-black/50 text-white text-[10px] truncate px-1.5 py-0.5">
-                  {it.name}
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
     </div>
   );
 }

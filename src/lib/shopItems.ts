@@ -17,6 +17,8 @@ export interface ShopItem {
   frameClass?: string;
   /** สำหรับ title: text ที่แสดงใต้ชื่อ */
   titleText?: string;
+  /** สำหรับ theme: ชุดสี hex 6-8 สี ใช้กับ Confetti + accent */
+  themeColors?: string[];
 }
 
 export const SHOP_ITEMS: ShopItem[] = [
@@ -39,9 +41,17 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'frame-cosmic',  category: 'frame', name: 'กรอบจักรวาล', description: 'ตำนานเท่านั้น',         price: 1500,emoji: '✨',
     frameClass: 'ring-4 ring-detective-500 ring-offset-2 shadow-glow-lg', unlockAfterStage: 12 },
 
-  // ===== Theme accents (ของฟรี/ราคาน้อย เป็นรางวัล) =====
-  { id: 'theme-confetti-pink',  category: 'theme', name: 'Confetti สีพาสเทล', description: 'เปลี่ยนสี confetti', price: 60,  emoji: '🎀' },
-  { id: 'theme-confetti-neon',  category: 'theme', name: 'Confetti นีออน',     description: 'สีนีออนสด',         price: 120, emoji: '💫', unlockAfterStage: 4 },
+  // ===== Theme accents — เปลี่ยนสี Confetti ตอนเล่นจบด่าน =====
+  { id: 'theme-default',  category: 'theme', name: 'TMF Blue',  description: 'ชุดสีหลัก (default)',  price: 0,   emoji: '🟦',
+    themeColors: ['#008FFF', '#0072CC', '#ABDAFF', '#2BCAAB', '#F59E0B', '#FBBF24'] },
+  { id: 'theme-pastel',   category: 'theme', name: 'Pastel หวาน', description: 'สีพาสเทลฟุ้งๆ',     price: 60,  emoji: '🎀',
+    themeColors: ['#FFD9EB', '#FF7AB6', '#FEF3C7', '#FBBF24', '#CFFAFE', '#A78BFA'] },
+  { id: 'theme-neon',     category: 'theme', name: 'Neon สด',     description: 'สีนีออนสะดุดตา',     price: 120, emoji: '💫', unlockAfterStage: 4,
+    themeColors: ['#FF00FF', '#00FFFF', '#FFFF00', '#FF00AA', '#00FF88', '#AA00FF'] },
+  { id: 'theme-forest',   category: 'theme', name: 'Forest เขียว', description: 'โทนเขียวธรรมชาติ',   price: 180, emoji: '🌿', unlockAfterStage: 6,
+    themeColors: ['#10B981', '#34D399', '#06B6D4', '#22D3EE', '#FBBF24', '#F59E0B'] },
+  { id: 'theme-sunset',   category: 'theme', name: 'Sunset อบอุ่น', description: 'ส้ม-แดง-ม่วงพระอาทิตย์ตก', price: 250, emoji: '🌅', unlockAfterStage: 8,
+    themeColors: ['#F59E0B', '#EF4444', '#EC4899', '#A78BFA', '#FBBF24', '#FB7185'] },
 ];
 
 export function getShopItem(id: string): ShopItem | undefined {
