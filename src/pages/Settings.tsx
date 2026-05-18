@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSettingsStore } from '../store/settingsStore';
 import { sfx } from '../lib/sound';
 import { startBgm, stopBgm } from '../lib/bgm';
+import BrandHeader from '../components/BrandHeader';
 
 interface ToggleProps {
   label: string;
@@ -43,6 +44,7 @@ export default function Settings() {
 
   return (
     <div className="min-h-full pb-8 relative">
+      <BrandHeader />
       <header className="sticky top-0 z-10 bg-white/85 backdrop-blur-md shadow-sm border-b border-detective-100/50
                          p-3 flex items-center gap-3">
         <button

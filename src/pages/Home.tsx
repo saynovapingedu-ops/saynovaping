@@ -114,8 +114,8 @@ export default function Home() {
 
   // ===== Main game home =====
   return (
-    <div className="min-h-screen pb-24 relative bg-[#008FFF]">
-      {/* ===== Blue zone — ขยายขึ้นสุด ไม่มี white gap (outer bg ก็เป็นสีฟ้า) ===== */}
+    <div className="min-h-screen pb-24 relative bg-white">
+      {/* ===== TMF blue header — extend to safe-area top (no white gap) ===== */}
       <section className="rainbow-header text-white relative overflow-hidden
                           pt-[max(2rem,calc(env(safe-area-inset-top)+1rem))]
                           px-5 pb-16">
@@ -338,12 +338,12 @@ export default function Home() {
             (อาจารย์ทักว่าไม่ควรไว้ล่างสุด) */}
       </main>
 
-      {/* ===== Sticky bottom nav — เห็นตลอดแม้ scroll ===== */}
+      {/* ===== Sticky bottom nav — พื้นขาวทึบ ไม่ทะลุสีหลัง ===== */}
       <nav className="fixed bottom-0 left-0 right-0 z-30
                       pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 px-3
-                      bg-gradient-to-t from-white via-white/95 to-transparent">
-        <div className="max-w-md mx-auto grid grid-cols-4 gap-1.5 bg-white/95 backdrop-blur-md
-                        rounded-2xl shadow-glow border border-detective-100 p-1.5">
+                      bg-white border-t border-slate-200">
+        <div className="max-w-md mx-auto grid grid-cols-4 gap-1.5 bg-white
+                        rounded-2xl p-1.5">
           <button
             onClick={() => { sfx.click(); nav('/stats'); }}
             className="flex flex-col items-center gap-0.5 py-1.5 rounded-xl

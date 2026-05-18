@@ -8,6 +8,7 @@ import { getLevelByXP } from '../lib/levels';
 import XPBar from '../components/XPBar';
 import Avatar from '../components/Avatar';
 import AvatarFolder from '../components/AvatarFolder';
+import BrandHeader from '../components/BrandHeader';
 
 // ============================================================================
 //  Profile — โทนสุภาพ คุมโทนเดียว (slate/lavender) ไม่มีรุ้ง
@@ -37,6 +38,7 @@ export default function Profile() {
   return (
     // min-h-screen + bg ทึบ → กลบ body background รุ้ง
     <div className="min-h-screen pb-10" style={{ background: '#F6F4FA' }}>
+      <BrandHeader />
       <header className="sticky top-0 bg-white border-b border-slate-200 px-3 py-3
                          flex items-center gap-3 z-10">
         <button

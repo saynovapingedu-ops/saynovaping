@@ -60,6 +60,8 @@ export const scenario05: Scenario = {
       prompt: 'เลือกอีกครั้ง',
       choices: [
         { label: 'ตอบไปว่าไม่รู้จัก แล้วบล็อก', next: 'right1', xp: 25 },
+        { label: 'พิมพ์ว่า "ไม่รู้จักครับ" แล้วบล็อกทันที', next: 'right1', xp: 25 },
+        { label: 'ไม่ตอบเลย บล็อกแล้วรายงานบัญชี', next: 'right1', xp: 28 },
       ],
     },
     {
@@ -124,6 +126,8 @@ export const scenario05: Scenario = {
       prompt: 'เลือกใหม่',
       choices: [
         { label: 'บอกพ่อแม่/ผู้ปกครอง', next: 'right3', xp: 20 },
+        { label: 'เล่าให้พ่อแม่ฟังตอนกินข้าวเย็น', next: 'right3', xp: 20 },
+        { label: 'บอกพี่/ผู้ปกครองที่ไว้ใจที่สุดในบ้าน', next: 'right3', xp: 22 },
       ],
     },
     {

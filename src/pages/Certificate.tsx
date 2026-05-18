@@ -7,6 +7,7 @@ import { usePlayerStore } from '../store/playerStore';
 import { issueCertificate } from '../lib/cloudSync';
 import { sfx } from '../lib/sound';
 import TMFLogo from '../components/TMFLogo';
+import BrandHeader from '../components/BrandHeader';
 
 export default function Certificate() {
   const nav = useNavigate();
@@ -51,7 +52,7 @@ export default function Certificate() {
   useEffect(() => {
     if (!verifyCode) return;
     const verifyUrl = `${location.origin}/saynovaping/verify?code=${verifyCode}`;
-    QRCode.toDataURL(verifyUrl, { width: 220, margin: 1, color: { dark: '#008FFF', light: '#FFFFFF' } })
+    QRCode.toDataURL(verifyUrl, { width: 220, margin: 1, color: { dark: '#003C73', light: '#FFFFFF' } })
       .then(setQrDataUrl)
       .catch(() => { /* ignore */ });
   }, [verifyCode]);
@@ -81,7 +82,7 @@ export default function Certificate() {
         cacheBust: true,
         backgroundColor: '#ffffff',
       });
-      const safeName = (player.nickname || 'health-detective').replace(/[^\w฀-๿-]/g, '_');
+      const safeName = (player.nickname || 'certificate').replace(/[^\w฀-๿-]/g, '_');
       const filename = `Certificate-${safeName}-${certNo || 'cert'}.png`;
 
       if (navigator.share && navigator.canShare) {
@@ -91,8 +92,8 @@ export default function Certificate() {
           if (navigator.canShare({ files: [file] })) {
             await navigator.share({
               files: [file],
-              title: 'Certificate — นักสืบสุขภาพ',
-              text: `${player.nickname} ผ่านภารกิจสู้บุหรี่ไฟฟ้า ครบ ${player.stagesCompleted.length} ด่าน! 🏆✨`,
+              title: 'ประกาศนียบัตร',
+              text: `${player.nickname} ผ่านการอบรม "นักสืบสู้บุหรี่ไฟฟ้า"`,
             });
             setSaving(false);
             return;
@@ -103,11 +104,11 @@ export default function Certificate() {
       }
 
       downloadDataUrl(dataUrl, filename);
-      setShareMsg('💾 บันทึกรูปเรียบร้อย — ตรวจในโฟลเดอร์ดาวน์โหลด');
+      setShareMsg('บันทึกรูปเรียบร้อย');
       setTimeout(() => setShareMsg(null), 2400);
     } catch (err) {
       console.error('save certificate failed', err);
-      setShareMsg('❌ บันทึกไม่สำเร็จ ลองอีกครั้ง');
+      setShareMsg('บันทึกไม่สำเร็จ ลองอีกครั้ง');
       setTimeout(() => setShareMsg(null), 2400);
     } finally {
       setSaving(false);
@@ -116,11 +117,11 @@ export default function Certificate() {
 
   const handleShare = async () => {
     sfx.click();
-    const text = `${player.nickname} ผ่านภารกิจสู้บุหรี่ไฟฟ้า ครบ ${player.stagesCompleted.length} ด่าน! 🏆✨`;
+    const text = `${player.nickname} ผ่านการอบรม "นักสืบสู้บุหรี่ไฟฟ้า"`;
     if (navigator.share && verifyUrl) {
       try {
         await navigator.share({
-          title: 'Certificate — นักสืบสุขภาพ',
+          title: 'ประกาศนียบัตร',
           text,
           url: verifyUrl,
         });
@@ -131,226 +132,158 @@ export default function Certificate() {
     }
     if (verifyUrl && navigator.clipboard) {
       await navigator.clipboard.writeText(`${text}\n${verifyUrl}`);
-      setShareMsg('📋 ก๊อปลิงก์แล้ว — แชร์ไปที่ไลน์/เฟซได้เลย');
+      setShareMsg('ก๊อปลิงก์แล้ว');
       setTimeout(() => setShareMsg(null), 2400);
     }
   };
 
   if (!eligible) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-        <div className="text-6xl mb-4 animate-float">🔒</div>
-        <h2 className="text-xl font-display font-bold text-detective-700 mb-2">ยังไม่ถึงเกณฑ์</h2>
-        <p className="text-gray-600 mb-6">
-          ต้องจบครบ 8 ด่าน หรือเก็บ XP ครบ 1,500
-          <br/>(ตอนนี้ {player.stagesCompleted.length}/8 ด่าน, {player.totalXP} XP)
-        </p>
-        <button onClick={() => nav('/')} className="btn-primary">กลับไปเล่นต่อ</button>
+      <div className="min-h-screen flex flex-col">
+        <BrandHeader />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <div className="text-5xl mb-4">🔒</div>
+          <h2 className="text-xl font-display font-bold text-detective-700 mb-2">ยังไม่ถึงเกณฑ์</h2>
+          <p className="text-slate-600 mb-6">
+            ต้องจบครบ 8 ด่าน หรือเก็บ XP ครบ 1,500
+            <br/>(ตอนนี้ {player.stagesCompleted.length}/8 ด่าน, {player.totalXP} XP)
+          </p>
+          <button onClick={() => nav('/')} className="btn-primary">กลับไปเล่นต่อ</button>
+        </div>
       </div>
     );
   }
 
+  // จัดวันที่แบบไทย "วันที่ DD เดือน พ.ศ. YYYY"
+  const formatThaiDate = (iso: string) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const months = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+    return `${d.getDate()} ${months[d.getMonth()]} พ.ศ. ${d.getFullYear() + 543}`;
+  };
+
   return (
-    <div className="min-h-full pb-8">
-      <header className="sticky top-0 bg-white/85 backdrop-blur-md shadow-sm border-b border-detective-100/50
+    <div className="min-h-full pb-8 bg-white">
+      <BrandHeader />
+      <header className="sticky top-0 bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200
                          p-3 flex items-center gap-3 z-10 print:hidden">
         <button
           onClick={() => nav('/')}
           className="text-detective-500 px-3 py-1.5 rounded-xl hover:bg-detective-50 active:scale-95"
         >←</button>
-        <h2 className="font-display font-bold text-detective-700">🏆 เกียรติบัตรของฉัน</h2>
+        <h2 className="font-display font-bold text-detective-700">ประกาศนียบัตร</h2>
       </header>
 
       <main className="max-w-md mx-auto p-4">
         {loading && (
           <div className="card text-center py-12">
-            <div className="text-5xl mb-3 animate-pulse">🏆</div>
-            <p className="text-gray-600">กำลังออก Certificate น่ารักๆ ...</p>
+            <div className="text-4xl mb-3 animate-pulse">⏳</div>
+            <p className="text-slate-600">กำลังออกประกาศนียบัตร ...</p>
           </div>
         )}
 
         {error && (
           <div className="card border-2 border-danger-400 text-center">
             <p className="text-danger-500 font-semibold mb-2">เกิดข้อผิดพลาด</p>
-            <p className="text-sm text-gray-600 mb-4">{error}</p>
+            <p className="text-sm text-slate-600 mb-4">{error}</p>
             <button onClick={() => location.reload()} className="btn-primary">ลองใหม่</button>
           </div>
         )}
 
         {certNo && !loading && !error && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-            {/* === Cert artwork — แบบน่ารัก สดใส === */}
+          <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}>
+            {/* ===== Certificate artwork — ทางการ พื้นขาวล้วน ===== */}
             <div
               id="cert-card"
-              className="relative rounded-[2rem] overflow-hidden shadow-2xl bg-white"
+              className="relative bg-white shadow-2xl font-official"
+              style={{ aspectRatio: '1 / 1.414', fontFamily: '"Sukhumvit Set", "Noto Sans Thai", "IBM Plex Sans Thai", sans-serif' }}
             >
-              {/* === ฉากหลัง — gradient พาสเทล + ดอกไม้/หัวใจกระจาย === */}
-              <div className="absolute inset-0 bg-gradient-to-br from-candy-50 via-warning-50 to-mint-50 pointer-events-none" />
-              <div className="absolute -top-10 -left-10 w-40 h-40 bg-candy-200/50 rounded-full blur-2xl pointer-events-none" />
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-warning-200/50 rounded-full blur-2xl pointer-events-none" />
+              {/* === กรอบเส้นคู่ น้ำเงินเข้ม (หนา + บาง) === */}
+              <div className="absolute inset-3 border-[3px] border-[#003C73] pointer-events-none" />
+              <div className="absolute inset-[18px] border border-[#003C73] pointer-events-none" />
 
-              {/* sticker decorations กระจายไปทั่ว */}
-              <div className="absolute top-4  left-3   text-2xl opacity-80 select-none">⭐</div>
-              <div className="absolute top-6  right-4  text-2xl opacity-80 select-none">🌟</div>
-              <div className="absolute top-1/3 left-4   text-xl opacity-70 select-none">💖</div>
-              <div className="absolute top-1/3 right-3  text-xl opacity-70 select-none">🎀</div>
-              <div className="absolute bottom-1/3 left-3 text-xl opacity-70 select-none">🌈</div>
-              <div className="absolute bottom-1/3 right-3 text-xl opacity-70 select-none">✨</div>
-              <div className="absolute bottom-6 left-5  text-2xl opacity-80 select-none">🦋</div>
-              <div className="absolute bottom-4 right-5 text-2xl opacity-80 select-none">🍭</div>
+              {/* === ลวดลายเรขาคณิตที่มุมล่าง (สี่เหลี่ยมฟ้า-น้ำเงิน) === */}
+              <CornerPattern position="bottom-left" />
+              <CornerPattern position="bottom-right" />
 
-              {/* === กรอบหลัก — เส้นประน่ารัก === */}
-              <div className="relative m-3 rounded-[1.75rem] p-[3px]
-                              bg-gradient-to-br from-candy-400 via-warning-400 to-mint-400 shadow-inner">
-                <div className="rounded-[1.6rem] p-[3px] bg-white">
-                  <div className="rounded-[1.4rem] bg-white/90 backdrop-blur-sm p-6 relative overflow-hidden
-                                  border-4 border-dashed border-detective-200/60">
-
-                    {/* corner stickers */}
-                    <div className="absolute top-1 left-2  text-3xl">🌸</div>
-                    <div className="absolute top-1 right-2 text-3xl">🌟</div>
-                    <div className="absolute bottom-1 left-2  text-3xl">🌈</div>
-                    <div className="absolute bottom-1 right-2 text-3xl">💫</div>
-
-                    <div className="relative text-center">
-                      {/* === Logo strip — ตามคู่มือ CI กองทุนพัฒนาสื่อฯ:
-                             โลโก้กองทุนต้องอยู่ด้านบนสุดของใบประกาศ คู่กับโลโก้ผู้รับทุน === */}
-                      <div className="flex items-center justify-center gap-3 mb-3 pb-3
-                                      border-b border-dashed border-slate-200">
-                        <TMFLogo variant="block" width={88} />
-                        <div className="text-left">
-                          <p className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">
-                            ผู้รับทุน
-                          </p>
-                          <p className="font-display font-bold text-detective-700 text-sm leading-tight">
-                            สำนักวิชา<br/>สาธารณสุขศาสตร์
-                          </p>
-                          <p className="text-[10px] text-slate-600">ม.วลัยลักษณ์</p>
-                        </div>
-                      </div>
-
-                      {/* === Top badge === */}
-                      <motion.div
-                        initial={{ scale: 0, rotate: -180 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-                        className="text-7xl mb-2 inline-block"
-                      >
-                        🏆
-                      </motion.div>
-
-                      <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-candy-400 to-warning-400
-                                      text-white text-[11px] font-bold uppercase tracking-[0.2em]
-                                      rounded-full px-3 py-1 shadow-glow-pink">
-                        🎉 Health Detective 🎉
-                      </div>
-
-                      <h1 className="font-display font-extrabold text-3xl mt-3 leading-tight
-                                     bg-gradient-to-r from-candy-500 via-detective-500 to-warning-500
-                                     bg-clip-text text-transparent">
-                        เกียรติบัตรน่ารัก
-                      </h1>
-                      <p className="text-detective-500 text-[11px] uppercase tracking-[0.2em] font-bold">
-                        ✨ Certificate of Awesomeness ✨
-                      </p>
-
-                      <div className="flex items-center justify-center gap-2 my-4">
-                        <span className="text-2xl">🌈</span>
-                        <span className="h-1 bg-gradient-to-r from-candy-400 via-warning-400 to-mint-400 flex-1 rounded-full" />
-                        <span className="text-2xl">💖</span>
-                        <span className="h-1 bg-gradient-to-r from-mint-400 via-detective-400 to-candy-400 flex-1 rounded-full" />
-                        <span className="text-2xl">⭐</span>
-                      </div>
-
-                      <p className="text-gray-600 text-sm font-medium">มอบให้กับ</p>
-                      <h2 className="font-display text-[2.2rem] font-extrabold my-2 leading-tight
-                                     bg-gradient-to-r from-detective-600 via-candy-500 to-warning-500
-                                     bg-clip-text text-transparent">
-                        {player.nickname} 💫
-                      </h2>
-
-                      <div className="bg-white/80 rounded-2xl border-2 border-dashed border-candy-300 p-3 mt-3">
-                        <p className="text-gray-700 text-sm leading-relaxed">
-                          👍 ผ่านภารกิจสุดเจ๋ง<br/>
-                          <b className="text-detective-600">"นักสืบสู้บุหรี่ไฟฟ้า"</b><br/>
-                          อย่างยอดเยี่ยม! 🎊
-                        </p>
-                      </div>
-
-                      {/* === stat strip — น่ารักๆ === */}
-                      <div className="grid grid-cols-3 gap-2 mt-5">
-                        <StatCell label="ด่าน" emoji="🎯" value={player.stagesCompleted.length} color="detective" />
-                        <StatCell label="XP" emoji="⚡" value={player.totalXP} color="warning" featured />
-                        <StatCell label="Badge" emoji="🏅" value={player.badges.length} color="candy" />
-                      </div>
-
-                      {/* === QR + Info === */}
-                      <div className="flex items-stretch gap-3 mt-5 text-left">
-                        {qrDataUrl && (
-                          <div className="flex-shrink-0 bg-white rounded-2xl p-2 border-2 border-mint-300 shadow-glow-mint">
-                            <img src={qrDataUrl} alt="Verify QR" className="w-20 h-20" />
-                            <p className="text-[8px] text-mint-600 mt-1 text-center font-bold uppercase tracking-wider">
-                              📱 สแกนเช็ค
-                            </p>
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0 flex flex-col justify-between bg-white/70 rounded-2xl p-2.5 border border-detective-100">
-                          <div>
-                            <p className="text-[9px] text-gray-500 uppercase tracking-wider font-bold">🎫 เลขที่</p>
-                            <p className="font-mono font-bold text-detective-700 text-sm truncate">{certNo}</p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] text-gray-500 uppercase tracking-wider font-bold mt-1">📅 ออกเมื่อ</p>
-                            <p className="font-semibold text-detective-700 text-xs">
-                              {issueDate && new Date(issueDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
-                            </p>
-                          </div>
-                          {verifyCode && (
-                            <div className="bg-gradient-to-r from-candy-100 to-warning-100 rounded-md px-2 py-0.5 mt-1 inline-block self-start">
-                              <p className="text-[10px] font-mono text-candy-600 truncate">✓ {verifyCode}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* === Signature === */}
-                      <div className="mt-5 pt-3 border-t-2 border-dotted border-candy-300/70">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-left">
-                            <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold">รับรองโดย 💝</p>
-                            <p className="font-display font-bold text-detective-700 text-sm leading-tight">
-                              🚭 SayNo
-                            </p>
-                            <p className="text-[10px] text-gray-500">สู้บุหรี่ไฟฟ้า</p>
-                          </div>
-                          <CuteSeal />
-                        </div>
-                      </div>
-                    </div>
+              {/* === Content === */}
+              <div className="relative px-8 pt-8 pb-12 h-full flex flex-col items-center text-center">
+                {/* === Logos: TMF + ผู้รับทุน (กึ่งกลางบนสุด) === */}
+                <div className="flex items-center justify-center gap-6 mb-6 w-full">
+                  <TMFLogo variant="bare" width={110} />
+                  <div className="w-px h-16 bg-slate-300" />
+                  <div className="text-left">
+                    <p className="text-[10px] text-slate-500 font-medium tracking-wide">ผู้รับทุน</p>
+                    <p className="text-detective-800 font-bold text-sm leading-tight">
+                      สำนักวิชา<br/>สาธารณสุขศาสตร์
+                    </p>
+                    <p className="text-[11px] text-slate-600 font-medium leading-tight mt-0.5">
+                      มหาวิทยาลัยวลัยลักษณ์
+                    </p>
                   </div>
                 </div>
+
+                {/* === Title === */}
+                <h1 className="text-detective-800 font-bold text-[2.5rem] leading-tight tracking-wide">
+                  ประกาศนียบัตร
+                </h1>
+                <div className="w-24 h-px bg-detective-700 my-3" />
+
+                {/* === Issuing statement === */}
+                <p className="text-slate-700 text-sm mt-2">ฉบับนี้ไว้เพื่อแสดงว่า</p>
+
+                {/* === Recipient name === */}
+                <h2 className="text-detective-800 font-bold text-3xl my-3 leading-tight px-4">
+                  {player.nickname}
+                </h2>
+
+                {/* === Description === */}
+                <p className="text-slate-700 text-sm leading-relaxed max-w-xs mt-1">
+                  เป็นผู้ผ่านการเข้าร่วมกิจกรรม
+                </p>
+                <p className="text-detective-700 font-semibold text-base leading-tight mt-1">
+                  "นักสืบสู้บุหรี่ไฟฟ้า"
+                </p>
+                <p className="text-slate-600 text-xs mt-1.5 leading-relaxed max-w-xs">
+                  หลักสูตรการเรียนรู้ทักษะปฏิเสธ
+                  และรู้เท่าทันภัยจากบุหรี่ไฟฟ้า สำหรับเยาวชน
+                </p>
+
+                {/* === Date === */}
+                <p className="text-slate-700 text-sm mt-auto pt-4">
+                  ให้ไว้ ณ วันที่ <span className="font-semibold text-detective-800">{formatThaiDate(issueDate)}</span>
+                </p>
+
+                {/* === Cert number — เล็ก ด้านล่าง === */}
+                <p className="text-[10px] text-slate-500 font-mono mt-1">
+                  เลขที่ {certNo}
+                </p>
               </div>
+
+              {/* === QR เล็ก มุมขวาล่าง === */}
+              {qrDataUrl && (
+                <div className="absolute bottom-6 right-6 bg-white p-1 border border-slate-300">
+                  <img src={qrDataUrl} alt="ตรวจสอบ" className="w-12 h-12 block" />
+                  <p className="text-[7px] text-slate-500 text-center mt-0.5 leading-none">ตรวจสอบ</p>
+                </div>
+              )}
             </div>
 
-            {/* === Buttons === */}
+            {/* ===== Buttons ===== */}
             <div className="mt-5 grid grid-cols-2 gap-2 print:hidden">
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-gradient-to-br from-warning-400 to-candy-500 text-white font-bold
-                           rounded-2xl py-3 shadow-glow-gold active:scale-95 transition-all
-                           disabled:opacity-60 disabled:cursor-wait
-                           flex items-center justify-center gap-1.5"
+                className="btn-primary flex items-center justify-center gap-1.5 disabled:opacity-60"
               >
-                {saving ? '⏳ กำลังบันทึก...' : '💾 บันทึกรูป'}
+                {saving ? 'กำลังบันทึก...' : '💾 บันทึกรูป'}
               </button>
               <button
                 onClick={handleShare}
-                className="bg-gradient-to-br from-mint-500 to-detective-500 text-white font-bold
-                           rounded-2xl py-3 shadow-glow active:scale-95 transition-all
-                           flex items-center justify-center gap-1.5"
+                className="btn-secondary flex items-center justify-center gap-1.5"
               >
-                📤 แชร์ให้เพื่อน
+                📤 แชร์
               </button>
             </div>
 
@@ -375,7 +308,7 @@ export default function Certificate() {
                 <button
                   onClick={() => {
                     navigator.clipboard?.writeText(`รหัสยืนยัน Certificate: ${verifyCode}`);
-                    setShareMsg('📋 ก๊อปรหัสแล้ว');
+                    setShareMsg('ก๊อปรหัสแล้ว');
                     setTimeout(() => setShareMsg(null), 2000);
                   }}
                   className="btn-secondary w-full text-sm py-2"
@@ -385,8 +318,9 @@ export default function Certificate() {
               )}
             </div>
 
-            <p className="text-[11px] text-center text-gray-400 mt-4 print:hidden">
-              💡 มือถือ: เลือกแชร์ไป Photos / LINE / IG / TikTok ได้เลย
+            <p className="text-[10px] text-center text-slate-500 mt-4 print:hidden leading-relaxed">
+              ตรวจสอบความถูกต้องได้ที่ /verify โดยใช้รหัสยืนยัน
+              หรือสแกน QR Code มุมขวาล่างของประกาศนียบัตร
             </p>
           </motion.div>
         )}
@@ -395,57 +329,33 @@ export default function Certificate() {
   );
 }
 
-// ===== สวยๆ น่ารักๆ =====
-
-function StatCell({
-  label, emoji, value, color, featured = false,
-}: {
-  label: string;
-  emoji: string;
-  value: number;
-  color: 'detective' | 'warning' | 'candy';
-  featured?: boolean;
-}) {
-  const cls =
-    color === 'warning'   ? 'border-warning-300 bg-gradient-to-b from-warning-50 to-white' :
-    color === 'candy'     ? 'border-candy-300   bg-gradient-to-b from-candy-50   to-white' :
-                            'border-detective-300 bg-gradient-to-b from-detective-50 to-white';
-  const valCls =
-    color === 'warning'   ? 'text-warning-600' :
-    color === 'candy'     ? 'text-candy-600' :
-                            'text-detective-700';
+// ===== ลวดลายเรขาคณิตสี่เหลี่ยมที่มุม — โทนฟ้า-น้ำเงิน =====
+function CornerPattern({ position }: { position: 'bottom-left' | 'bottom-right' }) {
+  const flip = position === 'bottom-right';
   return (
-    <div className={`rounded-2xl border-2 ${cls} ${featured ? 'shadow-glow-sm scale-105' : ''} py-2 px-1`}>
-      <p className="text-[14px] leading-none">{emoji}</p>
-      <p className={`font-display font-extrabold text-lg ${valCls} leading-none mt-0.5`}>{value}</p>
-      <p className="text-[9px] text-gray-500 uppercase tracking-wider font-bold mt-0.5">{label}</p>
+    <div
+      className="absolute bottom-6 w-24 h-24 pointer-events-none"
+      style={{
+        [flip ? 'right' : 'left']: '24px',
+        transform: flip ? 'scaleX(-1)' : 'none',
+      }}
+    >
+      <svg viewBox="0 0 96 96" className="w-full h-full" aria-hidden>
+        {/* layered rectangles — pattern เรขาคณิต TMF blue */}
+        <rect x="0"  y="72" width="20" height="20" fill="#003C73" />
+        <rect x="22" y="72" width="20" height="20" fill="#0072CC" />
+        <rect x="44" y="72" width="20" height="20" fill="#008FFF" />
+        <rect x="66" y="72" width="20" height="20" fill="#ABDAFF" />
+
+        <rect x="0"  y="50" width="20" height="20" fill="#0072CC" />
+        <rect x="22" y="50" width="20" height="20" fill="#008FFF" />
+        <rect x="44" y="50" width="20" height="20" fill="#ABDAFF" opacity="0.7" />
+
+        <rect x="0"  y="28" width="20" height="20" fill="#008FFF" />
+        <rect x="22" y="28" width="20" height="20" fill="#ABDAFF" opacity="0.6" />
+
+        <rect x="0"  y="6"  width="20" height="20" fill="#ABDAFF" opacity="0.5" />
+      </svg>
     </div>
-  );
-}
-
-function CuteSeal() {
-  return (
-    <svg width="60" height="60" viewBox="0 0 60 60" aria-hidden className="opacity-95">
-      <defs>
-        <linearGradient id="seal-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%"   stopColor="#EC4899" />
-          <stop offset="50%"  stopColor="#F59E0B" />
-          <stop offset="100%" stopColor="#06B6D4" />
-        </linearGradient>
-      </defs>
-      {/* ring น่ารัก wavy */}
-      <circle cx="30" cy="30" r="26" fill="url(#seal-grad)" />
-      <circle cx="30" cy="30" r="22" fill="#FFF" />
-      <circle cx="30" cy="30" r="20" fill="none" stroke="#8B5CF6" strokeWidth="1.2" strokeDasharray="3 3" />
-      {/* heart shape */}
-      <path
-        d="M30 42 C 18 34, 14 24, 22 20 C 26 18, 28 22, 30 25 C 32 22, 34 18, 38 20 C 46 24, 42 34, 30 42 Z"
-        fill="#EC4899"
-        opacity="0.85"
-      />
-      <text x="30" y="32" textAnchor="middle" fontSize="9" fontWeight="900" fill="#FFFFFF">
-        SAY NO
-      </text>
-    </svg>
   );
 }

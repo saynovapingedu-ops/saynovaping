@@ -69,6 +69,10 @@ export default {
       fontFamily: {
         sans: ['"IBM Plex Sans Thai"', 'sans-serif'],
         display: ['"Bai Jamjuree"', '"IBM Plex Sans Thai"', 'sans-serif'],
+        // ฟอนต์ทางการ — ใช้กับ Certificate, เอกสารทางการ
+        // ตามคู่มือ TMF: "Sukhumvit Set" (license proprietary AIS) →
+        // ถ้าไม่มีในเครื่อง fallback ไป Noto Sans Thai (ใกล้เคียงที่สุด)
+        official: ['"Sukhumvit Set"', '"Noto Sans Thai"', '"IBM Plex Sans Thai"', 'sans-serif'],
       },
       boxShadow: {
         // Glow ใช้สี TMF blue

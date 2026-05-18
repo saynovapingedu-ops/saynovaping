@@ -119,6 +119,8 @@ export const scenario07: Scenario = {
       prompt: 'เลือกใหม่',
       choices: [
         { label: 'แจ้ง สสส. หรือ 1422 (สายด่วน)', next: 'right2', xp: 20 },
+        { label: 'โทร 1422 ขอคำแนะนำ + แจ้งเบาะแสคนส่งของ', next: 'right2', xp: 22 },
+        { label: 'แจ้งตำรวจสถานีใกล้บ้านพร้อมกับโทร 1422', next: 'right2', xp: 22 },
       ],
     },
     {

@@ -5,6 +5,7 @@ import { getLevelByXP, getNextLevel, getProgressToNextLevel, LEVELS, TIER_INFO }
 import { BADGES } from '../lib/badges';
 import { SCENARIO_META } from '../scenarios';
 import Avatar from '../components/Avatar';
+import BrandHeader from '../components/BrandHeader';
 import { sfx } from '../lib/sound';
 
 export default function Stats() {
@@ -23,6 +24,7 @@ export default function Stats() {
 
   return (
     <div className="min-h-full pb-10 relative">
+      <BrandHeader />
       <header className="sticky top-0 z-10 bg-white/85 backdrop-blur-md shadow-sm border-b border-detective-100/50
                          p-3 flex items-center gap-3">
         <button

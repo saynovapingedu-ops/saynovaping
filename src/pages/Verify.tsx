@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { verifyCertificate, type VerifyResponse } from '../lib/cloudSync';
+import BrandHeader from '../components/BrandHeader';
 
 export default function Verify() {
   const [params] = useSearchParams();
@@ -25,6 +26,7 @@ export default function Verify() {
 
   return (
     <div className="min-h-full bg-detective-50 pb-8">
+      <BrandHeader />
       <header className="sticky top-0 bg-white shadow-sm p-3 flex items-center gap-3 z-10">
         <button onClick={() => nav('/')} className="text-detective-500 px-2">←</button>
         <h2 className="font-display font-bold text-detective-700">ยืนยัน Certificate</h2>

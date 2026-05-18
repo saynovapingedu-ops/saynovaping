@@ -7,6 +7,7 @@ import { fileToResizedDataUrl } from '../store/avatarStore';
 import { SHOP_ITEMS, type ShopItem, type ItemCategory } from '../lib/shopItems';
 import { sfx, vibrate } from '../lib/sound';
 import Avatar from '../components/Avatar';
+import BrandHeader from '../components/BrandHeader';
 
 const CATS: { id: ItemCategory | 'custom'; label: string; emoji: string }[] = [
   { id: 'title',       label: 'ตำแหน่ง', emoji: '🏷️' },
@@ -126,6 +127,7 @@ export default function Shop() {
 
   return (
     <div className="min-h-full pb-8 relative">
+      <BrandHeader />
       <header className="sticky top-0 z-10 bg-white/85 backdrop-blur-md shadow-sm border-b border-detective-100/50
                          p-3 flex items-center gap-3">
         <button
