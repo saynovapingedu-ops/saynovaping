@@ -17,6 +17,13 @@
     background: #F6F4FA;
     background-attachment: fixed;
   }
+  /* เมื่อสวม theme — body bg มี tint สีเด่นของ theme ลายอ่อนๆ */
+  html.has-theme body {
+    background:
+      radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--theme-1) 18%, transparent), transparent 50%),
+      radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--theme-3) 18%, transparent), transparent 50%),
+      #F6F4FA;
+  }
   h1, h2, h3 {
     @apply font-display;
   }
@@ -53,11 +60,18 @@
      สีอื่นใช้เฉพาะเชิงฟังก์ชัน: success=ถูก, danger=ผิด
      ============================================================================ */
 
-  /* ปุ่มหลัก — solid detective (เดียว) ไม่ใช้ gradient รุ้ง */
+  /* ปุ่มหลัก — solid detective (เดียว) ไม่ใช้ gradient รุ้ง
+     ถ้ามี theme equipped ใช้สี theme-1/theme-2 */
   .btn-primary {
     @apply relative bg-detective-600 hover:bg-detective-700
            text-white font-semibold rounded-2xl px-5 py-3 shadow-sm active:scale-95 transition-all
            disabled:opacity-50;
+  }
+  .has-theme .btn-primary {
+    background: linear-gradient(135deg, var(--theme-1) 0%, var(--theme-2) 100%);
+  }
+  .has-theme .btn-primary:hover {
+    filter: brightness(0.92);
   }
 
   .btn-secondary {
@@ -83,9 +97,12 @@
            bg-gradient-to-br from-detective-50/60 to-white;
   }
 
-  /* hero header — TMF blue ไล่เฉดเข้มขึ้น (single-hue) ตามแบรนด์ */
+  /* hero header — TMF blue (default) หรือ theme ที่สวมอยู่ */
   .rainbow-header {
     background: linear-gradient(135deg, #008FFF 0%, #0072CC 100%);
+  }
+  .has-theme .rainbow-header {
+    background: linear-gradient(135deg, var(--theme-1) 0%, var(--theme-2) 100%);
   }
 
   /* shimmer */

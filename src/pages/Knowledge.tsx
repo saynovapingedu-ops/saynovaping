@@ -229,7 +229,7 @@ export default function Knowledge() {
     <div className="min-h-full pb-10 relative">
       <PageHeader title="📖 ห้องสมุดความรู้" subtitle="รู้ทันภัยจากบุหรี่ไฟฟ้า" backTo="/" />
 
-      <main className="max-w-md mx-auto px-4 pt-3">
+      <main className="max-w-md md:max-w-2xl mx-auto px-4 pt-3">
         {/* Hero */}
         <div className="card-hero mb-3 text-center py-3">
           <div className="flex items-center gap-2 justify-center">
@@ -269,7 +269,7 @@ export default function Knowledge() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 8 }}
               transition={{ duration: 0.18 }}
-              className="space-y-2"
+              className="space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0"
             >
               {DANGERS.map((d, i) => {
                 const c = COLOR_MAP[d.color];
@@ -307,13 +307,14 @@ export default function Knowledge() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 8 }}
               transition={{ duration: 0.18 }}
-              className="space-y-3"
             >
-              <p className="text-xs text-slate-600 text-center">
+              <p className="text-xs text-slate-600 text-center mb-3">
                 💡 กดปุ่ม ▶ บนรูป — ถ้าเล่นไม่ได้ในแอป ให้กด "เปิดใน YouTube"
               </p>
-              {VIDEOS.map(v => <VideoCard key={v.id} video={v} />)}
-              <div className="card text-center text-[10px] text-slate-500 leading-relaxed">
+              <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+                {VIDEOS.map(v => <VideoCard key={v.id} video={v} />)}
+              </div>
+              <div className="card text-center text-[10px] text-slate-500 leading-relaxed mt-3">
                 เครดิตวิดีโอ: เป็นลิขสิทธิ์ของเจ้าของช่องตามที่ระบุ — ใช้เพื่อการศึกษา ไม่หากำไร
               </div>
             </motion.div>
@@ -412,10 +413,6 @@ export default function Knowledge() {
         >
           🎮 กลับไปเล่นเกม
         </button>
-
-        <p className="text-[11px] text-center text-slate-400 font-semibold mt-4">
-          🚭 SayNo:สู้บุหรี่ไฟฟ้า
-        </p>
       </main>
     </div>
   );

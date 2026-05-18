@@ -7,6 +7,7 @@ import { SHOP_ITEMS } from '../lib/shopItems';
 import XPBar from '../components/XPBar';
 import Avatar from '../components/Avatar';
 import BrandHeader from '../components/BrandHeader';
+import PageHeader from '../components/PageHeader';
 import { sfx } from '../lib/sound';
 
 const INTRO_SEEN_KEY = 'hd_game_intro_seen_v1';
@@ -53,27 +54,27 @@ export default function Home() {
   // ===== Intro / Tutorial =====
   if (showIntro) {
     return (
-      <div className="min-h-screen flex flex-col max-w-md mx-auto">
-        <BrandHeader />
+      <div className="min-h-screen flex flex-col max-w-md md:max-w-2xl mx-auto">
+        <PageHeader title="ℹ️ วิธีเล่น" subtitle="ทำความรู้จักเกมก่อนเริ่ม" onBack={closeIntro} />
         <AnimatePresence>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex-1 flex flex-col gap-3 p-4"
           >
-            {/* Hero — TMF blue */}
+            {/* Hero */}
             <div className="rainbow-header rounded-3xl p-4 text-white shadow-glow flex items-center gap-3">
               <div className="text-5xl drop-shadow-lg">🔍</div>
               <div className="flex-1">
-                <h1 className="text-xl font-display font-extrabold leading-tight drop-shadow">
+                <h1 className="text-xl md:text-2xl font-display font-extrabold leading-tight drop-shadow">
                   ก่อนเริ่มเล่น
                 </h1>
-                <p className="text-xs opacity-95">ทำความรู้จักเกมกันก่อน!</p>
+                <p className="text-xs md:text-sm opacity-95">ทำความรู้จักเกมกันก่อน!</p>
               </div>
             </div>
 
-            {/* 2×2 grid */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* 2×2 grid (md: 4-col single row) */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {INTRO_SECTIONS.map((s, i) => (
                 <div key={i} className="card p-3">
                   <div className="text-3xl mb-1">{s.emoji}</div>
@@ -84,7 +85,7 @@ export default function Home() {
             </div>
 
             <div className="card py-2.5 border-2 border-warning-200 bg-gradient-to-br from-warning-50 to-white">
-              <p className="text-xs text-gray-700 leading-relaxed">
+              <p className="text-xs md:text-sm text-gray-700 leading-relaxed">
                 <b className="text-warning-600">💡 เคล็ดลับ:</b> ดู
                 <button
                   onClick={() => { sfx.click(); nav('/knowledge'); }}
@@ -124,7 +125,7 @@ export default function Home() {
         <div className="absolute bottom-16 left-6 text-white/30 text-sm pointer-events-none">⭐</div>
 
         {/* ===== Top row: Profile (ซ้าย) + Pill (ขวา) บรรทัดเดียวกัน ===== */}
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md md:max-w-3xl mx-auto">
           <div className="flex items-center gap-2 relative">
             {/* Profile — ซ้าย, แตะ avatar/ชื่อ ไปหน้าโปรไฟล์ */}
             <button
@@ -201,7 +202,7 @@ export default function Home() {
       </section>
 
       {/* ===== White sheet ขอบโค้งซ้อนทับสีฟ้า ===== */}
-      <main className="max-w-md mx-auto px-4 pt-6 -mt-8 relative z-10
+      <main className="max-w-md md:max-w-3xl mx-auto px-4 pt-6 -mt-8 relative z-10
                        bg-white rounded-t-[28px]
                        shadow-[0_-6px_20px_-4px_rgba(0,0,0,0.08)]">
         {certEligible && !player.certificateNo && (
@@ -264,7 +265,8 @@ export default function Home() {
                 </span>
               </div>
 
-              <div className="space-y-2">
+              {/* Stages — single column mobile, 2 col tablet */}
+              <div className="space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
                 {stages.map((meta) => {
                   const unlocked = isStageUnlocked(meta.id, player.stagesCompleted);
                   const completed = player.stagesCompleted.includes(meta.id);
@@ -342,7 +344,7 @@ export default function Home() {
       <nav className="fixed bottom-0 left-0 right-0 z-30
                       pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 px-3
                       bg-white border-t border-slate-200">
-        <div className="max-w-md mx-auto grid grid-cols-4 gap-1.5 bg-white
+        <div className="max-w-md md:max-w-3xl mx-auto grid grid-cols-4 gap-1.5 bg-white
                         rounded-2xl p-1.5">
           <button
             onClick={() => { sfx.click(); nav('/stats'); }}

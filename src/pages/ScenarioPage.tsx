@@ -292,7 +292,7 @@ export default function ScenarioPage() {
     };
 
     return (
-      <div className="min-h-screen flex flex-col p-4 max-w-md mx-auto relative">
+      <div className="min-h-screen flex flex-col p-4 max-w-md md:max-w-2xl mx-auto relative">
         <button
           onClick={() => nav('/')}
           className="self-start text-detective-500 font-semibold mb-3 active:opacity-70 px-2 py-1"
@@ -432,7 +432,7 @@ export default function ScenarioPage() {
         </div>
       </header>
 
-      <main className="max-w-md mx-auto p-4">
+      <main className="max-w-md md:max-w-2xl mx-auto p-4">
         {/* แสดง history dialogue/feedback */}
         <div className="space-y-1 mb-4">
           <AnimatePresence>

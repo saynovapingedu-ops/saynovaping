@@ -111,7 +111,7 @@ export default function Room() {
         </button>
       </div>
 
-      <main className="max-w-md mx-auto px-3 pt-3">
+      <main className="max-w-md md:max-w-2xl mx-auto px-3 pt-3">
         <div className="mb-3 rounded-2xl border border-detective-200 bg-detective-50/70 p-2.5">
           <p className="text-[11px] text-gray-700 leading-relaxed">
             💡 <b className="text-detective-700">ห้องของคุณ</b> = รางวัลสะสม XP — แตะของที่เรืองแสง ✨

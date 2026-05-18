@@ -26,7 +26,7 @@ export default function Stats() {
     <div className="min-h-full pb-10 relative">
       <PageHeader title="📊 คะแนนของฉัน" subtitle="ความคืบหน้าและรางวัลทั้งหมด" backTo="/" />
 
-      <main className="max-w-md mx-auto px-4 pt-4 space-y-4">
+      <main className="max-w-md md:max-w-2xl mx-auto px-4 pt-4 space-y-4">
         {/* Player card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}

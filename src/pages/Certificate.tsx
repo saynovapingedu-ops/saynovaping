@@ -167,7 +167,7 @@ export default function Certificate() {
     <div className="min-h-full pb-8 bg-white">
       <PageHeader title="🏆 ประกาศนียบัตร" backTo="/" />
 
-      <main className="max-w-md mx-auto p-4">
+      <main className="max-w-md md:max-w-lg mx-auto p-4">
         {loading && (
           <div className="card text-center py-12">
             <div className="text-4xl mb-3 animate-pulse">⏳</div>

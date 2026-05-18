@@ -134,7 +134,7 @@ export default function Shop() {
         </div>
       </div>
 
-      <main className="max-w-md mx-auto px-4 pt-4">
+      <main className="max-w-md md:max-w-3xl mx-auto px-4 pt-4">
         {/* === Avatar preview — แสดงผลตามที่กำลังลอง / สวมอยู่ === */}
         {(() => {
           const shownFrameId = previewFrameId ?? player.equippedFrame;
@@ -225,8 +225,8 @@ export default function Shop() {
           )}
         </AnimatePresence>
 
-        {/* Items grid */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Items grid — responsive: 2 col mobile, 3 col tablet, 4 col desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {tabItems.map(item => {
             const isOwned = owned.has(item.id);
             const isEquipped =

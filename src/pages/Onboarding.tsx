@@ -68,7 +68,7 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col max-w-md mx-auto relative">
+    <div className="min-h-screen flex flex-col max-w-md md:max-w-lg mx-auto relative">
       <BrandHeader />
 
       <div className="flex flex-col flex-1 p-6">

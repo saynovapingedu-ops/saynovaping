@@ -28,7 +28,7 @@ export default function Verify() {
     <div className="min-h-full bg-detective-50 pb-8">
       <PageHeader title="🔍 ยืนยัน Certificate" backTo="/" />
 
-      <main className="max-w-md mx-auto p-4 space-y-4">
+      <main className="max-w-md md:max-w-xl mx-auto p-4 space-y-4">
         <div className="card">
           <h3 className="font-semibold text-detective-700 mb-2">ตรวจสอบใบประกาศนียบัตร</h3>
           <p className="text-sm text-gray-600 mb-3">

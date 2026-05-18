@@ -46,7 +46,7 @@ export default function Settings() {
     <div className="min-h-full pb-8 relative">
       <PageHeader title="⚙️ ตั้งค่า" backTo="/" />
 
-      <main className="max-w-md mx-auto px-4 pt-4 space-y-3">
+      <main className="max-w-md md:max-w-2xl mx-auto px-4 pt-4 space-y-3">
         <p className="text-xs text-gray-500 px-1">เสียงและการสั่น</p>
         <Toggle
           emoji="🔊"
@@ -117,14 +117,17 @@ export default function Settings() {
           <p className="flex justify-between"><span>ด่านทั้งหมด</span><span>15 ด่าน</span></p>
         </div>
 
-        <div className="card-hero text-center mt-2">
-          <p className="font-display font-bold text-detective-700 text-sm">
-            🚭 SayNo:สู้บุหรี่ไฟฟ้า
+        {/* === TMF funding credit === */}
+        <div className="card border-2 border-detective-200 bg-detective-50/60 text-center mt-2">
+          <p className="text-xs text-slate-700 leading-relaxed">
+            โครงการ <b className="text-detective-700">"SayNo:สู้บุหรี่ไฟฟ้า"</b>
+            <br/>
+            <span className="text-[11px] text-slate-600">ได้รับทุนสนับสนุนจาก</span>
           </p>
-        </div>
-
-        <div className="text-center text-[11px] text-gray-400 pt-4">
-          🔍 นักสืบสุขภาพ — ภารกิจปกป้องลมหายใจ
+          <p className="font-display font-bold text-detective-700 text-sm mt-1.5 leading-tight">
+            กองทุนพัฒนาสื่อปลอดภัยและสร้างสรรค์
+          </p>
+          <p className="text-[11px] text-slate-500 italic">THAI MEDIA FUND</p>
         </div>
       </main>
     </div>

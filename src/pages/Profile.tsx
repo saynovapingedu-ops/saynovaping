@@ -41,7 +41,7 @@ export default function Profile() {
     <div className="min-h-screen pb-10" style={{ background: '#F6F4FA' }}>
       <PageHeader title="โปรไฟล์" backTo="/" />
 
-      <main className="max-w-md mx-auto p-4 space-y-3">
+      <main className="max-w-md md:max-w-2xl mx-auto p-4 space-y-3">
         {/* === Hero card: solid white card, ไม่มี gradient รุ้ง === */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}

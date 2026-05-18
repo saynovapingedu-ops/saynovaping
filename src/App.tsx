@@ -5,6 +5,7 @@ import { flushQueue } from './lib/cloudSync';
 import { startBgm } from './lib/bgm';
 import { usePlayerStore } from './store/playerStore';
 import { useSettingsStore } from './store/settingsStore';
+import { SHOP_ITEMS } from './lib/shopItems';
 import Toaster from './components/Toaster';
 import Onboarding from './pages/Onboarding';
 import Home from './pages/Home';
@@ -35,6 +36,7 @@ export default function App() {
   const setUserHash = usePlayerStore(s => s.setUserHash);
   const fontSize = useSettingsStore(s => s.fontSize);
   const musicEnabled = useSettingsStore(s => s.musicEnabled);
+  const equippedTheme = usePlayerStore(s => s.equippedTheme);
 
   useEffect(() => {
     const sizeMap: Record<typeof fontSize, string> = {
@@ -42,6 +44,31 @@ export default function App() {
     };
     document.documentElement.style.fontSize = sizeMap[fontSize] || '16px';
   }, [fontSize]);
+
+  // === Apply equipped theme CSS variables on <html> ===
+  // ส่งผลกับ: body bg, .rainbow-header, .btn-primary
+  useEffect(() => {
+    const root = document.documentElement;
+    const item = equippedTheme ? SHOP_ITEMS.find(i => i.id === equippedTheme) : null;
+    const colors = item?.themeColors;
+    if (colors && colors.length >= 4) {
+      root.style.setProperty('--theme-1', colors[0]);
+      root.style.setProperty('--theme-2', colors[1] || colors[0]);
+      root.style.setProperty('--theme-3', colors[2] || colors[0]);
+      root.style.setProperty('--theme-4', colors[3] || colors[0]);
+      root.style.setProperty('--theme-5', colors[4] || colors[0]);
+      root.style.setProperty('--theme-6', colors[5] || colors[0]);
+      root.classList.add('has-theme');
+    } else {
+      root.style.removeProperty('--theme-1');
+      root.style.removeProperty('--theme-2');
+      root.style.removeProperty('--theme-3');
+      root.style.removeProperty('--theme-4');
+      root.style.removeProperty('--theme-5');
+      root.style.removeProperty('--theme-6');
+      root.classList.remove('has-theme');
+    }
+  }, [equippedTheme]);
 
   useEffect(() => {
     if (!musicEnabled) return;
