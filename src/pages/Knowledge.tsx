@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sfx } from '../lib/sound';
-import BrandHeader from '../components/BrandHeader';
+import PageHeader from '../components/PageHeader';
 
 // ===== เนื้อหาความรู้เรื่องบุหรี่ไฟฟ้า — สำหรับ ม.ต้น =====
 
@@ -215,19 +215,7 @@ export default function Knowledge() {
 
   return (
     <div className="min-h-full pb-10 relative">
-      <BrandHeader />
-
-      <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-200
-                      p-3 flex items-center gap-3">
-        <button
-          onClick={() => { sfx.click(); nav('/'); }}
-          className="text-detective-500 px-3 py-1.5 rounded-xl hover:bg-detective-50 active:scale-95"
-        >←</button>
-        <div className="flex-1 min-w-0">
-          <h2 className="font-display font-bold text-detective-700 text-base">📖 ห้องสมุดความรู้</h2>
-          <p className="text-[11px] text-slate-500">รู้ทันภัยจากบุหรี่ไฟฟ้า</p>
-        </div>
-      </div>
+      <PageHeader title="📖 ห้องสมุดความรู้" subtitle="รู้ทันภัยจากบุหรี่ไฟฟ้า" backTo="/" />
 
       <main className="max-w-md mx-auto px-4 pt-3">
         {/* Hero */}

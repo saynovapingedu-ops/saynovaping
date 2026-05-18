@@ -5,7 +5,7 @@ import { getLevelByXP, getNextLevel, getProgressToNextLevel, LEVELS, TIER_INFO }
 import { BADGES } from '../lib/badges';
 import { SCENARIO_META } from '../scenarios';
 import Avatar from '../components/Avatar';
-import BrandHeader from '../components/BrandHeader';
+import PageHeader from '../components/PageHeader';
 import { sfx } from '../lib/sound';
 
 export default function Stats() {
@@ -24,18 +24,7 @@ export default function Stats() {
 
   return (
     <div className="min-h-full pb-10 relative">
-      <BrandHeader />
-      <header className="sticky top-0 z-10 bg-white/85 backdrop-blur-md shadow-sm border-b border-detective-100/50
-                         p-3 flex items-center gap-3">
-        <button
-          onClick={() => { sfx.click(); nav('/'); }}
-          className="text-detective-500 px-3 py-1.5 rounded-lg hover:bg-detective-50 active:scale-95"
-        >←</button>
-        <div className="flex-1 min-w-0">
-          <h2 className="font-display font-bold text-detective-700 text-base">📊 คะแนนของฉัน</h2>
-          <p className="text-[11px] text-gray-500">ความคืบหน้าและรางวัลทั้งหมด</p>
-        </div>
-      </header>
+      <PageHeader title="📊 คะแนนของฉัน" subtitle="ความคืบหน้าและรางวัลทั้งหมด" backTo="/" />
 
       <main className="max-w-md mx-auto px-4 pt-4 space-y-4">
         {/* Player card */}

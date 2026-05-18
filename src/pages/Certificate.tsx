@@ -7,7 +7,7 @@ import { usePlayerStore } from '../store/playerStore';
 import { issueCertificate } from '../lib/cloudSync';
 import { sfx } from '../lib/sound';
 import TMFLogo from '../components/TMFLogo';
-import BrandHeader from '../components/BrandHeader';
+import PageHeader from '../components/PageHeader';
 
 export default function Certificate() {
   const nav = useNavigate();
@@ -140,7 +140,7 @@ export default function Certificate() {
   if (!eligible) {
     return (
       <div className="min-h-screen flex flex-col">
-        <BrandHeader />
+        <PageHeader title="🏆 ประกาศนียบัตร" backTo="/" />
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
           <div className="text-5xl mb-4">🔒</div>
           <h2 className="text-xl font-display font-bold text-detective-700 mb-2">ยังไม่ถึงเกณฑ์</h2>
@@ -165,15 +165,7 @@ export default function Certificate() {
 
   return (
     <div className="min-h-full pb-8 bg-white">
-      <BrandHeader />
-      <header className="sticky top-0 bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200
-                         p-3 flex items-center gap-3 z-10 print:hidden">
-        <button
-          onClick={() => nav('/')}
-          className="text-detective-500 px-3 py-1.5 rounded-xl hover:bg-detective-50 active:scale-95"
-        >←</button>
-        <h2 className="font-display font-bold text-detective-700">ประกาศนียบัตร</h2>
-      </header>
+      <PageHeader title="🏆 ประกาศนียบัตร" backTo="/" />
 
       <main className="max-w-md mx-auto p-4">
         {loading && (

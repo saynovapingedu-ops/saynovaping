@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
 import { ROOM_ITEMS, type RoomItem } from '../lib/roomItems';
 import Avatar from '../components/Avatar';
+import PageHeader from '../components/PageHeader';
 import { sfx, vibrate } from '../lib/sound';
 
 export default function Room() {
@@ -48,25 +49,19 @@ export default function Room() {
 
   return (
     <div className="min-h-full pb-10 relative">
-      <header className="sticky top-0 z-20 bg-white/85 backdrop-blur-md shadow-sm border-b border-detective-100/50
-                         p-3 flex items-center gap-3">
-        <button
-          onClick={() => { sfx.click(); nav('/'); }}
-          className="text-detective-500 px-3 py-1.5 rounded-lg hover:bg-detective-50 active:scale-95"
-        >←</button>
-        <div className="flex-1 min-w-0">
-          <h2 className="font-display font-bold text-detective-700 text-base">🏠 ห้องของฉัน</h2>
-          <p className="text-[11px] text-gray-500">
-            ปลดล็อค {unlockedCount}/{ROOM_ITEMS.length} ชิ้น • {player.totalXP} XP สะสม
-          </p>
-        </div>
+      <PageHeader
+        title="🏠 ห้องของฉัน"
+        subtitle={`ปลดล็อค ${unlockedCount}/${ROOM_ITEMS.length} ชิ้น • ${player.totalXP} XP สะสม`}
+        backTo="/"
+      />
+      <div className="px-3 py-2 flex justify-end">
         <button
           onClick={() => { sfx.click(); nav('/shop'); }}
           className="text-xs bg-detective-100 text-detective-700 font-semibold rounded-full px-3 py-1.5 active:scale-95"
         >
           🛍 ร้านค้า
         </button>
-      </header>
+      </div>
 
       <main className="max-w-md mx-auto px-3 pt-3">
         {/* === คำอธิบายสั้น — ครั้งแรกผู้เล่นจะรู้ว่าห้องนี้คืออะไร === */}

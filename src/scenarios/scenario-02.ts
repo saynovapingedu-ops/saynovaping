@@ -137,7 +137,8 @@ export const scenario02: Scenario = {
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
       title: 'Detective\'s Note 📓',
-      body: 'สูตรปฏิเสธ 3 ขั้น: "ไม่ → เพราะ → ไปทำอย่างอื่นแทน" — ใช้ได้ในหลายสถานการณ์ ไม่ใช่แค่เรื่องบุหรี่ไฟฟ้า',
+      body: 'สูตรปฏิเสธ 3 ขั้น "ไม่ → เพราะ → ไปทำอย่างอื่นแทน" มาจาก Life Skills Training (LST) ของ Dr. Gilbert Botvin มหาวิทยาลัย Cornell ปี 1980s. มันได้ผลเพราะการ "เสนอทางเลือก" ลดความอึดอัดในกลุ่มเพื่อน (peer pressure) มากกว่าการปฏิเสธเฉยๆ ที่ดูเย็นชา. ฝึกซ้อมจริงหน้ากระจกหรือกับเพื่อน — จะพูดได้คล่องเมื่อถึงเวลาจริง',
+      source: 'Botvin Life Skills Training (LST), Cornell University — Refusal Skills Module / NIDA Principles of Substance Use Prevention for Adolescents 2022',
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'end1',

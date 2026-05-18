@@ -34,6 +34,17 @@ export default function ScenarioPage() {
   const [history, setHistory] = useState<ScenarioNode[]>([]);
   const [currentNodeId, setCurrentNodeId] = useState<string>(scenario?.startNode || '');
   const [confettiActive, setConfettiActive] = useState(false);
+  // เก็บ pick ของผู้เล่นทีละข้อ — ใช้สร้างเฉลยตอนจบด่าน
+  const [reviewLog, setReviewLog] = useState<Array<{
+    prompt: string;
+    pickedLabel: string;
+    pickedXp: number;
+    isBest: boolean;
+    bestLabel: string;
+    reflection?: string;
+    source?: string;
+    bestSource?: string;
+  }>>([]);
   const [askResume, setAskResume] = useState(false);
 
   const saveProgress  = useProgressStore(s => s.saveProgress);
@@ -171,7 +182,25 @@ export default function ScenarioPage() {
         vibrate([20, 40, 20]);
       }
     }
-    // แสดง choice ที่เลือก เป็น bubble ฝั่งผู้เล่น (เหมือนแชท Messenger/LINE)
+    // เก็บ pick สำหรับเฉลยจบด่าน — เทียบ XP กับตัวเลือกสูงสุดในชุดนี้
+    const curNode = scenario?.nodes.find(n => n.id === currentNodeId);
+    if (curNode && curNode.type === 'choice') {
+      const maxXp = Math.max(...curNode.choices.map(c => c.xp || 0));
+      const best = curNode.choices.find(c => (c.xp || 0) === maxXp);
+      setReviewLog(prev => [
+        ...prev,
+        {
+          prompt: curNode.prompt,
+          pickedLabel: choice.label,
+          pickedXp: choice.xp || 0,
+          isBest: (choice.xp || 0) === maxXp,
+          bestLabel: best?.label || choice.label,
+          reflection: choice.reflection,
+          source: choice.source,
+          bestSource: best?.source,
+        },
+      ]);
+    }
     const playerEcho: ScenarioNode = {
       type: 'dialogue',
       id: `__pick_${currentNodeId}_${Date.now()}`,
@@ -559,11 +588,62 @@ export default function ScenarioPage() {
                     +{currentNode.xp} XP
                   </motion.p>
 
-                  {/* === แหล่งอ้างอิงของด่าน — เพื่อความน่าเชื่อถือของเนื้อหา === */}
+                  {/* === 📓 เฉลย — ตรวจคำตอบของผู้เล่นทุกข้อ + ที่มา === */}
+                  {reviewLog.length > 0 && (
+                    <details className="relative text-left bg-white rounded-2xl border-2 border-mint-200 p-3 mb-3 shadow-glow-sm">
+                      <summary className="cursor-pointer text-sm font-bold text-mint-600 flex items-center gap-1.5 select-none">
+                        <span>📓</span> ดูเฉลย — ตรวจคำตอบ ({reviewLog.length} ข้อ)
+                      </summary>
+                      <div className="mt-3 space-y-3">
+                        {reviewLog.map((r, i) => (
+                          <div key={i} className={`rounded-xl p-2.5 border-l-4 ${
+                            r.isBest
+                              ? 'border-success-500 bg-success-50'
+                              : 'border-warning-500 bg-warning-50'
+                          }`}>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                              ข้อ {i + 1} · {r.isBest ? '✓ ถูกที่สุด' : '○ ดีกว่านี้ได้'}
+                            </p>
+                            <p className="text-[11px] text-slate-700 mb-2 italic">"{r.prompt}"</p>
+                            <div className="space-y-1.5 text-[11px]">
+                              <div>
+                                <span className="text-slate-500">คุณตอบ:</span>{' '}
+                                <span className={r.isBest ? 'text-success-700 font-semibold' : 'text-warning-700 font-semibold'}>
+                                  "{r.pickedLabel}" (+{r.pickedXp} XP)
+                                </span>
+                              </div>
+                              {!r.isBest && (
+                                <>
+                                  <div>
+                                    <span className="text-slate-500">คำตอบที่ดีที่สุด:</span>{' '}
+                                    <span className="text-success-700 font-semibold">"{r.bestLabel}"</span>
+                                  </div>
+                                  {r.reflection && (
+                                    <div className="bg-white rounded-md p-2 mt-1">
+                                      <p className="text-slate-700">
+                                        <b className="text-warning-600">เหตุผล:</b> {r.reflection}
+                                      </p>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                              {(r.bestSource || r.source) && (
+                                <p className="text-[10px] text-slate-500 italic leading-snug mt-1">
+                                  📚 อ้างอิง: {r.bestSource || r.source}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+
+                  {/* === แหล่งอ้างอิงของด่าน === */}
                   {scenario.references && scenario.references.length > 0 && (
                     <details className="relative text-left bg-white/70 rounded-xl border border-detective-100 p-3 mb-4">
                       <summary className="cursor-pointer text-xs font-bold text-detective-700 flex items-center gap-1.5 select-none">
-                        <span>📚</span> แหล่งอ้างอิงของด่านนี้ ({scenario.references.length})
+                        <span>📚</span> แหล่งอ้างอิงรวมของด่านนี้ ({scenario.references.length})
                       </summary>
                       <ul className="mt-2 space-y-1">
                         {scenario.references.map((ref, i) => (

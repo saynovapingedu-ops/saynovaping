@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSettingsStore } from '../store/settingsStore';
 import { sfx } from '../lib/sound';
 import { startBgm, stopBgm } from '../lib/bgm';
-import BrandHeader from '../components/BrandHeader';
+import PageHeader from '../components/PageHeader';
 
 interface ToggleProps {
   label: string;
@@ -44,17 +44,7 @@ export default function Settings() {
 
   return (
     <div className="min-h-full pb-8 relative">
-      <BrandHeader />
-      <header className="sticky top-0 z-10 bg-white/85 backdrop-blur-md shadow-sm border-b border-detective-100/50
-                         p-3 flex items-center gap-3">
-        <button
-          onClick={() => { sfx.click(); nav('/'); }}
-          className="text-detective-500 px-3 py-1.5 rounded-lg hover:bg-detective-50 active:scale-95"
-        >
-          ←
-        </button>
-        <h2 className="font-display font-bold text-detective-700">⚙️ ตั้งค่า</h2>
-      </header>
+      <PageHeader title="⚙️ ตั้งค่า" backTo="/" />
 
       <main className="max-w-md mx-auto px-4 pt-4 space-y-3">
         <p className="text-xs text-gray-500 px-1">เสียงและการสั่น</p>

@@ -7,7 +7,7 @@ import { fileToResizedDataUrl } from '../store/avatarStore';
 import { SHOP_ITEMS, type ShopItem, type ItemCategory } from '../lib/shopItems';
 import { sfx, vibrate } from '../lib/sound';
 import Avatar from '../components/Avatar';
-import BrandHeader from '../components/BrandHeader';
+import PageHeader from '../components/PageHeader';
 
 const CATS: { id: ItemCategory | 'custom'; label: string; emoji: string }[] = [
   { id: 'title',       label: 'ตำแหน่ง', emoji: '🏷️' },
@@ -127,19 +127,9 @@ export default function Shop() {
 
   return (
     <div className="min-h-full pb-8 relative">
-      <BrandHeader />
-      <header className="sticky top-0 z-10 bg-white/85 backdrop-blur-md shadow-sm border-b border-detective-100/50
-                         p-3 flex items-center gap-3">
-        <button
-          onClick={() => { sfx.click(); nav('/'); }}
-          className="text-detective-500 px-3 py-1.5 rounded-lg hover:bg-detective-50 active:scale-95"
-        >
-          ←
-        </button>
-        <div className="flex-1 min-w-0">
-          <h2 className="font-display font-bold text-detective-700 text-base">🛍 ร้านค้านักสืบ</h2>
-          <p className="text-[11px] text-gray-500">แลกของรางวัลด้วยเหรียญ</p>
-        </div>
+      <PageHeader title="🛍 ร้านค้านักสืบ" subtitle="แลกของรางวัลด้วยเหรียญ" backTo="/" />
+      <div className="sticky top-0 z-10 bg-white/85 backdrop-blur-md shadow-sm border-b border-detective-100/50
+                      p-3 flex items-center justify-end gap-2">
         <button
           onClick={() => { sfx.click(); nav('/room'); }}
           className="text-xs bg-detective-100 text-detective-700 font-semibold rounded-full px-2.5 py-1.5 active:scale-95"
@@ -151,7 +141,7 @@ export default function Shop() {
           <span className="text-base">🪙</span>
           <span className="text-sm">{coins}</span>
         </div>
-      </header>
+      </div>
 
       <main className="max-w-md mx-auto px-4 pt-4">
         {/* Avatar preview — ใช้ preview ทับ equipped ถ้ากำลังลอง */}

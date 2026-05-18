@@ -22,6 +22,8 @@ export interface Choice {
   // ตัวเลือกถูก: ส่งผลด้านบวก
   // ตัวเลือกผิด: feedback น่ารักๆ ให้ลองใหม่
   reflection?: string;
+  /** แหล่งอ้างอิงของ "เหตุผลที่คำตอบนี้ดี/ไม่ดี" — แสดงใน post-game review */
+  source?: string;
 }
 
 export interface ChoiceNode {

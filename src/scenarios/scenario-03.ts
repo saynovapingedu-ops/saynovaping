@@ -132,7 +132,8 @@ export const scenario03: Scenario = {
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
       title: 'Detective\'s Note 📓',
-      body: 'การโน้มน้าวที่ได้ผล ไม่ใช่การสั่งสอน — แต่คือการ "ฟัง → เชื่อมโยง → เสนอ → ยืนยัน" คนจะเปลี่ยนเมื่อรู้สึกถูกเข้าใจ',
+      body: 'Motivational Interviewing (MI — เทคนิคสัมภาษณ์เพื่อสร้างแรงจูงใจ) ของ Miller & Rollnick เน้น "ฟัง → สะท้อน → เชื่อมโยงค่านิยม → เสนอทางเลือก". มันได้ผลเพราะคนเราต่อต้านเมื่อรู้สึกถูกสั่ง แต่ยอมเปลี่ยนเมื่อรู้สึกถูกเข้าใจและตัดสินใจเอง (autonomy). เริ่มด้วยคำถามเปิด อย่ารีบให้คำแนะนำก่อนเขาพร้อมฟัง',
+      source: 'Miller & Rollnick — Motivational Interviewing: Helping People Change (Guilford Press, 3rd Ed., 2013)',
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'end1',

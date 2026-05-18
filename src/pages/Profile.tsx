@@ -8,7 +8,7 @@ import { getLevelByXP } from '../lib/levels';
 import XPBar from '../components/XPBar';
 import Avatar from '../components/Avatar';
 import AvatarFolder from '../components/AvatarFolder';
-import BrandHeader from '../components/BrandHeader';
+import PageHeader from '../components/PageHeader';
 
 // ============================================================================
 //  Profile — โทนสุภาพ คุมโทนเดียว (slate/lavender) ไม่มีรุ้ง
@@ -38,16 +38,7 @@ export default function Profile() {
   return (
     // min-h-screen + bg ทึบ → กลบ body background รุ้ง
     <div className="min-h-screen pb-10" style={{ background: '#F6F4FA' }}>
-      <BrandHeader />
-      <header className="sticky top-0 bg-white border-b border-slate-200 px-3 py-3
-                         flex items-center gap-3 z-10">
-        <button
-          onClick={() => nav('/')}
-          className="text-slate-600 hover:text-detective-600 px-2 py-1.5 rounded-lg
-                     hover:bg-slate-100 active:scale-95 transition-colors"
-        >←</button>
-        <h2 className="font-display font-bold text-slate-800">โปรไฟล์</h2>
-      </header>
+      <PageHeader title="โปรไฟล์" backTo="/" />
 
       <main className="max-w-md mx-auto p-4 space-y-3">
         {/* === Hero card: solid white card, ไม่มี gradient รุ้ง === */}

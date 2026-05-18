@@ -152,7 +152,8 @@ export const scenario05: Scenario = {
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
       title: 'Detective\'s Note 📓',
-      body: 'การ "ถอย" ในโลกออนไลน์ไม่ใช่การยอมแพ้ — แต่คือการปกป้องตัวเอง: หยุด → บล็อก → รายงาน → บอก',
+      body: 'Walk Away Strategy (กลยุทธ์ถอนตัวออกจากภัยออนไลน์) คือลำดับ "หยุดตอบ → บล็อก → รายงาน → บอกผู้ใหญ่". มันได้ผลเพราะมิจฉาชีพออนไลน์ใช้ Grooming (การค่อยๆ สร้างความไว้ใจเพื่อหลอก) การถอยเร็วตัดวงจรนี้ก่อนผูกใจ. เก็บ screenshot ไว้เป็นหลักฐานก่อนบล็อก จะช่วยให้รายงานง่ายขึ้น',
+      source: 'Common Sense Media — Online Safety / รายงาน กสทช. 2566 — Cyber Grooming Awareness',
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'end1',

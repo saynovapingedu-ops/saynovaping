@@ -144,7 +144,8 @@ export const scenario06: Scenario = {
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
       title: 'Detective\'s Note 📓',
-      body: 'การช่วยเพื่อน ≠ การห้ามหรือสั่งสอน — คือการ "ฟัง → ยอมรับ → ห่วง → นำพา" ไปสู่ทางที่ปลอดภัย',
+      body: 'ALGEE (Approach-Listen-Give reassurance-Encourage help-Encourage self-help) จากหลักสูตร MHFA (Mental Health First Aid) คือลำดับช่วยเพื่อนที่เปราะบาง — เทียบกับเวอร์ชันสั้นไทย "ฟัง-ยอมรับ-ห่วง-นำพา". มันได้ผลเพราะคนที่เครียดต้องการ "พื้นที่ปลอดภัย" ก่อนคำแนะนำ การห้ามทันทีกลับผลักเขาออก. ฟังจบประโยคก่อนพูดสวน อย่ารีบเสนอทางออก',
+      source: 'Mental Health First Aid (MHFA) Australia — Youth Mental Health First Aid Manual',
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'end1',
