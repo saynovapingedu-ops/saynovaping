@@ -15,6 +15,7 @@ import SwipeDecide from '../components/minigames/SwipeDecide';
 import MemoryMatch from '../components/minigames/MemoryMatch';
 import RiskRank from '../components/minigames/RiskRank';
 import Confetti from '../components/Confetti';
+import { asset } from '../lib/asset';
 import { sfx, vibrate } from '../lib/sound';
 import { useProgressStore } from '../store/progressStore';
 import type { Choice, ScenarioNode } from '../types';
@@ -570,9 +571,13 @@ export default function ScenarioPage() {
                     initial={{ scale: 0, rotate: -180 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-                    className="text-7xl mb-3 relative inline-block"
+                    className="mb-3 relative inline-block"
                   >
-                    🎉
+                    <img
+                      src={asset('characters/party-popper.png')}
+                      alt="เยี่ยมมาก!"
+                      className="w-40 h-40 md:w-48 md:h-48 object-contain drop-shadow-xl"
+                    />
                   </motion.div>
                   <h2 className="font-display text-2xl font-bold text-detective-700 mb-2 relative">
                     {currentNode.title}

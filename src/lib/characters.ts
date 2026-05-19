@@ -57,10 +57,14 @@ export function getPlayerCharacter(preset?: number): PlayerCharacter {
   return PLAYER_CHARACTERS.find(c => c.preset === preset) || PLAYER_CHARACTERS[0];
 }
 
-// NPC speakers — มีรูป PNG จริง (หมอ / Vapor / กลุ่มเพื่อน)
+// NPC speakers — มีรูป PNG จริง (หมอ / Vapor / กลุ่มเพื่อน / ใบเตย ฯลฯ)
 export const NPC_CHARACTERS: Record<string, { src: string; label: string }> = {
-  doctor:  { src: asset('characters/doctor.png'),    label: 'พี่หมอเก๋' },
-  vapor:   { src: asset('characters/vapor.png'),     label: 'Vapor (ตัวร้าย)' },
+  doctor:        { src: asset('characters/doctor.png'),       label: 'พี่หมอเก๋' },
+  vapor:         { src: asset('characters/vapor.png'),        label: 'Vapor (ตัวร้าย)' },
+  baitoey:       { src: asset('characters/baitoey.png'),      label: 'น้องใบเตย' },
+  narrator:      { src: asset('characters/narrator.png'),     label: 'เล่าเรื่อง' },
+  shopkeeper:    { src: asset('characters/shopkeeper.png'),   label: 'เจ้าของร้าน' },
+  'dm-stranger': { src: asset('characters/dm-stranger.png'),  label: 'คนใน DM' },
   // เพื่อนในบทสนทนา — ใช้รูปเพื่อนกลุ่ม (ไม่ใช่ตัวผู้เล่น)
   friend1: { src: asset('characters/player-f1.png'), label: 'เพื่อน' },
   friend2: { src: asset('characters/player-m1.png'), label: 'เพื่อน' },

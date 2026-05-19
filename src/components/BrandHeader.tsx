@@ -29,11 +29,11 @@ function LogoPill() {
       <div className="w-px h-8 bg-slate-200" />
 
       {/* SayNo — text เล็กลง */}
-      <div className="leading-none">
-        <p className="font-display font-extrabold text-detective-700 text-[11px] leading-none tracking-tight">
+      <div className="leading-tight">
+        <p className="font-display font-extrabold text-detective-700 text-[11px] leading-tight tracking-tight">
           SayNo
         </p>
-        <p className="text-[9px] font-bold text-slate-500 mt-0.5 leading-none">
+        <p className="text-[9px] font-bold text-slate-500 mt-0.5 leading-tight">
           สู้บุหรี่ไฟฟ้า
         </p>
       </div>

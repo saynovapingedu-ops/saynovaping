@@ -99,7 +99,8 @@ export default function Onboarding() {
               🔍
             </motion.div>
             <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-detective-600 via-candy-500
-                           to-warning-500 bg-clip-text text-transparent mb-2">
+                           to-warning-500 bg-clip-text text-transparent mb-2
+                           leading-[1.4] pt-1 pb-2 overflow-visible">
               นักสืบสุขภาพ
             </h1>
             <p className="text-gray-600 mb-1 font-medium">🚭 ภารกิจรู้ทันบุหรี่ไฟฟ้า</p>
@@ -156,7 +157,7 @@ export default function Onboarding() {
           <motion.div key="2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
             className="flex-1 flex flex-col">
             <h2 className="text-xl font-display font-bold text-detective-700 mb-1">🛡️ ความเป็นส่วนตัว (PDPA)</h2>
-            <p className="text-xs text-gray-500 mb-3">กดแถบเพื่ออ่านรายละเอียดแต่ละหัวข้อ</p>
+            <p className="text-xs text-gray-500 mb-3">กดแถบเพื่ออ่านรายละเอียดเพิ่มเติม แต่ละหัวข้อ</p>
 
             {/* TL;DR ใหญ่ๆ อยู่ด้านบน — เห็นทันทีไม่ต้อง scroll */}
             <div className="card-hero mb-3 py-3">

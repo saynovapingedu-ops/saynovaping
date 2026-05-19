@@ -254,7 +254,7 @@ export default function Certificate() {
               {qrDataUrl && (
                 <div className="absolute bottom-6 right-6 bg-white p-1 border border-slate-300">
                   <img src={qrDataUrl} alt="ตรวจสอบ" className="w-12 h-12 block" />
-                  <p className="text-[7px] text-slate-500 text-center mt-0.5 leading-none">ตรวจสอบ</p>
+                  <p className="text-[7px] text-slate-500 text-center mt-0.5 leading-tight">ตรวจสอบ</p>
                 </div>
               )}
             </div>

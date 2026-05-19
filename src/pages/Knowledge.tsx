@@ -25,7 +25,7 @@ const DANGERS: DangerCard[] = [
   {
     emoji: '🧠',
     title: 'ติดเร็วกว่าที่คิด',
-    body: 'นิโคติน vape 1 ตัว ≈ บุหรี่ 20 มวน สมองวัยรุ่นยังพัฒนาไม่เต็มที่ ติดเร็วกว่าผู้ใหญ่ 4 เท่า',
+    body: 'บุหรี่ไฟฟ้า 1 พอต = บุหรี่ 1 ซอง วัยรุ่นติดง่ายกว่าผู้ใหญ่ 4 เท่า เพราะสมองกำลังโต ยิ่งสูบไว สมองยิ่งพังง่าย',
     source: 'U.S. Surgeon General Report: E-Cigarette Use Among Youth (2016, updated 2023)',
     color: 'detective',
   },

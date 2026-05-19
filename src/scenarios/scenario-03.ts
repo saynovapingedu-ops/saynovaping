@@ -15,7 +15,7 @@ export const scenario03: Scenario = {
   nodes: [
     {
       type: 'dialogue', id: 'intro1', speaker: 'friend1', next: 'intro2',
-      text: 'เฮ้ ทุกคน! วันเกิดวันนี้ ดูซิเอามาฝาก รสสตรอว์เบอร์รี หอมมาก ลองคนละนิดสิ',
+      text: 'เฮ้ ทุกคน! วันเกิดวันนี้ ดูซิเอามาฝาก รสสตรอว์เบอร์รี่ หอมมาก ลองคนละนิดสิ',
     },
     {
       type: 'dialogue', id: 'intro2', speaker: 'friend2', next: 'intro3',
@@ -112,7 +112,7 @@ export const scenario03: Scenario = {
     },
     {
       type: 'dialogue', id: 'right2', speaker: 'friend2', next: 'mg1',
-      text: 'เออ! ไปกัน ฉันรู้ร้านชานมเด็ดที่หัวมุม ขอบใจมากนะที่ห้าม',
+      text: 'เออ! ไปกัน ฉันรู้ร้านชานมเด็ดๆ ที่หัวมุม ขอบใจมากนะที่ห้าม',
     },
     {
       type: 'minigame', id: 'mg1', game: 'order-cards',
