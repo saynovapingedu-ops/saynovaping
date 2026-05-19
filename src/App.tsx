@@ -19,7 +19,7 @@ const Shop         = lazy(() => import('./pages/Shop'));
 const Settings     = lazy(() => import('./pages/Settings'));
 const Stats        = lazy(() => import('./pages/Stats'));
 const Knowledge    = lazy(() => import('./pages/Knowledge'));
-const Room         = lazy(() => import('./pages/Room'));
+const Journal      = lazy(() => import('./pages/Journal'));
 
 function PageLoader() {
   return (
@@ -133,7 +133,9 @@ export default function App() {
           <Route path="/verify" element={<Verify />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/knowledge" element={<Knowledge />} />
-          <Route path="/room" element={<Room />} />
+          <Route path="/journal" element={<Journal />} />
+          {/* legacy /room → redirect ไปที่ Journal เพื่อไม่ให้ลิงก์เก่าเสีย */}
+          <Route path="/room" element={<Navigate to="/journal" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

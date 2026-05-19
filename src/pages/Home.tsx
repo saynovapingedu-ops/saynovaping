@@ -21,7 +21,7 @@ interface IntroSection {
 const INTRO_SECTIONS: IntroSection[] = [
   { emoji: '🎯', title: 'เกี่ยวกับอะไร?', body: 'รู้ทันภัย "บุหรี่ไฟฟ้า" ฝึกทักษะปฏิเสธ จับเท็จโฆษณา' },
   { emoji: '🕹️', title: 'เล่นยังไง?',  body: 'อ่านเหตุการณ์ → เลือกคำตอบ → เล่นมินิเกมสนุกๆ' },
-  { emoji: '🏆', title: 'ได้อะไร?',    body: 'เก็บ XP & เหรียญ ซื้อของแต่งห้อง รับ Certificate' },
+  { emoji: '🏆', title: 'ได้อะไร?',    body: 'เก็บ XP & เหรียญ ซื้อของแต่ง เปิดแฟ้มคดี รับ Certificate' },
   { emoji: '⏱️', title: 'นานแค่ไหน?',   body: 'ด่านละ 5-8 นาที เล่นทีละด่านสบายๆ มี save' },
 ];
 
@@ -180,14 +180,14 @@ export default function Home() {
               </span>
             </button>
             <button
-              onClick={() => { sfx.click(); nav('/room'); }}
+              onClick={() => { sfx.click(); nav('/journal'); }}
               className="flex items-center justify-between
                          bg-white/10 hover:bg-white/20 backdrop-blur-md
                          border border-white/30 rounded-2xl px-3 py-2.5
                          active:scale-[0.99] transition-all"
             >
               <span className="text-[11px] font-semibold flex items-center gap-1">
-                🏠 ห้องของฉัน
+                📓 สมุดบันทึก
               </span>
               <span className="text-base">→</span>
             </button>

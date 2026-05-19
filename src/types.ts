@@ -186,9 +186,18 @@ export interface PlayerProfile {
   stagesCompleted: number[];
   badges: string[];
   ownedItems: string[];     // id ของ item ที่ซื้อจากร้านค้า
-  equippedTitle?: string;   // ตำแหน่งโชว์หน้าโปรไฟล์ เช่น "นักสืบทอง"
-  equippedFrame?: string;   // กรอบ avatar
-  equippedTheme?: string;   // ชุดสี confetti / accent
+  equippedTitle?: string;     // ตำแหน่งโชว์หน้าโปรไฟล์ เช่น "นักสืบทอง"
+  equippedFrame?: string;     // กรอบ avatar
+  equippedTheme?: string;     // ชุดสี confetti / accent
+  equippedAccessory?: string; // ของแต่ง avatar (id ของ accessory item)
+  equippedBackdrop?: string;  // พื้นหลังหน้าโปรไฟล์
+  equippedCertDeco?: string;  // ลายกรอบใบประกาศ
+  /** จำนวน hint token ที่ใช้ได้ — เพิ่มเมื่อซื้อ booster hint */
+  hintTokens?: number;
+  /** เหลือกี่ด่านที่ได้ coin x2 — ลดลง 1 ทุกครั้งจบด่าน */
+  coinX2Remaining?: number;
+  /** จำนวน streak shield ที่ถือ — ใช้อัตโนมัติเมื่อ streak จะหลุด */
+  streakShields?: number;
   // streak / daily
   streakDays?: number;
   lastPlayDate?: string;    // ISO date YYYY-MM-DD

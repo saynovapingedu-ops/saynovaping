@@ -35,6 +35,11 @@ export default function ScenarioPage() {
   const [history, setHistory] = useState<ScenarioNode[]>([]);
   const [currentNodeId, setCurrentNodeId] = useState<string>(scenario?.startNode || '');
   const [confettiActive, setConfettiActive] = useState(false);
+  // ใช้ Hint — เก็บ id ของ node ที่ผู้เล่นเปิด hint แล้ว (โชว์ best choice)
+  const [hintRevealedNode, setHintRevealedNode] = useState<string | null>(null);
+  const hintTokens = usePlayerStore(s => s.hintTokens || 0);
+  const coinX2Remaining = usePlayerStore(s => s.coinX2Remaining || 0);
+  const useHintToken = usePlayerStore(s => s.useHintToken);
   // เก็บ pick ของผู้เล่นทีละข้อ — ใช้สร้างเฉลยตอนจบด่าน
   const [reviewLog, setReviewLog] = useState<Array<{
     prompt: string;
@@ -431,6 +436,13 @@ export default function ScenarioPage() {
           <p className="text-[11px] text-detective-400 font-semibold">ด่าน {scenario.id}</p>
           <p className="font-semibold text-sm text-detective-700 truncate">{scenario.title}</p>
         </div>
+        {coinX2Remaining > 0 && (
+          <span className="flex-shrink-0 text-[10px] font-bold bg-warning-100 text-warning-700
+                           border border-warning-300 px-2 py-1 rounded-full"
+                title="โบนัสเหรียญ x2 กำลังทำงาน">
+            💰 x2 · {coinX2Remaining}
+          </span>
+        )}
       </header>
 
       <main className="max-w-md md:max-w-2xl mx-auto p-4">
@@ -476,20 +488,49 @@ export default function ScenarioPage() {
                 </>
               )}
 
-              {currentNode.type === 'choice' && (
-                <div>
-                  <div className="bg-gradient-to-r from-detective-50 to-warning-50 border-l-4
-                                  border-detective-400 rounded-r-xl px-3 py-2 mb-3">
-                    <p className="text-[11px] text-detective-500 font-semibold mb-0.5">เลือกคำตอบ</p>
-                    <p className="text-sm text-detective-700 font-semibold leading-snug">
-                      {currentNode.prompt}
-                    </p>
+              {currentNode.type === 'choice' && (() => {
+                const maxXp = Math.max(...currentNode.choices.map(c => c.xp || 0));
+                const bestIdx = currentNode.choices.findIndex(c => (c.xp || 0) === maxXp);
+                const hintShown = hintRevealedNode === currentNode.id;
+                return (
+                  <div>
+                    <div className="bg-gradient-to-r from-detective-50 to-warning-50 border-l-4
+                                    border-detective-400 rounded-r-xl px-3 py-2 mb-3
+                                    flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] text-detective-500 font-semibold mb-0.5">เลือกคำตอบ</p>
+                        <p className="text-sm text-detective-700 font-semibold leading-snug">
+                          {currentNode.prompt}
+                        </p>
+                      </div>
+                      {!hintShown && hintTokens > 0 && (
+                        <button
+                          onClick={() => {
+                            if (useHintToken()) {
+                              setHintRevealedNode(currentNode.id);
+                              sfx.click();
+                            }
+                          }}
+                          className="flex-shrink-0 bg-warning-100 text-warning-700 text-[11px]
+                                     font-bold px-2 py-1 rounded-lg border border-warning-300
+                                     active:scale-95 hover:bg-warning-200"
+                          title={`ใช้ Hint Token (เหลือ ${hintTokens})`}
+                        >
+                          💡 Hint × {hintTokens}
+                        </button>
+                      )}
+                    </div>
+                    {hintShown && (
+                      <div className="mb-3 text-[11px] bg-warning-50 border border-warning-300 rounded-xl p-2 text-warning-700">
+                        💡 ใบ้: ข้อ <b>{String.fromCharCode(65 + bestIdx)}</b> ดูจะให้ XP สูงสุด ({maxXp})
+                      </div>
+                    )}
+                    {currentNode.choices.map((c, i) => (
+                      <ChoiceCard key={i} choice={c} index={i} onPick={handleChoice} />
+                    ))}
                   </div>
-                  {currentNode.choices.map((c, i) => (
-                    <ChoiceCard key={i} choice={c} index={i} onPick={handleChoice} />
-                  ))}
-                </div>
-              )}
+                );
+              })()}
 
               {currentNode.type === 'minigame' && currentNode.game === 'spot-the-lie' && currentNode.claims && (
                 <SpotTheLie title={currentNode.title} claims={currentNode.claims}

@@ -36,9 +36,13 @@ export default function Profile() {
     location.reload();
   };
 
+  const backdropCss = player.equippedBackdrop
+    ? SHOP_ITEMS.find(i => i.id === player.equippedBackdrop)?.backdropCss
+    : undefined;
+
   return (
     // min-h-screen + bg ทึบ → กลบ body background รุ้ง
-    <div className="min-h-screen pb-10" style={{ background: '#F6F4FA' }}>
+    <div className="min-h-screen pb-10" style={{ background: backdropCss || '#F6F4FA' }}>
       <PageHeader title="โปรไฟล์" backTo="/" />
 
       <main className="max-w-md md:max-w-2xl mx-auto p-4 space-y-3">

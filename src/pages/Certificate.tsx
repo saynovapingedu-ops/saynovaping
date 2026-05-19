@@ -8,6 +8,7 @@ import { issueCertificate } from '../lib/cloudSync';
 import { sfx } from '../lib/sound';
 import TMFLogo from '../components/TMFLogo';
 import PageHeader from '../components/PageHeader';
+import { SHOP_ITEMS } from '../lib/shopItems';
 
 export default function Certificate() {
   const nav = useNavigate();
@@ -154,6 +155,11 @@ export default function Certificate() {
     );
   }
 
+  // === Cert decoration (equipped) ===
+  const certDeco = player.equippedCertDeco
+    ? SHOP_ITEMS.find(i => i.id === player.equippedCertDeco)?.certDeco
+    : undefined;
+
   // จัดวันที่แบบไทย "วันที่ DD เดือน พ.ศ. YYYY"
   const formatThaiDate = (iso: string) => {
     if (!iso) return '';
@@ -188,12 +194,20 @@ export default function Certificate() {
             {/* ===== Certificate artwork — ทางการ พื้นขาวล้วน ===== */}
             <div
               id="cert-card"
-              className="relative bg-white shadow-2xl font-official"
+              className={`relative bg-white shadow-2xl font-official ${certDeco?.borderClass || ''}`}
               style={{ aspectRatio: '1 / 1.414', fontFamily: '"Sukhumvit Set", "Noto Sans Thai", "IBM Plex Sans Thai", sans-serif' }}
             >
               {/* === กรอบเส้นคู่ น้ำเงินเข้ม (หนา + บาง) === */}
               <div className="absolute inset-3 border-[3px] border-[#003C73] pointer-events-none" />
               <div className="absolute inset-[18px] border border-[#003C73] pointer-events-none" />
+
+              {/* === Decorative corner emoji (จาก cert-deco ที่สวม) === */}
+              {certDeco?.corner && (
+                <>
+                  <span className="absolute top-6 left-6 text-2xl pointer-events-none" aria-hidden>{certDeco.corner}</span>
+                  <span className="absolute top-6 right-6 text-2xl pointer-events-none" aria-hidden>{certDeco.corner}</span>
+                </>
+              )}
 
               {/* === ลวดลายเรขาคณิตที่มุมล่าง (สี่เหลี่ยมฟ้า-น้ำเงิน) === */}
               <CornerPattern position="bottom-left" />

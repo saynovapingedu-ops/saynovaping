@@ -8,9 +8,13 @@ import Avatar from '../components/Avatar';
 import PageHeader from '../components/PageHeader';
 
 const CATS: { id: ItemCategory; label: string; emoji: string }[] = [
-  { id: 'title', label: 'ตำแหน่ง', emoji: '🏷️' },
-  { id: 'frame', label: 'กรอบ',    emoji: '🖼️' },
-  { id: 'theme', label: 'ธีมสี',   emoji: '🎨' },
+  { id: 'title',     label: 'ตำแหน่ง', emoji: '🏷️' },
+  { id: 'frame',     label: 'กรอบ',    emoji: '🖼️' },
+  { id: 'accessory', label: 'ของแต่ง', emoji: '👓' },
+  { id: 'backdrop',  label: 'พื้นหลัง', emoji: '🌄' },
+  { id: 'theme',     label: 'ธีมสี',   emoji: '🎨' },
+  { id: 'cert-deco', label: 'กรอบเซอร์', emoji: '📜' },
+  { id: 'booster',   label: 'บูสต์',    emoji: '⚡' },
 ];
 
 export default function Shop() {
@@ -18,9 +22,13 @@ export default function Shop() {
   const player = usePlayerStore();
   const spendCoins = usePlayerStore(s => s.spendCoins);
   const awardItem = usePlayerStore(s => s.awardItem);
+  const buyBooster = usePlayerStore(s => s.buyBooster);
   const equipTitle = usePlayerStore(s => s.equipTitle);
   const equipFrame = usePlayerStore(s => s.equipFrame);
   const equipTheme = usePlayerStore(s => s.equipTheme);
+  const equipAccessory = usePlayerStore(s => s.equipAccessory);
+  const equipBackdrop = usePlayerStore(s => s.equipBackdrop);
+  const equipCertDeco = usePlayerStore(s => s.equipCertDeco);
 
   const [tab, setTab] = useState<ItemCategory>('title');
   const [purchaseMsg, setPurchaseMsg] = useState<string | null>(null);
@@ -28,6 +36,7 @@ export default function Shop() {
   const [previewFrameId, setPreviewFrameId] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState<string | null>(null);
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
+  const [previewAccessoryId, setPreviewAccessoryId] = useState<string | null>(null);
   // popup ยืนยันซื้อ
   const [confirmItem, setConfirmItem] = useState<ShopItem | null>(null);
 
@@ -38,12 +47,17 @@ export default function Shop() {
   const isUnlockedByStage = (item: ShopItem) =>
     !item.unlockAfterStage || stagesDone >= item.unlockAfterStage;
 
-  const switchTab = (next: ItemCategory) => {
-    sfx.click();
-    setTab(next);
+  const clearPreviews = () => {
     setPreviewFrameId(null);
     setPreviewTitle(null);
     setPreviewTheme(null);
+    setPreviewAccessoryId(null);
+  };
+
+  const switchTab = (next: ItemCategory) => {
+    sfx.click();
+    setTab(next);
+    clearPreviews();
   };
 
   const handlePreview = (item: ShopItem) => {
@@ -54,11 +68,14 @@ export default function Shop() {
       setPreviewTitle(p => (p === item.titleText ? null : item.titleText!));
     } else if (item.category === 'theme') {
       setPreviewTheme(p => (p === item.id ? null : item.id));
+    } else if (item.category === 'accessory') {
+      setPreviewAccessoryId(p => (p === item.id ? null : item.id));
     }
   };
 
   const askBuy = (item: ShopItem) => {
-    if (owned.has(item.id)) return;
+    // booster ซื้อซ้ำได้ ไม่เช็ค owned
+    if (item.category !== 'booster' && owned.has(item.id)) return;
     if (!isUnlockedByStage(item)) {
       setPurchaseMsg(`🔒 ต้องผ่านด่าน ${item.unlockAfterStage} ก่อน`);
       sfx.wrong();
@@ -74,7 +91,8 @@ export default function Shop() {
     sfx.click();
     // ของฟรี (price = 0) → ปลดให้เลย ไม่ต้องยืนยัน
     if (item.price === 0) {
-      awardItem(item.id);
+      if (item.category === 'booster') buyBooster(item.id);
+      else awardItem(item.id);
       sfx.buy();
       setPurchaseMsg(`✓ ปลดล็อก "${item.name}" สำเร็จ!`);
       setTimeout(() => setPurchaseMsg(null), 2200);
@@ -87,10 +105,14 @@ export default function Shop() {
     const item = confirmItem;
     if (!item) return;
     if (spendCoins(item.price)) {
-      awardItem(item.id);
+      if (item.category === 'booster') buyBooster(item.id);
+      else awardItem(item.id);
       sfx.buy();
       vibrate([20, 30, 20]);
-      setPurchaseMsg(`✓ ซื้อ "${item.name}" สำเร็จ — กด "สวมใส่" เพื่อใช้งาน`);
+      const msg = item.category === 'booster'
+        ? `✓ ได้รับ "${item.name}" — ใช้ในด่านต่อไป`
+        : `✓ ซื้อ "${item.name}" สำเร็จ — กด "สวมใส่" เพื่อใช้งาน`;
+      setPurchaseMsg(msg);
       setTimeout(() => setPurchaseMsg(null), 2600);
     }
     setConfirmItem(null);
@@ -107,6 +129,15 @@ export default function Shop() {
     } else if (item.category === 'theme') {
       const isEquipped = player.equippedTheme === item.id;
       equipTheme(isEquipped ? undefined : item.id);
+    } else if (item.category === 'accessory') {
+      const isEquipped = player.equippedAccessory === item.id;
+      equipAccessory(isEquipped ? undefined : item.id);
+    } else if (item.category === 'backdrop') {
+      const isEquipped = player.equippedBackdrop === item.id;
+      equipBackdrop(isEquipped ? undefined : item.id);
+    } else if (item.category === 'cert-deco') {
+      const isEquipped = player.equippedCertDeco === item.id;
+      equipCertDeco(isEquipped ? undefined : item.id);
     }
   };
 
@@ -116,16 +147,23 @@ export default function Shop() {
   const shownThemeId = previewTheme ?? player.equippedTheme;
   const shownTheme = shownThemeId ? SHOP_ITEMS.find(i => i.id === shownThemeId) : null;
 
+  // === Booster summary (inventory) ===
+  const boosterInventory = [
+    { icon: '💡', label: 'Hint Token', count: player.hintTokens || 0 },
+    { icon: '💰', label: 'Coin x2 ด่านเหลือ', count: player.coinX2Remaining || 0 },
+    { icon: '🛡️', label: 'Streak Shield', count: player.streakShields || 0 },
+  ];
+
   return (
     <div className="min-h-full pb-8 relative">
       <PageHeader title="🛍 ร้านค้านักสืบ" subtitle="แลกของรางวัลด้วยเหรียญ" backTo="/" />
       <div className="sticky top-0 z-10 bg-white/85 backdrop-blur-md shadow-sm border-b border-detective-100/50
                       p-3 flex items-center justify-end gap-2">
         <button
-          onClick={() => { sfx.click(); nav('/room'); }}
+          onClick={() => { sfx.click(); nav('/journal'); }}
           className="text-xs bg-detective-100 text-detective-700 font-semibold rounded-full px-2.5 py-1.5 active:scale-95"
         >
-          🏠 ห้อง
+          📓 สมุดบันทึก
         </button>
         <div className="flex items-center gap-1.5 bg-gradient-to-br from-warning-400 to-warning-500
                         text-white font-bold rounded-full px-3 py-1.5 shadow-glow-sm">
@@ -139,10 +177,12 @@ export default function Shop() {
         {(() => {
           const shownFrameId = previewFrameId ?? player.equippedFrame;
           const shownTitle   = previewTitle   ?? player.equippedTitle;
+          const shownAccessoryId = previewAccessoryId ?? player.equippedAccessory;
           const shownFrameClass = shownFrameId
             ? SHOP_ITEMS.find(i => i.id === shownFrameId)?.frameClass || ''
             : '';
-          const isPreviewing = previewFrameId !== null || previewTitle !== null || previewTheme !== null;
+          const isPreviewing = previewFrameId !== null || previewTitle !== null
+            || previewTheme !== null || previewAccessoryId !== null;
           return (
             <div className={`card-hero flex items-center gap-3 mb-4 transition-all ${
               isPreviewing ? 'border-2 border-warning-400 bg-warning-50/30' : ''
@@ -153,6 +193,7 @@ export default function Shop() {
                 size={56}
                 ring={!!shownFrameId}
                 className={shownFrameClass}
+                accessoryId={shownAccessoryId}
               />
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-detective-700 truncate">{player.nickname}</p>
@@ -174,7 +215,7 @@ export default function Shop() {
               </div>
               {isPreviewing && (
                 <button
-                  onClick={() => { sfx.click(); setPreviewFrameId(null); setPreviewTitle(null); setPreviewTheme(null); }}
+                  onClick={() => { sfx.click(); clearPreviews(); }}
                   className="text-xs text-detective-600 bg-white border border-detective-200
                              rounded-full px-2.5 py-1 active:scale-95"
                 >
@@ -185,6 +226,26 @@ export default function Shop() {
           );
         })()}
 
+        {/* === Booster inventory bar (โชว์ทุกเเท็บ) === */}
+        {boosterInventory.some(b => b.count > 0) && (
+          <div className="mb-3 grid grid-cols-3 gap-2">
+            {boosterInventory.map(b => (
+              <div
+                key={b.label}
+                className={`rounded-2xl px-2 py-1.5 border text-center ${
+                  b.count > 0
+                    ? 'bg-warning-50 border-warning-300'
+                    : 'bg-slate-50 border-slate-200 opacity-60'
+                }`}
+              >
+                <div className="text-lg leading-none">{b.icon}</div>
+                <p className="text-[10px] text-slate-600 leading-tight mt-1">{b.label}</p>
+                <p className="font-bold text-sm text-detective-700">×{b.count}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="mb-3 rounded-2xl border border-detective-100 bg-detective-50/70 p-2.5">
           <p className="text-[11px] text-gray-700 leading-relaxed">
             💡 ซื้อด้วย <span className="font-semibold text-warning-600">🪙 เหรียญ</span>
@@ -193,19 +254,19 @@ export default function Shop() {
           </p>
         </div>
 
-        {/* Tabs */}
-        <div className="grid grid-cols-3 gap-1.5 mb-4">
+        {/* Tabs — horizontal scroll บนมือถือ */}
+        <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory">
           {CATS.map(c => (
             <button
               key={c.id}
               onClick={() => switchTab(c.id)}
-              className={`py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex-shrink-0 snap-start py-2 px-3 rounded-xl text-xs font-semibold transition-all ${
                 tab === c.id
                   ? 'bg-detective-600 text-white shadow-glow-sm'
                   : 'bg-white/80 text-gray-600 border border-detective-100'
               }`}
             >
-              <div className="text-base">{c.emoji}</div>
+              <span className="text-base mr-1">{c.emoji}</span>
               {c.label}
             </button>
           ))}
@@ -228,20 +289,27 @@ export default function Shop() {
         {/* Items grid — responsive: 2 col mobile, 3 col tablet, 4 col desktop */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {tabItems.map(item => {
-            const isOwned = owned.has(item.id);
+            const isOwned = item.category !== 'booster' && owned.has(item.id);
             const isEquipped =
-              item.category === 'title' ? player.equippedTitle === item.titleText :
-              item.category === 'frame' ? player.equippedFrame === item.id :
-              item.category === 'theme' ? player.equippedTheme === item.id :
+              item.category === 'title'     ? player.equippedTitle === item.titleText :
+              item.category === 'frame'     ? player.equippedFrame === item.id :
+              item.category === 'theme'     ? player.equippedTheme === item.id :
+              item.category === 'accessory' ? player.equippedAccessory === item.id :
+              item.category === 'backdrop'  ? player.equippedBackdrop === item.id :
+              item.category === 'cert-deco' ? player.equippedCertDeco === item.id :
               false;
             const locked = !isUnlockedByStage(item);
-            const canBuy = !isOwned && !locked && coins >= item.price;
-            const canEquip = isOwned;
+            const isBooster = item.category === 'booster';
+            const canBuy = (!isOwned || isBooster) && !locked && coins >= item.price;
+            const canEquip = isOwned && !isBooster;
             const isPreviewingThis =
-              (item.category === 'frame' && previewFrameId === item.id) ||
-              (item.category === 'title' && previewTitle === item.titleText) ||
-              (item.category === 'theme' && previewTheme === item.id);
-            const canPreview = !locked && !isOwned;
+              (item.category === 'frame'     && previewFrameId === item.id) ||
+              (item.category === 'title'     && previewTitle === item.titleText) ||
+              (item.category === 'theme'     && previewTheme === item.id) ||
+              (item.category === 'accessory' && previewAccessoryId === item.id);
+            const canPreview = !locked && !isOwned
+              && (item.category === 'frame' || item.category === 'title'
+                || item.category === 'theme' || item.category === 'accessory');
 
             return (
               <div
@@ -252,15 +320,21 @@ export default function Shop() {
                   isPreviewingThis ? 'border-2 border-warning-400 bg-warning-50/40' : ''
                 }`}
               >
-                {/* preview ของ theme: แสดงแถบสี / preview กรอบ: avatar mini */}
+                {/* preview: theme=แถบสี / backdrop=มินิภาพ / อื่นๆ=emoji */}
                 {item.category === 'theme' && item.themeColors ? (
                   <div className="flex gap-0.5 mb-1.5 rounded-lg overflow-hidden border border-slate-200">
                     {item.themeColors.slice(0, 6).map((c, i) => (
                       <span key={i} className="w-4 h-7" style={{ background: c }} />
                     ))}
                   </div>
+                ) : item.category === 'backdrop' && item.backdropCss ? (
+                  <div
+                    className="w-full h-14 rounded-lg mb-1.5 border border-slate-200 shadow-inner"
+                    style={{ background: item.backdropCss }}
+                    aria-hidden
+                  />
                 ) : (
-                  <div className="text-4xl mb-1">{item.emoji}</div>
+                  <div className="text-4xl mb-1 leading-none">{item.emoji}</div>
                 )}
                 <p className="font-semibold text-sm leading-tight">{item.name}</p>
                 <p className="text-[10px] text-gray-500 mb-2 line-clamp-2">{item.description}</p>
@@ -310,6 +384,9 @@ export default function Shop() {
                       }`}
                     >
                       {item.price === 0 ? '✨ ฟรี' : `🪙 ${item.price}`}
+                      {isBooster && item.booster?.uses && item.booster.uses > 1 && (
+                        <span className="ml-1 text-[10px] opacity-90">× {item.booster.uses}</span>
+                      )}
                     </button>
                   </div>
                 )}
@@ -353,7 +430,7 @@ export default function Shop() {
               className="bg-white rounded-3xl w-full max-w-sm p-5 shadow-xl"
             >
               <div className="text-center">
-                <div className="text-5xl mb-2">{confirmItem.emoji}</div>
+                <div className="text-5xl mb-2 leading-none">{confirmItem.emoji}</div>
                 <p className="font-display font-bold text-lg text-detective-700">{confirmItem.name}</p>
                 <p className="text-xs text-gray-500 mt-1">{confirmItem.description}</p>
                 <div className="my-4 inline-flex items-center gap-2 bg-warning-50 border border-warning-400
