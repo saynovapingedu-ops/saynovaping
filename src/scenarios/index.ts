@@ -14,6 +14,11 @@ import { scenario12 } from './scenario-12';
 import { scenario13 } from './scenario-13';
 import { scenario14 } from './scenario-14';
 import { scenario15 } from './scenario-15';
+import { scenario16 } from './scenario-16';
+import { scenario17 } from './scenario-17';
+import { scenario18 } from './scenario-18';
+import { scenario19 } from './scenario-19';
+import { scenario20 } from './scenario-20';
 
 export interface ScenarioMeta {
   id: number;
@@ -23,7 +28,7 @@ export interface ScenarioMeta {
   available: boolean;
   unlockAfter?: number;
   /** กลุ่มของด่าน — ใช้แบ่งบนแผนที่ */
-  arc?: 'hero' | 'master' | 'pro';
+  arc?: 'hero' | 'master' | 'pro' | 'expert';
 }
 
 export const SCENARIO_META: ScenarioMeta[] = [
@@ -45,6 +50,12 @@ export const SCENARIO_META: ScenarioMeta[] = [
   { id: 13, arc: 'pro', title: 'ฉลาดเสี่ยง',             subtitle: 'Pro 1 — จัดอันดับความเสี่ยง',   estMinutes: 7, available: true, unlockAfter: 12 },
   { id: 14, arc: 'pro', title: 'TikTok ขุดความจริง',     subtitle: 'Pro 2 — ปัดจริง/เท็จแบบเร็ว',   estMinutes: 6, available: true, unlockAfter: 13 },
   { id: 15, arc: 'pro', title: 'บันทึกนักสืบรุ่นเก่า',     subtitle: 'Pro 3 — จับคู่ความจำ',         estMinutes: 7, available: true, unlockAfter: 14 },
+  // === Expert Arc (16-20) — ระดับเชี่ยวชาญเฉพาะเรื่องบุหรี่ไฟฟ้า ===
+  { id: 16, arc: 'expert', title: 'นิโคตินกับสมองวัยรุ่น',   subtitle: 'Expert 1 — เข้าใจกลไก dopamine', estMinutes: 7, available: true, unlockAfter: 15 },
+  { id: 17, arc: 'expert', title: 'แชทแปลกใน Discord',     subtitle: 'Expert 2 — รับมือคนขายในเกม',     estMinutes: 6, available: true, unlockAfter: 16 },
+  { id: 18, arc: 'expert', title: 'พ่อแม่จับได้',            subtitle: 'Expert 3 — สื่อสารกับครอบครัว',    estMinutes: 7, available: true, unlockAfter: 17 },
+  { id: 19, arc: 'expert', title: 'EVALI ฉุกเฉิน',           subtitle: 'Expert 4 — ปอดอักเสบจากบุหรี่ไฟฟ้า', estMinutes: 8, available: true, unlockAfter: 18 },
+  { id: 20, arc: 'expert', title: 'สูตรเลิก 4D ส่งต่อทีม',    subtitle: 'Expert Final — รวมพลังป้องกัน',     estMinutes: 9, available: true, unlockAfter: 19 },
 ];
 
 export const TOTAL_STAGES = SCENARIO_META.length;
@@ -68,6 +79,11 @@ export function getScenarioById(id: number): Scenario | null {
     case 13: return scenario13;
     case 14: return scenario14;
     case 15: return scenario15;
+    case 16: return scenario16;
+    case 17: return scenario17;
+    case 18: return scenario18;
+    case 19: return scenario19;
+    case 20: return scenario20;
     default: return null;
   }
 }

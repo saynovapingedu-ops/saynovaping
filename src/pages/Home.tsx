@@ -241,13 +241,14 @@ export default function Home() {
           {player.stagesCompleted.length}/{SCENARIO_META.length} ด่าน
         </p>
 
-        {(['hero', 'master', 'pro'] as const).map((arc) => {
+        {(['hero', 'master', 'pro', 'expert'] as const).map((arc) => {
           const stages = SCENARIO_META.filter(m => (m.arc || 'hero') === arc);
           if (stages.length === 0) return null;
           const arcLabel =
             arc === 'hero'   ? { name: 'บทที่ 1: เส้นทางนักสืบ', emoji: '🦸', desc: 'ด่าน 1-8 — จบรับ Certificate' }
           : arc === 'master' ? { name: 'บทที่ 2: Master Class',   emoji: '🎓', desc: 'ด่าน 9-12 — ขั้นสูง' }
-          :                    { name: 'บทที่ 3: Pro Arc',         emoji: '🎯', desc: 'ด่าน 13-15 — มินิเกมใหม่' };
+          : arc === 'pro'    ? { name: 'บทที่ 3: Pro Arc',         emoji: '🎯', desc: 'ด่าน 13-15 — มินิเกมใหม่' }
+          :                    { name: 'บทที่ 4: Expert Arc',      emoji: '🔬', desc: 'ด่าน 16-20 — เชี่ยวชาญ vape' };
           const arcCompleted = stages.filter(m => player.stagesCompleted.includes(m.id)).length;
 
           return (

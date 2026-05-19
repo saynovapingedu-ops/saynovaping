@@ -2,7 +2,7 @@
 //  Journal Entries — ข้อมูล "แฟ้มคดี" ของแต่ละด่าน
 //
 //  แทนระบบห้องเดิม: ผู้เล่นจบด่าน → ปลดล็อกหน้าสมุดบันทึก
-//  แต่ละหน้ามี: stamp (ผ่าน) / หลักฐาน / ข้อเท็จจริงที่เรียนรู้
+//  แต่ละหน้ามี: stamp (ผ่าน) / หลักฐาน / ข้อเท็จจริง / ข้อคิด / วิธีแก้ / อ้างอิง
 // ============================================================================
 
 export interface JournalEntry {
@@ -11,57 +11,376 @@ export interface JournalEntry {
   caseNumber: string;        // เช่น "CASE-01"
   stamp: string;             // emoji ตราประทับเมื่อผ่าน
   evidence: string;          // hint emoji แทน "หลักฐาน" ที่เก็บได้
-  insight: string;           // ข้อเท็จจริง 1 ประโยค สรุปสั้น
-  insightSource?: string;    // ที่มา
-  tag: string;               // ป้ายสี เช่น "Hero Arc"
+  /** ข้อสรุปคดี 1 ประโยคสั้น */
+  insight: string;
+  /** ข้อคิดที่ได้ — 2-3 ประโยค มุมมองที่อยากให้น้องๆ จำ */
+  lesson: string;
+  /** วิธีแก้/วิธีรับมือ — bullet list ขั้นตอนปฏิบัติ */
+  howTo: string[];
+  /** แหล่งอ้างอิงทั้งหมด */
+  references: string[];
+  tag: string;               // ป้าย Arc
 }
 
 export const JOURNAL_ENTRIES: JournalEntry[] = [
-  { id: 1, caseNumber: 'CASE-01', stamp: '🔍', evidence: '🪧',
-    insight: 'โฆษณา vape ใช้รสผลไม้-สี-สื่อโซเชียล ดึงดูดวัยรุ่น แต่ซ่อนนิโคติน',
-    insightSource: 'WHO Tobacco Marketing Report 2023', tag: 'Hero Arc' },
-  { id: 2, caseNumber: 'CASE-02', stamp: '✋', evidence: '🚻',
+  // === Hero Arc (1-8) — เส้นทางนักสืบเริ่มต้น ===
+  {
+    id: 1, caseNumber: 'CASE-01', stamp: '🔍', evidence: '🪧',
+    insight: 'โฆษณา vape ใช้รสผลไม้-สี-อินฟลูฯ ดึงดูดวัยรุ่น แต่ซ่อนนิโคติน',
+    lesson: 'การตลาดบุหรี่ไฟฟ้าไม่ได้พุ่งเป้ามาที่ "ผู้ใหญ่เลิกบุหรี่" เหมือนที่บริษัทอ้าง — เด็กอายุ 13-17 คือกลุ่มเป้าหมายหลัก เพราะตลาดผู้ใหญ่อิ่มตัวแล้ว สี รส และ packaging ทำให้รู้สึก "ปลอดภัย" ทั้งที่ระดับนิโคตินสูงกว่าบุหรี่ปกติ',
+    howTo: [
+      'มองโฆษณาด้วยคำถาม "เขาขายอะไร?" และ "ใครได้ประโยชน์?"',
+      'อย่าเชื่อ "เหมือนน้ำผลไม้" — รส = สารแต่งกลิ่นเคมี ไม่ใช่ผลไม้จริง',
+      'ดู disclaimer ตัวเล็ก — มักมีคำว่า "อันตรายต่อสุขภาพ"',
+    ],
+    references: [
+      'WHO Report on Tobacco Epidemic 2023 — Marketing to Youth',
+      'Truth Initiative — How E-Cigarette Companies Target Youth (2022)',
+      'U.S. FDA — Youth Tobacco Use Survey 2023',
+    ],
+    tag: 'Hero Arc',
+  },
+  {
+    id: 2, caseNumber: 'CASE-02', stamp: '✋', evidence: '🚻',
     insight: 'สูตรปฏิเสธ 3 ขั้น: "ไม่" ชัด → บอกเหตุผลสั้น → เสนอทางเลือก',
-    insightSource: 'American Lung Association — Refusal Skills', tag: 'Hero Arc' },
-  { id: 3, caseNumber: 'CASE-03', stamp: '🎂', evidence: '🍓',
-    insight: 'รสหวานช่วยให้เริ่มสูบง่ายขึ้น 4 เท่า — เป็นเหตุผลที่ห้ามขายในไทย',
-    insightSource: 'CDC Tobacco Use Among Youth 2023', tag: 'Hero Arc' },
-  { id: 4, caseNumber: 'CASE-04', stamp: '🏬', evidence: '🪪',
+    lesson: 'การปฏิเสธไม่ใช่เรื่องเสียมารยาท — มันคือทักษะที่ต้องฝึก คนที่ปฏิเสธไม่ได้มักจะลองเพราะ "อยากเข้ากลุ่ม" แต่กลุ่มที่บังคับให้ลองอันตราย ไม่ใช่กลุ่มเพื่อนแท้',
+    howTo: [
+      'พูด "ไม่" ชัดๆ ไม่ต้องอธิบายยาว — "ไม่ครับ/ค่ะ" พอ',
+      'เหตุผลสั้น เช่น "ฉันไม่สูบ" / "พ่อแม่ห้าม" / "เป็นภูมิแพ้"',
+      'เสนอกิจกรรมอื่น — "ไปกินขนมกัน" / "ลองเกมใหม่ไหม"',
+      'ถ้ายังตื๊อ → เดินออก ไม่ต้องเถียง',
+    ],
+    references: [
+      'American Lung Association — Refusal Skills for Youth',
+      'CDC — Building Refusal Skills (Tobacco Free Schools)',
+      'SAMHSA — Talk. They Hear You. Campaign',
+    ],
+    tag: 'Hero Arc',
+  },
+  {
+    id: 3, caseNumber: 'CASE-03', stamp: '🎂', evidence: '🍓',
+    insight: 'รสหวานช่วยให้วัยรุ่นเริ่มสูบง่ายขึ้น 4 เท่า — เป็นเหตุที่ห้ามขายในไทย',
+    lesson: 'นิโคตินรสผลไม้/ลูกอม ทำให้ "เริ่มลอง" ง่ายขึ้นมาก เพราะกลิ่น/รสไม่เหมือนสารพิษ สมองวัยรุ่นรับ "รางวัล" จากน้ำตาล+นิโคตินพร้อมกัน ติดเร็วกว่าสูบบุหรี่ปกติ',
+    howTo: [
+      'ใช้เหตุผลส่วนตัวคุยกับเพื่อน — โยงกับสิ่งที่เขารัก/กลัว',
+      'อย่าใช้คำสั่ง ("อย่า!") เพราะวัยรุ่นจะต่อต้าน',
+      'ฟังก่อน → สะท้อนความรู้สึก → ค่อยเสนอข้อมูล',
+      'เสนอทางเลือกบวก ไม่ใช่ขู่ — "ไปร้านชาไทยอร่อยกว่า"',
+    ],
+    references: [
+      'CDC Tobacco Use Among Youth (2023)',
+      'Motivational Interviewing — Miller & Rollnick (3rd Ed., 2013)',
+      'NIDA — Adolescent Brain & Reward Systems',
+    ],
+    tag: 'Hero Arc',
+  },
+  {
+    id: 4, caseNumber: 'CASE-04', stamp: '🏬', evidence: '🪪',
     insight: 'Broken Record: พูดประโยคเดิมสงบๆ — คนตื๊อจะเลิกได้เอง',
-    insightSource: 'Manuel J. Smith — When I Say No, I Feel Guilty', tag: 'Hero Arc' },
-  { id: 5, caseNumber: 'CASE-05', stamp: '💬', evidence: '📱',
-    insight: 'DM จากคนแปลกหน้า + ขายของผิดกฎหมาย = หลบออก, แจ้งผู้ใหญ่',
-    insightSource: 'พ.ร.บ. คอมพิวเตอร์ + สคบ.', tag: 'Hero Arc' },
-  { id: 6, caseNumber: 'CASE-06', stamp: '🤝', evidence: '🌿',
+    lesson: 'การโต้เถียงด้วยเหตุผลใหม่ทุกครั้ง = เปิดประตูให้คนชวนหาข้อโต้ตอบใหม่ การพูดประโยคเดิมสงบๆ ส่งสัญญาณว่าไม่มีทางต่อรอง — เป็นเทคนิค assertiveness ที่ใช้ได้ในชีวิตจริง ทั้งกับเพื่อน ครอบครัว และผู้ใหญ่',
+    howTo: [
+      'เลือก 1 ประโยคสั้น เช่น "ไม่ครับ ผมไม่สูบ"',
+      'พูดซ้ำด้วยน้ำเสียงปกติ ไม่หงุดหงิด',
+      'ไม่ต้องอธิบายเพิ่ม ไม่ต้องเถียง',
+      'มองตา ยืนตัวตรง — body language สำคัญ',
+    ],
+    references: [
+      'Manuel J. Smith — When I Say No, I Feel Guilty (1975)',
+      'พ.ร.บ. ศุลกากร พ.ศ. 2560',
+      'American Heart Association — Vaping Effects 2022',
+    ],
+    tag: 'Hero Arc',
+  },
+  {
+    id: 5, caseNumber: 'CASE-05', stamp: '💬', evidence: '📱',
+    insight: 'DM จากคนแปลกหน้า + ขายของผิดกฎหมาย = ถ่าย screenshot + แจ้งผู้ใหญ่',
+    lesson: 'คนขาย vape ผ่าน DM/LINE/IG ผิดทั้งกฎหมายและจรรยาบรรณ — เป้าหมายเขาคือ "ลูกค้าใหม่อายุน้อย" เพราะติดง่ายและสูบยาว การตอบ "ขอลอง" หรือ "ขอราคา" = เปิดบัญชีเขาให้รู้ว่าคุณสนใจ',
+    howTo: [
+      'ไม่ตอบกลับ — block และ report ทันที',
+      'ถ่าย screenshot username + ข้อความ',
+      'แจ้งผู้ใหญ่ (ครู/พ่อแม่) หรือ สคบ. 1166',
+      'อย่ากดลิงก์ใดๆ — อาจมีไวรัสหรือเก็บข้อมูล',
+    ],
+    references: [
+      'พ.ร.บ. ว่าด้วยการกระทำความผิดเกี่ยวกับคอมพิวเตอร์ พ.ศ. 2560',
+      'สคบ. — แจ้งเบาะแสร้านผิดกฎหมาย โทร 1166',
+      'Truth Initiative — Social Media Tobacco Marketing (2022)',
+    ],
+    tag: 'Hero Arc',
+  },
+  {
+    id: 6, caseNumber: 'CASE-06', stamp: '🤝', evidence: '🌿',
     insight: 'เพื่อนเปราะบาง → ฟังก่อน, ไม่ตัดสิน, ชวนทำกิจกรรมอื่นแทน',
-    insightSource: 'WHO Adolescent Mental Health Guideline', tag: 'Hero Arc' },
-  { id: 7, caseNumber: 'CASE-07', stamp: '⚖️', evidence: '📜',
+    lesson: 'เพื่อนที่กำลังจะลอง vape มักจะมีปัญหาภายใน (เครียด เหงา ครอบครัวมีปัญหา) บุหรี่ไฟฟ้าเป็นแค่ "ทางหนี" ที่เห็นง่ายที่สุด การช่วยเขา = ช่วยให้เห็นทางอื่น ไม่ใช่แค่ห้ามไม่ให้สูบ',
+    howTo: [
+      'ถามด้วยความห่วงใย "เกิดอะไรขึ้น?" ไม่ใช่ "ทำไมโง่!"',
+      'รับฟัง 80% พูด 20% — สะท้อนสิ่งที่เขารู้สึก',
+      'อย่าบอก "ฉันก็เครียดเหมือนกัน" — เปลี่ยน focus จากเขา',
+      'เสนอกิจกรรมรูปธรรม เช่น "พรุ่งนี้ไปเล่นกีฬากันมั้ย"',
+      'ถ้าหนัก → ชวนคุยกับผู้ใหญ่ที่ไว้ใจได้',
+    ],
+    references: [
+      'WHO Adolescent Mental Health Guideline (2021)',
+      'Active Listening — Carl Rogers Person-Centered Approach',
+      'Thai Health Promotion Foundation — เพื่อนช่วยเพื่อน',
+    ],
+    tag: 'Hero Arc',
+  },
+  {
+    id: 7, caseNumber: 'CASE-07', stamp: '⚖️', evidence: '📜',
     insight: 'ไทยห้ามนำเข้า/ขาย/ครอบครอง vape ตั้งแต่ปี 2557 — มีโทษจริง',
-    insightSource: 'ประกาศกระทรวงพาณิชย์ 2557 + พ.ร.บ.ศุลกากร 2560', tag: 'Hero Arc' },
-  { id: 8, caseNumber: 'CASE-08', stamp: '🏆', evidence: '🏢',
+    lesson: 'หลายคนเข้าใจผิดว่า "เพราะของมีขายในตลาดนัด = ถูกกฎหมาย" ความจริงคือไทยมีกฎหมายเข้มงวด แต่ตำรวจไม่มีกำลังพอจับทุกร้าน — ผู้สูบเองก็ผิดกฎหมาย ไม่ใช่แค่ผู้ขาย',
+    howTo: [
+      'ผู้ขาย: ปรับสูงสุด 500,000 บาท + จำคุก 5 ปี',
+      'ผู้นำเข้า: ปรับ 4 เท่าของราคา + จำคุก 10 ปี (พ.ร.บ.ศุลกากร)',
+      'ผู้สูบในที่ห้ามสูบ: ปรับ 5,000 บาท',
+      'แจ้งเบาะแสได้ที่ สคบ. 1166 / กรมศุลกากร 1164',
+    ],
+    references: [
+      'ประกาศกระทรวงพาณิชย์ พ.ศ. 2557',
+      'พ.ร.บ. ศุลกากร พ.ศ. 2560',
+      'พ.ร.บ. คุ้มครองสุขภาพของผู้ไม่สูบบุหรี่ พ.ศ. 2560',
+    ],
+    tag: 'Hero Arc',
+  },
+  {
+    id: 8, caseNumber: 'CASE-08', stamp: '🏆', evidence: '🏢',
     insight: 'จบ Hero Arc — รับ Certificate ได้! การตลาด vape มีรูปแบบซ่อน',
-    insightSource: 'Vapor Corp Whistleblower Files (fictional)', tag: 'Hero Arc' },
-  { id: 9, caseNumber: 'CASE-09', stamp: '🩺', evidence: '🆘',
+    lesson: 'บริษัทบุหรี่ไฟฟ้ารู้ตั้งแต่ก่อนเริ่มขายว่านิโคตินเสพติด แต่เลือกออกแบบให้รสหวานและบรรจุภัณฑ์เด็กๆ การที่ "วัยรุ่นไทย 1 ใน 5 เคยลอง" ไม่ใช่อุบัติเหตุ มันคือผลของแผนการตลาดที่ตั้งใจ',
+    howTo: [
+      'รู้แล้วก็ส่งต่อให้เพื่อน — ห่วงโซ่ป้องกันเริ่มที่คุณ',
+      'ใช้ทักษะทุกด่าน: แยกข้อมูล + ปฏิเสธ + Broken Record + ช่วยเพื่อน',
+      'สมัครเป็น "นักสืบรุ่นพี่" ในโรงเรียน — สอนน้อง',
+      'รายงานร้านขายให้ผู้ใหญ่/สายด่วน',
+    ],
+    references: [
+      'JUUL Labs Internal Documents (2020 FOIA disclosure)',
+      'TRC Thailand — Youth E-Cigarette Survey 2022',
+      'WHO Framework Convention on Tobacco Control (FCTC)',
+    ],
+    tag: 'Hero Arc',
+  },
+
+  // === Master Arc (9-12) — ทักษะขั้นสูง ===
+  {
+    id: 9, caseNumber: 'CASE-09', stamp: '🩺', evidence: '🆘',
     insight: 'สูตร 5A ช่วยเพื่อนเลิก: Ask → Advise → Assess → Assist → Arrange',
-    insightSource: 'U.S. Public Health Service Tobacco Cessation', tag: 'Master Arc' },
-  { id: 10, caseNumber: 'CASE-10', stamp: '🎬', evidence: '🔓',
-    insight: 'TikTok ใช้ hashtag/emoji ลับ (e.g. 🍃, 💨) ขายของผิดกฎหมาย',
-    insightSource: 'Truth Initiative — Social Media Tobacco Marketing', tag: 'Master Arc' },
-  { id: 11, caseNumber: 'CASE-11', stamp: '🏠', evidence: '👨‍👩‍👧',
+    lesson: 'การเลิกนิโคตินยากกว่าเลิกเฮโรอีนในแง่ "อยากกลับมาสูบ" เพราะนิโคตินเปลี่ยนการทำงานของ dopamine — เพื่อนที่อยากเลิกต้องได้รับการช่วยเหลือเป็นระบบ ไม่ใช่แค่ "ใจสู้" คนเดียว',
+    howTo: [
+      'Ask: ถามตรงๆ ว่าสูบไหม สูบบ่อยแค่ไหน',
+      'Advise: บอกข้อเสียที่เกี่ยวกับเป้าหมายเขา (กีฬา/เรียน)',
+      'Assess: ประเมินความพร้อมเลิก (1-10)',
+      'Assist: ช่วยทำแผน — โทร 1600, ใช้หมากฝรั่งนิโคติน, ออกกำลังกาย',
+      'Arrange: นัด follow-up — ถามทุก 1 สัปดาห์',
+    ],
+    references: [
+      'U.S. Public Health Service — Treating Tobacco Use 2008 Update',
+      'สายเลิกบุหรี่แห่งชาติ 1600 (Quit Line) — โทรฟรี 24 ชม.',
+      'WHO — Toolkit for Delivering Brief Interventions',
+    ],
+    tag: 'Master Arc',
+  },
+  {
+    id: 10, caseNumber: 'CASE-10', stamp: '🎬', evidence: '🔓',
+    insight: 'TikTok ใช้ hashtag/emoji ลับ (🍃 💨 🌿) ขายของผิดกฎหมาย',
+    lesson: 'แพลตฟอร์มกำลังพยายามแบนคำว่า "vape" แต่คนขายปรับตัวเร็วกว่า — ใช้ emoji แทนคำ ใช้ slang ใหม่ๆ (เช่น "puff", "pod", "เครื่อง") การรู้เท่าทันรหัสลับ = ป้องกันตัวเองและรายงานได้',
+    howTo: [
+      'สังเกต emoji ในชื่อบัญชี: 🍃 💨 🍓 = สัญญาณ',
+      'อย่าตอบ comment ที่ขอ "DM นะ"',
+      'รายงานบัญชี: ในแอป Report → Selling Restricted Goods',
+      'ส่ง link ให้ผู้ใหญ่ที่จัดการได้ (ครู/ตำรวจ)',
+    ],
+    references: [
+      'Truth Initiative — Social Media Tobacco Marketing (2023)',
+      'Stanford Internet Observatory — Youth Vape on Social',
+      'TikTok Community Guidelines — Tobacco & Drugs',
+    ],
+    tag: 'Master Arc',
+  },
+  {
+    id: 11, caseNumber: 'CASE-11', stamp: '🏠', evidence: '👨‍👩‍👧',
     insight: 'พี่/พ่อแม่ในบ้านสูบ → คุยตรง อย่าเทศนา + ขอผู้ใหญ่อีกคนช่วย',
-    insightSource: 'CDC Family Conversations About Tobacco', tag: 'Master Arc' },
-  { id: 12, caseNumber: 'CASE-12', stamp: '🎓', evidence: '📚',
+    lesson: 'ในครอบครัวที่ผู้ใหญ่สูบเอง วัยรุ่นมักรู้สึกว่า "ฉันจะห้ามใครได้?" — แต่ความจริงคือคุณสามารถบอกว่า "ฉันห่วง" ได้ และคนในบ้านที่เปลี่ยน 1 คน มักจะเปลี่ยนทั้งบ้าน',
+    howTo: [
+      'เลือกจังหวะดี — ไม่ใช่ตอนเขาเครียด',
+      'พูดด้วยความรู้สึก ("ฉันกลัวเสียเขา") ไม่ใช่กล่าวโทษ',
+      'ให้ข้อมูล 1-2 อย่างพอ — ไม่ต้องบรรยาย',
+      'ถ้าเขาไม่ฟัง → คุยกับผู้ใหญ่อีกคนในบ้าน (ปู่ ย่า ลุง ป้า)',
+      'อย่าถือเป็นความรับผิดชอบของคุณคนเดียว',
+    ],
+    references: [
+      'CDC — Family Conversations About Tobacco (2022)',
+      'Quitline 1600 — บริการครอบครัว',
+      'American Lung Association — Family Support Toolkit',
+    ],
+    tag: 'Master Arc',
+  },
+  {
+    id: 12, caseNumber: 'CASE-12', stamp: '🎓', evidence: '📚',
     insight: 'นักสืบที่เก่งสุด = ส่งต่อความรู้ให้รุ่นน้อง — ทักษะคูณ',
-    insightSource: 'Peer Education Effectiveness — WHO 2022', tag: 'Master Arc' },
-  { id: 13, caseNumber: 'CASE-13', stamp: '⚠️', evidence: '📊',
+    lesson: 'งานวิจัยพบว่า "peer education" (เพื่อนสอนเพื่อน/รุ่นพี่สอนน้อง) มีประสิทธิภาพมากกว่าครู/พ่อแม่สอน 3 เท่า เพราะใกล้กว่า เข้าใจกว่า — การส่งต่อความรู้คือการป้องกันที่กระจายตัวเอง',
+    howTo: [
+      'หาน้อง ป.5-ป.6 ในโรงเรียนที่สนิท',
+      'ใช้ภาษาง่ายๆ — เน้นเรื่องเล่าจริง ไม่ใช่สถิติ',
+      'สอนสูตรปฏิเสธ 3 ขั้น (ทำเป็นเกมก็ได้)',
+      'แชร์ลิงก์เกมนี้ให้น้อง',
+      'รายงานครู ถ้าเจอเพื่อนน้องมีปัญหา',
+    ],
+    references: [
+      'WHO — Peer Education Effectiveness Review (2022)',
+      'UNESCO — Health Education Through Peer Networks',
+      'Thai Health Promotion — โครงการรุ่นพี่ดูแลรุ่นน้อง',
+    ],
+    tag: 'Master Arc',
+  },
+
+  // === Pro Arc (13-15) ===
+  {
+    id: 13, caseNumber: 'CASE-13', stamp: '⚠️', evidence: '📊',
     insight: '"ความเสี่ยง" มี 4 ระดับ — vape เด็ก = สูงสุด เพราะสมองยังโต',
-    insightSource: 'U.S. Surgeon General Report 2023', tag: 'Pro Arc' },
-  { id: 14, caseNumber: 'CASE-14', stamp: '🤳', evidence: '👀',
+    lesson: 'การจัดอันดับความเสี่ยงเป็นทักษะที่ใช้ในวิชาแพทย์ — แทนการพูด "อันตราย/ไม่อันตราย" แบบ binary มาเรียงว่าอะไร "เสี่ยงน้อย-เสี่ยงมาก" จะช่วยตัดสินใจในสถานการณ์จริงได้ดีกว่า',
+    howTo: [
+      'ระดับ 1 (ต่ำ): กิจกรรมปกติของวัยรุ่น',
+      'ระดับ 2 (กลาง): ค้นข้อมูลจากแหล่งไม่น่าเชื่อถือ',
+      'ระดับ 3 (สูง): ลองสูบบุหรี่/vape แม้แค่ครั้งเดียว',
+      'ระดับ 4 (สูงสุด): สูบ vape ในวัยรุ่น สมองยังพัฒนาไม่จบ',
+      'ตัดสินใจตามระดับ — ระดับ 3+ ต้องพึ่งผู้ใหญ่',
+    ],
+    references: [
+      'U.S. Surgeon General Report — Youth & Vaping (2023)',
+      'WHO Risk Stratification Framework',
+      'NIDA — Adolescent Brain Development Atlas',
+    ],
+    tag: 'Pro Arc',
+  },
+  {
+    id: 14, caseNumber: 'CASE-14', stamp: '🤳', evidence: '👀',
     insight: '"ปัดผ่าน" ก่อนคิด = อันตราย — ฝึกหยุดถามตัวเอง 3 วินาที',
-    insightSource: 'Stanford SHEG Civic Online Reasoning', tag: 'Pro Arc' },
-  { id: 15, caseNumber: 'CASE-15', stamp: '🧩', evidence: '🗝️',
+    lesson: 'Algorithm ของ TikTok/Reels ใช้เวลาน้อยมากเพื่อยึดความสนใจ — ผ่านไป 1.5 วินาทีก็ตัดสินว่าจะดูต่อไหม การฝึก "หยุดคิด 3 วินาที" ทำให้เราไม่ถูก algorithm ผลักดันไปทางที่อันตราย',
+    howTo: [
+      'เห็นคลิป → หยุด → ถาม "ใครได้ประโยชน์จากคลิปนี้?"',
+      'ดูแหล่งที่มา — บัญชีมีตัวตนจริงไหม?',
+      'ตรวจ comment — มีคนเตือนไหม?',
+      'ถ้าสงสัย → ค้น Google + คำว่า "fact check"',
+      'รายงานก่อนแชร์',
+    ],
+    references: [
+      'Stanford SHEG — Civic Online Reasoning (2021)',
+      'MIT Media Lab — Misinformation Speed Study',
+      'TikTok Safety Center — How to Report',
+    ],
+    tag: 'Pro Arc',
+  },
+  {
+    id: 15, caseNumber: 'CASE-15', stamp: '🧩', evidence: '🗝️',
     insight: 'ภัย-เครื่องมือ-ทักษะ จับคู่กันได้ — การจำเป็นระบบ ไม่ใช่ท่อง',
-    insightSource: 'Cognitive Load Theory — Sweller 1988', tag: 'Pro Arc' },
+    lesson: 'ความรู้แบบ "ท่อง" หายเร็ว แต่ความรู้แบบ "เชื่อมโยง" จำได้ตลอด การเชื่อมว่า "EVALI → เครื่อง vape ราคาถูก → ไม่มี QC → สารพิษเข้าปอด" ทำให้เข้าใจมากกว่าจำแค่ชื่อโรค',
+    howTo: [
+      'สร้าง mind map ของเรื่อง vape — จุดศูนย์กลาง + กิ่ง',
+      'จับคู่ "ภัย" กับ "ทักษะที่ใช้รับมือ"',
+      'อธิบายให้คนอื่นฟัง — ถ้าอธิบายได้ = เข้าใจ',
+      'ใช้ flashcard — ทบทวนทุก 1 สัปดาห์',
+    ],
+    references: [
+      'Cognitive Load Theory — John Sweller (1988)',
+      'Make It Stick — Brown, Roediger, McDaniel (2014)',
+      'Tony Buzan — Mind Mapping for Memory',
+    ],
+    tag: 'Pro Arc',
+  },
+
+  // === Expert Arc (16-20) — ระดับเชี่ยวชาญ ===
+  {
+    id: 16, caseNumber: 'CASE-16', stamp: '🧠', evidence: '⚡',
+    insight: 'นิโคตินเปลี่ยน dopamine — สมองวัยรุ่นเสียหายถาวรได้',
+    lesson: 'สมองวัยรุ่นยังพัฒนาจนถึงอายุ 25 ปี นิโคตินไปกระตุ้นระบบ reward (dopamine) ทำให้สมองเรียนรู้ว่า "นิโคติน = ความสุข" — เมื่อโตขึ้น คนเหล่านี้มีแนวโน้มติดสารอื่นๆ ตาม (เหล้า ยา) เพราะ "wiring" ของสมองถูกแก้ไปแล้ว',
+    howTo: [
+      'รู้กลไก: นิโคติน → กระตุ้น dopamine → รู้สึกดีชั่วครู่ → สมองต้องการมากขึ้น',
+      'อาการขาดนิโคติน: หงุดหงิด สมาธิหลุด หิว นอนไม่หลับ',
+      'ถ้าสูบมาก่อน — ยังเลิกได้! สมองจะค่อยๆ ซ่อมตัวเองใน 3-6 เดือน',
+      'ออกกำลังกาย + นอนพอ ช่วยฟื้นฟู dopamine system',
+    ],
+    references: [
+      'NIDA — Cigarettes and Other Tobacco Products (2023)',
+      'Nature Neuroscience — Adolescent Nicotine Exposure (2021)',
+      'U.S. Surgeon General Report 2016 — Youth Tobacco',
+    ],
+    tag: 'Expert Arc',
+  },
+  {
+    id: 17, caseNumber: 'CASE-17', stamp: '🎮', evidence: '💸',
+    insight: 'ขายในเกมออนไลน์ผิดกฎหมาย — ดูดเด็กผ่านแชท Roblox/Discord',
+    lesson: 'คนขาย vape ใช้เกมเป็น "ทาง" เข้าหาวัยรุ่น เพราะผู้ปกครองไม่ค่อยดู — Discord/Roblox/Minecraft มีฟีเจอร์แชทที่ตรวจสอบยาก การ "อยู่ในเกมเดียวกัน" ทำให้รู้สึก trust แต่จริงๆ ก็คือคนแปลกหน้า',
+    howTo: [
+      'อย่ารับเพื่อนแปลกหน้าใน Discord/Roblox',
+      'ตั้งค่า DM = friends only',
+      'ถ้ามีคนชวนคุย "นอกเกม" (Line, IG) = สัญญาณอันตราย',
+      'รายงานผ่าน Roblox Report / Discord Report ภายในเกม',
+      'บอกพ่อแม่ทันที — ไม่ใช่ความผิดของน้อง',
+    ],
+    references: [
+      'FBI — Online Predators & Gaming Platforms (2022)',
+      'พ.ร.บ. คอมพิวเตอร์ มาตรา 14 (เผยแพร่ข้อมูลผิดกฎหมาย)',
+      'Common Sense Media — Discord Safety Guide',
+    ],
+    tag: 'Expert Arc',
+  },
+  {
+    id: 18, caseNumber: 'CASE-18', stamp: '💬', evidence: '🏠',
+    insight: 'พ่อแม่จับได้ → บอกความจริง + ขอความช่วยเหลือ ดีกว่าซ่อน',
+    lesson: 'พ่อแม่หลายคน react แรงตอนรู้ครั้งแรก เพราะกลัว ไม่ใช่เพราะอยากลงโทษ — ถ้าโกหก/ซ่อน ความเชื่อใจจะพังถาวร แต่ถ้าบอกตรงๆ + แสดงความตั้งใจเลิก ผู้ใหญ่จะพร้อมช่วยมากกว่าที่คิด',
+    howTo: [
+      'หยิบของออกมาให้เห็น — ไม่ซ่อน',
+      'ขอโทษก่อน — บอกว่ารู้ว่าผิด',
+      'อธิบายสาเหตุที่เริ่ม — ความเครียด เพื่อนชวน ฯลฯ',
+      'ขอให้ช่วยหาวิธีเลิก — โทร 1600 ด้วยกัน',
+      'ขอ "โอกาส" ไม่ใช่ "ให้อภัย"',
+    ],
+    references: [
+      'CDC — Talking to Your Teen About Tobacco',
+      'Quitline 1600 — บริการครอบครัว (ฟรี 24 ชม.)',
+      'American Lung Association — Family Recovery Guide',
+    ],
+    tag: 'Expert Arc',
+  },
+  {
+    id: 19, caseNumber: 'CASE-19', stamp: '🫁', evidence: '🏥',
+    insight: 'EVALI = ปอดอักเสบจาก vape — เด็กไทยมีบันทึกแล้ว ICU จริง',
+    lesson: 'EVALI (E-cigarette/Vaping Use-Associated Lung Injury) เกิดจากสารพิษในน้ำยา — เช่น vitamin E acetate, โลหะหนัก, ฟอร์มาลดีไฮด์ อาการเริ่มแค่ไอ-เหนื่อย แต่ลามเร็วถึงต้องใช้เครื่องช่วยหายใจ ค่ารักษาหลักล้านบาท',
+    howTo: [
+      'รู้อาการเตือน: ไอ + เหนื่อย + แน่นหน้าอก + ไข้',
+      'เคยสูบมา 1-3 เดือน + อาการพวกนี้ → ไป รพ. ทันที',
+      'บอกหมอตรงๆ ว่าเคยสูบ — ไม่ใช่เวลามาซ่อน',
+      'ถ้าเพื่อนมีอาการ → โทร 1669 หรือพาไป รพ.',
+      'ห้ามรอ "ดูอาการ" — EVALI ลามเร็วใน 2-3 วัน',
+    ],
+    references: [
+      'CDC — EVALI Outbreak Report (2019-2023)',
+      'NEJM — Pulmonary Illness Related to E-Cigarette Use (2019)',
+      'กรมการแพทย์ กระทรวงสาธารณสุข — รายงานเคส EVALI ไทย',
+    ],
+    tag: 'Expert Arc',
+  },
+  {
+    id: 20, caseNumber: 'CASE-20', stamp: '🌟', evidence: '🎓',
+    insight: '4D เพื่อเลิก: Delay, Deep breath, Drink water, Do something — รวมพลังทีม',
+    lesson: 'ภารกิจสุดท้าย: ไม่ใช่แค่ตัวเองรอด แต่สร้างเครือข่ายป้องกันในโรงเรียน เทคนิค 4D เป็นเครื่องมือเชิงปฏิบัติเมื่อ "อยากสูบ" ตอนกำลังเลิก — แต่การที่หลายคนใช้พร้อมกัน จะกลายเป็นวัฒนธรรมโรงเรียนที่ปลอดภัย',
+    howTo: [
+      'D-1 Delay: หน่วงเวลา 5 นาที — ความอยากจะหายเอง',
+      'D-2 Deep breath: หายใจลึก 10 ครั้ง — ลด cortisol',
+      'D-3 Drink water: ดื่มน้ำเย็น — แทนการ inhale',
+      'D-4 Do something: ทำกิจกรรมอื่น — เดิน, ฟังเพลง, โทรเพื่อน',
+      'สร้างทีม: หา 3-5 คนในห้องเป็น "นักสืบประจำห้อง"',
+      'รายงาน case ทุกสัปดาห์ — ให้ครูที่ปรึกษา',
+    ],
+    references: [
+      'American Cancer Society — 4D Quit Smoking Method',
+      'WHO — School-Based Tobacco Prevention Programs',
+      'สสส. — โรงเรียนปลอดบุหรี่ คู่มือนักเรียนแกนนำ (2023)',
+      'Quitline 1600 — เครือข่ายผู้ช่วยเลิกแห่งชาติ',
+    ],
+    tag: 'Expert Arc',
+  },
 ];
 
 export function getJournalEntry(id: number): JournalEntry | undefined {

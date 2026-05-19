@@ -76,19 +76,26 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'theme-sunset',   category: 'theme', name: 'Sunset อบอุ่น', description: 'ส้ม-แดง-ม่วงพระอาทิตย์ตก', price: 250, emoji: '🌅', unlockAfterStage: 8,
     themeColors: ['#F59E0B', '#EF4444', '#EC4899', '#A78BFA', '#FBBF24', '#FB7185'] },
 
-  // ===== Accessories — overlay บน avatar (ของแต่งหน้าตา) =====
+  // ===== Accessories — overlay บน avatar (ของแต่งหน้าตา)
+  //   x/y = % ของขนาด avatar (จุดศูนย์กลางของ emoji)
+  //   scale = สเกลของ emoji เทียบกับขนาด avatar
+  //   ตำแหน่งคำนวณให้พอดีกับศิลปะตัวละคร (ใบหน้าอยู่ ~5-50% ของรูป)
   { id: 'acc-glasses-nerd', category: 'accessory', name: 'แว่นนักสืบ', description: 'แว่นกรอบดำสำหรับนักสืบ',
-    price: 80,  emoji: '👓', accessory: { emoji: '👓', x: 50, y: 40, scale: 0.45 } },
+    price: 80,  emoji: '👓', accessory: { emoji: '👓', x: 50, y: 32, scale: 0.4 } },
   { id: 'acc-cap-detective', category: 'accessory', name: 'หมวกนักสืบ', description: 'หมวก Sherlock สุดคลาสสิก',
-    price: 120, emoji: '🎩', unlockAfterStage: 2, accessory: { emoji: '🎩', x: 50, y: 8, scale: 0.55 } },
+    price: 120, emoji: '🎩', unlockAfterStage: 2, accessory: { emoji: '🎩', x: 50, y: 5, scale: 0.5 } },
   { id: 'acc-bow-pink', category: 'accessory', name: 'โบว์ชมพู', description: 'โบว์น่ารักติดผม',
-    price: 100, emoji: '🎀', accessory: { emoji: '🎀', x: 70, y: 10, scale: 0.45 } },
-  { id: 'acc-mask', category: 'accessory', name: 'แมสคนป่วย', description: 'แมสปิดปาก ดูแลสุขภาพ',
-    price: 60,  emoji: '😷', accessory: { emoji: '😷', x: 50, y: 60, scale: 0.5 } },
-  { id: 'acc-headphones', category: 'accessory', name: 'หูฟัง', description: 'หูฟัง gamer สีนีออน',
-    price: 150, emoji: '🎧', unlockAfterStage: 4, accessory: { emoji: '🎧', x: 50, y: 30, scale: 0.55 } },
+    price: 100, emoji: '🎀', accessory: { emoji: '🎀', x: 68, y: 12, scale: 0.35 } },
+  { id: 'acc-mask', category: 'accessory', name: 'แมสปิดปาก', description: 'ใส่แมสดูแลสุขภาพ',
+    price: 60,  emoji: '😷', accessory: { emoji: '😷', x: 50, y: 50, scale: 0.55 } },
+  { id: 'acc-headphones', category: 'accessory', name: 'หูฟัง gamer', description: 'หูฟัง gamer สีนีออน',
+    price: 150, emoji: '🎧', unlockAfterStage: 4, accessory: { emoji: '🎧', x: 50, y: 28, scale: 0.6 } },
   { id: 'acc-crown', category: 'accessory', name: 'มงกุฎทอง', description: 'มงกุฎสำหรับนักสืบระดับตำนาน',
-    price: 600, emoji: '👑', unlockAfterStage: 8, accessory: { emoji: '👑', x: 50, y: 5, scale: 0.5 } },
+    price: 600, emoji: '👑', unlockAfterStage: 8, accessory: { emoji: '👑', x: 50, y: 0, scale: 0.45 } },
+  { id: 'acc-sparkle', category: 'accessory', name: 'ประกายดารา', description: 'ดาวระยิบรอบหัว',
+    price: 250, emoji: '✨', unlockAfterStage: 5, accessory: { emoji: '✨', x: 22, y: 18, scale: 0.4 } },
+  { id: 'acc-flower', category: 'accessory', name: 'ดอกไม้ผม', description: 'ดอกไม้ติดผมหวานๆ',
+    price: 90,  emoji: '🌸', accessory: { emoji: '🌸', x: 25, y: 14, scale: 0.35 } },
 
   // ===== Profile Backdrops — พื้นหลังหน้าโปรไฟล์ =====
   { id: 'bd-default', category: 'backdrop', name: 'ขาวสุภาพ', description: 'พื้นหลังเริ่มต้น',

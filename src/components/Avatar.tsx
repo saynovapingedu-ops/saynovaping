@@ -21,6 +21,9 @@ interface Props {
 //   2) preset → ภาพ PNG ตัวละคร (PLAYER_CHARACTERS) ถ้าโหลดไม่ขึ้นใช้ emoji
 //   3) fallback → emoji
 //   + accessory overlay (แว่น หมวก โบว์ ฯลฯ) จาก equippedAccessory
+//
+// โครงสร้าง 2 ชั้น: <wrapper relative> + <innerCircle overflow-hidden>
+//   accessory อยู่ใน wrapper จึงไม่โดน clip โดยขอบวงกลม
 export default function Avatar({
   preset, customId, size = 48, className = '', ring,
   accessoryId, hideAccessory,
@@ -37,13 +40,15 @@ export default function Avatar({
     ? SHOP_ITEMS.find(i => i.id === effectiveAccId)?.accessory
     : undefined;
 
-  const ringClass = ring ? 'ring-2 ring-white/40 ring-offset-2 ring-offset-transparent' : '';
-  const baseClass = `relative rounded-full overflow-hidden flex items-center justify-center bg-white ${ringClass} ${className}`;
+  // wrapper: ขนาดวงกลม แต่ overflow-visible เพื่อให้ accessory ที่ออกนอกวงไม่โดนตัด
+  const ringClass = ring ? 'ring-2 ring-white/40 ring-offset-2 ring-offset-transparent rounded-full' : '';
+  const wrapperClass = `relative inline-block ${ringClass} ${className}`;
+  const innerClass = 'rounded-full overflow-hidden flex items-center justify-center bg-white w-full h-full';
 
   // accessory overlay node — สเกลตามขนาด avatar
   const accessoryNode = accessory ? (
     <span
-      className="absolute pointer-events-none leading-none select-none drop-shadow-sm"
+      className="absolute pointer-events-none leading-none select-none drop-shadow-sm z-10"
       style={{
         left: `${accessory.x}%`,
         top: `${accessory.y}%`,
@@ -59,8 +64,10 @@ export default function Avatar({
   // 1) custom uploaded image
   if (custom) {
     return (
-      <div className={baseClass} style={{ width: size, height: size }}>
-        <img src={custom.dataUrl} alt={custom.name} className="w-full h-full object-cover" />
+      <div className={wrapperClass} style={{ width: size, height: size }}>
+        <div className={innerClass}>
+          <img src={custom.dataUrl} alt={custom.name} className="w-full h-full object-cover" />
+        </div>
         {accessoryNode}
       </div>
     );
@@ -70,14 +77,16 @@ export default function Avatar({
   const character = getPlayerCharacter(preset);
   if (!pngFailed) {
     return (
-      <div className={baseClass} style={{ width: size, height: size }}>
-        <img
-          src={character.src}
-          alt={character.label}
-          className="w-full h-full object-cover"
-          onError={() => setPngFailed(true)}
-          loading="lazy"
-        />
+      <div className={wrapperClass} style={{ width: size, height: size }}>
+        <div className={innerClass}>
+          <img
+            src={character.src}
+            alt={character.label}
+            className="w-full h-full object-cover"
+            onError={() => setPngFailed(true)}
+            loading="lazy"
+          />
+        </div>
         {accessoryNode}
       </div>
     );
@@ -86,10 +95,12 @@ export default function Avatar({
   // 3) emoji fallback
   const emojiSize = Math.round(size * 0.6);
   return (
-    <div className={`${baseClass} bg-gradient-to-br from-detective-50 to-detective-100`} style={{ width: size, height: size }}>
-      <span style={{ fontSize: emojiSize }} className="leading-none">
-        {character.emoji}
-      </span>
+    <div className={wrapperClass} style={{ width: size, height: size }}>
+      <div className={`${innerClass} bg-gradient-to-br from-detective-50 to-detective-100`}>
+        <span style={{ fontSize: emojiSize }} className="leading-none">
+          {character.emoji}
+        </span>
+      </div>
       {accessoryNode}
     </div>
   );

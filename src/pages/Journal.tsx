@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
 import { JOURNAL_ENTRIES, type JournalEntry } from '../lib/journalEntries';
 import { SCENARIO_META, isStageUnlocked } from '../scenarios';
+import { SHOP_ITEMS } from '../lib/shopItems';
 import PageHeader from '../components/PageHeader';
 import { sfx } from '../lib/sound';
 
@@ -22,7 +23,10 @@ const ARC_COLOR: Record<string, { bg: string; border: string; text: string; tape
   hero:   { bg: 'from-detective-50 to-white',  border: 'border-detective-300',  text: 'text-detective-700', tape: 'bg-detective-300' },
   master: { bg: 'from-warning-50 to-white',    border: 'border-warning-300',    text: 'text-warning-700',   tape: 'bg-warning-300' },
   pro:    { bg: 'from-mint-50 to-white',       border: 'border-mint-300',       text: 'text-mint-700',      tape: 'bg-mint-300' },
+  expert: { bg: 'from-purple-50 to-white',     border: 'border-purple-300',     text: 'text-purple-700',    tape: 'bg-purple-300' },
 };
+
+type ArcKey = 'hero' | 'master' | 'pro' | 'expert';
 
 interface CombinedCase extends JournalEntry {
   meta: typeof SCENARIO_META[number];
@@ -53,20 +57,21 @@ export default function Journal() {
 
   // group by arc
   const byArc = useMemo(() => {
-    const groups: Record<'hero' | 'master' | 'pro', CombinedCase[]> = {
-      hero: [], master: [], pro: [],
+    const groups: Record<ArcKey, CombinedCase[]> = {
+      hero: [], master: [], pro: [], expert: [],
     };
     cases.forEach(c => {
-      const arc = (c.meta.arc || 'hero') as 'hero' | 'master' | 'pro';
+      const arc = (c.meta.arc || 'hero') as ArcKey;
       groups[arc].push(c);
     });
     return groups;
   }, [cases]);
 
-  const arcLabel = {
-    hero:   { name: 'Hero Arc', subtitle: 'ด่าน 1-8 · เส้นทางนักสืบ', emoji: '🦸' },
-    master: { name: 'Master Arc', subtitle: 'ด่าน 9-12 · ขั้นสูง',     emoji: '🎓' },
-    pro:    { name: 'Pro Arc',  subtitle: 'ด่าน 13-15 · เกมเพลย์ใหม่', emoji: '🎯' },
+  const arcLabel: Record<ArcKey, { name: string; subtitle: string; emoji: string }> = {
+    hero:   { name: 'Hero Arc',   subtitle: 'ด่าน 1-8 · เส้นทางนักสืบ',  emoji: '🦸' },
+    master: { name: 'Master Arc', subtitle: 'ด่าน 9-12 · ขั้นสูง',        emoji: '🎓' },
+    pro:    { name: 'Pro Arc',    subtitle: 'ด่าน 13-15 · เกมเพลย์ใหม่',  emoji: '🎯' },
+    expert: { name: 'Expert Arc', subtitle: 'ด่าน 16-20 · เชี่ยวชาญ vape', emoji: '🔬' },
   };
 
   const handleCardTap = (c: CombinedCase) => {
@@ -80,8 +85,12 @@ export default function Journal() {
     nav(`/scenario/${id}`);
   };
 
+  const backdropCss = player.equippedBackdrop
+    ? SHOP_ITEMS.find(i => i.id === player.equippedBackdrop)?.backdropCss
+    : undefined;
+
   return (
-    <div className="min-h-full pb-10 relative">
+    <div className="min-h-screen pb-10 relative" style={backdropCss ? { background: backdropCss } : undefined}>
       <PageHeader
         title="📓 สมุดบันทึกนักสืบ"
         subtitle={`ปิดคดีแล้ว ${clearedCount}/${totalCount} · ${player.totalXP} XP`}
@@ -115,7 +124,7 @@ export default function Journal() {
         </div>
 
         {/* === แต่ละ Arc === */}
-        {(['hero', 'master', 'pro'] as const).map(arc => {
+        {(['hero', 'master', 'pro', 'expert'] as const).map(arc => {
           const list = byArc[arc];
           if (list.length === 0) return null;
           const ac = ARC_COLOR[arc];
@@ -245,7 +254,7 @@ function CaseModal({
   onPlay: () => void;
 }) {
   const { cleared, unlocked, meta } = c;
-  const arc = (meta.arc || 'hero') as 'hero' | 'master' | 'pro';
+  const arc = (meta.arc || 'hero') as ArcKey;
   const colors = ARC_COLOR[arc];
 
   return (
@@ -294,28 +303,58 @@ function CaseModal({
         </div>
 
         <div className="p-5">
-          {/* Evidence + Insight (เมื่อปิดคดีแล้ว) */}
+          {/* Evidence + Insight + Lesson + How-to + References (เมื่อปิดคดีแล้ว) */}
           {cleared ? (
-            <>
+            <div className="max-h-[60vh] overflow-y-auto pr-1 -mr-1">
               <div className="flex items-center gap-1.5 mb-2">
                 <span className="text-2xl leading-none">{c.evidence}</span>
                 <p className="text-[11px] font-bold text-detective-600 uppercase tracking-wider">
                   หลักฐานที่เก็บได้
                 </p>
               </div>
+
+              {/* 1) ข้อสรุปคดี */}
               <div className="bg-warning-50 border-l-4 border-warning-400 rounded-r-xl p-3 mb-3">
                 <p className="text-[11px] font-bold text-warning-700 mb-1">💡 ข้อสรุปคดี</p>
                 <p className="text-sm text-slate-800 leading-relaxed">{c.insight}</p>
-                {c.insightSource && (
-                  <p className="text-[10px] text-slate-500 italic mt-1.5 leading-snug">
-                    📚 อ้างอิง: {c.insightSource}
-                  </p>
-                )}
               </div>
+
+              {/* 2) ข้อคิด */}
+              <div className="bg-detective-50 border-l-4 border-detective-400 rounded-r-xl p-3 mb-3">
+                <p className="text-[11px] font-bold text-detective-700 mb-1">🧠 ข้อคิดที่ได้</p>
+                <p className="text-sm text-slate-800 leading-relaxed">{c.lesson}</p>
+              </div>
+
+              {/* 3) วิธีแก้ / วิธีรับมือ */}
+              <div className="bg-mint-50 border-l-4 border-mint-500 rounded-r-xl p-3 mb-3">
+                <p className="text-[11px] font-bold text-mint-700 mb-1.5">✅ วิธีแก้ / วิธีรับมือ</p>
+                <ul className="space-y-1">
+                  {c.howTo.map((step, i) => (
+                    <li key={i} className="text-sm text-slate-800 leading-relaxed flex gap-1.5">
+                      <span className="text-mint-600 font-bold flex-shrink-0">{i + 1}.</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* 4) แหล่งอ้างอิง */}
+              <div className="bg-slate-50 border-l-4 border-slate-400 rounded-r-xl p-3 mb-3">
+                <p className="text-[11px] font-bold text-slate-700 mb-1.5">📚 แหล่งอ้างอิง</p>
+                <ul className="space-y-0.5">
+                  {c.references.map((ref, i) => (
+                    <li key={i} className="text-[11px] text-slate-600 leading-relaxed flex gap-1.5">
+                      <span className="text-slate-400 flex-shrink-0">•</span>
+                      <span>{ref}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
               <button onClick={onPlay} className="btn-secondary w-full">
                 🔄 เล่นซ้ำ (รีวิวคดีนี้)
               </button>
-            </>
+            </div>
           ) : unlocked ? (
             <>
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-3 text-center">
