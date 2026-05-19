@@ -40,9 +40,10 @@ export default function Avatar({
     ? SHOP_ITEMS.find(i => i.id === effectiveAccId)?.accessory
     : undefined;
 
-  // wrapper: ขนาดวงกลม แต่ overflow-visible เพื่อให้ accessory ที่ออกนอกวงไม่โดนตัด
-  const ringClass = ring ? 'ring-2 ring-white/40 ring-offset-2 ring-offset-transparent rounded-full' : '';
-  const wrapperClass = `relative inline-block ${ringClass} ${className}`;
+  // wrapper: rounded-full เสมอ — กรอบ (ring) ต้องวิ่งตามวงกลม ไม่ใช่สี่เหลี่ยม
+  // overflow-visible (default) เพื่อให้ accessory ที่ออกนอกวงไม่โดนตัด
+  const ringClass = ring ? 'ring-2 ring-white/40 ring-offset-2 ring-offset-transparent' : '';
+  const wrapperClass = `relative inline-block rounded-full ${ringClass} ${className}`;
   const innerClass = 'rounded-full overflow-hidden flex items-center justify-center bg-white w-full h-full';
 
   // accessory overlay node — สเกลตามขนาด avatar
