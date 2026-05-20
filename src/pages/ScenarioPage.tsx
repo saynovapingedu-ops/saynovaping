@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getScenarioById, SCENARIO_META, isStageUnlocked } from '../scenarios';
+import { getScenarioById, SCENARIO_META, isStageUnlocked, CERT_STAGE_COUNT } from '../scenarios';
 import { getBadge } from '../lib/badges';
 import { usePlayerStore } from '../store/playerStore';
+import { useCertNameStore } from '../store/certNameStore';
 import { useUIStore } from '../store/uiStore';
 import DialogueBubble from '../components/DialogueBubble';
 import ChoiceCard from '../components/ChoiceCard';
+import CertNameDialog from '../components/CertNameDialog';
 import SpotTheLie from '../components/minigames/SpotTheLie';
 import OrderCards from '../components/minigames/OrderCards';
 import WordMatch from '../components/minigames/WordMatch';
@@ -35,6 +37,8 @@ export default function ScenarioPage() {
   const [history, setHistory] = useState<ScenarioNode[]>([]);
   const [currentNodeId, setCurrentNodeId] = useState<string>(scenario?.startNode || '');
   const [confettiActive, setConfettiActive] = useState(false);
+  const [certNameOpen, setCertNameOpen] = useState(false);
+  const markCertNamePrompted = usePlayerStore(s => s.markCertNamePrompted);
   // ใช้ Hint — เก็บ id ของ node ที่ผู้เล่นเปิด hint แล้ว (โชว์ best choice)
   const [hintRevealedNode, setHintRevealedNode] = useState<string | null>(null);
   const hintTokens = usePlayerStore(s => s.hintTokens || 0);
@@ -149,9 +153,24 @@ export default function ScenarioPage() {
       sfx.victory();
       vibrate([30, 50, 30, 50, 60]);
       const t = setTimeout(() => setConfettiActive(false), 2600);
-      return () => clearTimeout(t);
+
+      // ถามชื่อจริงสำหรับเกียรติบัตร — ครั้งเดียว ตอนผ่านเกณฑ์
+      const p = usePlayerStore.getState();
+      const completedAfter = p.stagesCompleted.includes(stageId)
+        ? p.stagesCompleted
+        : [...p.stagesCompleted, stageId];
+      const eligible = completedAfter.length >= CERT_STAGE_COUNT || p.totalXP >= 1500;
+      const hasRealName = useCertNameStore.getState().realName.trim().length > 0;
+      let t2: ReturnType<typeof setTimeout> | undefined;
+      if (eligible && !p.certNamePrompted && !hasRealName) {
+        t2 = setTimeout(() => {
+          setCertNameOpen(true);
+          markCertNamePrompted();
+        }, 1600);
+      }
+      return () => { clearTimeout(t); if (t2) clearTimeout(t2); };
     }
-  }, [currentNodeId, scenario]);
+  }, [currentNodeId, scenario, stageId, markCertNamePrompted]);
 
   if (!scenario) {
     return (
@@ -721,6 +740,13 @@ export default function ScenarioPage() {
           </AnimatePresence>
         )}
       </main>
+
+      <CertNameDialog
+        open={certNameOpen}
+        onClose={() => setCertNameOpen(false)}
+        title="🎉 ผ่านเกณฑ์รับเกียรติบัตร!"
+        subtitle="ใส่ชื่อจริงเพื่อพิมพ์บนเกียรติบัตร (ไม่บังคับ)"
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import type { PlayerProfile } from '../types';
 import { syncProgress } from '../lib/cloudSync';
 import { getLevelByXP } from '../lib/levels';
 import { getShopItem } from '../lib/shopItems';
+import { useCertNameStore } from './certNameStore';
 
 interface PlayerState extends PlayerProfile {
   // ----- mutations -----
@@ -34,6 +35,8 @@ interface PlayerState extends PlayerProfile {
   awardBadge: (id: string) => boolean;
   completeStage: (stageId: number) => void;
   setCertificate: (no: string, issuedAt: string) => void;
+  /** บันทึกว่าเคยถามเรื่องชื่อจริงบนเกียรติบัตรแล้ว (กัน popup ซ้ำ) */
+  markCertNamePrompted: () => void;
   /** บันทึกผล Daily Challenge ของวันนี้ (กันรับซ้ำในวันเดียว) → true ถ้าบันทึกได้ */
   recordDaily: (score: number, total: number, coinReward: number) => boolean;
   /** บันทึกผล Final Exam — return true ถ้าได้รับโบนัสเหรียญ (ครั้งแรกที่ผ่าน) */
@@ -240,6 +243,8 @@ export const usePlayerStore = create<PlayerState>()(
         get().syncIfReady();
       },
 
+      markCertNamePrompted: () => set({ certNamePrompted: true }),
+
       recordDaily: (score, _total, coinReward) => {
         const cur = get();
         const today = todayDate();
@@ -281,6 +286,8 @@ export const usePlayerStore = create<PlayerState>()(
 
       reset: () => {
         set({ ...blankProfile(), isInitialized: false });
+        // ลบชื่อจริงบนเกียรติบัตร (local-only) ออกด้วยเมื่อล้างข้อมูล
+        try { useCertNameStore.getState().clearRealName(); } catch { /* ignore */ }
       },
 
       // ส่ง progress ไป Backend (เรียกอัตโนมัติทุกครั้งที่ state เปลี่ยน)
@@ -344,6 +351,7 @@ export const usePlayerStore = create<PlayerState>()(
         postTestAt: s.postTestAt,
         certificateNo: s.certificateNo,
         certificateIssuedAt: s.certificateIssuedAt,
+        certNamePrompted: s.certNamePrompted,
         createdAt: s.createdAt,
         lastActiveAt: s.lastActiveAt,
         consentAt: s.consentAt,

@@ -8,7 +8,9 @@ import { issueCertificate } from '../lib/cloudSync';
 import { sfx } from '../lib/sound';
 import TMFLogo from '../components/TMFLogo';
 import PageHeader from '../components/PageHeader';
+import CertNameDialog from '../components/CertNameDialog';
 import { SHOP_ITEMS } from '../lib/shopItems';
+import { useCertNameStore } from '../store/certNameStore';
 
 export default function Certificate() {
   const nav = useNavigate();
@@ -21,6 +23,11 @@ export default function Certificate() {
   const [issueDate, setIssueDate] = useState(player.certificateIssuedAt || '');
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [shareMsg, setShareMsg] = useState<string | null>(null);
+
+  // ชื่อจริงบนเกียรติบัตร (local-only) — ถ้าไม่ใส่ใช้ชื่อเล่น
+  const realName = useCertNameStore(s => s.realName);
+  const displayName = realName.trim() || player.nickname;
+  const [editNameOpen, setEditNameOpen] = useState(false);
 
   useEffect(() => {
     const eligible = player.stagesCompleted.length >= 8 || player.totalXP >= 1500;
@@ -83,7 +90,7 @@ export default function Certificate() {
         cacheBust: true,
         backgroundColor: '#ffffff',
       });
-      const safeName = (player.nickname || 'certificate').replace(/[^\w฀-๿-]/g, '_');
+      const safeName = (displayName || 'certificate').replace(/[^\w฀-๿-]/g, '_');
       const filename = `Certificate-${safeName}-${certNo || 'cert'}.png`;
 
       if (navigator.share && navigator.canShare) {
@@ -94,7 +101,7 @@ export default function Certificate() {
             await navigator.share({
               files: [file],
               title: 'ประกาศนียบัตร',
-              text: `${player.nickname} ผ่านการอบรม "นักสืบสู้บุหรี่ไฟฟ้า"`,
+              text: `${displayName} ผ่านการอบรม "นักสืบสู้บุหรี่ไฟฟ้า"`,
             });
             setSaving(false);
             return;
@@ -118,7 +125,7 @@ export default function Certificate() {
 
   const handleShare = async () => {
     sfx.click();
-    const text = `${player.nickname} ผ่านการอบรม "นักสืบสู้บุหรี่ไฟฟ้า"`;
+    const text = `${displayName} ผ่านการอบรม "นักสืบสู้บุหรี่ไฟฟ้า"`;
     if (navigator.share && verifyUrl) {
       try {
         await navigator.share({
@@ -236,10 +243,13 @@ export default function Certificate() {
                 {/* === Issuing statement === */}
                 <p className="text-slate-700 text-sm mt-2">ฉบับนี้ไว้เพื่อแสดงว่า</p>
 
-                {/* === Recipient name === */}
-                <h2 className="text-detective-800 font-bold text-3xl my-3 leading-tight px-4">
-                  {player.nickname}
+                {/* === Recipient name === ชื่อจริงเป็นหลัก, ไม่ใส่ใช้ชื่อเล่น */}
+                <h2 className="text-detective-800 font-bold text-3xl my-1 leading-tight px-4">
+                  {displayName}
                 </h2>
+                {realName.trim() && player.nickname && (
+                  <p className="text-slate-500 text-sm mb-2">({player.nickname})</p>
+                )}
 
                 {/* === Description === */}
                 <p className="text-slate-700 text-sm leading-relaxed max-w-xs mt-1">
@@ -273,8 +283,26 @@ export default function Certificate() {
               )}
             </div>
 
+            {/* ===== ชื่อบนเกียรติบัตร ===== */}
+            <button
+              onClick={() => { sfx.click(); setEditNameOpen(true); }}
+              className="mt-4 w-full surface-soft px-3 py-2.5 flex items-center gap-2.5 text-left
+                         active:scale-[0.99] transition-all print:hidden"
+            >
+              <span className="icon-tile-sm bg-warning-50 text-warning-600">✏️</span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[11px] text-slate-500">ชื่อบนเกียรติบัตร</span>
+                <span className="block text-sm font-semibold text-detective-700 truncate">
+                  {realName.trim() || `${player.nickname} (ชื่อเล่น)`}
+                </span>
+              </span>
+              <span className="text-[11px] text-detective-500 font-semibold flex-shrink-0">
+                {realName.trim() ? 'แก้ไข' : 'ใส่ชื่อจริง'}
+              </span>
+            </button>
+
             {/* ===== Buttons ===== */}
-            <div className="mt-5 grid grid-cols-2 gap-2 print:hidden">
+            <div className="mt-3 grid grid-cols-2 gap-2 print:hidden">
               <button
                 onClick={handleSave}
                 disabled={saving}
@@ -328,6 +356,13 @@ export default function Certificate() {
           </motion.div>
         )}
       </main>
+
+      <CertNameDialog
+        open={editNameOpen}
+        onClose={() => setEditNameOpen(false)}
+        title="ชื่อบนเกียรติบัตร"
+        subtitle="ใส่ชื่อจริงเพื่อพิมพ์บนใบ — เก็บในเครื่องนี้เท่านั้น"
+      />
     </div>
   );
 }

@@ -9,7 +9,9 @@ import XPBar from '../components/XPBar';
 import Avatar from '../components/Avatar';
 import AvatarFolder from '../components/AvatarFolder';
 import PageHeader from '../components/PageHeader';
+import CertNameDialog from '../components/CertNameDialog';
 import { SHOP_ITEMS } from '../lib/shopItems';
+import { useCertNameStore } from '../store/certNameStore';
 
 // ============================================================================
 //  Profile — โทนสุภาพ คุมโทนเดียว (slate/lavender) ไม่มีรุ้ง
@@ -27,6 +29,8 @@ export default function Profile() {
   const lv = getLevelByXP(player.totalXP);
   const earned = new Set(player.badges);
   const [editAvatar, setEditAvatar] = useState(false);
+  const [certNameOpen, setCertNameOpen] = useState(false);
+  const realName = useCertNameStore(s => s.realName);
 
   const handleReset = () => {
     if (!confirm('แน่ใจไหมว่าต้องการลบข้อมูลทั้งหมดและเริ่มใหม่? — การกระทำนี้กลับคืนไม่ได้')) return;
@@ -129,6 +133,24 @@ export default function Profile() {
           <StatCard label="แบดจ์" value={`${earned.size}/${BADGES.length}`} icon="🎖" />
         </div>
 
+        {/* === ชื่อบนเกียรติบัตร (local-only) === */}
+        <button
+          onClick={() => setCertNameOpen(true)}
+          className="w-full card flex items-center gap-3 active:scale-[0.99] transition-all text-left"
+        >
+          <span className="icon-tile bg-warning-50 text-warning-600">🏆</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] text-slate-500">ชื่อบนเกียรติบัตร</p>
+            <p className="font-semibold text-detective-700 truncate">
+              {realName.trim() || `${player.nickname} (ชื่อเล่น)`}
+            </p>
+            <p className="text-[10px] text-slate-400 mt-0.5">เก็บในเครื่องนี้เท่านั้น · เข้ารหัสไว้</p>
+          </div>
+          <span className="text-[11px] text-detective-500 font-semibold flex-shrink-0">
+            {realName.trim() ? 'แก้ไข' : 'ใส่ชื่อจริง'}
+          </span>
+        </button>
+
         {/* === Badges collection — ขาวล้วน ตัวที่ได้ปลด highlight ม่วงเบาๆ === */}
         <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
@@ -189,6 +211,9 @@ export default function Profile() {
             <p>• User ID (hash): <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">{player.userIdHash.slice(0, 12)}...</code></p>
             <p>• เริ่มเล่น: {player.createdAt && new Date(player.createdAt).toLocaleDateString('th-TH')}</p>
             <p>• เล่นล่าสุด: {player.lastActiveAt && new Date(player.lastActiveAt).toLocaleDateString('th-TH')}</p>
+            <p>• ชื่อจริง (เกียรติบัตร): {realName.trim()
+              ? <span className="text-detective-700">เก็บในเครื่องนี้ (เข้ารหัส)</span>
+              : <span className="text-slate-400">ไม่ได้ใส่</span>}</p>
             <button onClick={handleReset} className="text-danger-500 underline text-xs mt-1">
               ลบข้อมูลทั้งหมดและเริ่มใหม่
             </button>
@@ -200,6 +225,13 @@ export default function Profile() {
           สนับสนุนโดย กองทุนพัฒนาสื่อฯ • รับรองโดย ม.วลัยลักษณ์
         </p>
       </main>
+
+      <CertNameDialog
+        open={certNameOpen}
+        onClose={() => setCertNameOpen(false)}
+        title="ชื่อบนเกียรติบัตร"
+        subtitle="ใส่ชื่อจริงเพื่อพิมพ์บนใบ — เก็บในเครื่องนี้เท่านั้น"
+      />
     </div>
   );
 }

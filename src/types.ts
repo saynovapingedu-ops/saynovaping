@@ -215,6 +215,8 @@ export interface PlayerProfile {
   postTestAt?: string;
   certificateNo?: string;
   certificateIssuedAt?: string;
+  /** เคยถูกถามเรื่องใส่ชื่อจริงบนเกียรติบัตรแล้วหรือยัง (กัน popup ซ้ำ) */
+  certNamePrompted?: boolean;
   createdAt: string;
   lastActiveAt: string;
   consentAt?: string;
