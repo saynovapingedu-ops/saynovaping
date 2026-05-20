@@ -20,8 +20,8 @@ interface Props {
 function LogoPill() {
   return (
     <div className="inline-flex items-center gap-2.5 bg-white rounded-2xl
-                    pl-2.5 pr-3 py-1.5
-                    shadow-[0_8px_20px_-4px_rgba(0,143,255,0.30)]">
+                    pl-2.5 pr-3 py-1.5 border border-detective-100
+                    shadow-[0_4px_16px_-6px_rgba(0,143,255,0.22)]">
       {/* TMF logo — เน้นใหญ่ + clear space รอบโลโก้ */}
       <TMFLogo variant="bare" width={70} />
 
@@ -46,15 +46,12 @@ export default function BrandHeader({ variant = 'bar' }: Props) {
     return <LogoPill />;
   }
 
-  // 'bar' — แถบฟ้าอ่อนเล็ก + Pill ลอยขวา (ลอยเด่น มีเงา)
-  // พื้นหลังโทนฟ้าเดียวกับหน้าแรก แต่อ่อนกว่า → กรอบขาวลอยตัด background ชัด
+  // 'bar' — แถบฟ้าอ่อน + Pill ลอยขวา (โทนเดียวกับ PageHeader)
   return (
     <header
       className="px-4 py-2.5 flex items-center justify-end relative
-                 pt-[max(0.625rem,calc(env(safe-area-inset-top)+0.25rem))]"
-      style={{
-        background: 'linear-gradient(135deg, #D6EDFF 0%, #ABDAFF 100%)',
-      }}
+                 bg-detective-50/90 backdrop-blur-md border-b border-detective-100
+                 pt-[max(0.625rem,calc(env(safe-area-inset-top)+0.3rem))]"
     >
       <LogoPill />
     </header>

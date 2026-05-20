@@ -99,21 +99,16 @@ export default function Journal() {
 
       <main className="max-w-md md:max-w-3xl mx-auto px-3 pt-3">
         {/* === Progress hero === */}
-        <div className="card-hero mb-4 relative overflow-hidden">
-          <div className="absolute -top-3 -right-3 text-6xl opacity-10 pointer-events-none">📚</div>
-          <div className="flex items-center gap-3 relative">
-            <div className="text-4xl drop-shadow leading-none">🔎</div>
+        <div className="card-hero mb-4">
+          <div className="flex items-center gap-3">
+            <div className="icon-tile bg-detective-50 text-detective-600 text-3xl">🔎</div>
             <div className="flex-1 min-w-0">
               <p className="text-[11px] text-detective-500 font-bold uppercase tracking-wider">Detective's Journal</p>
               <p className="font-display font-extrabold text-detective-700 text-lg leading-tight">
                 แฟ้มคดี · {clearedCount}/{totalCount}
               </p>
-              <div className="mt-1.5 h-2 bg-detective-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-detective-500 via-candy-500 to-warning-500
-                             transition-all duration-700"
-                  style={{ width: `${progress}%` }}
-                />
+              <div className="progress-track mt-1.5">
+                <div className="progress-fill" style={{ width: `${progress}%` }} />
               </div>
             </div>
           </div>

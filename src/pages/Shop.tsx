@@ -157,7 +157,7 @@ export default function Shop() {
   return (
     <div className="min-h-full pb-8 relative">
       <PageHeader title="🛍 ร้านค้านักสืบ" subtitle="แลกของรางวัลด้วยเหรียญ" backTo="/" />
-      <div className="sticky top-0 z-10 bg-white/85 backdrop-blur-md shadow-sm border-b border-detective-100/50
+      <div className="sticky top-0 z-10 bg-detective-50/90 backdrop-blur-md border-b border-detective-100
                       p-3 flex items-center justify-end gap-2">
         <button
           onClick={() => { sfx.click(); nav('/journal'); }}

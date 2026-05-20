@@ -311,8 +311,8 @@ export default function ScenarioPage() {
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 200 }}
-            className="self-start mb-2 inline-flex items-center gap-1.5 bg-gradient-to-r from-detective-500
-                       to-candy-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-glow"
+            className="self-start mb-2 inline-flex items-center gap-1.5 bg-detective-600
+                       text-white text-xs font-bold px-3 py-1 rounded-full shadow-glow-sm"
           >
             <span>🎯</span> ด่าน {scenario.id} · ⏱ ~{scenario.estMinutes} นาที
           </motion.div>
@@ -340,7 +340,7 @@ export default function ScenarioPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
-            className="card mb-3 border-2 border-mint-200 bg-gradient-to-br from-mint-50 to-white"
+            className="card mb-3 border-l-4 border-l-mint-400"
           >
             <p className="text-[11px] font-bold text-mint-600 uppercase tracking-wider mb-1.5">
               📋 ในด่านนี้คุณจะเจอ
@@ -350,7 +350,7 @@ export default function ScenarioPage() {
                 <span className="pill bg-detective-100 text-detective-700">💬 บทสนทนา</span>
               )}
               {hasChoice && (
-                <span className="pill bg-candy-100 text-candy-600">✅ เลือกคำตอบ</span>
+                <span className="pill bg-detective-100 text-detective-700">✅ เลือกคำตอบ</span>
               )}
               {Array.from(minigameSet).map(g => {
                 const m = MINIGAME_LABEL[g];
@@ -379,10 +379,8 @@ export default function ScenarioPage() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 + i * 0.15 }}
-                  className="relative pl-4 bg-white/85 rounded-2xl p-3 border border-detective-100 shadow-glow-sm"
+                  className="bg-white rounded-2xl p-3 border-l-4 border-l-detective-300 border border-slate-200"
                 >
-                  <span className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b
-                                   from-detective-500 to-candy-500 rounded-l-2xl" />
                   <p className="text-sm text-gray-700 leading-relaxed">{line}</p>
                 </motion.div>
               ))}
@@ -424,7 +422,7 @@ export default function ScenarioPage() {
   return (
     <div className="min-h-full pb-8 relative">
       <Confetti active={confettiActive} count={100} duration={2600} />
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md shadow-sm border-b border-detective-100/50
+      <header className="sticky top-0 z-10 bg-detective-50/90 backdrop-blur-md border-b border-detective-100
                          p-3 flex items-center gap-3">
         <button
           onClick={() => nav('/')}
@@ -494,9 +492,8 @@ export default function ScenarioPage() {
                 const hintShown = hintRevealedNode === currentNode.id;
                 return (
                   <div>
-                    <div className="bg-gradient-to-r from-detective-50 to-warning-50 border-l-4
-                                    border-detective-400 rounded-r-xl px-3 py-2 mb-3
-                                    flex items-start gap-2">
+                    <div className="surface-soft border-l-4 border-l-detective-400
+                                    px-3 py-2.5 mb-3 flex items-start gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="text-[11px] text-detective-500 font-semibold mb-0.5">เลือกคำตอบ</p>
                         <p className="text-sm text-detective-700 font-semibold leading-snug">

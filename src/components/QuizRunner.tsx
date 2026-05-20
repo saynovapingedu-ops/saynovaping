@@ -52,9 +52,9 @@ export default function QuizRunner({ questions, onFinish, finishLabel = 'ดู�
     <div className="space-y-3">
       {/* progress */}
       <div className="flex items-center gap-2">
-        <div className="flex-1 h-2 bg-detective-100 rounded-full overflow-hidden">
+        <div className="progress-track flex-1">
           <div
-            className="h-full bg-gradient-to-r from-detective-500 to-candy-500 transition-all duration-300"
+            className="progress-fill"
             style={{ width: `${((idx + (revealed ? 1 : 0)) / questions.length) * 100}%` }}
           />
         </div>

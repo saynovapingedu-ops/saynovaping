@@ -32,30 +32,28 @@ export default function PageHeader({ title, subtitle, backTo = '/', onBack, stic
   return (
     <header
       className={`${sticky ? 'sticky top-0 z-20' : ''}
-                  px-3 py-2 flex items-center gap-2
-                  pt-[max(0.5rem,calc(env(safe-area-inset-top)+0.25rem))]`}
-      style={{
-        background: 'linear-gradient(135deg, #D6EDFF 0%, #ABDAFF 100%)',
-      }}
+                  px-3.5 py-2.5 flex items-center gap-2.5
+                  bg-detective-50/90 backdrop-blur-md border-b border-detective-100
+                  pt-[max(0.625rem,calc(env(safe-area-inset-top)+0.3rem))]`}
     >
       {/* Back button */}
       <button
         onClick={handleBack}
-        className="bg-white/80 hover:bg-white text-detective-700 w-9 h-9 rounded-2xl
-                   flex items-center justify-center shadow-sm active:scale-95 transition-all
-                   flex-shrink-0"
+        className="bg-white hover:bg-detective-50 text-detective-700 w-9 h-9 rounded-2xl
+                   flex items-center justify-center border border-detective-100
+                   active:scale-95 transition-all flex-shrink-0"
         aria-label="กลับ"
       >
         <span className="text-lg leading-none">←</span>
       </button>
 
       {/* Title */}
-      <div className="flex-1 min-w-0 px-1">
+      <div className="flex-1 min-w-0 px-0.5">
         <h2 className="font-display font-bold text-detective-800 text-sm leading-tight truncate">
           {title}
         </h2>
         {subtitle && (
-          <p className="text-[10px] text-detective-700/70 leading-tight truncate">{subtitle}</p>
+          <p className="text-[11px] text-slate-500 leading-tight truncate">{subtitle}</p>
         )}
       </div>
 

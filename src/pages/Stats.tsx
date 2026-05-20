@@ -55,10 +55,9 @@ export default function Stats() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="card relative overflow-hidden"
+          className="card"
         >
-          <div className="absolute top-0 right-0 text-7xl opacity-10 -mr-2 -mt-1">{lv.emoji}</div>
-          <div className="relative">
+          <div>
             <div className="flex items-baseline gap-2 mb-1">
               <span
                 className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
@@ -84,12 +83,8 @@ export default function Stats() {
                   <span className="text-success-600 font-semibold">🏆 ระดับสูงสุดแล้ว!</span>
                 )}
               </div>
-              <div className="relative h-3 rounded-full overflow-hidden bg-detective-100">
-                <div
-                  className="h-full bg-gradient-to-r from-warning-400 via-warning-500 to-detective-400
-                             transition-all duration-700"
-                  style={{ width: `${progress * 100}%` }}
-                />
+              <div className="progress-track">
+                <div className="progress-fill--xp" style={{ width: `${progress * 100}%` }} />
               </div>
             </div>
           </div>

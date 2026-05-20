@@ -142,17 +142,18 @@ const HOTLINES: HotlineEntry[] = [
   },
 ];
 
-const COLOR_MAP: Record<DangerCard['color'], { bg: string; border: string; text: string }> = {
-  detective: { bg: 'from-detective-50 to-white', border: 'border-detective-200', text: 'text-detective-700' },
-  warning:   { bg: 'from-warning-50 to-white',   border: 'border-warning-200',   text: 'text-warning-600'   },
-  mint:      { bg: 'from-mint-50 to-white',      border: 'border-mint-200',      text: 'text-mint-600'     },
-  danger:    { bg: 'from-danger-50 to-white',    border: 'border-danger-100',    text: 'text-danger-500'   },
+// accent = สีเส้นซ้าย + ไอคอน (ไม่ทาทั้งใบ) ตามระบบ refined
+const COLOR_MAP: Record<DangerCard['color'], { accent: string; tile: string; text: string }> = {
+  detective: { accent: 'border-l-detective-400', tile: 'bg-detective-50', text: 'text-detective-700' },
+  warning:   { accent: 'border-l-warning-400',   tile: 'bg-warning-50',   text: 'text-warning-600'   },
+  mint:      { accent: 'border-l-mint-400',      tile: 'bg-mint-50',      text: 'text-mint-600'     },
+  danger:    { accent: 'border-l-danger-400',    tile: 'bg-danger-50',    text: 'text-danger-500'   },
 };
 
-const HOTLINE_COLOR: Record<HotlineEntry['color'], { border: string; bg: string; chip: string; text: string }> = {
-  mint:      { border: 'border-mint-200',      bg: 'from-mint-50 to-white',      chip: 'bg-mint-100',      text: 'text-mint-600' },
-  warning:   { border: 'border-warning-200',   bg: 'from-warning-50 to-white',   chip: 'bg-warning-100',   text: 'text-warning-600' },
-  detective: { border: 'border-detective-200', bg: 'from-detective-50 to-white', chip: 'bg-detective-100', text: 'text-detective-700' },
+const HOTLINE_COLOR: Record<HotlineEntry['color'], { accent: string; chip: string; text: string }> = {
+  mint:      { accent: 'border-l-mint-400',      chip: 'bg-mint-100',      text: 'text-mint-600' },
+  warning:   { accent: 'border-l-warning-400',   chip: 'bg-warning-100',   text: 'text-warning-600' },
+  detective: { accent: 'border-l-detective-400', chip: 'bg-detective-100', text: 'text-detective-700' },
 };
 
 // ===== Video Card: คลิ๊กแล้วเปิด YouTube จริง =====
@@ -287,10 +288,10 @@ export default function Knowledge() {
                 return (
                   <div
                     key={i}
-                    className={`rounded-2xl p-3 border-2 ${c.border} bg-gradient-to-br ${c.bg} shadow-glow-sm`}
+                    className={`card border-l-4 ${c.accent}`}
                   >
                     <div className="flex items-start gap-2.5">
-                      <div className="text-3xl flex-shrink-0">{d.emoji}</div>
+                      <div className={`icon-tile ${c.tile} text-2xl`}>{d.emoji}</div>
                       <div className="flex-1 min-w-0">
                         <h4 className={`font-display font-bold ${c.text} text-sm leading-tight mb-0.5`}>
                           {d.title}
@@ -434,7 +435,7 @@ export default function Knowledge() {
                   <a
                     key={h.number}
                     href={h.href}
-                    className={`block rounded-2xl p-3 border-2 ${c.border} bg-gradient-to-br ${c.bg} shadow-glow-sm active:scale-[0.98] transition-transform`}
+                    className={`card block border-l-4 ${c.accent} active:scale-[0.98] transition-transform`}
                   >
                     <div className="flex items-start gap-3">
                       <div className={`w-14 h-14 rounded-2xl ${c.chip} flex items-center justify-center flex-shrink-0`}>

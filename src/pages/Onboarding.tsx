@@ -78,7 +78,7 @@ export default function Onboarding() {
             key={i}
             className={`h-2 rounded-full transition-all duration-500 ${
               i === step
-                ? 'w-12 bg-gradient-to-r from-detective-500 to-candy-500 shadow-glow-sm'
+                ? 'w-12 bg-gradient-to-r from-detective-500 to-detective-600 shadow-glow-sm'
                 : i < step
                 ? 'w-6 bg-detective-300'
                 : 'w-6 bg-detective-100'
@@ -98,7 +98,7 @@ export default function Onboarding() {
             >
               🔍
             </motion.div>
-            <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-detective-600 via-candy-500
+            <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-detective-600
                            to-warning-500 bg-clip-text text-transparent mb-2
                            leading-[1.4] pt-1 pb-2 overflow-visible">
               นักสืบสุขภาพ
@@ -160,7 +160,7 @@ export default function Onboarding() {
             <p className="text-xs text-gray-500 mb-3">กดแถบเพื่ออ่านรายละเอียดเพิ่มเติม แต่ละหัวข้อ</p>
 
             {/* TL;DR ใหญ่ๆ อยู่ด้านบน — เห็นทันทีไม่ต้อง scroll */}
-            <div className="card-hero mb-3 py-3">
+            <div className="card-hero mb-3">
               <p className="text-sm text-gray-700 leading-relaxed">
                 <b className="text-detective-700">🚫 เราไม่เก็บข้อมูลส่วนตัว</b><br/>
                 เกมเพื่อการศึกษาเรื่อง <b>บุหรี่ไฟฟ้า</b> สำหรับ ม.ต้น

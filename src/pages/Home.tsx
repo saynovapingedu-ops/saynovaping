@@ -129,10 +129,6 @@ export default function Home() {
       <section className="rainbow-header text-white relative overflow-hidden
                           pt-[max(2rem,calc(env(safe-area-inset-top)+1rem))]
                           px-5 pb-16">
-        {/* subtle sparkle */}
-        <div className="absolute top-24 right-6 text-white/40 text-base pointer-events-none">✨</div>
-        <div className="absolute bottom-16 left-6 text-white/30 text-sm pointer-events-none">⭐</div>
-
         {/* ===== Top row: Profile (ซ้าย) + Pill (ขวา) บรรทัดเดียวกัน ===== */}
         <div className="max-w-md md:max-w-3xl mx-auto">
           <div className="flex items-center gap-2 relative">
@@ -176,8 +172,8 @@ export default function Home() {
             <button
               onClick={() => { sfx.click(); nav('/shop'); }}
               className="flex items-center justify-between
-                         bg-white/10 hover:bg-white/20 backdrop-blur-md
-                         border border-white/30 rounded-2xl px-3 py-2.5
+                         bg-white/15 hover:bg-white/25 backdrop-blur-md
+                         border border-white/25 rounded-2xl px-3 py-2.5
                          active:scale-[0.99] transition-all"
             >
               <span className="flex items-center gap-1.5">
@@ -191,8 +187,8 @@ export default function Home() {
             <button
               onClick={() => { sfx.click(); nav('/journal'); }}
               className="flex items-center justify-between
-                         bg-white/10 hover:bg-white/20 backdrop-blur-md
-                         border border-white/30 rounded-2xl px-3 py-2.5
+                         bg-white/15 hover:bg-white/25 backdrop-blur-md
+                         border border-white/25 rounded-2xl px-3 py-2.5
                          active:scale-[0.99] transition-all"
             >
               <span className="text-[11px] font-semibold flex items-center gap-1">
@@ -240,27 +236,27 @@ export default function Home() {
           {/* Daily Challenge — always */}
           <button
             onClick={() => { sfx.click(); nav('/daily'); }}
-            className={`w-full card flex items-center gap-3 active:scale-[0.99] transition-all border-2 ${
-              dailyDone ? 'border-success-200 bg-success-50/40' : 'border-candy-200 bg-gradient-to-r from-candy-50 to-white'
-            }`}
+            className="w-full card flex items-center gap-3 active:scale-[0.99] transition-all"
           >
-            <div className="text-3xl leading-none">📅</div>
+            <div className={`icon-tile ${dailyDone ? 'bg-success-50 text-success-600' : 'bg-detective-50 text-detective-600'}`}>📅</div>
             <div className="flex-1 text-left min-w-0">
               <p className="font-bold text-detective-700 text-sm">ภารกิจรายวัน</p>
               <p className="text-[11px] text-slate-500">
                 {dailyDone ? '✓ วันนี้ทำแล้ว — กลับมาพรุ่งนี้' : 'ควิซ 5 ข้อ รับเหรียญ + รักษา streak'}
               </p>
             </div>
-            {!dailyDone && <span className="pill bg-candy-100 text-candy-600 flex-shrink-0">NEW</span>}
+            {!dailyDone
+              ? <span className="pill bg-detective-100 text-detective-600 flex-shrink-0">NEW</span>
+              : <span className="text-success-500 flex-shrink-0">✓</span>}
           </button>
 
           {/* Pre-test — เฉพาะผู้เล่นใหม่ที่ยังไม่ทำ */}
           {showPreTest && (
             <button
               onClick={() => { sfx.click(); nav('/assessment?kind=pre'); }}
-              className="w-full card flex items-center gap-3 active:scale-[0.99] transition-all border-2 border-detective-200"
+              className="w-full card flex items-center gap-3 active:scale-[0.99] transition-all"
             >
-              <div className="text-3xl leading-none">🅰️</div>
+              <div className="icon-tile bg-detective-50 text-detective-600">🅰️</div>
               <div className="flex-1 text-left min-w-0">
                 <p className="font-bold text-detective-700 text-sm">แบบประเมินก่อนเรียน</p>
                 <p className="text-[11px] text-slate-500">ทำก่อนเริ่มเล่น เพื่อวัดความรู้ตอนจบ</p>
@@ -273,9 +269,9 @@ export default function Home() {
           {examEligible && (
             <button
               onClick={() => { sfx.click(); nav('/exam'); }}
-              className="w-full card flex items-center gap-3 active:scale-[0.99] transition-all border-2 border-warning-300 bg-gradient-to-r from-warning-50 to-white"
+              className="w-full card flex items-center gap-3 active:scale-[0.99] transition-all"
             >
-              <div className="text-3xl leading-none">🎓</div>
+              <div className="icon-tile bg-warning-50 text-warning-600">🎓</div>
               <div className="flex-1 text-left min-w-0">
                 <p className="font-bold text-detective-700 text-sm">แบบทดสอบรวม</p>
                 <p className="text-[11px] text-slate-500">
@@ -289,7 +285,7 @@ export default function Home() {
         </div>
 
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-display font-extrabold text-detective-700 text-lg flex items-center gap-2">
+          <h3 className="section-label text-lg">
             <span className="text-2xl">📍</span> แผนที่ภารกิจ
           </h3>
           <button
@@ -343,29 +339,28 @@ export default function Home() {
                       className={`w-full text-left card flex items-center gap-3 relative
                                   transition-all ${
                         !playable
-                          ? 'opacity-60 grayscale'
+                          ? 'opacity-60'
                           : 'active:scale-[0.98]'
                       } ${
                         completed
-                          ? 'border-2 border-success-300 bg-gradient-to-r from-success-50 to-white'
+                          ? 'border-l-4 border-l-success-400'
                           : playable
-                          ? 'border-2 border-candy-100'
-                          : 'bg-white/70'
+                          ? 'border-l-4 border-l-detective-400'
+                          : ''
                       }`}
                     >
                       {playable && (
                         <span className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${
                           completed
                             ? 'text-success-600 bg-success-50'
-                            : 'text-candy-600 bg-candy-100'
+                            : 'text-detective-600 bg-detective-50'
                         }`}>
                           {completed ? '🔄 REPLAY' : 'NEW'}
                         </span>
                       )}
 
                       <div
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold flex-shrink-0
-                                    shadow-sm ${
+                        className={`icon-tile font-bold ${
                           completed
                             ? 'bg-success-500 text-white'
                             : playable
@@ -409,38 +404,23 @@ export default function Home() {
                       bg-white border-t border-slate-200">
         <div className="max-w-md md:max-w-3xl mx-auto grid grid-cols-4 gap-1.5 bg-white
                         rounded-2xl p-1.5">
-          <button
-            onClick={() => { sfx.click(); nav('/stats'); }}
-            className="flex flex-col items-center gap-0.5 py-1.5 rounded-xl
-                       active:scale-95 active:bg-detective-50 transition-all"
-          >
-            <span className="text-xl">📊</span>
-            <span className="text-[11px] font-bold text-detective-700">คะแนน</span>
-          </button>
-          <button
-            onClick={() => { sfx.click(); nav('/knowledge'); }}
-            className="flex flex-col items-center gap-0.5 py-1.5 rounded-xl
-                       active:scale-95 active:bg-mint-50 transition-all"
-          >
-            <span className="text-xl">📖</span>
-            <span className="text-[11px] font-bold text-mint-600">ความรู้</span>
-          </button>
-          <button
-            onClick={() => { sfx.click(); nav('/certificate'); }}
-            className="flex flex-col items-center gap-0.5 py-1.5 rounded-xl
-                       active:scale-95 active:bg-warning-50 transition-all"
-          >
-            <span className="text-xl">🏆</span>
-            <span className="text-[11px] font-bold text-warning-600">ใบประกาศ</span>
-          </button>
-          <button
-            onClick={() => { sfx.click(); nav('/settings'); }}
-            className="flex flex-col items-center gap-0.5 py-1.5 rounded-xl
-                       active:scale-95 active:bg-slate-100 transition-all"
-          >
-            <span className="text-xl">⚙️</span>
-            <span className="text-[11px] font-bold text-slate-600">ตั้งค่า</span>
-          </button>
+          {[
+            { to: '/stats',       emoji: '📊', label: 'คะแนน' },
+            { to: '/knowledge',   emoji: '📖', label: 'ความรู้' },
+            { to: '/certificate', emoji: '🏆', label: 'ใบประกาศ' },
+            { to: '/settings',    emoji: '⚙️', label: 'ตั้งค่า' },
+          ].map(item => (
+            <button
+              key={item.to}
+              onClick={() => { sfx.click(); nav(item.to); }}
+              className="flex flex-col items-center gap-0.5 py-1.5 rounded-xl
+                         text-detective-700 hover:bg-detective-50
+                         active:scale-95 active:bg-detective-50 transition-all"
+            >
+              <span className="text-xl">{item.emoji}</span>
+              <span className="text-[11px] font-bold">{item.label}</span>
+            </button>
+          ))}
         </div>
       </nav>
     </div>

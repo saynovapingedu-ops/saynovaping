@@ -40,17 +40,16 @@ export default function Achievements() {
 
       <main className="max-w-md md:max-w-2xl mx-auto px-4 pt-4">
         {/* progress hero */}
-        <div className="card-hero mb-4 relative overflow-hidden">
-          <div className="absolute -top-3 -right-3 text-6xl opacity-10 pointer-events-none">🏅</div>
-          <div className="flex items-center gap-3 relative">
-            <div className="text-4xl leading-none">🏅</div>
+        <div className="card-hero mb-4">
+          <div className="flex items-center gap-3">
+            <div className="icon-tile bg-warning-50 text-warning-600 text-3xl">🏅</div>
             <div className="flex-1 min-w-0">
               <p className="font-display font-extrabold text-detective-700 text-lg leading-tight">
                 สะสมแล้ว {earnedCount}/{total}
               </p>
-              <div className="mt-1.5 h-2.5 bg-detective-100 rounded-full overflow-hidden">
+              <div className="progress-track mt-1.5">
                 <div
-                  className="h-full bg-gradient-to-r from-detective-500 via-candy-500 to-warning-500 transition-all duration-700"
+                  className="progress-fill"
                   style={{ width: `${total ? (earnedCount / total) * 100 : 0}%` }}
                 />
               </div>

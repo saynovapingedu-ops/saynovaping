@@ -18,8 +18,9 @@ export default function ChoiceCard({ choice, index, onPick, disabled }: Props) {
       whileHover={{ y: -2 }}
       onClick={() => onPick(choice)}
       disabled={disabled}
-      className="group w-full text-left bg-white/95 backdrop-blur-sm border-2 border-detective-100
-                 hover:border-detective-400 rounded-2xl p-4 mb-2.5 shadow-sm hover:shadow-glow
+      className="group w-full text-left bg-white border border-slate-200
+                 hover:border-detective-400 hover:bg-detective-50/40 rounded-2xl p-4 mb-2.5
+                 shadow-[0_1px_3px_rgba(15,23,42,0.04)] hover:shadow-glow-sm
                  transition-all disabled:opacity-50"
     >
       <div className="flex items-start gap-3">

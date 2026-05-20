@@ -35,9 +35,9 @@ export default function XPBar({ variant = 'light' }: Props) {
         </div>
         <span className={`text-sm font-semibold ${xpText} flex-shrink-0`}>{xp} XP</span>
       </div>
-      <div className={`relative h-3 rounded-full overflow-hidden ${trackBg}`}>
+      <div className={`relative h-2.5 rounded-full overflow-hidden ${trackBg}`}>
         <div
-          className="h-full bg-gradient-to-r from-warning-400 via-warning-500 to-detective-300
+          className="h-full rounded-full bg-gradient-to-r from-warning-400 to-warning-500
                      transition-all duration-700 relative"
           style={{ width: `${progress * 100}%` }}
         >

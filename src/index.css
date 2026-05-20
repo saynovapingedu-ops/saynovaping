@@ -54,10 +54,11 @@
 
 @layer components {
   /* ===========================================================================
-     Minimal palette — เลือกใช้แค่ 2 สีหลัก:
-       1) detective (ม่วง #8B5CF6) เป็น primary action / accent
-       2) warning (ทอง #F59E0B) สำหรับ achievement-only (Certificate, badges)
-     สีอื่นใช้เฉพาะเชิงฟังก์ชัน: success=ถูก, danger=ผิด
+     Refined minimal-warm palette — ใช้แค่ 2 สีหลัก:
+       1) detective (ฟ้า TMF #008FFF) = primary action / progress / accent
+       2) warning (ทอง #F59E0B) = achievement-only (Certificate, badges, XP)
+     สีอื่นเชิงฟังก์ชัน: success=ถูก, danger=ผิด, mint=accent เบาๆ
+     หลักการ: "สีอยู่บนชิป/ไอคอน ไม่ใช่ทั้งการ์ด" — การ์ดพื้นขาว เงานุ่มชั้นเดียว
      ============================================================================ */
 
   /* ปุ่มหลัก — solid detective (เดียว) ไม่ใช้ gradient รุ้ง
@@ -86,15 +87,50 @@
            rounded-2xl px-5 py-3 shadow-sm active:scale-95 transition-all;
   }
 
-  /* การ์ดพื้นฐาน — ขาวล้วน ขอบเทาบาง */
+  /* การ์ดพื้นฐาน — ขาวล้วน ขอบเทาบาง เงานุ่มชั้นเดียว */
   .card {
-    @apply bg-white rounded-3xl shadow-sm p-4 border border-slate-200;
+    @apply bg-white rounded-3xl p-4 border border-slate-200
+           shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.10)];
   }
 
-  /* การ์ดเด่น — โทนเดียว ม่วงอ่อนมาก ไม่ใช่รุ้ง */
+  /* การ์ดเด่น — โทนฟ้าจางมาก (subtle) ไม่ใช่รุ้ง */
   .card-hero {
-    @apply rounded-3xl p-5 border border-slate-200 shadow-sm
-           bg-gradient-to-br from-detective-50/60 to-white;
+    @apply rounded-3xl p-5 border border-detective-100/70
+           bg-gradient-to-br from-detective-50/40 to-white
+           shadow-[0_1px_3px_rgba(15,23,42,0.04),0_10px_30px_-14px_rgba(0,143,255,0.18)];
+  }
+
+  /* ===== Progress bars — มาตรฐานเดียว =====
+     .progress-fill = ฟ้า (ความคืบหน้า) · --xp = ทอง (XP/level achievement) */
+  .progress-track {
+    @apply relative h-2.5 rounded-full overflow-hidden bg-detective-100/70;
+  }
+  .progress-fill {
+    @apply h-full rounded-full bg-gradient-to-r from-detective-400 to-detective-600
+           transition-all duration-700;
+  }
+  .progress-fill--xp {
+    @apply h-full rounded-full bg-gradient-to-r from-warning-400 to-warning-500
+           transition-all duration-700;
+  }
+
+  /* ===== หัวข้อ section มาตรฐาน ===== */
+  .section-label {
+    @apply font-display font-bold text-detective-700 text-base flex items-center gap-2;
+  }
+
+  /* ===== พื้นจางสำหรับกล่องข้อมูล/hint ===== */
+  .surface-soft {
+    @apply rounded-2xl border border-detective-100 bg-detective-50/60;
+  }
+
+  /* ===== Icon tile — ชิปไอคอนสี่เหลี่ยมมน ขนาด/มุม/เงาเท่ากัน =====
+     ใส่ emoji/ตัวเลขบนการ์ด (quick-action, stat, hotline) — สีพื้นกำหนดเพิ่มเองได้ */
+  .icon-tile {
+    @apply flex items-center justify-center rounded-2xl w-12 h-12 text-2xl leading-none flex-shrink-0;
+  }
+  .icon-tile-sm {
+    @apply flex items-center justify-center rounded-xl w-9 h-9 text-lg leading-none flex-shrink-0;
   }
 
   /* hero header — TMF blue (default) หรือ theme ที่สวมอยู่ */
