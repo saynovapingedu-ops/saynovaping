@@ -1,8 +1,8 @@
-import { useNavigate } from 'react-router-dom';
 import { useSettingsStore } from '../store/settingsStore';
 import { sfx } from '../lib/sound';
 import { startBgm, stopBgm } from '../lib/bgm';
 import PageHeader from '../components/PageHeader';
+import { SCENARIO_META } from '../scenarios';
 
 interface ToggleProps {
   label: string;
@@ -39,7 +39,6 @@ function Toggle({ label, description, value, onToggle, emoji }: ToggleProps) {
 }
 
 export default function Settings() {
-  const nav = useNavigate();
   const s = useSettingsStore();
 
   return (
@@ -112,9 +111,9 @@ export default function Settings() {
 
         <p className="text-xs text-gray-500 px-1 pt-3">เกี่ยวกับ</p>
         <div className="card text-sm text-gray-700 space-y-1">
-          <p className="flex justify-between"><span>เวอร์ชัน</span><span className="font-mono">v0.7.1</span></p>
+          <p className="flex justify-between"><span>เวอร์ชัน</span><span className="font-mono">v0.8.0</span></p>
           <p className="flex justify-between"><span>มินิเกม</span><span>7 แบบ</span></p>
-          <p className="flex justify-between"><span>ด่านทั้งหมด</span><span>15 ด่าน</span></p>
+          <p className="flex justify-between"><span>ด่านทั้งหมด</span><span>{SCENARIO_META.length} ด่าน</span></p>
         </div>
 
         {/* === TMF funding credit === */}

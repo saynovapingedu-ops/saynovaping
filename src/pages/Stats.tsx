@@ -20,7 +20,8 @@ export default function Stats() {
   const earnedBadges = new Set(player.badges);
   const heroDone = player.stagesCompleted.filter(id => id <= 8).length;
   const masterDone = player.stagesCompleted.filter(id => id >= 9 && id <= 12).length;
-  const proDone = player.stagesCompleted.filter(id => id >= 13).length;
+  const proDone = player.stagesCompleted.filter(id => id >= 13 && id <= 15).length;
+  const expertDone = player.stagesCompleted.filter(id => id >= 16 && id <= 20).length;
 
   return (
     <div className="min-h-full pb-10 relative">
@@ -102,6 +103,7 @@ export default function Stats() {
           <StatBox emoji="🦸" label="Hero Arc" value={`${heroDone}/8`} />
           <StatBox emoji="🎓" label="Master Arc" value={`${masterDone}/4`} />
           <StatBox emoji="🎯" label="Pro Arc" value={`${proDone}/3`} />
+          <StatBox emoji="🔬" label="Expert Arc" value={`${expertDone}/5`} />
         </div>
 
         {(player.streakDays || 0) > 0 && (
@@ -150,9 +152,17 @@ export default function Stats() {
 
         {/* Badges grid */}
         <section>
-          <h3 className="font-display font-bold text-detective-700 mb-2 flex items-center gap-2">
-            <span>🎖</span> แบดจ์ ({player.badges.length}/{BADGES.length})
-          </h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-display font-bold text-detective-700 flex items-center gap-2">
+              <span>🎖</span> แบดจ์ ({player.badges.length}/{BADGES.length})
+            </h3>
+            <button
+              onClick={() => { sfx.click(); nav('/achievements'); }}
+              className="text-[11px] font-semibold text-detective-500 hover:text-detective-700 active:opacity-70"
+            >
+              ดูทั้งหมด →
+            </button>
+          </div>
           <p className="text-[11px] text-gray-500 -mt-1 mb-2 leading-relaxed">
             💡 ตัวเลข <b>{player.badges.length}/{BADGES.length}</b> = ได้แล้ว / มีให้สะสมทั้งหมด — แบดจ์ปลดล็อกตามทักษะที่ทำในด่าน
           </p>

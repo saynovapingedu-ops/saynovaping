@@ -34,6 +34,12 @@ interface PlayerState extends PlayerProfile {
   awardBadge: (id: string) => boolean;
   completeStage: (stageId: number) => void;
   setCertificate: (no: string, issuedAt: string) => void;
+  /** บันทึกผล Daily Challenge ของวันนี้ (กันรับซ้ำในวันเดียว) → true ถ้าบันทึกได้ */
+  recordDaily: (score: number, total: number, coinReward: number) => boolean;
+  /** บันทึกผล Final Exam — return true ถ้าได้รับโบนัสเหรียญ (ครั้งแรกที่ผ่าน) */
+  recordExam: (percent: number, passed: boolean, bonusCoins: number) => boolean;
+  /** บันทึกผลแบบประเมิน pre/post */
+  recordAssessment: (kind: 'pre' | 'post', percent: number) => void;
   /** เรียกตอนเล่นเกม — อัพเดท streak ถ้าเล่นต่อเนื่องได้ */
   pingDailyPlay: () => void;
   reset: () => void;
@@ -234,6 +240,45 @@ export const usePlayerStore = create<PlayerState>()(
         get().syncIfReady();
       },
 
+      recordDaily: (score, _total, coinReward) => {
+        const cur = get();
+        const today = todayDate();
+        if (cur.lastDailyDate === today) return false;  // ทำวันนี้แล้ว
+        set({
+          lastDailyDate: today,
+          dailyDoneCount: (cur.dailyDoneCount || 0) + 1,
+          dailyBestScore: Math.max(cur.dailyBestScore || 0, score),
+          coins: (cur.coins || 0) + Math.max(0, coinReward),
+        });
+        get().syncIfReady();
+        return true;
+      },
+
+      recordExam: (percent, passed, bonusCoins) => {
+        const cur = get();
+        const best = Math.max(cur.examBestScore || 0, percent);
+        let gotBonus = false;
+        const patch: Partial<PlayerProfile> = { examBestScore: best };
+        if (passed && !cur.examBonusClaimed) {
+          patch.examBonusClaimed = true;
+          patch.coins = (cur.coins || 0) + Math.max(0, bonusCoins);
+          gotBonus = true;
+        }
+        set(patch);
+        if (passed) get().awardBadge('master-graduate');
+        get().syncIfReady();
+        return gotBonus;
+      },
+
+      recordAssessment: (kind, percent) => {
+        if (kind === 'pre') {
+          set({ preTestScore: percent, preTestAt: new Date().toISOString() });
+        } else {
+          set({ postTestScore: percent, postTestAt: new Date().toISOString() });
+        }
+        get().syncIfReady();
+      },
+
       reset: () => {
         set({ ...blankProfile(), isInitialized: false });
       },
@@ -288,6 +333,15 @@ export const usePlayerStore = create<PlayerState>()(
         streakShields: s.streakShields,
         streakDays: s.streakDays,
         lastPlayDate: s.lastPlayDate,
+        lastDailyDate: s.lastDailyDate,
+        dailyDoneCount: s.dailyDoneCount,
+        dailyBestScore: s.dailyBestScore,
+        examBestScore: s.examBestScore,
+        examBonusClaimed: s.examBonusClaimed,
+        preTestScore: s.preTestScore,
+        postTestScore: s.postTestScore,
+        preTestAt: s.preTestAt,
+        postTestAt: s.postTestAt,
         certificateNo: s.certificateNo,
         certificateIssuedAt: s.certificateIssuedAt,
         createdAt: s.createdAt,

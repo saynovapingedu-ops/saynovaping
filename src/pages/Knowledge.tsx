@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sfx } from '../lib/sound';
+import { GLOSSARY } from '../lib/glossary';
 import PageHeader from '../components/PageHeader';
 
 // ===== เนื้อหาความรู้เรื่องบุหรี่ไฟฟ้า — สำหรับ ม.ต้น =====
@@ -212,18 +213,28 @@ function VideoCard({ video }: { video: VideoEntry }) {
   );
 }
 
-type Tab = 'dangers' | 'videos' | 'tips' | 'help';
+type Tab = 'dangers' | 'videos' | 'tips' | 'glossary' | 'help';
 
 export default function Knowledge() {
   const nav = useNavigate();
   const [tab, setTab] = useState<Tab>('dangers');
+  const [glossarySearch, setGlossarySearch] = useState('');
 
   const TABS: { id: Tab; label: string; emoji: string }[] = [
-    { id: 'dangers', label: 'ภัยอันตราย', emoji: '⚠️' },
-    { id: 'videos',  label: 'คลิป',       emoji: '🎬' },
-    { id: 'tips',    label: 'วิธีปฏิเสธ', emoji: '✋' },
-    { id: 'help',    label: 'ขอช่วย',    emoji: '📞' },
+    { id: 'dangers',  label: 'ภัยอันตราย', emoji: '⚠️' },
+    { id: 'videos',   label: 'คลิป',       emoji: '🎬' },
+    { id: 'tips',     label: 'วิธีปฏิเสธ', emoji: '✋' },
+    { id: 'glossary', label: 'ศัพท์',      emoji: '📖' },
+    { id: 'help',     label: 'ขอช่วย',    emoji: '📞' },
   ];
+
+  const filteredGlossary = useMemo(() => {
+    const q = glossarySearch.trim().toLowerCase();
+    if (!q) return GLOSSARY;
+    return GLOSSARY.filter(g =>
+      g.term.toLowerCase().includes(q) || g.def.toLowerCase().includes(q)
+    );
+  }, [glossarySearch]);
 
   return (
     <div className="min-h-full pb-10 relative">
@@ -244,7 +255,7 @@ export default function Knowledge() {
         </div>
 
         {/* Tabs */}
-        <div className="grid grid-cols-4 gap-1.5 mb-3">
+        <div className="grid grid-cols-5 gap-1.5 mb-3">
           {TABS.map(t => (
             <button
               key={t.id}
@@ -352,6 +363,59 @@ export default function Knowledge() {
                   📚 ปรับจาก: WHO Tobacco Cessation Guidelines + American Lung Association
                 </p>
               </div>
+            </motion.div>
+          )}
+
+          {tab === 'glossary' && (
+            <motion.div
+              key="glossary"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+              transition={{ duration: 0.18 }}
+            >
+              {/* search */}
+              <div className="relative mb-3">
+                <input
+                  value={glossarySearch}
+                  onChange={e => setGlossarySearch(e.target.value)}
+                  placeholder="🔍 ค้นหาคำศัพท์ เช่น EVALI, นิโคติน"
+                  className="w-full p-3 rounded-2xl border-2 border-detective-100 bg-white/90
+                             focus:border-detective-500 focus:shadow-glow-sm outline-none transition-all text-sm"
+                />
+                {glossarySearch && (
+                  <button
+                    onClick={() => setGlossarySearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 active:scale-90"
+                    aria-label="ล้างคำค้น"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {filteredGlossary.length === 0 ? (
+                <p className="text-center text-sm text-slate-500 py-8">ไม่พบคำที่ค้นหา</p>
+              ) : (
+                <div className="space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
+                  {filteredGlossary.map(g => (
+                    <div key={g.term} className="card border-l-4 border-detective-400">
+                      <div className="flex items-start gap-2.5">
+                        <div className="text-2xl flex-shrink-0 leading-none">{g.emoji}</div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-display font-bold text-detective-700 text-sm leading-tight mb-0.5">
+                            {g.term}
+                          </h4>
+                          <p className="text-xs text-slate-700 leading-relaxed">{g.def}</p>
+                          <p className="text-[10px] text-slate-500 italic mt-1.5 leading-snug">
+                            📚 {g.source}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
           )}
 

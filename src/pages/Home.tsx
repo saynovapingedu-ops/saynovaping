@@ -51,6 +51,15 @@ export default function Home() {
   const heroDone = player.stagesCompleted.filter(id => id <= CERT_STAGE_COUNT).length;
   const certEligible = heroDone >= CERT_STAGE_COUNT || player.totalXP >= 1500;
 
+  // === quick actions flags ===
+  const today = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
+  const dailyDone = player.lastDailyDate === today;
+  const examEligible = player.stagesCompleted.length >= SCENARIO_META.length || !!player.certificateNo;
+  const showPreTest = player.preTestScore === undefined && player.stagesCompleted.length === 0;
+
   // ===== Intro / Tutorial =====
   if (showIntro) {
     return (
@@ -225,6 +234,59 @@ export default function Home() {
             </button>
           </div>
         )}
+
+        {/* === Quick actions: Daily / Exam / Pre-test === */}
+        <div className="mb-4 space-y-2">
+          {/* Daily Challenge — always */}
+          <button
+            onClick={() => { sfx.click(); nav('/daily'); }}
+            className={`w-full card flex items-center gap-3 active:scale-[0.99] transition-all border-2 ${
+              dailyDone ? 'border-success-200 bg-success-50/40' : 'border-candy-200 bg-gradient-to-r from-candy-50 to-white'
+            }`}
+          >
+            <div className="text-3xl leading-none">📅</div>
+            <div className="flex-1 text-left min-w-0">
+              <p className="font-bold text-detective-700 text-sm">ภารกิจรายวัน</p>
+              <p className="text-[11px] text-slate-500">
+                {dailyDone ? '✓ วันนี้ทำแล้ว — กลับมาพรุ่งนี้' : 'ควิซ 5 ข้อ รับเหรียญ + รักษา streak'}
+              </p>
+            </div>
+            {!dailyDone && <span className="pill bg-candy-100 text-candy-600 flex-shrink-0">NEW</span>}
+          </button>
+
+          {/* Pre-test — เฉพาะผู้เล่นใหม่ที่ยังไม่ทำ */}
+          {showPreTest && (
+            <button
+              onClick={() => { sfx.click(); nav('/assessment?kind=pre'); }}
+              className="w-full card flex items-center gap-3 active:scale-[0.99] transition-all border-2 border-detective-200"
+            >
+              <div className="text-3xl leading-none">🅰️</div>
+              <div className="flex-1 text-left min-w-0">
+                <p className="font-bold text-detective-700 text-sm">แบบประเมินก่อนเรียน</p>
+                <p className="text-[11px] text-slate-500">ทำก่อนเริ่มเล่น เพื่อวัดความรู้ตอนจบ</p>
+              </div>
+              <span className="text-detective-400 flex-shrink-0">→</span>
+            </button>
+          )}
+
+          {/* Final Exam — เมื่อจบครบ */}
+          {examEligible && (
+            <button
+              onClick={() => { sfx.click(); nav('/exam'); }}
+              className="w-full card flex items-center gap-3 active:scale-[0.99] transition-all border-2 border-warning-300 bg-gradient-to-r from-warning-50 to-white"
+            >
+              <div className="text-3xl leading-none">🎓</div>
+              <div className="flex-1 text-left min-w-0">
+                <p className="font-bold text-detective-700 text-sm">แบบทดสอบรวม</p>
+                <p className="text-[11px] text-slate-500">
+                  วัดความรู้รวม — ผ่าน 80% รับเหรียญตรา
+                  {player.examBestScore !== undefined && ` · สูงสุด ${player.examBestScore}%`}
+                </p>
+              </div>
+              <span className="text-warning-500 flex-shrink-0">→</span>
+            </button>
+          )}
+        </div>
 
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-display font-extrabold text-detective-700 text-lg flex items-center gap-2">

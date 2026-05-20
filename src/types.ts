@@ -201,6 +201,18 @@ export interface PlayerProfile {
   // streak / daily
   streakDays?: number;
   lastPlayDate?: string;    // ISO date YYYY-MM-DD
+  // daily challenge
+  lastDailyDate?: string;   // วันที่ทำ Daily Challenge ล่าสุด (YYYY-MM-DD)
+  dailyDoneCount?: number;  // จำนวนครั้งที่ทำ Daily สำเร็จ (สถิติ)
+  dailyBestScore?: number;  // คะแนนเต็มที่เคยทำได้ใน Daily
+  // final exam
+  examBestScore?: number;   // % คะแนนสูงสุดในแบบทดสอบรวม
+  examBonusClaimed?: boolean; // รับโบนัสเหรียญครั้งแรกแล้วหรือยัง
+  // pre/post assessment
+  preTestScore?: number;    // % แบบประเมินก่อนเรียน
+  postTestScore?: number;   // % แบบประเมินหลังเรียน
+  preTestAt?: string;
+  postTestAt?: string;
   certificateNo?: string;
   certificateIssuedAt?: string;
   createdAt: string;

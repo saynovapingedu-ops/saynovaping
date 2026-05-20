@@ -20,6 +20,10 @@ const Settings     = lazy(() => import('./pages/Settings'));
 const Stats        = lazy(() => import('./pages/Stats'));
 const Knowledge    = lazy(() => import('./pages/Knowledge'));
 const Journal      = lazy(() => import('./pages/Journal'));
+const Daily        = lazy(() => import('./pages/Daily'));
+const Exam         = lazy(() => import('./pages/Exam'));
+const Achievements = lazy(() => import('./pages/Achievements'));
+const Assessment   = lazy(() => import('./pages/Assessment'));
 
 function PageLoader() {
   return (
@@ -134,6 +138,10 @@ export default function App() {
           <Route path="/stats" element={<Stats />} />
           <Route path="/knowledge" element={<Knowledge />} />
           <Route path="/journal" element={<Journal />} />
+          <Route path="/daily" element={<Daily />} />
+          <Route path="/exam" element={<Exam />} />
+          <Route path="/achievements" element={<Achievements />} />
+          <Route path="/assessment" element={<Assessment />} />
           {/* legacy /room → redirect ไปที่ Journal เพื่อไม่ให้ลิงก์เก่าเสีย */}
           <Route path="/room" element={<Navigate to="/journal" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />

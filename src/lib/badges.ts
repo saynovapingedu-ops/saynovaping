@@ -23,6 +23,13 @@ export const BADGES: Badge[] = [
   { id: 'stage-4-clear',    name: 'ผ่านด่าน 4',      description: 'จบด่านห้าง',           category: 'progress', emoji: '④' },
   { id: 'health-legend',    name: 'Health Legend',  description: 'จบเกมและได้ certificate', category: 'progress', emoji: '🏆' },
   { id: 'streak-7',         name: 'ต่อเนื่อง 7 วัน',  description: 'เล่นต่อกันครบสัปดาห์',   category: 'progress', emoji: '🔥' },
+  // ===== Expert Arc clears (ด่าน 16-20) =====
+  { id: 'expert-1-clear',     name: 'เข้าใจสมอง',      description: 'รู้กลไกนิโคติน-dopamine ในสมองวัยรุ่น', category: 'progress', emoji: '🧠' },
+  { id: 'expert-2-clear',     name: 'รู้ทันเกมออนไลน์', description: 'รับมือคนขายในเกม/Discord ได้',         category: 'progress', emoji: '🎮' },
+  { id: 'expert-3-clear',     name: 'สื่อสารกับบ้าน',   description: 'บอกพ่อแม่เรื่องยากได้อย่างถูกวิธี',     category: 'progress', emoji: '💬' },
+  { id: 'expert-4-clear',     name: 'รู้จัก EVALI',     description: 'เข้าใจปอดอักเสบจากบุหรี่ไฟฟ้า',         category: 'progress', emoji: '🫁' },
+  { id: 'expert-final-clear', name: 'นักสืบเชี่ยวชาญ',  description: 'จบครบ 20 ด่าน — รู้สูตรเลิก 4D',         category: 'progress', emoji: '🌟' },
+  { id: 'master-graduate',    name: 'ผ่านการประเมิน',   description: 'สอบแบบทดสอบรวมผ่าน ≥ 80%',              category: 'progress', emoji: '🎓' },
 
   // ===== Social badges =====
   { id: 'first-share',  name: 'แชร์ครั้งแรก',  description: 'แชร์เกมให้เพื่อน',     category: 'social', emoji: '📣' },
