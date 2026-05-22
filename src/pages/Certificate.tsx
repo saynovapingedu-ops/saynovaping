@@ -244,7 +244,8 @@ export default function Certificate() {
                 <p className="text-slate-700 text-sm mt-2">ฉบับนี้ไว้เพื่อแสดงว่า</p>
 
                 {/* === Recipient name === ชื่อจริงเป็นหลัก, ไม่ใส่ใช้ชื่อเล่น */}
-                <h2 className="text-detective-800 font-bold text-3xl my-1 leading-tight px-4">
+                <h2 className={`text-detective-800 font-bold my-1 leading-tight px-4 whitespace-nowrap w-full overflow-hidden text-ellipsis ${
+                  displayName.length > 25 ? 'text-xl' : displayName.length > 15 ? 'text-2xl' : 'text-3xl'}`} >
                   {displayName}
                 </h2>
                 {realName.trim() && player.nickname && (
