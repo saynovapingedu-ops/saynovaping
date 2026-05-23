@@ -78,7 +78,7 @@ export const scenario19: Scenario = {
     },
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
-      title: 'Detective\'s Note 📓',
+      title: 'บันทึกนักสืบ 📓',
       body: 'EVALI ค้นพบครั้งแรกในปี 2019 — มีผู้ป่วยกว่า 2,800 คน เสียชีวิต 68 คน (CDC) หลังจากห้ามขายน้ำยา flavored บางส่วน เคสลดลง แต่ในไทยที่ตลาดเป็น "underground" ทำให้น้ำยาไม่มี QC — เคส EVALI ในไทยเริ่มพบเพิ่มทุกปี',
       source: 'CDC EVALI Surveillance 2019-2023 / กรมการแพทย์ กระทรวงสาธารณสุข',
     },

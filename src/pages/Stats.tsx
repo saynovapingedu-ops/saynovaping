@@ -129,12 +129,15 @@ export default function Stats() {
           </div>
         )}
 
-        {/* Stages list */}
-        <section>
-          <h3 className="font-display font-bold text-detective-700 mb-2 flex items-center gap-2">
+        {/* Stages list — ย่อไว้ ให้กดเปิดดูเพื่อไม่ให้หน้ายาว */}
+        <details className="card p-3">
+          <summary className="cursor-pointer select-none font-display font-bold text-detective-700 flex items-center gap-2">
             <span>📍</span> ด่านที่ผ่าน
-          </h3>
-          <div className="card p-2 space-y-1.5">
+            <span className="ml-auto pill bg-detective-100 text-detective-700">
+              {player.stagesCompleted.length}/{SCENARIO_META.length}
+            </span>
+          </summary>
+          <div className="mt-3 space-y-1.5">
             {SCENARIO_META.map(meta => {
               const done = player.stagesCompleted.includes(meta.id);
               return (
@@ -159,7 +162,7 @@ export default function Stats() {
               );
             })}
           </div>
-        </section>
+        </details>
 
         {/* Badges grid */}
         <section>

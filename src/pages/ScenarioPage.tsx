@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getScenarioById, SCENARIO_META, isStageUnlocked, CERT_STAGE_COUNT } from '../scenarios';
@@ -56,6 +56,9 @@ export default function ScenarioPage() {
     bestSource?: string;
   }>>([]);
   const [askResume, setAskResume] = useState(false);
+  // เลื่อนหน้าจอไปที่ฉากปัจจุบันอัตโนมัติ + ย่อบทสนทนาเก่าให้หน้าสั้นลง
+  const currentRef = useRef<HTMLDivElement>(null);
+  const [showOlder, setShowOlder] = useState(false);
 
   const saveProgress  = useProgressStore(s => s.saveProgress);
   const getProgress   = useProgressStore(s => s.getProgress);
@@ -171,6 +174,16 @@ export default function ScenarioPage() {
       return () => { clearTimeout(t); if (t2) clearTimeout(t2); };
     }
   }, [currentNodeId, scenario, stageId, markCertNamePrompted]);
+
+  // เลื่อนไปฉากปัจจุบันทุกครั้งที่เปลี่ยน node + ย่อบทสนทนาเก่ากลับมาตอนเริ่มสเต็ปใหม่
+  useEffect(() => {
+    if (showIntro) return;
+    setShowOlder(false);
+    const t = setTimeout(() => {
+      currentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 60);
+    return () => clearTimeout(t);
+  }, [currentNodeId, showIntro]);
 
   if (!scenario) {
     return (
@@ -298,6 +311,36 @@ export default function ScenarioPage() {
   })();
   const nextMeta = SCENARIO_META.find(m => m.unlockAfter === stageId);
   const canPlayNext = nextMeta && nextMeta.available && isStageUnlocked(nextMeta.id, completedAfter);
+
+  // render บทสนทนา/feedback ที่ผ่านมาแล้ว 1 รายการ (ใช้ทั้งส่วนที่ย่อและไม่ย่อ)
+  const renderPastNode = (node: ScenarioNode) =>
+    node.type === 'dialogue' ? (
+      <DialogueBubble key={node.id} speaker={node.speaker} text={node.text} />
+    ) : node.type === 'feedback' ? (
+      <motion.div key={node.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        className="card bg-warning-50 border-l-4 border-warning-500 mb-3">
+        <p className="font-semibold text-warning-600 mb-1">{node.title}</p>
+        <p className="text-sm text-gray-700 leading-relaxed">{node.body}</p>
+        {node.source && (
+          <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">
+            📚 อ้างอิง: {node.source}
+          </p>
+        )}
+      </motion.div>
+    ) : node.type === 'educationalPopup' ? (
+      <motion.div key={node.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        className="card bg-success-50 border-l-4 border-success-500 mb-3">
+        <p className="font-semibold text-success-600 mb-1">💡 รู้หรือไม่?</p>
+        <p className="text-sm text-gray-700 leading-relaxed">{node.fact}</p>
+        <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">📚 อ้างอิง: {node.source}</p>
+      </motion.div>
+    ) : null;
+
+  // บทสนทนาที่ผ่านมา — โชว์แค่ 2 รายการล่าสุด ที่เหลือซ่อนไว้ (กดดูได้) เพื่อไม่ให้หน้ายาว
+  const pastNodes = history.slice(0, -1);
+  const RECENT = 2;
+  const olderNodes = pastNodes.slice(0, Math.max(0, pastNodes.length - RECENT));
+  const recentNodes = pastNodes.slice(Math.max(0, pastNodes.length - RECENT));
 
   // ---- Intro screen ----
   if (showIntro) {
@@ -463,39 +506,35 @@ export default function ScenarioPage() {
       </header>
 
       <main className="max-w-md md:max-w-2xl mx-auto p-4">
-        {/* แสดง history dialogue/feedback */}
+        {/* แสดง history dialogue/feedback — ย่อรายการเก่าไว้ให้หน้าสั้น */}
         <div className="space-y-1 mb-4">
+          {olderNodes.length > 0 && (
+            <div className="mb-2">
+              <button
+                onClick={() => { setShowOlder(v => !v); sfx.click(); }}
+                className="w-full text-xs font-semibold text-detective-500 bg-detective-50
+                           border border-detective-200 rounded-full py-1.5 active:scale-[0.98]"
+              >
+                {showOlder
+                  ? '▴ ซ่อนบทสนทนาก่อนหน้า'
+                  : `▾ ดูบทสนทนาก่อนหน้า (${olderNodes.length})`}
+              </button>
+              {showOlder && (
+                <div className="space-y-1 mt-2 opacity-80">
+                  {olderNodes.map(renderPastNode)}
+                </div>
+              )}
+            </div>
+          )}
           <AnimatePresence>
-            {history.slice(0, -1).map((node) => (
-              node.type === 'dialogue' ? (
-                <DialogueBubble key={node.id} speaker={node.speaker} text={node.text} />
-              ) : node.type === 'feedback' ? (
-                <motion.div key={node.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className="card bg-warning-50 border-l-4 border-warning-500 mb-3">
-                  <p className="font-semibold text-warning-600 mb-1">{node.title}</p>
-                  <p className="text-sm text-gray-700 leading-relaxed">{node.body}</p>
-                  {node.source && (
-                    <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">
-                      📚 อ้างอิง: {node.source}
-                    </p>
-                  )}
-                </motion.div>
-              ) : node.type === 'educationalPopup' ? (
-                <motion.div key={node.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className="card bg-success-50 border-l-4 border-success-500 mb-3">
-                  <p className="font-semibold text-success-600 mb-1">💡 รู้หรือไม่?</p>
-                  <p className="text-sm text-gray-700 leading-relaxed">{node.fact}</p>
-                  <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">📚 อ้างอิง: {node.source}</p>
-                </motion.div>
-              ) : null
-            ))}
+            {recentNodes.map(renderPastNode)}
           </AnimatePresence>
         </div>
 
         {/* current node */}
         {currentNode && (
           <AnimatePresence mode="wait">
-            <motion.div key={currentNode.id}
+            <motion.div key={currentNode.id} ref={currentRef} className="scroll-mt-20"
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               {currentNode.type === 'dialogue' && (
                 <>

@@ -57,7 +57,7 @@ export const scenario01: Scenario = {
     },
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
-      title: 'Detective\'s Note 📓',
+      title: 'บันทึกนักสืบ 📓',
       body: 'CRAAP Test (Currency-Relevance-Authority-Accuracy-Purpose) คือเช็กลิสต์ 5 ข้อสำหรับตรวจความน่าเชื่อถือของข้อมูล. เพราะสมองมนุษย์มี Confirmation Bias (เอนเอียงเชื่อสิ่งที่ตรงกับใจ) เราจึงต้องใช้กรอบช่วยตัดสิน. ก่อนกดแชร์ — เช็กแหล่งจากเว็บหน่วยงานจริง เช่น ศจย., สสส., CDC, WHO ก่อนทุกครั้ง',
       source: 'Sarah Blakeslee, CSU Chico Meriam Library (2004) — CRAAP Test / WHO Tobacco Industry Marketing to Youth 2023',
     },

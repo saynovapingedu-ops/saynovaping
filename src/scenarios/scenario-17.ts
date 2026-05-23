@@ -102,7 +102,7 @@ export const scenario17: Scenario = {
     },
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
-      title: 'Detective\'s Note 📓',
+      title: 'บันทึกนักสืบ 📓',
       body: 'แพลตฟอร์มเกม (Discord/Roblox/Steam) ทำเรื่องนี้ยาก เพราะ DM เป็น private — โมเดอเรเตอร์ตรวจไม่ได้ ทางที่ดีคือ "อย่าให้คนแปลกหน้าทักถึงคุณ" — ตั้งค่า DM = friends only เป็นค่าเริ่มต้น',
       source: 'Common Sense Media — Discord Safety Guide 2023',
     },

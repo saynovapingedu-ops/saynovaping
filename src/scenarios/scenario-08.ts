@@ -220,7 +220,7 @@ export const scenario08: Scenario = {
     },
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
-      title: 'Detective\'s Note Final 📓',
+      title: 'บันทึกนักสืบ (สรุปส่งท้าย) 📓',
       body: 'การรวมหลายทักษะ (refusal + media literacy + helping peers + law) คือแนวคิด Comprehensive Prevention ของ NIDA — ป้องกันได้ผลที่สุดเมื่อใช้หลายชั้นพร้อมกัน. มันได้ผลเพราะปัจจัยเสี่ยงของวัยรุ่นมาจากหลายด้าน (สื่อ-เพื่อน-ครอบครัว-อารมณ์) ทักษะเดียวไม่พอ. ส่งต่อสิ่งที่เรียน — Peer Education (เพื่อนสอนเพื่อน) เพิ่มผลป้องกันได้ 2-3 เท่าตามงานวิจัยไทย',
       source: 'NIDA Principles of Substance Use Prevention for Adolescents 2022 / งานวิจัย ม.มหิดล + สสส. 2566 — Peer Education Effectiveness',
     },

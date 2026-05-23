@@ -87,7 +87,7 @@ export const scenario16: Scenario = {
     },
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
-      title: 'Detective\'s Note 📓',
+      title: 'บันทึกนักสืบ 📓',
       body: 'งานวิจัยพบว่าวัยรุ่นที่เริ่มสูบนิโคติน มีโอกาสติดสารอื่นในอนาคต (เหล้า กัญชา) สูงขึ้น 3-4 เท่า เพราะสมอง "เรียนรู้" pattern การเสพติด ข่าวดีคือ — ถ้าเลิกได้ภายใน 6 เดือน สมองยังซ่อมตัวเองได้',
       source: 'U.S. Surgeon General Report 2023 / NIDA Adolescent Brain Atlas',
     },

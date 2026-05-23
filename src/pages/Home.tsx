@@ -35,6 +35,9 @@ export default function Home() {
     catch { return true; }
   });
 
+  // ย่อ/ขยายแต่ละบท — เปิดเฉพาะบทที่กำลังเล่นอยู่ ที่เหลือพับไว้ให้หน้าสั้น
+  const [openArcs, setOpenArcs] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     pingDailyPlay();
   }, [pingDailyPlay]);
@@ -312,21 +315,31 @@ export default function Home() {
           {player.stagesCompleted.length}/{SCENARIO_META.length} ด่าน
         </p>
 
-        {(['hero', 'master', 'pro', 'expert'] as const).map((arc) => {
+        {(() => {
+          // หาบทที่ "กำลังเล่นอยู่" = ด่านแรกที่เล่นได้แต่ยังไม่จบ → เปิดบทนั้นไว้
+          const activeStage = SCENARIO_META.find(
+            m => m.available && isStageUnlocked(m.id, player.stagesCompleted) && !player.stagesCompleted.includes(m.id)
+          );
+          const activeArc = activeStage?.arc || 'hero';
+          return (['hero', 'master', 'pro', 'expert'] as const).map((arc) => {
           const stages = SCENARIO_META.filter(m => (m.arc || 'hero') === arc);
           if (stages.length === 0) return null;
           const arcLabel =
-            arc === 'hero'   ? { name: 'บทที่ 1: เส้นทางนักสืบ', emoji: '🦸', desc: 'ด่าน 1-8 — จบรับ Certificate' }
-          : arc === 'master' ? { name: 'บทที่ 2: Master Class',   emoji: '🎓', desc: 'ด่าน 9-12 — ขั้นสูง' }
-          : arc === 'pro'    ? { name: 'บทที่ 3: Pro Arc',         emoji: '🎯', desc: 'ด่าน 13-15 — มินิเกมใหม่' }
-          :                    { name: 'บทที่ 4: Expert Arc',      emoji: '🔬', desc: 'ด่าน 16-20 — เชี่ยวชาญ vape' };
+            arc === 'hero'   ? { name: 'บทที่ 1: เส้นทางนักสืบ', emoji: '🦸', desc: 'ด่าน 1-8 — จบรับเกียรติบัตร' }
+          : arc === 'master' ? { name: 'บทที่ 2: ขั้นสูง',        emoji: '🎓', desc: 'ด่าน 9-12 — ขั้นสูง' }
+          : arc === 'pro'    ? { name: 'บทที่ 3: เกมเพลย์ใหม่',   emoji: '🎯', desc: 'ด่าน 13-15 — มินิเกมใหม่' }
+          :                    { name: 'บทที่ 4: เชี่ยวชาญ',      emoji: '🔬', desc: 'ด่าน 16-20 — เชี่ยวชาญบุหรี่ไฟฟ้า' };
           const arcCompleted = stages.filter(m => player.stagesCompleted.includes(m.id)).length;
+          const isOpen = openArcs[arc] ?? (arc === activeArc);
 
           return (
             <div key={arc} className="mb-5">
-              <div className="flex items-center gap-2 mb-2">
+              <button
+                onClick={() => { sfx.click(); setOpenArcs(o => ({ ...o, [arc]: !isOpen })); }}
+                className="w-full flex items-center gap-2 mb-2 text-left active:scale-[0.99]"
+              >
                 <span className="text-2xl">{arcLabel.emoji}</span>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h4 className="font-display font-bold text-detective-700 text-base leading-tight">
                     {arcLabel.name}
                   </h4>
@@ -335,9 +348,13 @@ export default function Home() {
                 <span className="pill bg-detective-100 text-detective-700">
                   {arcCompleted}/{stages.length}
                 </span>
-              </div>
+                <span className="text-detective-400 text-sm flex-shrink-0 w-4 text-center">
+                  {isOpen ? '▴' : '▾'}
+                </span>
+              </button>
 
               {/* Stages — single column mobile, 2 col tablet */}
+              {isOpen && (
               <div className="space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
                 {stages.map((meta) => {
                   const unlocked = isStageUnlocked(meta.id, player.stagesCompleted);
@@ -403,9 +420,11 @@ export default function Home() {
                   );
                 })}
               </div>
+              )}
             </div>
           );
-        })}
+          });
+        })()}
 
         {/* footer ของ Home ตัดออก — แบรนด์ย้ายขึ้น header บนสุดแล้ว
             (อาจารย์ทักว่าไม่ควรไว้ล่างสุด) */}

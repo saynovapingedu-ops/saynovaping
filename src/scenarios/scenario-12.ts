@@ -184,7 +184,7 @@ export const scenario12: Scenario = {
     },
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
-      title: 'Detective\'s Final Note 📓',
+      title: 'บันทึกนักสืบ (สรุปส่งท้าย) 📓',
       body: 'Peer Education (เพื่อนสอนเพื่อน / รุ่นพี่สอนรุ่นน้อง) คือกลยุทธ์ป้องกันที่ WHO แนะนำสำหรับวัยรุ่น เพราะเด็กจะเชื่อเพื่อนวัยใกล้กันมากกว่าผู้ใหญ่ (peer credibility). มันได้ผลเพราะคนสอนก็ได้ทบทวนความรู้ของตัวเอง (Protégé Effect) เก่งขึ้นทั้งคู่. สอนน้องด้วยเรื่องเล่า ไม่ใช่คำขู่ — เรื่องจริงจำได้นานกว่าสถิติ',
       source: 'งานวิจัย ม.มหิดล + สสส. 2566 — Peer Education Effectiveness / WHO Adolescent Health Strategy 2018',
     },

@@ -398,7 +398,8 @@ export default function Knowledge() {
               {filteredGlossary.length === 0 ? (
                 <p className="text-center text-sm text-slate-500 py-8">ไม่พบคำที่ค้นหา</p>
               ) : (
-                <div className="space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
+                <div className="max-h-[60vh] overflow-y-auto overscroll-contain -mx-1 px-1 pb-1
+                                space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
                   {filteredGlossary.map(g => (
                     <div key={g.term} className="card border-l-4 border-detective-400">
                       <div className="flex items-start gap-2.5">

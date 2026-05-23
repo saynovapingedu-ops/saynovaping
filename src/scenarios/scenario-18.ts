@@ -64,7 +64,7 @@ export const scenario18: Scenario = {
     },
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
-      title: 'Detective\'s Note 📓',
+      title: 'บันทึกนักสืบ 📓',
       body: 'การ "ลำดับ" สำคัญมาก — เริ่มด้วย "หลักฐาน" (หยิบของให้เห็น) ตามด้วย "รับผิด" (ขอโทษ) แล้ว "แก้ปัญหา" (ขอช่วยเลิก) นี่คือสูตรการสื่อสารในวิกฤต (Crisis Communication) ที่ใช้ในทั้งครอบครัว องค์กร และการเมือง',
       source: 'Crisis Communication Framework — Coombs (2007) / CDC Family Toolkit',
     },

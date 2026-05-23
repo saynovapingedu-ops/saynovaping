@@ -8,54 +8,84 @@ interface Props {
   onComplete: (allCorrect: boolean) => void;
 }
 
+// จับโกหก — แสดงข้อความทีละข้อ ให้กดว่า "จริง" หรือ "เท็จ"
 export default function SpotTheLie({ title, claims, onComplete }: Props) {
-  const [answers, setAnswers] = useState<(boolean | null)[]>(claims.map(() => null));
-  const [revealed, setRevealed] = useState<boolean[]>(claims.map(() => false));
+  const [idx, setIdx] = useState(0);
+  const [picked, setPicked] = useState<boolean | null>(null); // ผู้เล่นเลือก: true = เท็จ, false = จริง
+  const [correctCount, setCorrectCount] = useState(0);
 
-  const handlePick = (i: number, isLie: boolean) => {
-    if (revealed[i]) return;
-    const newAns = [...answers]; newAns[i] = isLie; setAnswers(newAns);
-    const newRev = [...revealed]; newRev[i] = true; setRevealed(newRev);
+  const claim = claims[idx];
+  const isLast = idx === claims.length - 1;
+  const revealed = picked !== null;
+  const isCorrect = revealed && picked === claim.isLie;
+
+  const handlePick = (saysLie: boolean) => {
+    if (revealed) return;
+    setPicked(saysLie);
+    if (saysLie === claim.isLie) setCorrectCount(c => c + 1);
   };
 
-  const allDone = revealed.every(Boolean);
-  const correctCount = answers.reduce((sum, a, i) => sum + (a === claims[i].isLie ? 1 : 0), 0);
+  const handleNext = () => {
+    if (isLast) {
+      onComplete(correctCount === claims.length);
+      return;
+    }
+    setIdx(i => i + 1);
+    setPicked(null);
+  };
 
   return (
     <div className="space-y-3">
       <h3 className="font-display font-bold text-lg text-detective-700">🎯 {title}</h3>
-      <p className="text-sm text-gray-600">
-        แต่ละข้อความด้านล่าง — กดว่า "จริง" หรือ "เท็จ"
-      </p>
-      {claims.map((claim, i) => (
-        <div key={i} className="card border-l-4 border-detective-500">
-          <p className="text-gray-800 leading-relaxed mb-3">{claim.text}</p>
-          {!revealed[i] ? (
-            <div className="flex gap-2">
-              <button
-                onClick={() => handlePick(i, false)}
-                className="flex-1 py-2 px-4 bg-success-500 text-white rounded-lg font-semibold active:scale-95"
-              >
-                ✓ จริง
-              </button>
-              <button
-                onClick={() => handlePick(i, true)}
-                className="flex-1 py-2 px-4 bg-danger-500 text-white rounded-lg font-semibold active:scale-95"
-              >
-                ✗ เท็จ
-              </button>
-            </div>
-          ) : (
-            <AnimatePresence>
+
+      {/* progress */}
+      <div className="flex items-center gap-2">
+        <div className="progress-track flex-1">
+          <div
+            className="progress-fill"
+            style={{ width: `${((idx + (revealed ? 1 : 0)) / claims.length) * 100}%` }}
+          />
+        </div>
+        <span className="text-xs font-bold text-detective-600 flex-shrink-0">
+          {idx + 1}/{claims.length}
+        </span>
+      </div>
+      <p className="text-sm text-gray-600">ข้อความนี้ — "จริง" หรือ "เท็จ"?</p>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={idx}
+          initial={{ opacity: 0, x: 12 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -12 }}
+          transition={{ duration: 0.18 }}
+        >
+          <div className="card border-l-4 border-detective-500">
+            <p className="text-gray-800 leading-relaxed mb-3">{claim.text}</p>
+
+            {!revealed ? (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handlePick(false)}
+                  className="flex-1 py-2 px-4 bg-success-500 text-white rounded-lg font-semibold active:scale-95"
+                >
+                  ✓ จริง
+                </button>
+                <button
+                  onClick={() => handlePick(true)}
+                  className="flex-1 py-2 px-4 bg-danger-500 text-white rounded-lg font-semibold active:scale-95"
+                >
+                  ✗ เท็จ
+                </button>
+              </div>
+            ) : (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className={`p-3 rounded-lg ${
-                  answers[i] === claim.isLie ? 'bg-success-50 text-success-600' : 'bg-danger-50 text-danger-600'
-                }`}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`p-3 rounded-lg ${isCorrect ? 'bg-success-50' : 'bg-danger-50'}`}
               >
-                <p className="font-semibold mb-1">
-                  {answers[i] === claim.isLie ? '✓ ถูกต้อง!' : '✗ ลองคิดอีกครั้ง'}
+                <p className={`font-semibold mb-1 ${isCorrect ? 'text-success-600' : 'text-danger-600'}`}>
+                  {isCorrect ? '✓ ถูกต้อง!' : '✗ ลองคิดอีกครั้ง'}
                 </p>
                 <p className="text-sm text-gray-700">{claim.reveal}</p>
                 {claim.source && (
@@ -63,21 +93,14 @@ export default function SpotTheLie({ title, claims, onComplete }: Props) {
                     📚 อ้างอิง: {claim.source}
                   </p>
                 )}
+                <button onClick={handleNext} className="btn-primary w-full mt-3">
+                  {isLast ? `ดูผล (ถูก ${correctCount}/${claims.length}) →` : 'ข้อต่อไป →'}
+                </button>
               </motion.div>
-            </AnimatePresence>
-          )}
-        </div>
-      ))}
-      {allDone && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center pt-2">
-          <p className="font-semibold mb-2">
-            ตอบถูก {correctCount}/{claims.length} ข้อ
-          </p>
-          <button onClick={() => onComplete(correctCount === claims.length)} className="btn-primary">
-            ไปต่อ →
-          </button>
+            )}
+          </div>
         </motion.div>
-      )}
+      </AnimatePresence>
     </div>
   );
 }

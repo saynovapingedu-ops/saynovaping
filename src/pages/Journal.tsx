@@ -68,11 +68,15 @@ export default function Journal() {
   }, [cases]);
 
   const arcLabel: Record<ArcKey, { name: string; subtitle: string; emoji: string }> = {
-    hero:   { name: 'Hero Arc',   subtitle: 'ด่าน 1-8 · เส้นทางนักสืบ',  emoji: '🦸' },
-    master: { name: 'Master Arc', subtitle: 'ด่าน 9-12 · ขั้นสูง',        emoji: '🎓' },
-    pro:    { name: 'Pro Arc',    subtitle: 'ด่าน 13-15 · เกมเพลย์ใหม่',  emoji: '🎯' },
-    expert: { name: 'Expert Arc', subtitle: 'ด่าน 16-20 · เชี่ยวชาญ vape', emoji: '🔬' },
+    hero:   { name: 'บทที่ 1: เส้นทางนักสืบ', subtitle: 'ด่าน 1-8 · เส้นทางนักสืบ',  emoji: '🦸' },
+    master: { name: 'บทที่ 2: ขั้นสูง',        subtitle: 'ด่าน 9-12 · ขั้นสูง',        emoji: '🎓' },
+    pro:    { name: 'บทที่ 3: เกมเพลย์ใหม่',   subtitle: 'ด่าน 13-15 · เกมเพลย์ใหม่',  emoji: '🎯' },
+    expert: { name: 'บทที่ 4: เชี่ยวชาญ vape', subtitle: 'ด่าน 16-20 · เชี่ยวชาญ vape', emoji: '🔬' },
   };
+
+  // หาบทที่กำลังเล่นอยู่ = แฟ้มแรกที่ปลดล็อกแต่ยังไม่ปิดคดี → เปิดบทนั้นไว้
+  const activeArc: ArcKey = (cases.find(c => c.unlocked && !c.cleared)?.meta.arc as ArcKey) || 'hero';
+  const [openArcs, setOpenArcs] = useState<Record<string, boolean>>({});
 
   const handleCardTap = (c: CombinedCase) => {
     sfx.click();
@@ -103,7 +107,7 @@ export default function Journal() {
           <div className="flex items-center gap-3">
             <div className="icon-tile bg-detective-50 text-detective-600 text-3xl">🔎</div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] text-detective-500 font-bold uppercase tracking-wider">Detective's Journal</p>
+              <p className="text-[11px] text-detective-500 font-bold uppercase tracking-wider">แฟ้มคดีนักสืบ</p>
               <p className="font-display font-extrabold text-detective-700 text-lg leading-tight">
                 แฟ้มคดี · {clearedCount}/{totalCount}
               </p>
@@ -125,9 +129,13 @@ export default function Journal() {
           const ac = ARC_COLOR[arc];
           const lbl = arcLabel[arc];
           const arcCleared = list.filter(c => c.cleared).length;
+          const isOpen = openArcs[arc] ?? (arc === activeArc);
           return (
             <section key={arc} className="mb-6">
-              <div className="flex items-center gap-2 mb-2.5 px-1">
+              <button
+                onClick={() => { sfx.click(); setOpenArcs(o => ({ ...o, [arc]: !isOpen })); }}
+                className="w-full flex items-center gap-2 mb-2.5 px-1 text-left active:scale-[0.99]"
+              >
                 <span className="text-2xl leading-none">{lbl.emoji}</span>
                 <div className="flex-1 min-w-0">
                   <h3 className={`font-display font-bold ${ac.text} text-base leading-tight`}>
@@ -138,11 +146,16 @@ export default function Journal() {
                 <span className={`pill bg-white border ${ac.border} ${ac.text} font-semibold`}>
                   {arcCleared}/{list.length}
                 </span>
-              </div>
+                <span className={`${ac.text} text-sm flex-shrink-0 w-4 text-center`}>
+                  {isOpen ? '▴' : '▾'}
+                </span>
+              </button>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {list.map(c => <CaseCard key={c.id} c={c} colors={ac} onTap={handleCardTap} />)}
-              </div>
+              {isOpen && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {list.map(c => <CaseCard key={c.id} c={c} colors={ac} onTap={handleCardTap} />)}
+                </div>
+              )}
             </section>
           );
         })}
