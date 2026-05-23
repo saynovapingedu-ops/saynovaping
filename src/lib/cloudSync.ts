@@ -73,8 +73,9 @@ export type LeaderboardScope = 'class' | 'school' | 'all';
 
 export interface LeaderboardEntry {
   rank: number;
-  nickname: string;
-  level: number;
+  /** PDPA: ส่งมาเฉพาะแถวของผู้เล่นเอง (isMe) เท่านั้น — ของคนอื่นจะไม่มีชื่อ */
+  nickname?: string;
+  level?: number;
   totalXP: number;
   stagesCount: number;
   /** true ถ้าเป็นแถวของผู้เล่นคนปัจจุบัน (backend เทียบจาก userIdHash) */
@@ -207,7 +208,7 @@ export async function restoreProgress(userIdHash: string): Promise<RestoreRespon
  */
 export async function fetchLeaderboard(
   userIdHash: string,
-  scope: LeaderboardScope = 'class',
+  scope: LeaderboardScope = 'all',
   limit = 50,
 ): Promise<LeaderboardResponse> {
   const empty = (extra: Partial<LeaderboardResponse> = {}): LeaderboardResponse =>

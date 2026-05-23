@@ -257,8 +257,8 @@ export default function Home() {
           >
             <div className="icon-tile bg-warning-50 text-warning-600">🏆</div>
             <div className="flex-1 text-left min-w-0">
-              <p className="font-bold text-detective-700 text-sm">อันดับห้องเรียน</p>
-              <p className="text-[11px] text-slate-500">เทียบความก้าวหน้ากับเพื่อน ๆ ในห้อง</p>
+              <p className="font-bold text-detective-700 text-sm">กระดานอันดับ</p>
+              <p className="text-[11px] text-slate-500">เทียบคะแนนรวมกับผู้เล่นทั้งหมด</p>
             </div>
             <span className="text-warning-500 flex-shrink-0">→</span>
           </button>
