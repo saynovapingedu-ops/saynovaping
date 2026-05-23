@@ -68,6 +68,33 @@ export interface RestoreResponse {
   };
 }
 
+/** ขอบเขตของกระดานอันดับ */
+export type LeaderboardScope = 'class' | 'school' | 'all';
+
+export interface LeaderboardEntry {
+  rank: number;
+  nickname: string;
+  level: number;
+  totalXP: number;
+  stagesCount: number;
+  /** true ถ้าเป็นแถวของผู้เล่นคนปัจจุบัน (backend เทียบจาก userIdHash) */
+  isMe?: boolean;
+}
+
+export interface LeaderboardResponse {
+  ok: boolean;
+  /** backend ที่ยังไม่รองรับ action นี้ → unsupported = true (ใช้แยกจาก network error) */
+  unsupported?: boolean;
+  scope: LeaderboardScope;
+  /** ชื่อห้อง/โรงเรียนที่ใช้กรอง (ถ้ามี) */
+  groupLabel?: string;
+  entries: LeaderboardEntry[];
+  /** อันดับของผู้เล่นปัจจุบัน (เผื่อหลุดนอก top N) */
+  me?: LeaderboardEntry;
+  /** จำนวนผู้เล่นทั้งหมดในขอบเขตนี้ */
+  total?: number;
+}
+
 async function fetchWithRetry(url: string, options: RequestInit, retries = MAX_RETRIES): Promise<Response> {
   let lastError: unknown = null;
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -166,6 +193,47 @@ export async function restoreProgress(userIdHash: string): Promise<RestoreRespon
     return await res.json();
   } catch {
     return { ok: false, found: false };
+  }
+}
+
+/**
+ * ดึงกระดานอันดับ (Leaderboard)
+ * - scope='class'  → เฉพาะคนโรงเรียน+ชั้นเดียวกัน (ห้องเรียน)
+ * - scope='school' → เฉพาะคนโรงเรียนเดียวกัน
+ * - scope='all'    → ทุกคน
+ *
+ * ส่ง userIdHash ไปด้วยเพื่อให้ backend หา "ห้อง" ของผู้เล่น และทำเครื่องหมาย isMe
+ * ถ้า backend เก่ายังไม่รองรับ action นี้ → คืน unsupported=true (หน้าเว็บจะโชว์ empty state สวยๆ แทน crash)
+ */
+export async function fetchLeaderboard(
+  userIdHash: string,
+  scope: LeaderboardScope = 'class',
+  limit = 50,
+): Promise<LeaderboardResponse> {
+  const empty = (extra: Partial<LeaderboardResponse> = {}): LeaderboardResponse =>
+    ({ ok: false, scope, entries: [], ...extra });
+
+  if (!SYNC_URL) return empty({ unsupported: true });
+  try {
+    const url = `${SYNC_URL}?action=leaderboard&scope=${scope}`
+      + `&hash=${encodeURIComponent(userIdHash)}&limit=${limit}`;
+    const res = await fetchWithRetry(url, { method: 'GET' });
+    const data = await res.json();
+    // backend เก่าจะตอบ { ok:false, error:'unknown_action' } หรือไม่มี field entries
+    if (!data || data.ok !== true || !Array.isArray(data.entries)) {
+      return empty({ unsupported: true });
+    }
+    return {
+      ok: true,
+      scope: data.scope || scope,
+      groupLabel: data.groupLabel,
+      entries: data.entries as LeaderboardEntry[],
+      me: data.me as LeaderboardEntry | undefined,
+      total: typeof data.total === 'number' ? data.total : data.entries.length,
+    };
+  } catch (err) {
+    console.warn('[cloudSync] leaderboard failed:', err);
+    return empty();
   }
 }
 

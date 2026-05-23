@@ -90,6 +90,22 @@ export default function Stats() {
           </div>
         </motion.div>
 
+        {/* Leaderboard link */}
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          onClick={() => { sfx.click(); nav('/leaderboard'); }}
+          className="w-full card flex items-center gap-3 active:scale-[0.99] transition-all"
+        >
+          <div className="icon-tile bg-warning-50 text-warning-600">🏆</div>
+          <div className="flex-1 text-left min-w-0">
+            <p className="font-bold text-detective-700 text-sm">กระดานอันดับ</p>
+            <p className="text-[11px] text-slate-500">ดูอันดับห้องเรียน · โรงเรียน · ทั้งหมด</p>
+          </div>
+          <span className="text-warning-500 flex-shrink-0">→</span>
+        </motion.button>
+
         {/* Quick stats grid */}
         <div className="grid grid-cols-3 gap-2">
           <StatBox emoji="🏁" label="ด่านที่ผ่าน" value={`${player.stagesCompleted.length}/${SCENARIO_META.length}`} />
