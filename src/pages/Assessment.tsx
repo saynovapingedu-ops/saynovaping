@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
-import { getAssessmentQuestions } from '../lib/quizBank';
+import { getAssessmentQuestions, type QuizResultItem } from '../lib/quizBank';
 import { CERT_STAGE_COUNT } from '../scenarios';
 import QuizRunner from '../components/QuizRunner';
+import QuizReview from '../components/QuizReview';
 import PageHeader from '../components/PageHeader';
 import { sfx } from '../lib/sound';
 
@@ -26,15 +27,15 @@ export default function Assessment() {
     : params.get('kind') === 'pre' ? 'pre' : null;
   const [kind, setKind] = useState<'pre' | 'post' | null>(kindParam);
   const [started, setStarted] = useState(false);
-  const [result, setResult] = useState<number | null>(null);
+  const [result, setResult] = useState<{ percent: number; details: QuizResultItem[] } | null>(null);
 
   const questions = useMemo(() => getAssessmentQuestions(ASSESS_N), []);
   const postUnlocked = player.stagesCompleted.length >= CERT_STAGE_COUNT || !!player.certificateNo;
 
-  const handleFinish = (score: number, total: number) => {
+  const handleFinish = (score: number, total: number, details: QuizResultItem[]) => {
     const percent = Math.round((score / total) * 100);
     if (kind) recordAssessment(kind, percent);
-    setResult(percent);
+    setResult({ percent, details });
     sfx.victory();
   };
 
@@ -54,7 +55,7 @@ export default function Assessment() {
             <h2 className="font-display font-bold text-xl text-detective-700 mb-1">
               {kind === 'pre' ? 'แบบประเมินก่อนเรียน' : kind === 'post' ? 'แบบประเมินหลังเรียน' : 'ผลแบบประเมิน'}
             </h2>
-            <p className="text-3xl font-bold text-detective-700 my-2">{result}%</p>
+            <p className="text-3xl font-bold text-detective-700 my-2">{result.percent}%</p>
 
             {showDelta && (
               <div className="mt-3 bg-white/70 rounded-2xl p-3 border border-detective-100">
@@ -71,6 +72,15 @@ export default function Assessment() {
               💡 แบบประเมินนี้ช่วยวัดว่าความรู้เรื่องบุหรี่ไฟฟ้าเพิ่มขึ้นแค่ไหน
             </p>
           </motion.div>
+
+          {kind === 'post' && <QuizReview details={result.details} defaultOpen />}
+          {kind === 'pre' && (
+            <p className="text-[12px] text-slate-500 text-center mt-4 leading-relaxed
+                          bg-detective-50 border border-detective-200 rounded-2xl p-3">
+              📝 เฉลยจะแสดงหลังเรียน — เพื่อความเที่ยงตรงของการวัดผลก่อนเรียน
+            </p>
+          )}
+
           <button onClick={() => { sfx.click(); nav('/'); }} className="btn-primary w-full mt-4">
             🏠 กลับหน้าหลัก
           </button>
@@ -109,7 +119,7 @@ export default function Assessment() {
               <p className="font-bold text-detective-700">แบบประเมินหลังเรียน</p>
               <p className="text-xs text-slate-500">
                 {postUnlocked
-                  ? (player.postTestScore !== undefined ? `ทำแล้ว: ${player.postTestScore}% (ทำซ้ำได้)` : 'ทำหลังจบ Hero Arc')
+                  ? (player.postTestScore !== undefined ? `ทำแล้ว: ${player.postTestScore}% (ทำซ้ำได้)` : 'ทำหลังจบบทพื้นฐาน')
                   : `🔒 ปลดเมื่อจบ ${CERT_STAGE_COUNT} ด่านแรก`}
               </p>
             </div>
@@ -153,7 +163,7 @@ export default function Assessment() {
     <div className="min-h-full pb-10">
       <PageHeader title="📋 แบบประเมิน" backTo="/" />
       <main className="max-w-md mx-auto px-4 pt-4">
-        <QuizRunner questions={questions} onFinish={handleFinish} finishLabel="ส่งคำตอบ →" />
+        <QuizRunner questions={questions} onFinish={handleFinish} finishLabel="ส่งคำตอบ →" revealMode="end" />
       </main>
     </div>
   );

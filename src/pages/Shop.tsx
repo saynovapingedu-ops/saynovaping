@@ -149,9 +149,9 @@ export default function Shop() {
 
   // === Booster summary (inventory) ===
   const boosterInventory = [
-    { icon: '💡', label: 'Hint Token', count: player.hintTokens || 0 },
-    { icon: '💰', label: 'Coin x2 ด่านเหลือ', count: player.coinX2Remaining || 0 },
-    { icon: '🛡️', label: 'Streak Shield', count: player.streakShields || 0 },
+    { icon: '💡', label: 'บัตรใบ้คำตอบ', count: player.hintTokens || 0 },
+    { icon: '💰', label: 'เหรียญ ×2 ด่านเหลือ', count: player.coinX2Remaining || 0 },
+    { icon: '🛡️', label: 'โล่กันต่อเนื่องขาด', count: player.streakShields || 0 },
   ];
 
   return (

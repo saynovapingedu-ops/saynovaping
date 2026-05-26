@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
-import { getDailyQuestions } from '../lib/quizBank';
+import { getDailyQuestions, type QuizResultItem } from '../lib/quizBank';
 import QuizRunner from '../components/QuizRunner';
+import QuizReview from '../components/QuizReview';
 import PageHeader from '../components/PageHeader';
 import Confetti from '../components/Confetti';
 import { sfx } from '../lib/sound';
@@ -27,18 +28,18 @@ export default function Daily() {
 
   const questions = useMemo(() => getDailyQuestions(today, 5), [today]);
   const [started, setStarted] = useState(false);
-  const [result, setResult] = useState<{ score: number; total: number; coins: number } | null>(null);
+  const [result, setResult] = useState<{ score: number; total: number; coins: number; details: QuizResultItem[] } | null>(null);
 
-  const handleFinish = (score: number, total: number) => {
+  const handleFinish = (score: number, total: number, details: QuizResultItem[]) => {
     const coins = score * COIN_PER_CORRECT;
     const ok = recordDaily(score, total, coins);
     if (ok) {
       pingDailyPlay(); // ช่วยรักษา streak
-      setResult({ score, total, coins });
+      setResult({ score, total, coins, details });
       sfx.victory();
     } else {
       // เผื่อกรณี race — ทำไปแล้ว
-      setResult({ score, total, coins: 0 });
+      setResult({ score, total, coins: 0, details });
     }
   };
 
@@ -75,9 +76,11 @@ export default function Daily() {
               <p className="text-slate-600 mb-3">กลับมาทำชุดใหม่ได้พรุ่งนี้ 🌙</p>
             )}
             <p className="text-[11px] text-slate-500 mt-4 leading-relaxed">
-              💡 ภารกิจรายวันสุ่มคำถามใหม่ทุกวัน — ทำต่อเนื่องช่วยรักษา streak 🔥
+              💡 ภารกิจรายวันสุ่มคำถามใหม่ทุกวัน — ทำต่อเนื่องช่วยรักษาสถิติเล่นต่อเนื่อง 🔥
             </p>
           </motion.div>
+
+          {result && <QuizReview details={result.details} />}
 
           <div className="grid grid-cols-2 gap-2 mt-4">
             <button onClick={() => { sfx.click(); nav('/knowledge'); }} className="btn-secondary">
@@ -121,7 +124,7 @@ export default function Daily() {
     <div className="min-h-full pb-10">
       <PageHeader title="📅 ภารกิจรายวัน" backTo="/" />
       <main className="max-w-md mx-auto px-4 pt-4">
-        <QuizRunner questions={questions} onFinish={handleFinish} finishLabel="ดูผล →" />
+        <QuizRunner questions={questions} onFinish={handleFinish} finishLabel="ดูผล →" revealMode="immediate" />
       </main>
     </div>
   );

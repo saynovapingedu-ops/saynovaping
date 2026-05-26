@@ -38,7 +38,7 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'Truth Initiative — How E-Cigarette Companies Target Youth (2022)',
       'U.S. FDA — Youth Tobacco Use Survey 2023',
     ],
-    tag: 'Hero Arc',
+    tag: 'บทพื้นฐาน',
   },
   {
     id: 2, caseNumber: 'CASE-02', stamp: '✋', evidence: '🚻',
@@ -55,7 +55,7 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'CDC — Building Refusal Skills (Tobacco Free Schools)',
       'SAMHSA — Talk. They Hear You. Campaign',
     ],
-    tag: 'Hero Arc',
+    tag: 'บทพื้นฐาน',
   },
   {
     id: 3, caseNumber: 'CASE-03', stamp: '🎂', evidence: '🍓',
@@ -72,11 +72,11 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'Motivational Interviewing — Miller & Rollnick (3rd Ed., 2013)',
       'NIDA — Adolescent Brain & Reward Systems',
     ],
-    tag: 'Hero Arc',
+    tag: 'บทพื้นฐาน',
   },
   {
     id: 4, caseNumber: 'CASE-04', stamp: '🏬', evidence: '🪪',
-    insight: 'Broken Record: พูดประโยคเดิมสงบๆ — คนตื๊อจะเลิกได้เอง',
+    insight: 'เทคนิคแผ่นเสียงตกร่อง (Broken Record): พูดประโยคเดิมสงบๆ — คนตื๊อจะเลิกได้เอง',
     lesson: 'การโต้เถียงด้วยเหตุผลใหม่ทุกครั้ง = เปิดประตูให้คนชวนหาข้อโต้ตอบใหม่ การพูดประโยคเดิมสงบๆ ส่งสัญญาณว่าไม่มีทางต่อรอง — เป็นเทคนิค assertiveness ที่ใช้ได้ในชีวิตจริง ทั้งกับเพื่อน ครอบครัว และผู้ใหญ่',
     howTo: [
       'เลือก 1 ประโยคสั้น เช่น "ไม่ครับ ผมไม่สูบ"',
@@ -89,7 +89,7 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'พ.ร.บ. ศุลกากร พ.ศ. 2560',
       'American Heart Association — Vaping Effects 2022',
     ],
-    tag: 'Hero Arc',
+    tag: 'บทพื้นฐาน',
   },
   {
     id: 5, caseNumber: 'CASE-05', stamp: '💬', evidence: '📱',
@@ -106,7 +106,7 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'สคบ. — แจ้งเบาะแสร้านผิดกฎหมาย โทร 1166',
       'Truth Initiative — Social Media Tobacco Marketing (2022)',
     ],
-    tag: 'Hero Arc',
+    tag: 'บทพื้นฐาน',
   },
   {
     id: 6, caseNumber: 'CASE-06', stamp: '🤝', evidence: '🌿',
@@ -124,7 +124,7 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'Active Listening — Carl Rogers Person-Centered Approach',
       'Thai Health Promotion Foundation — เพื่อนช่วยเพื่อน',
     ],
-    tag: 'Hero Arc',
+    tag: 'บทพื้นฐาน',
   },
   {
     id: 7, caseNumber: 'CASE-07', stamp: '⚖️', evidence: '📜',
@@ -141,15 +141,15 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'พ.ร.บ. ศุลกากร พ.ศ. 2560',
       'พ.ร.บ. คุ้มครองสุขภาพของผู้ไม่สูบบุหรี่ พ.ศ. 2560',
     ],
-    tag: 'Hero Arc',
+    tag: 'บทพื้นฐาน',
   },
   {
     id: 8, caseNumber: 'CASE-08', stamp: '🏆', evidence: '🏢',
-    insight: 'จบ Hero Arc — รับ Certificate ได้! การตลาด vape มีรูปแบบซ่อน',
+    insight: 'จบบทพื้นฐาน — รับเกียรติบัตรได้! การตลาด vape มีรูปแบบซ่อน',
     lesson: 'บริษัทบุหรี่ไฟฟ้ารู้ตั้งแต่ก่อนเริ่มขายว่านิโคตินเสพติด แต่เลือกออกแบบให้รสหวานและบรรจุภัณฑ์เด็กๆ การที่ "วัยรุ่นไทย 1 ใน 5 เคยลอง" ไม่ใช่อุบัติเหตุ มันคือผลของแผนการตลาดที่ตั้งใจ',
     howTo: [
       'รู้แล้วก็ส่งต่อให้เพื่อน — ห่วงโซ่ป้องกันเริ่มที่คุณ',
-      'ใช้ทักษะทุกด่าน: แยกข้อมูล + ปฏิเสธ + Broken Record + ช่วยเพื่อน',
+      'ใช้ทักษะทุกด่าน: แยกข้อมูล + ปฏิเสธ + แผ่นเสียงตกร่อง + ช่วยเพื่อน',
       'สมัครเป็น "นักสืบรุ่นพี่" ในโรงเรียน — สอนน้อง',
       'รายงานร้านขายให้ผู้ใหญ่/สายด่วน',
     ],
@@ -158,7 +158,7 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'TRC Thailand — Youth E-Cigarette Survey 2022',
       'WHO Framework Convention on Tobacco Control (FCTC)',
     ],
-    tag: 'Hero Arc',
+    tag: 'บทพื้นฐาน',
   },
 
   // === Master Arc (9-12) — ทักษะขั้นสูง ===
@@ -178,16 +178,16 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'สายเลิกบุหรี่แห่งชาติ 1600 (Quit Line) — โทรฟรี 24 ชม.',
       'WHO — Toolkit for Delivering Brief Interventions',
     ],
-    tag: 'Master Arc',
+    tag: 'บทขั้นสูง',
   },
   {
     id: 10, caseNumber: 'CASE-10', stamp: '🎬', evidence: '🔓',
     insight: 'TikTok ใช้ hashtag/emoji ลับ (🍃 💨 🌿) ขายของผิดกฎหมาย',
-    lesson: 'แพลตฟอร์มกำลังพยายามแบนคำว่า "vape" แต่คนขายปรับตัวเร็วกว่า — ใช้ emoji แทนคำ ใช้ slang ใหม่ๆ (เช่น "puff", "pod", "เครื่อง") การรู้เท่าทันรหัสลับ = ป้องกันตัวเองและรายงานได้',
+    lesson: 'แพลตฟอร์มกำลังพยายามแบนคำว่า "vape" แต่คนขายปรับตัวเร็วกว่า — ใช้อีโมจิแทนคำ ใช้ศัพท์แสลงใหม่ๆ (เช่น "puff", "pod", "เครื่อง") การรู้เท่าทันรหัสลับ = ป้องกันตัวเองและรายงานได้',
     howTo: [
-      'สังเกต emoji ในชื่อบัญชี: 🍃 💨 🍓 = สัญญาณ',
-      'อย่าตอบ comment ที่ขอ "DM นะ"',
-      'รายงานบัญชี: ในแอป Report → Selling Restricted Goods',
+      'สังเกตอีโมจิในชื่อบัญชี: 🍃 💨 🍓 = สัญญาณอันตราย',
+      'อย่าตอบความคิดเห็นที่ขอ "ทักแชทมา (DM)"',
+      'รายงานบัญชี: ในแอปกด Report → Selling Restricted Goods (ขายสินค้าผิดกฎหมาย)',
       'ส่ง link ให้ผู้ใหญ่ที่จัดการได้ (ครู/ตำรวจ)',
     ],
     references: [
@@ -195,7 +195,7 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'Stanford Internet Observatory — Youth Vape on Social',
       'TikTok Community Guidelines — Tobacco & Drugs',
     ],
-    tag: 'Master Arc',
+    tag: 'บทขั้นสูง',
   },
   {
     id: 11, caseNumber: 'CASE-11', stamp: '🏠', evidence: '👨‍👩‍👧',
@@ -213,7 +213,7 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'Quitline 1600 — บริการครอบครัว',
       'American Lung Association — Family Support Toolkit',
     ],
-    tag: 'Master Arc',
+    tag: 'บทขั้นสูง',
   },
   {
     id: 12, caseNumber: 'CASE-12', stamp: '🎓', evidence: '📚',
@@ -231,7 +231,7 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'UNESCO — Health Education Through Peer Networks',
       'Thai Health Promotion — โครงการรุ่นพี่ดูแลรุ่นน้อง',
     ],
-    tag: 'Master Arc',
+    tag: 'บทขั้นสูง',
   },
 
   // === Pro Arc (13-15) ===
@@ -251,7 +251,7 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'WHO Risk Stratification Framework',
       'NIDA — Adolescent Brain Development Atlas',
     ],
-    tag: 'Pro Arc',
+    tag: 'บทเชี่ยวชาญ',
   },
   {
     id: 14, caseNumber: 'CASE-14', stamp: '🤳', evidence: '👀',
@@ -269,24 +269,24 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'MIT Media Lab — Misinformation Speed Study',
       'TikTok Safety Center — How to Report',
     ],
-    tag: 'Pro Arc',
+    tag: 'บทเชี่ยวชาญ',
   },
   {
     id: 15, caseNumber: 'CASE-15', stamp: '🧩', evidence: '🗝️',
     insight: 'ภัย-เครื่องมือ-ทักษะ จับคู่กันได้ — การจำเป็นระบบ ไม่ใช่ท่อง',
     lesson: 'ความรู้แบบ "ท่อง" หายเร็ว แต่ความรู้แบบ "เชื่อมโยง" จำได้ตลอด การเชื่อมว่า "EVALI → เครื่อง vape ราคาถูก → ไม่มี QC → สารพิษเข้าปอด" ทำให้เข้าใจมากกว่าจำแค่ชื่อโรค',
     howTo: [
-      'สร้าง mind map ของเรื่อง vape — จุดศูนย์กลาง + กิ่ง',
+      'สร้างแผนผังความคิด (mind map) เรื่อง vape — จุดศูนย์กลาง + กิ่ง',
       'จับคู่ "ภัย" กับ "ทักษะที่ใช้รับมือ"',
       'อธิบายให้คนอื่นฟัง — ถ้าอธิบายได้ = เข้าใจ',
-      'ใช้ flashcard — ทบทวนทุก 1 สัปดาห์',
+      'ใช้บัตรคำ (flashcard) — ทบทวนทุก 1 สัปดาห์',
     ],
     references: [
       'Cognitive Load Theory — John Sweller (1988)',
       'Make It Stick — Brown, Roediger, McDaniel (2014)',
       'Tony Buzan — Mind Mapping for Memory',
     ],
-    tag: 'Pro Arc',
+    tag: 'บทเชี่ยวชาญ',
   },
 
   // === Expert Arc (16-20) — ระดับเชี่ยวชาญ ===
@@ -305,15 +305,15 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'Nature Neuroscience — Adolescent Nicotine Exposure (2021)',
       'U.S. Surgeon General Report 2016 — Youth Tobacco',
     ],
-    tag: 'Expert Arc',
+    tag: 'บทเจาะลึก vape',
   },
   {
     id: 17, caseNumber: 'CASE-17', stamp: '🎮', evidence: '💸',
     insight: 'ขายในเกมออนไลน์ผิดกฎหมาย — ดูดเด็กผ่านแชท Roblox/Discord',
-    lesson: 'คนขาย vape ใช้เกมเป็น "ทาง" เข้าหาวัยรุ่น เพราะผู้ปกครองไม่ค่อยดู — Discord/Roblox/Minecraft มีฟีเจอร์แชทที่ตรวจสอบยาก การ "อยู่ในเกมเดียวกัน" ทำให้รู้สึก trust แต่จริงๆ ก็คือคนแปลกหน้า',
+    lesson: 'คนขาย vape ใช้เกมเป็น "ทาง" เข้าหาวัยรุ่น เพราะผู้ปกครองไม่ค่อยดู — Discord/Roblox/Minecraft มีฟีเจอร์แชทที่ตรวจสอบยาก การ "อยู่ในเกมเดียวกัน" ทำให้รู้สึกไว้ใจ แต่จริงๆ ก็คือคนแปลกหน้า',
     howTo: [
       'อย่ารับเพื่อนแปลกหน้าใน Discord/Roblox',
-      'ตั้งค่า DM = friends only',
+      'ตั้งค่าให้ทักแชทได้เฉพาะเพื่อนเท่านั้น (DM = friends only)',
       'ถ้ามีคนชวนคุย "นอกเกม" (Line, IG) = สัญญาณอันตราย',
       'รายงานผ่าน Roblox Report / Discord Report ภายในเกม',
       'บอกพ่อแม่ทันที — ไม่ใช่ความผิดของน้อง',
@@ -323,7 +323,7 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'พ.ร.บ. คอมพิวเตอร์ มาตรา 14 (เผยแพร่ข้อมูลผิดกฎหมาย)',
       'Common Sense Media — Discord Safety Guide',
     ],
-    tag: 'Expert Arc',
+    tag: 'บทเจาะลึก vape',
   },
   {
     id: 18, caseNumber: 'CASE-18', stamp: '💬', evidence: '🏠',
@@ -341,7 +341,7 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'Quitline 1600 — บริการครอบครัว (ฟรี 24 ชม.)',
       'American Lung Association — Family Recovery Guide',
     ],
-    tag: 'Expert Arc',
+    tag: 'บทเจาะลึก vape',
   },
   {
     id: 19, caseNumber: 'CASE-19', stamp: '🫁', evidence: '🏥',
@@ -359,7 +359,7 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'NEJM — Pulmonary Illness Related to E-Cigarette Use (2019)',
       'กรมการแพทย์ กระทรวงสาธารณสุข — รายงานเคส EVALI ไทย',
     ],
-    tag: 'Expert Arc',
+    tag: 'บทเจาะลึก vape',
   },
   {
     id: 20, caseNumber: 'CASE-20', stamp: '🌟', evidence: '🎓',
@@ -379,7 +379,7 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
       'สสส. — โรงเรียนปลอดบุหรี่ คู่มือนักเรียนแกนนำ (2023)',
       'Quitline 1600 — เครือข่ายผู้ช่วยเลิกแห่งชาติ',
     ],
-    tag: 'Expert Arc',
+    tag: 'บทเจาะลึก vape',
   },
 ];
 

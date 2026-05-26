@@ -4,7 +4,7 @@ import type { Scenario } from '../types';
 export const scenario19: Scenario = {
   id: 19,
   title: 'EVALI ฉุกเฉิน',
-  subtitle: 'Expert 4 — ปอดอักเสบจากบุหรี่ไฟฟ้า',
+  subtitle: 'บทเจาะลึก 4 — ปอดอักเสบจากบุหรี่ไฟฟ้า',
   estMinutes: 8,
   startNode: 'd1',
   intro: [

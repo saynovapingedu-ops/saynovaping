@@ -4,7 +4,7 @@ import type { Scenario } from '../types';
 export const scenario20: Scenario = {
   id: 20,
   title: 'สูตรเลิก 4D ส่งต่อทีม',
-  subtitle: 'Expert Final — รวมพลังป้องกันในโรงเรียน',
+  subtitle: 'บทเจาะลึก รวบยอด — รวมพลังป้องกันในโรงเรียน',
   estMinutes: 9,
   startNode: 'd1',
   intro: [

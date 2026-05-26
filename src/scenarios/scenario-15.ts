@@ -4,7 +4,7 @@ import type { Scenario } from '../types';
 export const scenario15: Scenario = {
   id: 15,
   title: 'บันทึกนักสืบรุ่นเก่า',
-  subtitle: 'Pro 3 — เชื่อมพฤติกรรมกับผล',
+  subtitle: 'เชี่ยวชาญ 3 — เชื่อมพฤติกรรมกับผล',
   estMinutes: 7,
   startNode: 'd1',
   intro: [

@@ -231,7 +231,7 @@ export const scenario08: Scenario = {
     },
     {
       type: 'end', id: 'end1',
-      title: '🏆 จบเกม! Health Legend',
+      title: '🏆 จบเกม! ตำนานสุขภาพ',
       message: 'คุณเป็นนักสืบสุขภาพระดับตำนาน — ปกป้องลมหายใจของเพื่อนรุ่นต่อไปได้แล้ว!',
       xp: 200,
       badge: 'health-legend',

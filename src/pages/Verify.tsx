@@ -26,13 +26,13 @@ export default function Verify() {
 
   return (
     <div className="min-h-full bg-detective-50 pb-8">
-      <PageHeader title="🔍 ยืนยัน Certificate" backTo="/" />
+      <PageHeader title="🔍 ยืนยันเกียรติบัตร" backTo="/" />
 
       <main className="max-w-md md:max-w-xl mx-auto p-4 space-y-4">
         <div className="card">
           <h3 className="font-semibold text-detective-700 mb-2">ตรวจสอบใบประกาศนียบัตร</h3>
           <p className="text-sm text-gray-600 mb-3">
-            ใส่รหัสยืนยัน 6 หลักจาก Certificate (หรือสแกน QR Code)
+            ใส่รหัสยืนยัน 6 หลักจากเกียรติบัตร (หรือสแกน QR Code)
           </p>
           <input
             value={code}
@@ -62,17 +62,17 @@ export default function Verify() {
                   <p><b>ด่านที่จบ:</b> {result.stagesCount}/8</p>
                 </div>
                 <p className="text-xs text-gray-500 mt-4">
-                  Certificate นี้ออกโดย SayNo:สู้บุหรี่ไฟฟ้า
+                  เกียรติบัตรนี้ออกโดย SayNo:สู้บุหรี่ไฟฟ้า
                 </p>
               </div>
             ) : (
               <div className="card border-2 border-danger-500 bg-danger-50">
                 <div className="flex items-center gap-2">
                   <span className="text-3xl">❌</span>
-                  <p className="font-bold text-danger-500 text-lg">ไม่พบ Certificate</p>
+                  <p className="font-bold text-danger-500 text-lg">ไม่พบเกียรติบัตร</p>
                 </div>
                 <p className="text-sm text-gray-600 mt-2">
-                  รหัสยืนยันไม่ถูกต้อง หรือ Certificate นี้ไม่ได้ออกโดยระบบของเรา
+                  รหัสยืนยันไม่ถูกต้อง หรือเกียรติบัตรนี้ไม่ได้ออกโดยระบบของเรา
                 </p>
               </div>
             )}

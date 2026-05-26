@@ -128,7 +128,7 @@ export default function Profile() {
 
         {/* === Stat row — การ์ดขาวล้วน ขอบเทาอ่อน เลขเป็นสีม่วงเดียว === */}
         <div className="grid grid-cols-3 gap-2">
-          <StatCard label="Level" value={String(lv.level)} icon={lv.emoji} />
+          <StatCard label="เลเวล" value={String(lv.level)} icon={lv.emoji} />
           <StatCard label="ด่านที่จบ" value={`${player.stagesCompleted.length}/${TOTAL_STAGES}`} icon="🏁" />
           <StatCard label="แบดจ์" value={`${earned.size}/${BADGES.length}`} icon="🎖" />
         </div>
@@ -197,7 +197,7 @@ export default function Profile() {
                        bg-gradient-to-r from-warning-500 to-warning-600
                        flex items-center justify-center gap-2 transition-transform"
           >
-            <span>🏆</span> ดู Certificate
+            <span>🏆</span> ดูเกียรติบัตร
           </button>
         )}
 

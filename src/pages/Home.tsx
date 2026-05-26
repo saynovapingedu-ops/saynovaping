@@ -21,8 +21,8 @@ interface IntroSection {
 const INTRO_SECTIONS: IntroSection[] = [
   { emoji: '🎯', title: 'เกี่ยวกับอะไร?', body: 'รู้ทันภัย "บุหรี่ไฟฟ้า" ฝึกทักษะปฏิเสธ จับเท็จโฆษณา' },
   { emoji: '🕹️', title: 'เล่นยังไง?',  body: 'อ่านเหตุการณ์ → เลือกคำตอบ → เล่นมินิเกมสนุกๆ' },
-  { emoji: '🏆', title: 'ได้อะไร?',    body: 'เก็บ XP & เหรียญ ซื้อของแต่ง เปิดแฟ้มคดี รับ Certificate' },
-  { emoji: '⏱️', title: 'นานแค่ไหน?',   body: 'ด่านละ 5-8 นาที เล่นทีละด่านสบายๆ มี save' },
+  { emoji: '🏆', title: 'ได้อะไร?',    body: 'เก็บคะแนน (XP) และเหรียญ ซื้อของแต่ง เปิดแฟ้มคดี รับเกียรติบัตร' },
+  { emoji: '⏱️', title: 'นานแค่ไหน?',   body: 'ด่านละ 5-8 นาที เล่นทีละด่านสบายๆ ระบบบันทึกความคืบหน้าให้อัตโนมัติ' },
 ];
 
 export default function Home() {
@@ -158,7 +158,7 @@ export default function Home() {
                 </h2>
                 {(player.streakDays || 0) > 0 && (
                   <p className="text-white/85 text-[11px] flex items-center gap-1">
-                    🔥 streak {player.streakDays} วัน
+                    🔥 เล่นต่อเนื่อง {player.streakDays} วัน
                   </p>
                 )}
               </div>
@@ -217,7 +217,7 @@ export default function Home() {
           <div className="card relative overflow-hidden mb-4 border border-warning-300
                           bg-warning-50">
             <div className="absolute -top-3 -right-3 text-6xl opacity-15">🏆</div>
-            <p className="text-warning-700 font-bold mb-2 relative">🏆 พร้อมรับ Certificate แล้ว!</p>
+            <p className="text-warning-700 font-bold mb-2 relative">🏆 พร้อมรับเกียรติบัตรแล้ว!</p>
             <button onClick={() => nav('/certificate')} className="btn-sunny w-full">
               รับใบประกาศนียบัตร ✨
             </button>
@@ -226,10 +226,10 @@ export default function Home() {
 
         {player.certificateNo && (
           <div className="card mb-4 border border-success-300 bg-success-50">
-            <p className="text-success-700 font-bold mb-1">🏆 Certificate ของคุณ</p>
+            <p className="text-success-700 font-bold mb-1">🏆 เกียรติบัตรของคุณ</p>
             <p className="text-sm text-slate-600 mb-2">เลขที่ {player.certificateNo}</p>
             <button onClick={() => nav('/certificate')} className="btn-secondary w-full">
-              ดู Certificate
+              ดูเกียรติบัตร
             </button>
           </div>
         )}
@@ -245,11 +245,11 @@ export default function Home() {
             <div className="flex-1 text-left min-w-0">
               <p className="font-bold text-detective-700 text-sm">ภารกิจรายวัน</p>
               <p className="text-[11px] text-slate-500">
-                {dailyDone ? '✓ วันนี้ทำแล้ว — กลับมาพรุ่งนี้' : 'ควิซ 5 ข้อ รับเหรียญ + รักษา streak'}
+                {dailyDone ? '✓ วันนี้ทำแล้ว — กลับมาพรุ่งนี้' : 'ควิซ 5 ข้อ รับเหรียญ + รักษาสถิติเล่นต่อเนื่อง'}
               </p>
             </div>
             {!dailyDone
-              ? <span className="pill bg-detective-100 text-detective-600 flex-shrink-0">NEW</span>
+              ? <span className="pill bg-detective-100 text-detective-600 flex-shrink-0">ใหม่</span>
               : <span className="text-success-500 flex-shrink-0">✓</span>}
           </button>
 

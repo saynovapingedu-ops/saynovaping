@@ -21,7 +21,7 @@ export const BADGES: Badge[] = [
   { id: 'stage-2-clear',    name: 'ผ่านด่าน 2',      description: 'จบด่านห้องน้ำ',         category: 'progress', emoji: '②' },
   { id: 'stage-3-clear',    name: 'ผ่านด่าน 3',      description: 'จบด่านปาร์ตี้',         category: 'progress', emoji: '③' },
   { id: 'stage-4-clear',    name: 'ผ่านด่าน 4',      description: 'จบด่านห้าง',           category: 'progress', emoji: '④' },
-  { id: 'health-legend',    name: 'Health Legend',  description: 'จบเกมและได้ certificate', category: 'progress', emoji: '🏆' },
+  { id: 'health-legend',    name: 'ตำนานสุขภาพ',     description: 'จบเกมและได้รับเกียรติบัตร', category: 'progress', emoji: '🏆' },
   { id: 'streak-7',         name: 'ต่อเนื่อง 7 วัน',  description: 'เล่นต่อกันครบสัปดาห์',   category: 'progress', emoji: '🔥' },
   // ===== Expert Arc clears (ด่าน 16-20) =====
   { id: 'expert-1-clear',     name: 'เข้าใจสมอง',      description: 'รู้กลไกนิโคติน-dopamine ในสมองวัยรุ่น', category: 'progress', emoji: '🧠' },

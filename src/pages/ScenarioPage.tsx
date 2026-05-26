@@ -569,9 +569,9 @@ export default function ScenarioPage() {
                           className="flex-shrink-0 bg-warning-100 text-warning-700 text-[11px]
                                      font-bold px-2 py-1 rounded-lg border border-warning-300
                                      active:scale-95 hover:bg-warning-200"
-                          title={`ใช้ Hint Token (เหลือ ${hintTokens})`}
+                          title={`ใช้บัตรใบ้คำตอบ (เหลือ ${hintTokens})`}
                         >
-                          💡 Hint × {hintTokens}
+                          💡 บัตรใบ้ × {hintTokens}
                         </button>
                       )}
                     </div>

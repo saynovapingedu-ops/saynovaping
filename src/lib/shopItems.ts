@@ -49,8 +49,8 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'title-rookie',     category: 'title', name: 'นักสืบมือใหม่', description: 'ตำแหน่งเริ่มต้น',     price: 30,  emoji: '🌱', titleText: 'นักสืบมือใหม่' },
   { id: 'title-investigator', category: 'title', name: 'นักสืบฝึกหัด', description: 'มีประสบการณ์ 3+ ด่าน', price: 80,  emoji: '🔎', titleText: 'นักสืบฝึกหัด',  unlockAfterStage: 3 },
   { id: 'title-detective',  category: 'title', name: 'นักสืบเต็มตัว',  description: 'มากด้วยประสบการณ์',      price: 200, emoji: '🕵️', titleText: 'นักสืบเต็มตัว', unlockAfterStage: 6 },
-  { id: 'title-legend',     category: 'title', name: 'ตำนานนักสืบ',   description: 'จบเกมและรับ Cert',         price: 500, emoji: '🏆', titleText: 'ตำนานนักสืบ',  unlockAfterStage: 8 },
-  { id: 'title-sensei',     category: 'title', name: 'อาจารย์นักสืบ',  description: 'ครูของนักสืบรุ่นใหม่',     price: 1000,emoji: '🎓', titleText: 'Sensei',         unlockAfterStage: 12 },
+  { id: 'title-legend',     category: 'title', name: 'ตำนานนักสืบ',   description: 'จบเกมและรับเกียรติบัตร',  price: 500, emoji: '🏆', titleText: 'ตำนานนักสืบ',  unlockAfterStage: 8 },
+  { id: 'title-sensei',     category: 'title', name: 'อาจารย์นักสืบ',  description: 'ครูของนักสืบรุ่นใหม่',     price: 1000,emoji: '🎓', titleText: 'อาจารย์นักสืบ',   unlockAfterStage: 12 },
 
   // ===== Frames (กรอบ avatar) =====
   { id: 'frame-bronze',  category: 'frame', name: 'กรอบทองแดง',  description: 'กรอบเริ่มต้นน่ารัก',  price: 50,  emoji: '🟫',
@@ -65,15 +65,15 @@ export const SHOP_ITEMS: ShopItem[] = [
     frameClass: 'ring-4 ring-detective-500 ring-offset-2 shadow-glow-lg', unlockAfterStage: 12 },
 
   // ===== Theme accents — เปลี่ยนสี Confetti ตอนเล่นจบด่าน =====
-  { id: 'theme-default',  category: 'theme', name: 'TMF Blue',  description: 'ชุดสีหลัก (default)',  price: 0,   emoji: '🟦',
+  { id: 'theme-default',  category: 'theme', name: 'น้ำเงินมาตรฐาน',  description: 'ชุดสีหลัก (เริ่มต้น)', price: 0,   emoji: '🟦',
     themeColors: ['#008FFF', '#0072CC', '#ABDAFF', '#2BCAAB', '#F59E0B', '#FBBF24'] },
-  { id: 'theme-pastel',   category: 'theme', name: 'Pastel หวาน', description: 'สีพาสเทลฟุ้งๆ',     price: 60,  emoji: '🎀',
+  { id: 'theme-pastel',   category: 'theme', name: 'พาสเทลหวาน',       description: 'โทนสีพาสเทลฟุ้งๆ',  price: 60,  emoji: '🎀',
     themeColors: ['#FFD9EB', '#FF7AB6', '#FEF3C7', '#FBBF24', '#CFFAFE', '#A78BFA'] },
-  { id: 'theme-neon',     category: 'theme', name: 'Neon สด',     description: 'สีนีออนสะดุดตา',     price: 120, emoji: '💫', unlockAfterStage: 4,
+  { id: 'theme-neon',     category: 'theme', name: 'นีออนสด',          description: 'สีนีออนสะดุดตา',     price: 120, emoji: '💫', unlockAfterStage: 4,
     themeColors: ['#FF00FF', '#00FFFF', '#FFFF00', '#FF00AA', '#00FF88', '#AA00FF'] },
-  { id: 'theme-forest',   category: 'theme', name: 'Forest เขียว', description: 'โทนเขียวธรรมชาติ',   price: 180, emoji: '🌿', unlockAfterStage: 6,
+  { id: 'theme-forest',   category: 'theme', name: 'เขียวธรรมชาติ',     description: 'โทนเขียวสบายตา',     price: 180, emoji: '🌿', unlockAfterStage: 6,
     themeColors: ['#10B981', '#34D399', '#06B6D4', '#22D3EE', '#FBBF24', '#F59E0B'] },
-  { id: 'theme-sunset',   category: 'theme', name: 'Sunset อบอุ่น', description: 'ส้ม-แดง-ม่วงพระอาทิตย์ตก', price: 250, emoji: '🌅', unlockAfterStage: 8,
+  { id: 'theme-sunset',   category: 'theme', name: 'พระอาทิตย์ตก',     description: 'ส้ม-แดง-ม่วงพระอาทิตย์ตก', price: 250, emoji: '🌅', unlockAfterStage: 8,
     themeColors: ['#F59E0B', '#EF4444', '#EC4899', '#A78BFA', '#FBBF24', '#FB7185'] },
 
   // ===== Accessories — overlay บน avatar (ของแต่งหน้าตา)
@@ -134,13 +134,13 @@ export const SHOP_ITEMS: ShopItem[] = [
     certDeco: { borderClass: 'border-4 border-mint-500', corner: '🌿' } },
 
   // ===== Boosters — ของใช้ในเกม (consumable, ซื้อซ้ำได้) =====
-  { id: 'boost-hint',    category: 'booster', name: 'Hint Token',     description: 'ดูเฉลยข้อที่ตอบยาก 1 ครั้ง — ใช้ในด่าน',
+  { id: 'boost-hint',    category: 'booster', name: 'บัตรใบ้คำตอบ',        description: 'ดูใบ้ข้อที่ตอบยาก 1 ครั้ง — ใช้ในด่าน',
     price: 40,  emoji: '💡', booster: { effect: 'hint-token', uses: 1 } },
-  { id: 'boost-hint-3',  category: 'booster', name: 'Hint Pack ×3',    description: 'แพ็คคุ้ม 3 ครั้ง — ประหยัดกว่า 10%',
+  { id: 'boost-hint-3',  category: 'booster', name: 'บัตรใบ้คำตอบ ×3',      description: 'แพ็คคุ้ม 3 ครั้ง — ประหยัดกว่า 10%',
     price: 108, emoji: '🎁', booster: { effect: 'hint-token', uses: 3 } },
-  { id: 'boost-coin-x2', category: 'booster', name: 'Coin x2 (3 ด่าน)', description: 'เหรียญที่ได้ x2 ใน 3 ด่านถัดไป',
+  { id: 'boost-coin-x2', category: 'booster', name: 'เหรียญ ×2 (3 ด่าน)',    description: 'เหรียญที่ได้คูณ 2 ใน 3 ด่านถัดไป',
     price: 100, emoji: '💰', unlockAfterStage: 2, booster: { effect: 'coin-x2', uses: 3 } },
-  { id: 'boost-shield',  category: 'booster', name: 'Streak Shield',  description: 'กันสตรีค (🔥) ขาด 1 วัน ถ้าลืมเข้ามาเล่น',
+  { id: 'boost-shield',  category: 'booster', name: 'โล่กันต่อเนื่องขาด',   description: 'กันสถิติเล่นต่อเนื่อง (🔥) ขาด 1 วัน ถ้าลืมเข้ามาเล่น',
     price: 80,  emoji: '🛡️', unlockAfterStage: 1, booster: { effect: 'streak-shield', uses: 1 } },
 ];
 

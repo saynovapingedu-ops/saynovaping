@@ -4,7 +4,7 @@ import type { Scenario } from '../types';
 export const scenario12: Scenario = {
   id: 12,
   title: 'นักสืบระดับครู',
-  subtitle: 'Master Final — ส่งต่อทักษะให้นักสืบรุ่นน้อง',
+  subtitle: 'ขั้นสูง รวบยอด — ส่งต่อทักษะให้นักสืบรุ่นน้อง',
   estMinutes: 10,
   startNode: 'd1',
   intro: [
@@ -196,7 +196,7 @@ export const scenario12: Scenario = {
     {
       type: 'end', id: 'end1',
       title: '🎓✨ ตำนานนักสืบสุขภาพ',
-      message: 'คุณคือ Sensei แล้ว — ห่วงโซ่ปกป้องเริ่มต้นจากคุณ และจะดำเนินต่อไปอีกหลายรุ่น',
+      message: 'คุณคืออาจารย์นักสืบแล้ว — ห่วงโซ่ปกป้องเริ่มต้นจากคุณ และจะดำเนินต่อไปอีกหลายรุ่น',
       xp: 250,
       badge: 'sensei',
     },

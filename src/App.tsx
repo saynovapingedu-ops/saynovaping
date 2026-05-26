@@ -1,7 +1,7 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { initLiff, getUserIdHash } from './lib/liff';
-import { flushQueue } from './lib/cloudSync';
+import { initLiff, getUserIdHash, isMockMode } from './lib/liff';
+import { flushQueue, restoreProgress } from './lib/cloudSync';
 import { startBgm } from './lib/bgm';
 import { usePlayerStore } from './store/playerStore';
 import { useSettingsStore } from './store/settingsStore';
@@ -100,6 +100,60 @@ export default function App() {
         await initLiff();
         const hash = await getUserIdHash();
         setUserHash(hash);
+
+        // กู้ progress จาก backend ถ้าเครื่องนี้ยังไม่มีข้อมูล (เปลี่ยนเครื่อง/ล้างแคช)
+        // — เรียกเฉพาะกรณี player ยังไม่ได้ onboard ในเครื่องนี้ เพื่อกัน overwrite ข้อมูล local
+        const st = usePlayerStore.getState();
+        if (!st.isInitialized && !st.nickname) {
+          try {
+            const r = await restoreProgress(hash);
+            if (r.ok && r.found && r.player) {
+              const p = r.player;
+              // ไม่ใช้ initProfile เพราะจะ trigger sync กลับทันที — set ตรงๆ ผ่าน setState
+              usePlayerStore.setState({
+                nickname: p.nickname,
+                grade: p.grade,
+                school: p.school,
+                avatar: p.avatar ?? 1,
+                totalXP: p.totalXP,
+                level: p.level,
+                stagesCompleted: p.stagesCompleted || [],
+                badges: p.badges || [],
+                coins: p.coins ?? 0,
+                ownedItems: p.ownedItems || [],
+                equippedTitle: p.equippedTitle,
+                equippedFrame: p.equippedFrame,
+                equippedTheme: p.equippedTheme,
+                equippedAccessory: p.equippedAccessory,
+                equippedBackdrop: p.equippedBackdrop,
+                equippedCertDeco: p.equippedCertDeco,
+                hintTokens: p.hintTokens,
+                coinX2Remaining: p.coinX2Remaining,
+                streakShields: p.streakShields,
+                streakDays: p.streakDays,
+                lastPlayDate: p.lastPlayDate,
+                lastDailyDate: p.lastDailyDate,
+                dailyDoneCount: p.dailyDoneCount,
+                dailyBestScore: p.dailyBestScore,
+                examBestScore: p.examBestScore,
+                examBonusClaimed: p.examBonusClaimed,
+                preTestScore: p.preTestScore,
+                postTestScore: p.postTestScore,
+                preTestAt: p.preTestAt,
+                postTestAt: p.postTestAt,
+                certificateNo: p.certificateNo || undefined,
+                certificateIssuedAt: p.certificateIssuedAt || undefined,
+                createdAt: p.createdAt || new Date().toISOString(),
+                lastActiveAt: new Date().toISOString(),
+                isInitialized: true,
+              });
+              console.info('[App] restored progress from backend');
+            }
+          } catch (e) {
+            console.warn('[App] restore failed (silent):', e);
+          }
+        }
+
         flushQueue().catch(() => { /* silent */ });
         const target = sessionStorage.getItem('hd_liff_target');
         if (target && target !== '/') {
@@ -150,6 +204,15 @@ export default function App() {
         </Routes>
       </Suspense>
       <Toaster />
+      {/* แบนเนอร์เตือน: production แต่ยังรัน mock mode = ข้อมูลไม่ผูกบัญชี LINE (config ผิด) */}
+      {isMockMode() && import.meta.env.PROD && (
+        <div className="fixed bottom-2 inset-x-0 z-[60] flex justify-center px-3 pointer-events-none">
+          <div className="pointer-events-auto bg-warning-500 text-white text-[11px] font-bold
+                          px-3 py-1.5 rounded-full shadow-glow text-center max-w-md">
+            ⚠️ โหมดทดสอบ (mock) — ข้อมูลจะไม่ผูกกับบัญชี LINE
+          </div>
+        </div>
+      )}
     </>
   );
 }

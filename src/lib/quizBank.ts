@@ -15,6 +15,18 @@ export interface QuizQuestion {
   topic: string;            // หมวดหมู่ เช่น 'นิโคติน','กฎหมาย','EVALI'
 }
 
+/** ผลตอบรายข้อ — choices/index อยู่ในลำดับที่ "สลับแล้ว" ตรงกับที่ผู้เล่นเห็น */
+export interface QuizResultItem {
+  id: string;
+  question: string;
+  choices: string[];        // ลำดับที่แสดง (สลับแล้ว)
+  correctIndex: number;     // index ใน choices ที่สลับแล้ว
+  pickedIndex: number;      // index ที่ผู้เล่นเลือก; -1 ถ้าไม่ได้ตอบ
+  explain: string;
+  source: string;
+  topic: string;
+}
+
 export const QUIZ_BANK: QuizQuestion[] = [
   // ===== Hero topics (ระดับเริ่มต้น) =====
   {

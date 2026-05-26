@@ -111,10 +111,10 @@ export default function Stats() {
           <StatBox emoji="🏁" label="ด่านที่ผ่าน" value={`${player.stagesCompleted.length}/${SCENARIO_META.length}`} />
           <StatBox emoji="🪙" label="เหรียญ" value={String(player.coins || 0)} />
           <StatBox emoji="🎖" label="แบดจ์" value={`${player.badges.length}/${BADGES.length}`} />
-          <StatBox emoji="🦸" label="Hero Arc" value={`${heroDone}/8`} />
-          <StatBox emoji="🎓" label="Master Arc" value={`${masterDone}/4`} />
-          <StatBox emoji="🎯" label="Pro Arc" value={`${proDone}/3`} />
-          <StatBox emoji="🔬" label="Expert Arc" value={`${expertDone}/5`} />
+          <StatBox emoji="🦸" label="บทพื้นฐาน" value={`${heroDone}/8`} />
+          <StatBox emoji="🎓" label="บทขั้นสูง" value={`${masterDone}/4`} />
+          <StatBox emoji="🎯" label="บทเชี่ยวชาญ" value={`${proDone}/3`} />
+          <StatBox emoji="🔬" label="บทเจาะลึก" value={`${expertDone}/5`} />
         </div>
 
         {(player.streakDays || 0) > 0 && (

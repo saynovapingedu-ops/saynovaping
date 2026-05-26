@@ -4,7 +4,7 @@ import type { Scenario } from '../types';
 export const scenario10: Scenario = {
   id: 10,
   title: 'รหัสลับใน TikTok',
-  subtitle: 'Master 2 — รู้เท่าทันโฆษณาแฝงในโซเชียล',
+  subtitle: 'ขั้นสูง 2 — รู้เท่าทันโฆษณาแฝงในโซเชียล',
   estMinutes: 7,
   startNode: 'd1',
   intro: [

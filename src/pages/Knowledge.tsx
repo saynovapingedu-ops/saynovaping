@@ -342,7 +342,7 @@ export default function Knowledge() {
             >
               <div className="card-hero">
                 <p className="text-xs text-slate-700 mb-2.5 text-center">
-                  มีคนชวนสูบ vape? ทำตาม 4 ขั้น
+                  มีคนชวนสูบบุหรี่ไฟฟ้า? ทำตาม 4 ขั้น
                 </p>
                 <div className="space-y-2">
                   {REJECT_TIPS.map((t, i) => (

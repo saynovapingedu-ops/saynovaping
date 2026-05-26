@@ -295,19 +295,43 @@ export const usePlayerStore = create<PlayerState>()(
       syncIfReady: (() => {
         let timer: ReturnType<typeof setTimeout> | null = null;
         return () => {
-          const s = usePlayerStore.getState();
-          if (!s.userIdHash || !s.nickname) return;
+          // debounce: ดึง snapshot ตอน flush (ไม่ใช่ตอน schedule) — จะได้ค่าล่าสุดเสมอ
           if (timer) clearTimeout(timer);
           timer = setTimeout(() => {
+            const s = usePlayerStore.getState();
+            if (!s.userIdHash || !s.nickname) return;
             syncProgress({
               userIdHash: s.userIdHash,
               nickname: s.nickname,
               grade: s.grade,
               school: s.school,
+              avatar: s.avatar,
               totalXP: s.totalXP,
               level: s.level,
               stagesCompleted: s.stagesCompleted,
               badges: s.badges,
+              coins: s.coins,
+              ownedItems: s.ownedItems,
+              equippedTitle: s.equippedTitle,
+              equippedFrame: s.equippedFrame,
+              equippedTheme: s.equippedTheme,
+              equippedAccessory: s.equippedAccessory,
+              equippedBackdrop: s.equippedBackdrop,
+              equippedCertDeco: s.equippedCertDeco,
+              hintTokens: s.hintTokens,
+              coinX2Remaining: s.coinX2Remaining,
+              streakShields: s.streakShields,
+              streakDays: s.streakDays,
+              lastPlayDate: s.lastPlayDate,
+              lastDailyDate: s.lastDailyDate,
+              dailyDoneCount: s.dailyDoneCount,
+              dailyBestScore: s.dailyBestScore,
+              examBestScore: s.examBestScore,
+              examBonusClaimed: s.examBonusClaimed,
+              preTestScore: s.preTestScore,
+              postTestScore: s.postTestScore,
+              preTestAt: s.preTestAt,
+              postTestAt: s.postTestAt,
             }).catch(() => { /* silent */ });
           }, 800);
         };
@@ -315,6 +339,10 @@ export const usePlayerStore = create<PlayerState>()(
     }),
     {
       name: 'hd_player',
+      // เวอร์ชัน schema ของ save — เพิ่มเลขนี้เมื่อแก้โครงสร้าง store แล้วเขียน migrate ให้รองรับ
+      // ของเดิม (ไม่มี version) ถือเป็น v0 schema เดียวกัน → migrate คืนค่าเดิม ไม่ทำให้ข้อมูลนักเรียนหาย
+      version: 1,
+      migrate: (persisted) => persisted as PlayerState,
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({
         userIdHash: s.userIdHash,

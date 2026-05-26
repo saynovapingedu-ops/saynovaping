@@ -71,7 +71,7 @@ export default function Journal() {
     hero:   { name: 'บทที่ 1: เส้นทางนักสืบ', subtitle: 'ด่าน 1-8 · เส้นทางนักสืบ',  emoji: '🦸' },
     master: { name: 'บทที่ 2: ขั้นสูง',        subtitle: 'ด่าน 9-12 · ขั้นสูง',        emoji: '🎓' },
     pro:    { name: 'บทที่ 3: เกมเพลย์ใหม่',   subtitle: 'ด่าน 13-15 · เกมเพลย์ใหม่',  emoji: '🎯' },
-    expert: { name: 'บทที่ 4: เชี่ยวชาญ vape', subtitle: 'ด่าน 16-20 · เชี่ยวชาญ vape', emoji: '🔬' },
+    expert: { name: 'บทที่ 4: เชี่ยวชาญบุหรี่ไฟฟ้า', subtitle: 'ด่าน 16-20 · เชี่ยวชาญบุหรี่ไฟฟ้า', emoji: '🔬' },
   };
 
   // หาบทที่กำลังเล่นอยู่ = แฟ้มแรกที่ปลดล็อกแต่ยังไม่ปิดคดี → เปิดบทนั้นไว้
@@ -241,12 +241,12 @@ function CaseCard({
         {c.meta.subtitle || '—'}
       </p>
 
-      {/* CLEARED diagonal stamp overlay */}
+      {/* ตราประทับ "ปิดคดี" แสดงเมื่อจบด่านแล้ว */}
       {cleared && (
         <span className="absolute bottom-2 right-2 text-[9px] font-extrabold text-success-600
                          border-2 border-success-500 rounded px-1 py-0.5 -rotate-12 opacity-80
                          pointer-events-none">
-          CLEARED
+          ปิดคดี
         </span>
       )}
     </motion.button>

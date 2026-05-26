@@ -42,20 +42,20 @@ export const SCENARIO_META: ScenarioMeta[] = [
   { id: 7,  arc: 'hero',   title: 'คุณลุงที่ร้านสะดวกซื้อ', subtitle: 'รู้กฎหมาย — เติมคำ + จับคู่', estMinutes: 6, available: true,  unlockAfter: 6 },
   { id: 8,  arc: 'hero',   title: 'บุก Vapor Corp (ด่านบอสใหญ่)', subtitle: 'รวมทุกทักษะ 5 ช่วง',   estMinutes: 12, available: true,  unlockAfter: 7 },
   // === Master Arc (9-12) ===
-  { id: 9,  arc: 'master', title: 'เพื่อนเริ่มติดแล้ว',      subtitle: 'Master 1 — สูตร 5A ช่วยเลิก',  estMinutes: 8,  available: true, unlockAfter: 8 },
-  { id: 10, arc: 'master', title: 'รหัสลับใน TikTok',     subtitle: 'Master 2 — รู้เท่าทันสื่อ',     estMinutes: 7,  available: true, unlockAfter: 9 },
-  { id: 11, arc: 'master', title: 'พี่ในครอบครัวสูบ',      subtitle: 'Master 3 — รับมือคนในบ้าน',   estMinutes: 7,  available: true, unlockAfter: 10 },
-  { id: 12, arc: 'master', title: 'นักสืบระดับครู',         subtitle: 'Master Final — ส่งต่อรุ่นน้อง', estMinutes: 10, available: true, unlockAfter: 11 },
-  // === Pro Arc (13-15) — ทักษะเสริม + เกมเพลย์รูปแบบใหม่ ===
-  { id: 13, arc: 'pro', title: 'ฉลาดเสี่ยง',             subtitle: 'Pro 1 — จัดอันดับความเสี่ยง',   estMinutes: 7, available: true, unlockAfter: 12 },
-  { id: 14, arc: 'pro', title: 'TikTok ขุดความจริง',     subtitle: 'Pro 2 — ปัดจริง/เท็จแบบเร็ว',   estMinutes: 6, available: true, unlockAfter: 13 },
-  { id: 15, arc: 'pro', title: 'บันทึกนักสืบรุ่นเก่า',     subtitle: 'Pro 3 — จับคู่ความจำ',         estMinutes: 7, available: true, unlockAfter: 14 },
-  // === Expert Arc (16-20) — ระดับเชี่ยวชาญเฉพาะเรื่องบุหรี่ไฟฟ้า ===
-  { id: 16, arc: 'expert', title: 'นิโคตินกับสมองวัยรุ่น',   subtitle: 'Expert 1 — เข้าใจกลไก dopamine', estMinutes: 7, available: true, unlockAfter: 15 },
-  { id: 17, arc: 'expert', title: 'แชทแปลกใน Discord',     subtitle: 'Expert 2 — รับมือคนขายในเกม',     estMinutes: 6, available: true, unlockAfter: 16 },
-  { id: 18, arc: 'expert', title: 'พ่อแม่จับได้',            subtitle: 'Expert 3 — สื่อสารกับครอบครัว',    estMinutes: 7, available: true, unlockAfter: 17 },
-  { id: 19, arc: 'expert', title: 'EVALI ฉุกเฉิน',           subtitle: 'Expert 4 — ปอดอักเสบจากบุหรี่ไฟฟ้า', estMinutes: 8, available: true, unlockAfter: 18 },
-  { id: 20, arc: 'expert', title: 'สูตรเลิก 4D ส่งต่อทีม',    subtitle: 'Expert Final — รวมพลังป้องกัน',     estMinutes: 9, available: true, unlockAfter: 19 },
+  { id: 9,  arc: 'master', title: 'เพื่อนเริ่มติดแล้ว',      subtitle: 'ขั้นสูง 1 — สูตร 5A ช่วยเลิก',     estMinutes: 8,  available: true, unlockAfter: 8 },
+  { id: 10, arc: 'master', title: 'รหัสลับใน TikTok',     subtitle: 'ขั้นสูง 2 — รู้เท่าทันสื่อ',          estMinutes: 7,  available: true, unlockAfter: 9 },
+  { id: 11, arc: 'master', title: 'พี่ในครอบครัวสูบ',      subtitle: 'ขั้นสูง 3 — รับมือคนในบ้าน',        estMinutes: 7,  available: true, unlockAfter: 10 },
+  { id: 12, arc: 'master', title: 'นักสืบระดับครู',         subtitle: 'ขั้นสูง รวบยอด — ส่งต่อรุ่นน้อง',    estMinutes: 10, available: true, unlockAfter: 11 },
+  // === บทเชี่ยวชาญ (13-15) — ทักษะเสริม + เกมเพลย์รูปแบบใหม่ ===
+  { id: 13, arc: 'pro', title: 'ฉลาดเสี่ยง',             subtitle: 'เชี่ยวชาญ 1 — จัดอันดับความเสี่ยง',  estMinutes: 7, available: true, unlockAfter: 12 },
+  { id: 14, arc: 'pro', title: 'TikTok ขุดความจริง',     subtitle: 'เชี่ยวชาญ 2 — ปัดจริง/เท็จแบบเร็ว',  estMinutes: 6, available: true, unlockAfter: 13 },
+  { id: 15, arc: 'pro', title: 'บันทึกนักสืบรุ่นเก่า',     subtitle: 'เชี่ยวชาญ 3 — จับคู่ความจำ',         estMinutes: 7, available: true, unlockAfter: 14 },
+  // === บทเจาะลึก (16-20) — เนื้อหาเชิงลึกเฉพาะเรื่องบุหรี่ไฟฟ้า ===
+  { id: 16, arc: 'expert', title: 'นิโคตินกับสมองวัยรุ่น',   subtitle: 'บทเจาะลึก 1 — เข้าใจกลไก โดปามีน (dopamine)', estMinutes: 7, available: true, unlockAfter: 15 },
+  { id: 17, arc: 'expert', title: 'แชทแปลกใน Discord',     subtitle: 'บทเจาะลึก 2 — รับมือคนขายในเกม',             estMinutes: 6, available: true, unlockAfter: 16 },
+  { id: 18, arc: 'expert', title: 'พ่อแม่จับได้',            subtitle: 'บทเจาะลึก 3 — สื่อสารกับครอบครัว',           estMinutes: 7, available: true, unlockAfter: 17 },
+  { id: 19, arc: 'expert', title: 'EVALI ฉุกเฉิน',           subtitle: 'บทเจาะลึก 4 — ปอดอักเสบจากบุหรี่ไฟฟ้า',       estMinutes: 8, available: true, unlockAfter: 18 },
+  { id: 20, arc: 'expert', title: 'สูตรเลิก 4D ส่งต่อทีม',    subtitle: 'บทเจาะลึก รวบยอด — รวมพลังป้องกัน',           estMinutes: 9, available: true, unlockAfter: 19 },
 ];
 
 export const TOTAL_STAGES = SCENARIO_META.length;

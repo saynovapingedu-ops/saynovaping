@@ -37,7 +37,9 @@ jobs:
         env:
           VITE_LIFF_ID: ${{ vars.VITE_LIFF_ID || '2000000000-AbCdEfGh' }}
           VITE_SYNC_URL: ${{ vars.VITE_SYNC_URL }}
-          VITE_MOCK_LIFF: ${{ vars.VITE_MOCK_LIFF || 'true' }}
+          # ค่า default เป็น 'false' (fail-safe) — production ต้องไม่รัน mock โดยไม่ตั้งใจ
+          # ตั้งจริงที่ Settings → Variables: VITE_MOCK_LIFF=false, VITE_LIFF_ID=<LIFF ID จริง>
+          VITE_MOCK_LIFF: ${{ vars.VITE_MOCK_LIFF || 'false' }}
 
       - name: Add 404.html (SPA fallback)
         run: cp dist/index.html dist/404.html

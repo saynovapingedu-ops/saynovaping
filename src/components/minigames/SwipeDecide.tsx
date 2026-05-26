@@ -172,7 +172,7 @@ export default function SwipeDecide({ title, cards, onComplete }: Props) {
           </p>
           <p className="text-xs text-gray-600 mb-3 leading-relaxed">
             {correctCount === cards.length
-              ? 'ปัดเก่งทุกใบ — เป็น TikTok Detective ตัวจริงแล้ว'
+              ? 'ปัดเก่งทุกใบ — เป็นนักสืบจับโกหกใน TikTok ตัวจริงแล้ว'
               : 'ลองทบทวนใบที่ปัดผิดในใจ ก่อนไปต่อ'}
           </p>
           <button onClick={() => onComplete(correctCount === cards.length)} className="btn-primary w-full">

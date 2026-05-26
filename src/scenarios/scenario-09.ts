@@ -4,7 +4,7 @@ import type { Scenario } from '../types';
 export const scenario09: Scenario = {
   id: 9,
   title: 'เพื่อนเริ่มติดแล้ว',
-  subtitle: 'บทเรียนขั้นสูง 1 — สูตร 5 ขั้นช่วยเพื่อนเลิก (5A)',
+  subtitle: 'ขั้นสูง 1 — สูตร 5 ขั้นช่วยเพื่อนเลิก (5A)',
   estMinutes: 8,
   startNode: 'mg-warmup',
   intro: [

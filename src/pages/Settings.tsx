@@ -50,13 +50,13 @@ export default function Settings() {
         <Toggle
           emoji="🔊"
           label="เสียงประกอบ"
-          description="คลิก / ตอบถูก-ผิด / ได้ XP"
+          description="คลิก / ตอบถูก-ผิด / ได้คะแนน"
           value={s.soundEnabled}
           onToggle={s.toggleSound}
         />
         <Toggle
           emoji="🎵"
-          label="เพลงประกอบ (BGM)"
+          label="เพลงประกอบ"
           description="เพลงนักสืบเบาๆ ขณะเล่น — สังเคราะห์ในเครื่อง ไม่กินเน็ต"
           value={s.musicEnabled}
           onToggle={() => {
@@ -68,8 +68,8 @@ export default function Settings() {
         />
         <Toggle
           emoji="📳"
-          label="สั่นมือถือ (Vibration)"
-          description="สั่นเบาๆ ตอนเลือกหรือได้ badge"
+          label="สั่นมือถือ"
+          description="สั่นเบาๆ ตอนเลือกหรือได้แบดจ์"
           value={s.vibrationEnabled}
           onToggle={s.toggleVibration}
         />
@@ -103,8 +103,8 @@ export default function Settings() {
 
         <Toggle
           emoji="🎬"
-          label="ลด animation"
-          description="ปิด confetti และเอฟเฟ็กต์เคลื่อนไหว — ดีสำหรับคนเวียนหัว"
+          label="ลดการเคลื่อนไหว"
+          description="ปิดกระดาษโปรยฉลองและเอฟเฟ็กต์เคลื่อนไหว — ดีสำหรับคนเวียนหัว"
           value={s.reducedMotion}
           onToggle={s.toggleReducedMotion}
         />

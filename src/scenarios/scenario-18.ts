@@ -4,7 +4,7 @@ import type { Scenario } from '../types';
 export const scenario18: Scenario = {
   id: 18,
   title: 'พ่อแม่จับได้',
-  subtitle: 'Expert 3 — สื่อสารกับครอบครัวเมื่อเจอเรื่องยาก',
+  subtitle: 'บทเจาะลึก 3 — สื่อสารกับครอบครัวเมื่อเจอเรื่องยาก',
   estMinutes: 7,
   startNode: 'd1',
   intro: [

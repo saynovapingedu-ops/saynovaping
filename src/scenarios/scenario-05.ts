@@ -4,7 +4,7 @@ import type { Scenario } from '../types';
 export const scenario05: Scenario = {
   id: 5,
   title: 'DM ในเกมออนไลน์',
-  subtitle: 'รู้จักถอย — block, report, walk away',
+  subtitle: 'รู้จักถอย — บล็อก รายงาน เดินหนี',
   estMinutes: 5,
   startNode: 'intro1',
   intro: [

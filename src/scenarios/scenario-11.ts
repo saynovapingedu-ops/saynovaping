@@ -4,7 +4,7 @@ import type { Scenario } from '../types';
 export const scenario11: Scenario = {
   id: 11,
   title: 'พี่ในครอบครัวสูบ',
-  subtitle: 'Master 3 — รับมือกับครอบครัวอ่อนโยนและกล้าหาญ',
+  subtitle: 'ขั้นสูง 3 — รับมือกับครอบครัวอ่อนโยนและกล้าหาญ',
   estMinutes: 7,
   startNode: 'd1',
   intro: [

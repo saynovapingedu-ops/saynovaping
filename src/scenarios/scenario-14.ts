@@ -4,7 +4,7 @@ import type { Scenario } from '../types';
 export const scenario14: Scenario = {
   id: 14,
   title: 'TikTok ขุดความจริง',
-  subtitle: 'Pro 2 — ตัดสินจริง/เท็จแบบเร็ว',
+  subtitle: 'เชี่ยวชาญ 2 — ตัดสินจริง/เท็จแบบเร็ว',
   estMinutes: 6,
   startNode: 'd1',
   intro: [
@@ -103,8 +103,8 @@ export const scenario14: Scenario = {
     },
     {
       type: 'end', id: 'end1',
-      title: '📱 Pro 2 ผ่าน!',
-      message: 'คุณคือ TikTok Detective ตัวจริง — รู้เท่าทันสื่อแม้คลิปจะไหลเร็ว',
+      title: '📱 บทเชี่ยวชาญ 2 ผ่าน!',
+      message: 'คุณคือนักสืบจับโกหกใน TikTok ตัวจริง — รู้เท่าทันสื่อแม้คลิปจะไหลเร็ว',
       xp: 90,
       badge: 'media-literate',
     },

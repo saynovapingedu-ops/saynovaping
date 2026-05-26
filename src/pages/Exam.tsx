@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
-import { getExamQuestions } from '../lib/quizBank';
+import { getExamQuestions, type QuizResultItem } from '../lib/quizBank';
 import { TOTAL_STAGES } from '../scenarios';
 import QuizRunner from '../components/QuizRunner';
+import QuizReview from '../components/QuizReview';
 import PageHeader from '../components/PageHeader';
 import Confetti from '../components/Confetti';
 import { sfx } from '../lib/sound';
@@ -22,16 +23,16 @@ export default function Exam() {
   const eligible = player.stagesCompleted.length >= TOTAL_STAGES || !!player.certificateNo;
 
   const [started, setStarted] = useState(false);
-  const [result, setResult] = useState<{ percent: number; passed: boolean; gotBonus: boolean } | null>(null);
+  const [result, setResult] = useState<{ percent: number; passed: boolean; gotBonus: boolean; details: QuizResultItem[] } | null>(null);
   // สุ่มชุดใหม่ทุกครั้งที่กดเริ่ม
   const [runKey, setRunKey] = useState(0);
   const questions = useMemo(() => getExamQuestions(EXAM_N), [runKey]);
 
-  const handleFinish = (score: number, total: number) => {
+  const handleFinish = (score: number, total: number, details: QuizResultItem[]) => {
     const percent = Math.round((score / total) * 100);
     const passed = percent >= PASS_PERCENT;
     const gotBonus = recordExam(percent, passed, BONUS_COINS);
-    setResult({ percent, passed, gotBonus });
+    setResult({ percent, passed, gotBonus, details });
     if (passed) sfx.victory(); else sfx.wrong();
   };
 
@@ -52,7 +53,7 @@ export default function Exam() {
             <div className="text-6xl mb-3 leading-none">🔒</div>
             <h2 className="font-display font-bold text-xl text-detective-700 mb-2">ยังไม่ปลดล็อก</h2>
             <p className="text-slate-600 text-sm leading-relaxed">
-              แบบทดสอบรวมจะเปิดเมื่อ <b>จบครบ {TOTAL_STAGES} ด่าน</b> หรือได้รับ Certificate แล้ว
+              แบบทดสอบรวมจะเปิดเมื่อ <b>จบครบ {TOTAL_STAGES} ด่าน</b> หรือได้รับเกียรติบัตรแล้ว
               <br />(ตอนนี้ {player.stagesCompleted.length}/{TOTAL_STAGES} ด่าน)
             </p>
             <button onClick={() => { sfx.click(); nav('/'); }} className="btn-primary mt-5">
@@ -94,6 +95,8 @@ export default function Exam() {
             )}
           </motion.div>
 
+          <QuizReview details={result.details} defaultOpen />
+
           <div className="grid grid-cols-2 gap-2 mt-4">
             <button onClick={restart} className="btn-secondary">🔄 ทำใหม่</button>
             <button onClick={() => { sfx.click(); nav('/'); }} className="btn-primary">🏠 หน้าหลัก</button>
@@ -133,7 +136,7 @@ export default function Exam() {
     <div className="min-h-full pb-10">
       <PageHeader title="🎓 แบบทดสอบรวม" backTo="/" />
       <main className="max-w-md mx-auto px-4 pt-4">
-        <QuizRunner key={runKey} questions={questions} onFinish={handleFinish} finishLabel="ส่งคำตอบ →" />
+        <QuizRunner key={runKey} questions={questions} onFinish={handleFinish} finishLabel="ส่งคำตอบ →" revealMode="end" />
       </main>
     </div>
   );

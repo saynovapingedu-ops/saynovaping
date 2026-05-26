@@ -74,7 +74,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
   },
   {
     stageId: 4,
-    title: 'Broken Record — ยืนยันซ้ำ',
+    title: 'แผ่นเสียงตกร่อง — ยืนยันคำเดิมซ้ำ',
     emoji: '🔁',
     difficulty: 'กลาง',
     concept: 'ยืนคำตอบเดิม จนคนตื๊อเลิกเอง',
@@ -92,7 +92,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
   },
   {
     stageId: 5,
-    title: 'Walk Away — ออนไลน์',
+    title: 'เดินหนี (Walk Away) — ออนไลน์',
     emoji: '🚶',
     difficulty: 'กลาง',
     concept: 'หยุด → บล็อก → รายงาน → บอกผู้ใหญ่',
@@ -246,7 +246,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
     difficulty: 'ยาก',
     concept: 'ตรวจ 3 อย่างก่อนเชื่อ — ใคร ที่มา ผลประโยชน์',
     points: [
-      'ใคร: คนพูดเป็นใคร? ผู้เชี่ยวชาญ หรือ Influencer ที่รับโฆษณา',
+      'ใคร: คนพูดเป็นใคร? ผู้เชี่ยวชาญ หรืออินฟลูเอนเซอร์ที่รับโฆษณา',
       'ที่มา: อ้างอิงงานวิจัยไหม? หรือแค่ "ฉันเคยลอง"',
       'ผลประโยชน์: เขาจะได้อะไรจากการให้คนเชื่อ? ขายของหรือเปล่า?',
       'ถ้าเช็ค 3 อย่างนี้ไม่ได้ → ปัดซ้าย (ไม่เชื่อ) ก่อน',

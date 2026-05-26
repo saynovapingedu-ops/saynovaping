@@ -108,7 +108,7 @@ export default function Onboarding() {
               <p className="text-sm text-gray-700 leading-relaxed">
                 เกมสนุก ฝึกทักษะปฏิเสธ <b>บุหรี่ไฟฟ้า</b><br/>
                 สำหรับเยาวชน ม.ต้น<br/>
-                เล่นจบรับ Certificate น่ารักๆ 🏆
+                เล่นจบรับเกียรติบัตรน่ารักๆ 🏆
               </p>
               <p className="text-[11px] text-detective-500 font-semibold mt-3">
                 🚭 SayNo:สู้บุหรี่ไฟฟ้า
@@ -164,7 +164,7 @@ export default function Onboarding() {
               <p className="text-sm text-gray-700 leading-relaxed">
                 <b className="text-detective-700">🚫 เราไม่เก็บข้อมูลส่วนตัว</b><br/>
                 เกมเพื่อการศึกษาเรื่อง <b>บุหรี่ไฟฟ้า</b> สำหรับ ม.ต้น
-                เก็บแค่ "ชื่อเล่น" และ "คะแนน" เพื่อบันทึก progress
+                เก็บแค่ "ชื่อเล่น" และ "คะแนน" เพื่อบันทึกความคืบหน้า
               </p>
             </div>
 
@@ -189,8 +189,8 @@ export default function Onboarding() {
 
               <PDPAAccordion title="🎯 ใช้ข้อมูลทำอะไร?">
                 <ul className="space-y-0.5 pl-1">
-                  <li>• บันทึก progress ของเกม</li>
-                  <li>• ออก Certificate น่ารักๆ ตอนเล่นจบ</li>
+                  <li>• บันทึกความคืบหน้าของเกม</li>
+                  <li>• ออกเกียรติบัตรน่ารักๆ ตอนเล่นจบ</li>
                   <li>• ไม่ใช้เพื่อการตลาด/ส่งข้อความรบกวน</li>
                 </ul>
               </PDPAAccordion>

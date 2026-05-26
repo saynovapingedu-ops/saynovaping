@@ -4,7 +4,7 @@ import type { Scenario } from '../types';
 export const scenario17: Scenario = {
   id: 17,
   title: 'แชทแปลกใน Discord',
-  subtitle: 'Expert 2 — รับมือคนขายในเกมออนไลน์',
+  subtitle: 'บทเจาะลึก 2 — รับมือคนขายในเกมออนไลน์',
   estMinutes: 6,
   startNode: 'd1',
   intro: [

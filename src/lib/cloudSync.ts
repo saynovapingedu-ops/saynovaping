@@ -25,6 +25,31 @@ export interface SyncPayload {
   level: number;
   stagesCompleted: number[];
   badges: string[];
+  // เหรียญ + ของในร้าน (booster + อุปกรณ์แต่งโปรไฟล์) — ต้องเก็บไว้กู้ตอนเปลี่ยนเครื่อง
+  coins?: number;
+  ownedItems?: string[];
+  equippedTitle?: string;
+  equippedFrame?: string;
+  equippedTheme?: string;
+  equippedAccessory?: string;
+  equippedBackdrop?: string;
+  equippedCertDeco?: string;
+  hintTokens?: number;
+  coinX2Remaining?: number;
+  streakShields?: number;
+  // streak / daily challenge / final exam / pre-post assessment
+  streakDays?: number;
+  lastPlayDate?: string;
+  lastDailyDate?: string;
+  dailyDoneCount?: number;
+  dailyBestScore?: number;
+  examBestScore?: number;
+  examBonusClaimed?: boolean;
+  preTestScore?: number;
+  postTestScore?: number;
+  preTestAt?: string;
+  postTestAt?: string;
+  avatar?: number;
 }
 
 export interface CertResponse {
@@ -65,6 +90,30 @@ export interface RestoreResponse {
     badges: string[];
     certificateNo: string | null;
     certificateIssuedAt: string | null;
+    // field ที่เพิ่ม — ถ้า Apps Script ยังไม่ส่งกลับมา จะเป็น undefined (frontend จะใช้ค่า default)
+    avatar?: number;
+    coins?: number;
+    ownedItems?: string[];
+    equippedTitle?: string;
+    equippedFrame?: string;
+    equippedTheme?: string;
+    equippedAccessory?: string;
+    equippedBackdrop?: string;
+    equippedCertDeco?: string;
+    hintTokens?: number;
+    coinX2Remaining?: number;
+    streakShields?: number;
+    streakDays?: number;
+    lastPlayDate?: string;
+    lastDailyDate?: string;
+    dailyDoneCount?: number;
+    dailyBestScore?: number;
+    examBestScore?: number;
+    examBonusClaimed?: boolean;
+    preTestScore?: number;
+    postTestScore?: number;
+    preTestAt?: string;
+    postTestAt?: string;
   };
 }
 

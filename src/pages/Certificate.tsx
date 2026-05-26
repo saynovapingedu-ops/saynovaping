@@ -52,7 +52,7 @@ export default function Certificate() {
         setIssueDate(res.issueDate || new Date().toISOString());
         setCertificate(res.certificateNo, res.issueDate || new Date().toISOString());
       } else {
-        setError(res.message || res.error || 'ไม่สามารถออก certificate ได้');
+        setError(res.message || res.error || 'ไม่สามารถออกเกียรติบัตรได้');
       }
     });
   }, [player.userIdHash, player.certificateNo, player.stagesCompleted.length, player.totalXP, setCertificate, player.certificateIssuedAt]);
@@ -339,7 +339,7 @@ export default function Certificate() {
               {verifyCode && (
                 <button
                   onClick={() => {
-                    navigator.clipboard?.writeText(`รหัสยืนยัน Certificate: ${verifyCode}`);
+                    navigator.clipboard?.writeText(`รหัสยืนยันเกียรติบัตร: ${verifyCode}`);
                     setShareMsg('ก๊อปรหัสแล้ว');
                     setTimeout(() => setShareMsg(null), 2000);
                   }}
