@@ -91,7 +91,7 @@ export default function Home() {
                 <div key={i} className="card p-3">
                   <div className="text-3xl mb-1">{s.emoji}</div>
                   <h3 className="font-display font-bold text-detective-700 text-sm leading-tight mb-1">{s.title}</h3>
-                  <p className="text-[11px] text-gray-700 leading-snug">{s.body}</p>
+                  <p className="text-xs text-slate-700 leading-snug">{s.body}</p>
                 </div>
               ))}
             </div>
@@ -170,34 +170,40 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ===== Glass cards: เหรียญ + ห้อง ===== */}
-          <div className="mt-4 grid grid-cols-2 gap-2">
+          {/* ===== Glass cards: เหรียญ + ห้อง + ใบประกาศ ===== */}
+          <div className="mt-4 grid grid-cols-3 gap-2">
             <button
               onClick={() => { sfx.click(); nav('/shop'); }}
-              className="flex items-center justify-between
+              className="flex flex-col items-center justify-center gap-0.5
                          bg-white/15 hover:bg-white/25 backdrop-blur-md
-                         border border-white/25 rounded-2xl px-3 py-2.5
-                         active:scale-[0.99] transition-all"
+                         border border-white/25 rounded-2xl px-2 py-2.5
+                         active:scale-[0.97] transition-all"
             >
-              <span className="flex items-center gap-1.5">
-                <span className="text-lg">🪙</span>
+              <span className="flex items-center gap-1">
+                <span className="text-base">🪙</span>
                 <span className="font-bold text-sm">{player.coins || 0}</span>
               </span>
-              <span className="text-[11px] font-semibold flex items-center gap-1">
-                🛍 ร้านค้า →
-              </span>
+              <span className="text-[10px] font-semibold opacity-90">🛍 ร้านค้า</span>
             </button>
             <button
               onClick={() => { sfx.click(); nav('/journal'); }}
-              className="flex items-center justify-between
+              className="flex flex-col items-center justify-center gap-0.5
                          bg-white/15 hover:bg-white/25 backdrop-blur-md
-                         border border-white/25 rounded-2xl px-3 py-2.5
-                         active:scale-[0.99] transition-all"
+                         border border-white/25 rounded-2xl px-2 py-2.5
+                         active:scale-[0.97] transition-all"
             >
-              <span className="text-[11px] font-semibold flex items-center gap-1">
-                📓 สมุดบันทึก
-              </span>
-              <span className="text-base">→</span>
+              <span className="text-lg">📓</span>
+              <span className="text-[10px] font-semibold">สมุดบันทึก</span>
+            </button>
+            <button
+              onClick={() => { sfx.click(); nav('/certificate'); }}
+              className="flex flex-col items-center justify-center gap-0.5
+                         bg-white/15 hover:bg-white/25 backdrop-blur-md
+                         border border-white/25 rounded-2xl px-2 py-2.5
+                         active:scale-[0.97] transition-all"
+            >
+              <span className="text-lg">🏆</span>
+              <span className="text-[10px] font-semibold">ใบประกาศ</span>
             </button>
           </div>
 
@@ -234,50 +240,49 @@ export default function Home() {
           </div>
         )}
 
-        {/* === Quick actions: Daily / Exam / Pre-test === */}
-        <div className="mb-4 space-y-2">
+        {/* === Quick actions: Daily / Exam / Pre-test === แถวเดียว 3 col */}
+        <div className="mb-4 grid grid-cols-3 gap-2">
           {/* Daily Challenge — always */}
           <button
             onClick={() => { sfx.click(); nav('/daily'); }}
-            className="w-full card flex items-center gap-3 active:scale-[0.99] transition-all"
+            className="card flex flex-col items-center text-center gap-1.5 p-3 relative
+                       active:scale-[0.97] transition-all"
           >
             <div className={`icon-tile ${dailyDone ? 'bg-success-50 text-success-600' : 'bg-detective-50 text-detective-600'}`}>📅</div>
-            <div className="flex-1 text-left min-w-0">
-              <p className="font-bold text-detective-700 text-sm">ภารกิจรายวัน</p>
-              <p className="text-[11px] text-slate-500">
-                {dailyDone ? '✓ วันนี้ทำแล้ว — กลับมาพรุ่งนี้' : 'ควิซ 5 ข้อ รับเหรียญ + รักษาสถิติเล่นต่อเนื่อง'}
-              </p>
-            </div>
+            <p className="font-bold text-detective-700 text-xs leading-tight">ภารกิจรายวัน</p>
+            <p className="text-[10px] text-slate-500 leading-snug line-clamp-2">
+              {dailyDone ? '✓ วันนี้ทำแล้ว' : 'ควิซ 5 ข้อ รับเหรียญ'}
+            </p>
             {!dailyDone
-              ? <span className="pill bg-detective-100 text-detective-600 flex-shrink-0">ใหม่</span>
-              : <span className="text-success-500 flex-shrink-0">✓</span>}
+              ? <span className="absolute top-1.5 right-1.5 pill bg-detective-100 text-detective-600">ใหม่</span>
+              : <span className="absolute top-1.5 right-1.5 text-success-500 text-sm">✓</span>}
           </button>
 
           {/* Leaderboard — อันดับห้องเรียน */}
           <button
             onClick={() => { sfx.click(); nav('/leaderboard'); }}
-            className="w-full card flex items-center gap-3 active:scale-[0.99] transition-all"
+            className="card flex flex-col items-center text-center gap-1.5 p-3
+                       active:scale-[0.97] transition-all"
           >
             <div className="icon-tile bg-warning-50 text-warning-600">🏆</div>
-            <div className="flex-1 text-left min-w-0">
-              <p className="font-bold text-detective-700 text-sm">กระดานอันดับ</p>
-              <p className="text-[11px] text-slate-500">เทียบคะแนนรวมกับผู้เล่นทั้งหมด</p>
-            </div>
-            <span className="text-warning-500 flex-shrink-0">→</span>
+            <p className="font-bold text-detective-700 text-xs leading-tight">กระดานอันดับ</p>
+            <p className="text-[10px] text-slate-500 leading-snug line-clamp-2">
+              เทียบคะแนนกับผู้เล่นทั้งหมด
+            </p>
           </button>
 
           {/* Pre-test — เฉพาะผู้เล่นใหม่ที่ยังไม่ทำ */}
           {showPreTest && (
             <button
               onClick={() => { sfx.click(); nav('/assessment?kind=pre'); }}
-              className="w-full card flex items-center gap-3 active:scale-[0.99] transition-all"
+              className="card flex flex-col items-center text-center gap-1.5 p-3
+                         active:scale-[0.97] transition-all"
             >
               <div className="icon-tile bg-detective-50 text-detective-600">🅰️</div>
-              <div className="flex-1 text-left min-w-0">
-                <p className="font-bold text-detective-700 text-sm">แบบประเมินก่อนเรียน</p>
-                <p className="text-[11px] text-slate-500">ทำก่อนเริ่มเล่น เพื่อวัดความรู้ตอนจบ</p>
-              </div>
-              <span className="text-detective-400 flex-shrink-0">→</span>
+              <p className="font-bold text-detective-700 text-xs leading-tight">แบบประเมินก่อนเรียน</p>
+              <p className="text-[10px] text-slate-500 leading-snug line-clamp-2">
+                ทำก่อนเล่น วัดความรู้
+              </p>
             </button>
           )}
 
@@ -285,35 +290,45 @@ export default function Home() {
           {examEligible && (
             <button
               onClick={() => { sfx.click(); nav('/exam'); }}
-              className="w-full card flex items-center gap-3 active:scale-[0.99] transition-all"
+              className="card flex flex-col items-center text-center gap-1.5 p-3
+                         active:scale-[0.97] transition-all"
             >
               <div className="icon-tile bg-warning-50 text-warning-600">🎓</div>
-              <div className="flex-1 text-left min-w-0">
-                <p className="font-bold text-detective-700 text-sm">แบบทดสอบรวม</p>
-                <p className="text-[11px] text-slate-500">
-                  วัดความรู้รวม — ผ่าน 80% รับเหรียญตรา
-                  {player.examBestScore !== undefined && ` · สูงสุด ${player.examBestScore}%`}
-                </p>
-              </div>
-              <span className="text-warning-500 flex-shrink-0">→</span>
+              <p className="font-bold text-detective-700 text-xs leading-tight">แบบทดสอบรวม</p>
+              <p className="text-[10px] text-slate-500 leading-snug line-clamp-2">
+                ผ่าน 80% รับเหรียญตรา
+                {player.examBestScore !== undefined && ` · สูงสุด ${player.examBestScore}%`}
+              </p>
             </button>
           )}
         </div>
 
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="section-label text-lg">
-            <span className="text-2xl">📍</span> แผนที่ภารกิจ
-          </h3>
-          <button
-            onClick={() => { sfx.click(); setShowIntro(true); }}
-            className="text-[11px] text-detective-500 font-semibold hover:text-detective-700 active:opacity-70"
-          >
-            ℹ️ วิธีเล่น
-          </button>
+        {/* === Section header: แผนที่ภารกิจ + progress รวม === */}
+        <div className="card-hero mb-4 px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="section-label text-lg">
+              <span className="text-2xl">📍</span> แผนที่ภารกิจ
+            </h3>
+            <button
+              onClick={() => { sfx.click(); setShowIntro(true); }}
+              className="text-xs text-detective-500 font-semibold hover:text-detective-700
+                         active:opacity-70 flex items-center gap-1"
+            >
+              ℹ️ วิธีเล่น
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="progress-track flex-1">
+              <div
+                className="progress-fill"
+                style={{ width: `${(player.stagesCompleted.length / SCENARIO_META.length) * 100}%` }}
+              />
+            </div>
+            <span className="text-xs font-bold text-detective-700 flex-shrink-0">
+              {player.stagesCompleted.length}/{SCENARIO_META.length} ด่าน
+            </span>
+          </div>
         </div>
-        <p className="text-xs text-gray-500 mb-3">
-          {player.stagesCompleted.length}/{SCENARIO_META.length} ด่าน
-        </p>
 
         {(() => {
           // หาบทที่ "กำลังเล่นอยู่" = ด่านแรกที่เล่นได้แต่ยังไม่จบ → เปิดบทนั้นไว้
@@ -332,95 +347,164 @@ export default function Home() {
           const arcCompleted = stages.filter(m => player.stagesCompleted.includes(m.id)).length;
           const isOpen = openArcs[arc] ?? (arc === activeArc);
 
+          const arcPct = (arcCompleted / stages.length) * 100;
+          const arcAllDone = arcCompleted === stages.length;
+
           return (
-            <div key={arc} className="mb-5">
+            <div key={arc} className="mb-3">
               <button
                 onClick={() => { sfx.click(); setOpenArcs(o => ({ ...o, [arc]: !isOpen })); }}
-                className="w-full flex items-center gap-2 mb-2 text-left active:scale-[0.99]"
+                className={`w-full text-left rounded-2xl px-3 py-3 transition-all
+                            active:scale-[0.99]
+                            ${arcAllDone
+                              ? 'bg-success-50 border border-success-200'
+                              : arc === activeArc
+                              ? 'bg-white border-2 border-detective-300 shadow-glow-sm'
+                              : 'surface-soft hover:bg-detective-50/80'}`}
               >
-                <span className="text-2xl">{arcLabel.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-display font-bold text-detective-700 text-base leading-tight">
-                    {arcLabel.name}
-                  </h4>
-                  <p className="text-[11px] text-gray-500">{arcLabel.desc}</p>
+                <div className="flex items-center gap-3">
+                  <div className={`icon-tile shadow-sm flex-shrink-0
+                                   ${arcAllDone
+                                     ? 'bg-success-500 text-white'
+                                     : 'bg-white text-detective-600'}`}>
+                    {arcAllDone ? '✓' : arcLabel.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-display font-bold text-detective-700 text-base leading-tight">
+                      {arcLabel.name}
+                    </h4>
+                    <p className="text-xs text-slate-500 leading-snug mt-0.5">{arcLabel.desc}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <span className={`pill ${arcAllDone
+                      ? 'bg-success-500 text-white'
+                      : 'bg-white text-detective-700 border border-detective-200'}`}>
+                      {arcCompleted}/{stages.length}
+                    </span>
+                    <span className="text-detective-400 text-xs">
+                      {isOpen ? '▴ ย่อ' : '▾ ขยาย'}
+                    </span>
+                  </div>
                 </div>
-                <span className="pill bg-detective-100 text-detective-700">
-                  {arcCompleted}/{stages.length}
-                </span>
-                <span className="text-detective-400 text-sm flex-shrink-0 w-4 text-center">
-                  {isOpen ? '▴' : '▾'}
-                </span>
+                {/* Progress bar ใต้ header — แสดงเฉพาะตอน collapsed เพื่อไม่รก */}
+                {!isOpen && arcCompleted > 0 && (
+                  <div className="progress-track mt-2.5 h-1.5">
+                    <div
+                      className={arcAllDone
+                        ? 'h-full rounded-full bg-gradient-to-r from-success-400 to-success-500'
+                        : 'progress-fill'}
+                      style={{ width: `${arcPct}%` }}
+                    />
+                  </div>
+                )}
               </button>
 
-              {/* Stages — single column mobile, 2 col tablet */}
+              {/* Stages — connector line ซ้าย เชื่อมกับบท */}
+              <AnimatePresence initial={false}>
               {isOpen && (
-              <div className="space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
-                {stages.map((meta) => {
-                  const unlocked = isStageUnlocked(meta.id, player.stagesCompleted);
-                  const completed = player.stagesCompleted.includes(meta.id);
-                  const playable = meta.available && unlocked;
+              <motion.div
+                key={`${arc}-stages`}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                className="overflow-hidden"
+              >
+                <div className="relative pl-6 mt-2 ml-4 md:ml-6 md:grid md:grid-cols-2 md:gap-2
+                                md:pl-0 md:ml-0 space-y-1.5 md:space-y-0
+                                before:absolute before:left-2 before:top-1 before:bottom-1 before:w-0.5
+                                before:bg-gradient-to-b before:from-detective-200 before:to-detective-100
+                                md:before:hidden">
+                  {stages.map((meta) => {
+                    const unlocked = isStageUnlocked(meta.id, player.stagesCompleted);
+                    const completed = player.stagesCompleted.includes(meta.id);
+                    const playable = meta.available && unlocked;
 
-                  return (
-                    <button
-                      key={meta.id}
-                      disabled={!playable}
-                      onClick={() => playable && nav(`/scenario/${meta.id}`)}
-                      className={`w-full text-left card flex items-center gap-3 relative
-                                  transition-all ${
-                        !playable
-                          ? 'opacity-60'
-                          : 'active:scale-[0.98]'
-                      } ${
-                        completed
-                          ? 'border-l-4 border-l-success-400'
-                          : playable
-                          ? 'border-l-4 border-l-detective-400'
-                          : ''
-                      }`}
-                    >
-                      {playable && (
-                        <span className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    // ====== Locked stage — compact, ไม่กดได้ ======
+                    if (!playable) {
+                      return (
+                        <div
+                          key={meta.id}
+                          className="relative flex items-center gap-3 px-3 py-2 rounded-xl
+                                     bg-slate-50/70 border border-slate-200/70 opacity-75"
+                        >
+                          {/* dot บนเส้น connector */}
+                          <span className="absolute -left-[26px] top-1/2 -translate-y-1/2 w-3 h-3
+                                           rounded-full bg-slate-300 border-2 border-white md:hidden"
+                                aria-hidden />
+                          <div className="w-9 h-9 rounded-xl bg-slate-200 text-slate-500 font-bold
+                                          flex items-center justify-center text-sm flex-shrink-0">
+                            {meta.id}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-slate-500 text-sm truncate">{meta.title}</p>
+                            <p className="text-[11px] text-slate-400 truncate flex items-center gap-1">
+                              <span>🔒</span>
+                              {!meta.available
+                                ? 'เร็วๆ นี้'
+                                : `ปลดล็อกหลังจบด่าน ${meta.unlockAfter}`}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // ====== Playable / Completed stage — เด่น ======
+                    return (
+                      <button
+                        key={meta.id}
+                        onClick={() => nav(`/scenario/${meta.id}`)}
+                        className={`relative w-full text-left card flex items-center gap-3 py-3
+                                    active:scale-[0.98] transition-all hover:shadow-glow-sm ${
                           completed
-                            ? 'text-success-600 bg-success-50'
-                            : 'text-detective-600 bg-detective-50'
+                            ? 'border-l-4 border-l-success-400 bg-success-50/30'
+                            : 'border-l-4 border-l-detective-400'
+                        }`}
+                      >
+                        {/* dot บนเส้น connector */}
+                        <span className={`absolute -left-[26px] top-1/2 -translate-y-1/2 w-3.5 h-3.5
+                                         rounded-full border-2 border-white md:hidden shadow-sm
+                                         ${completed ? 'bg-success-500' : 'bg-detective-500'}`}
+                              aria-hidden />
+
+                        <span className={`absolute top-1.5 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          completed
+                            ? 'text-success-600 bg-success-100'
+                            : 'text-detective-600 bg-detective-100'
                         }`}>
                           {completed ? '🔄 REPLAY' : 'NEW'}
                         </span>
-                      )}
 
-                      <div
-                        className={`icon-tile font-bold ${
-                          completed
-                            ? 'bg-success-500 text-white'
-                            : playable
-                            ? 'bg-detective-600 text-white'
-                            : 'bg-slate-200 text-slate-500'
-                        }`}
-                      >
-                        {completed ? '✓' : meta.id}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-800 truncate">{meta.title}</p>
-                        <p className="text-xs text-gray-500 truncate">
-                          {!meta.available
-                            ? '🚧 เร็วๆ นี้'
-                            : !unlocked
-                            ? `🔒 ปลดล็อกหลังจบด่าน ${meta.unlockAfter}`
-                            : meta.subtitle}
-                        </p>
-                        {meta.estMinutes && playable && (
-                          <p className="text-[11px] text-gray-400 mt-0.5">⏱ ~{meta.estMinutes} นาที</p>
-                        )}
-                      </div>
-                      {playable && (
-                        <span className="text-detective-500 text-2xl flex-shrink-0">→</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                        <div
+                          className={`icon-tile font-bold shadow-glow-sm flex-shrink-0 ${
+                            completed
+                              ? 'bg-gradient-to-br from-success-400 to-success-600 text-white'
+                              : 'bg-gradient-to-br from-detective-500 to-detective-700 text-white'
+                          }`}
+                        >
+                          {completed ? '✓' : meta.id}
+                        </div>
+                        <div className="flex-1 min-w-0 pr-12">
+                          <p className="font-bold text-slate-800 truncate">{meta.title}</p>
+                          <p className="text-xs text-slate-500 truncate">{meta.subtitle}</p>
+                          {meta.estMinutes && (
+                            <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
+                              <span>⏱</span> ~{meta.estMinutes} นาที
+                            </p>
+                          )}
+                        </div>
+                        <span className={`text-2xl flex-shrink-0 ${
+                          completed ? 'text-success-500' : 'text-detective-500'
+                        }`}>
+                          →
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
               )}
+              </AnimatePresence>
             </div>
           );
           });
@@ -430,27 +514,27 @@ export default function Home() {
             (อาจารย์ทักว่าไม่ควรไว้ล่างสุด) */}
       </main>
 
-      {/* ===== Sticky bottom nav — พื้นขาวทึบ ไม่ทะลุสีหลัง ===== */}
+      {/* ===== Sticky bottom nav — โทนฟ้า TMF เด่นขึ้น 3 ปุ่ม ===== */}
       <nav className="fixed bottom-0 left-0 right-0 z-30
                       pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 px-3
-                      bg-white border-t border-slate-200">
-        <div className="max-w-md md:max-w-3xl mx-auto grid grid-cols-4 gap-1.5 bg-white
-                        rounded-2xl p-1.5">
+                      bg-white/95 backdrop-blur-md border-t border-detective-100
+                      shadow-[0_-4px_16px_-6px_rgba(0,143,255,0.12)]">
+        <div className="max-w-md md:max-w-3xl mx-auto grid grid-cols-3 gap-2">
           {[
-            { to: '/stats',       emoji: '📊', label: 'คะแนน' },
-            { to: '/knowledge',   emoji: '📖', label: 'ความรู้' },
-            { to: '/certificate', emoji: '🏆', label: 'ใบประกาศ' },
-            { to: '/settings',    emoji: '⚙️', label: 'ตั้งค่า' },
+            { to: '/stats',     emoji: '📊', label: 'คะแนน',  iconBg: 'bg-detective-50 text-detective-600' },
+            { to: '/knowledge', emoji: '📖', label: 'ความรู้', iconBg: 'bg-mint-50 text-mint-600' },
+            { to: '/settings',  emoji: '⚙️', label: 'ตั้งค่า', iconBg: 'bg-warning-50 text-warning-600' },
           ].map(item => (
             <button
               key={item.to}
               onClick={() => { sfx.click(); nav(item.to); }}
-              className="flex flex-col items-center gap-0.5 py-1.5 rounded-xl
-                         text-detective-700 hover:bg-detective-50
-                         active:scale-95 active:bg-detective-50 transition-all"
+              className="flex flex-col items-center gap-1 py-2 rounded-2xl
+                         bg-white border border-detective-100
+                         hover:border-detective-300 hover:shadow-glow-sm
+                         active:scale-95 transition-all"
             >
-              <span className="text-xl">{item.emoji}</span>
-              <span className="text-[11px] font-bold">{item.label}</span>
+              <span className={`icon-tile-sm ${item.iconBg}`}>{item.emoji}</span>
+              <span className="text-xs font-bold text-detective-700">{item.label}</span>
             </button>
           ))}
         </div>

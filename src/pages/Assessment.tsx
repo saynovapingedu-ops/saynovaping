@@ -8,6 +8,9 @@ import QuizRunner from '../components/QuizRunner';
 import QuizReview from '../components/QuizReview';
 import PageHeader from '../components/PageHeader';
 import { sfx } from '../lib/sound';
+import ResultHero from '../components/ui/ResultHero';
+import ProgressCircle from '../components/ui/ProgressCircle';
+import CountUp from '../components/ui/CountUp';
 
 const ASSESS_N = 10;
 
@@ -49,33 +52,53 @@ export default function Assessment() {
       <div className="min-h-full pb-10">
         <PageHeader title="📋 แบบประเมิน" backTo="/" />
         <main className="max-w-md mx-auto px-4 pt-6">
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-            className="card-hero text-center py-8">
-            <div className="text-6xl mb-3 leading-none">📋</div>
-            <h2 className="font-display font-bold text-xl text-detective-700 mb-1">
-              {kind === 'pre' ? 'แบบประเมินก่อนเรียน' : kind === 'post' ? 'แบบประเมินหลังเรียน' : 'ผลแบบประเมิน'}
-            </h2>
-            <p className="text-3xl font-bold text-detective-700 my-2">{result.percent}%</p>
+          <ResultHero
+            emoji="📋"
+            tone="info"
+            title={kind === 'pre' ? 'แบบประเมินก่อนเรียน' : kind === 'post' ? 'แบบประเมินหลังเรียน' : 'ผลแบบประเมิน'}
+            subtitle={
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                💡 แบบประเมินนี้ช่วยวัดว่าความรู้เรื่องบุหรี่ไฟฟ้าเพิ่มขึ้นแค่ไหน
+              </p>
+            }
+          >
+            <ProgressCircle
+              percent={result.percent}
+              tone="detective"
+              size={140}
+              label={`ได้ ${result.percent} เปอร์เซ็นต์`}
+            >
+              <span className="font-display font-extrabold text-3xl text-detective-700 leading-none">
+                <CountUp to={result.percent} formatter={n => `${n}%`} duration={1100} />
+              </span>
+            </ProgressCircle>
 
             {showDelta && (
-              <div className="mt-3 bg-white/70 rounded-2xl p-3 border border-detective-100">
-                <p className="text-xs text-slate-500 mb-1">เปรียบเทียบก่อน-หลังเรียน</p>
-                <p className="text-sm">
-                  ก่อน <b className="text-slate-600">{pre}%</b> → หลัง <b className="text-success-600">{post}%</b>{' '}
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                className="surface-soft px-4 py-3 w-full max-w-xs"
+              >
+                <p className="text-xs text-slate-500 mb-1 text-center">เปรียบเทียบก่อน-หลังเรียน</p>
+                <p className="text-sm text-center">
+                  ก่อน <b className="text-slate-600">{pre}%</b> → หลัง{' '}
+                  <b className="text-success-600">{post}%</b>{' '}
                   <span className={`font-bold ${delta >= 0 ? 'text-success-600' : 'text-danger-500'}`}>
-                    ({delta >= 0 ? '+' : ''}{delta}%)
+                    (<CountUp
+                      to={Math.abs(delta)}
+                      duration={1100}
+                      formatter={n => `${delta >= 0 ? '+' : '-'}${n}%`}
+                    />)
                   </span>
                 </p>
-              </div>
+              </motion.div>
             )}
-            <p className="text-[11px] text-slate-500 mt-4 leading-relaxed">
-              💡 แบบประเมินนี้ช่วยวัดว่าความรู้เรื่องบุหรี่ไฟฟ้าเพิ่มขึ้นแค่ไหน
-            </p>
-          </motion.div>
+          </ResultHero>
 
           {kind === 'post' && <QuizReview details={result.details} defaultOpen />}
           {kind === 'pre' && (
-            <p className="text-[12px] text-slate-500 text-center mt-4 leading-relaxed
+            <p className="text-sm text-slate-500 text-center mt-4 leading-relaxed
                           bg-detective-50 border border-detective-200 rounded-2xl p-3">
               📝 เฉลยจะแสดงหลังเรียน — เพื่อความเที่ยงตรงของการวัดผลก่อนเรียน
             </p>

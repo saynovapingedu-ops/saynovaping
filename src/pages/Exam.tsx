@@ -9,6 +9,11 @@ import QuizReview from '../components/QuizReview';
 import PageHeader from '../components/PageHeader';
 import Confetti from '../components/Confetti';
 import { sfx } from '../lib/sound';
+import EmptyState from '../components/ui/EmptyState';
+import ResultHero from '../components/ui/ResultHero';
+import ProgressCircle from '../components/ui/ProgressCircle';
+import CountUp from '../components/ui/CountUp';
+import StarRating from '../components/ui/StarRating';
 
 const EXAM_N = 15;
 const PASS_PERCENT = 80;
@@ -48,18 +53,24 @@ export default function Exam() {
     return (
       <div className="min-h-full pb-10">
         <PageHeader title="🎓 แบบทดสอบรวม" backTo="/" />
-        <main className="max-w-md mx-auto px-4 pt-6 text-center">
-          <div className="card-hero py-8">
-            <div className="text-6xl mb-3 leading-none">🔒</div>
-            <h2 className="font-display font-bold text-xl text-detective-700 mb-2">ยังไม่ปลดล็อก</h2>
-            <p className="text-slate-600 text-sm leading-relaxed">
-              แบบทดสอบรวมจะเปิดเมื่อ <b>จบครบ {TOTAL_STAGES} ด่าน</b> หรือได้รับเกียรติบัตรแล้ว
-              <br />(ตอนนี้ {player.stagesCompleted.length}/{TOTAL_STAGES} ด่าน)
-            </p>
-            <button onClick={() => { sfx.click(); nav('/'); }} className="btn-primary mt-5">
-              กลับไปเล่นต่อ
-            </button>
-          </div>
+        <main className="max-w-md mx-auto px-4 pt-6">
+          <EmptyState
+            hero
+            icon="🔒"
+            tone="info"
+            title="ยังไม่ปลดล็อก"
+            description={
+              <>
+                แบบทดสอบรวมจะเปิดเมื่อ <b>จบครบ {TOTAL_STAGES} ด่าน</b> หรือได้รับเกียรติบัตรแล้ว
+                <br />(ตอนนี้ {player.stagesCompleted.length}/{TOTAL_STAGES} ด่าน)
+              </>
+            }
+            action={
+              <button onClick={() => { sfx.click(); nav('/'); }} className="btn-primary">
+                กลับไปเล่นต่อ
+              </button>
+            }
+          />
         </main>
       </div>
     );
@@ -67,33 +78,59 @@ export default function Exam() {
 
   // ===== หน้าผลลัพธ์ =====
   if (result) {
+    const score = result.details.filter(d => d.pickedIndex === d.correctIndex).length;
     return (
       <div className="min-h-full pb-10">
         <Confetti active={result.passed} count={90} duration={2600} />
         <PageHeader title="🎓 แบบทดสอบรวม" backTo="/" />
         <main className="max-w-md mx-auto px-4 pt-6">
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-            className="card-hero text-center py-8">
-            <div className="text-6xl mb-3 leading-none">{result.passed ? '🎓' : '📚'}</div>
-            <h2 className="font-display font-bold text-2xl text-detective-700 mb-1">{result.percent}%</h2>
-            <p className={`font-semibold mb-3 ${result.passed ? 'text-success-600' : 'text-warning-600'}`}>
-              {result.passed ? '✓ ผ่านการประเมิน!' : `ยังไม่ผ่าน (ต้อง ≥ ${PASS_PERCENT}%)`}
-            </p>
-            {result.passed && (
-              <p className="text-sm text-slate-600 mb-2">
-                ได้รับเหรียญตรา <b className="text-detective-700">🎓 ผ่านการประเมิน</b>
-              </p>
-            )}
+          <ResultHero
+            tone={result.passed ? 'warning' : 'info'}
+            emoji={result.passed ? '🎓' : '📚'}
+            title={result.passed ? '✓ ผ่านการประเมิน!' : `ยังไม่ผ่าน (ต้อง ≥ ${PASS_PERCENT}%)`}
+            subtitle={
+              <>
+                {result.passed && (
+                  <>ได้รับเหรียญตรา <b className="text-detective-700">🎓 ผ่านการประเมิน</b></>
+                )}
+                {player.examBestScore !== undefined && (
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    คะแนนสูงสุดที่เคยทำ: {player.examBestScore}%
+                  </p>
+                )}
+              </>
+            }
+          >
+            <ProgressCircle
+              percent={result.percent}
+              tone={result.passed ? 'warning' : 'detective'}
+              size={140}
+              label={`ได้ ${result.percent} เปอร์เซ็นต์`}
+            >
+              <span className="font-display font-extrabold text-3xl text-slate-800 leading-none">
+                <CountUp to={result.percent} formatter={n => `${n}%`} duration={1100} />
+              </span>
+              <span className="text-xs text-slate-500 mt-1">
+                ({score}/{result.details.length} ข้อ)
+              </span>
+            </ProgressCircle>
+            <StarRating
+              score={result.percent}
+              total={100}
+              thresholds={[PASS_PERCENT, 90, 95]}
+            />
             {result.gotBonus && (
-              <p className="inline-block bg-gradient-to-r from-warning-400 to-warning-500
-                            text-white font-bold px-5 py-2 rounded-full shadow-glow">
-                โบนัสครั้งแรก +{BONUS_COINS} 🪙
-              </p>
+              <motion.span
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.6, type: 'spring', stiffness: 200 }}
+                className="inline-block bg-gradient-to-r from-warning-400 to-warning-500
+                           text-white font-bold px-5 py-2 rounded-full shadow-glow-gold"
+              >
+                โบนัสครั้งแรก +<CountUp to={BONUS_COINS} duration={1000} /> 🪙
+              </motion.span>
             )}
-            {player.examBestScore !== undefined && (
-              <p className="text-[11px] text-slate-500 mt-4">คะแนนสูงสุดที่เคยทำ: {player.examBestScore}%</p>
-            )}
-          </motion.div>
+          </ResultHero>
 
           <QuizReview details={result.details} defaultOpen />
 

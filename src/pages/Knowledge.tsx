@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sfx } from '../lib/sound';
-import { GLOSSARY } from '../lib/glossary';
+import { GLOSSARY, CATEGORY_INFO, type GlossaryCategory } from '../lib/glossary';
 import PageHeader from '../components/PageHeader';
 
 // ===== เนื้อหาความรู้เรื่องบุหรี่ไฟฟ้า — สำหรับ ม.ต้น =====
@@ -88,6 +88,18 @@ const VIDEOS: VideoEntry[] = [
     desc: 'หนังสั้นแคมเปญ "Director\'s Cut" พร้อม English Subtitle',
   },
   {
+    id: 'uyRnV6BLZNA',
+    title: 'HEALTH A RIETY EP.2 : เรื่องจริง! ที่บุหรี่ไฟฟ้าซ่อนไว้',
+    channel: 'สสส. (สำนักงานกองทุนสนับสนุนการสร้างเสริมสุขภาพ)',
+    desc: 'เปิดเบื้องหลังบุหรี่ไฟฟ้า — สารพิษ การตลาด และผลกระทบที่ผู้ผลิตไม่อยากให้รู้',
+  },
+  {
+    id: 'c0Yh0qMjw0Y',
+    title: 'คลิปรณรงค์ให้ความรู้เรื่องบุหรี่ไฟฟ้า',
+    channel: 'ASHThailand (มูลนิธิรณรงค์เพื่อการไม่สูบบุหรี่)',
+    desc: 'รณรงค์สำหรับเยาวชน — บุหรี่ไฟฟ้าไม่ใช่ทางออกของวัยรุ่น',
+  },
+  {
     id: 'YiT1359eC10',
     title: 'บุหรี่ไฟฟ้าดีกว่าบุหรี่ธรรมดา จริงเหรอ?',
     channel: 'Zerosick (Doctor\'s Talk EP.19)',
@@ -156,70 +168,180 @@ const HOTLINE_COLOR: Record<HotlineEntry['color'], { accent: string; chip: strin
   detective: { accent: 'border-l-detective-400', chip: 'bg-detective-100', text: 'text-detective-700' },
 };
 
-// ===== Video Card: คลิ๊กแล้วเปิด YouTube จริง =====
-function VideoCard({ video }: { video: VideoEntry }) {
-  const [playing, setPlaying] = useState(false);
+// ===== Video Card — compact: thumbnail + title, กดเล่น → เปิด modal =====
+function VideoCard({ video, onPlay }: { video: VideoEntry; onPlay: () => void }) {
+  const [expanded, setExpanded] = useState(false);
   const thumb = `https://img.youtube.com/vi/${video.id}/hqdefault.jpg`;
   const watchUrl = `https://www.youtube.com/watch?v=${video.id}`;
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&playsinline=1&rel=0`;
 
   return (
-    <div className="card overflow-hidden p-0">
+    <div className="card overflow-hidden p-0 flex flex-col">
       <div className="relative w-full bg-black" style={{ paddingTop: '56.25%' }}>
-        {playing ? (
+        <button
+          onClick={() => { sfx.click(); onPlay(); }}
+          className="absolute inset-0 w-full h-full group"
+          aria-label={`เล่นวิดีโอ ${video.title}`}
+        >
+          <img
+            src={thumb}
+            alt={video.title}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-glow
+                            group-active:scale-90 transition-transform">
+              <div className="w-0 h-0 border-y-[8px] border-y-transparent border-l-[12px] border-l-detective-600 ml-1" />
+            </div>
+          </div>
+        </button>
+      </div>
+      <div className="p-2.5 flex-1 flex flex-col">
+        <p className="font-semibold text-detective-700 text-xs leading-snug line-clamp-2">
+          {video.title}
+        </p>
+        <p className="text-[10px] text-slate-500 mt-1 truncate">📺 {video.channel}</p>
+
+        {expanded && (
+          <p className="text-[11px] text-slate-600 mt-1.5 leading-relaxed">{video.desc}</p>
+        )}
+
+        <div className="mt-auto pt-2 flex items-center gap-1.5">
+          <button
+            onClick={() => { sfx.click(); setExpanded(v => !v); }}
+            className="flex-1 text-[10px] font-semibold text-slate-500 hover:text-detective-600
+                       border border-slate-200 hover:border-detective-300 rounded-lg px-2 py-1
+                       active:scale-95 transition-all"
+          >
+            {expanded ? 'ย่อ ▴' : 'รายละเอียด ▾'}
+          </button>
+          <a
+            href={watchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => sfx.click()}
+            className="flex-1 text-center text-[10px] font-bold bg-detective-100 text-detective-700
+                       px-2 py-1 rounded-lg hover:bg-detective-200 active:scale-95 transition-all"
+          >
+            ▶ YouTube
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===== Video Modal — fullscreen player overlay =====
+function VideoModal({ video, onClose }: { video: VideoEntry; onClose: () => void }) {
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&playsinline=1&rel=0`;
+
+  // ปิด modal เมื่อกด Esc
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-sm flex flex-col
+                 p-3 sm:p-6 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`เล่นวิดีโอ ${video.title}`}
+    >
+      {/* Header bar: title + close */}
+      <div className="flex items-start gap-2 mb-3 max-w-4xl mx-auto w-full">
+        <div className="flex-1 min-w-0">
+          <p className="font-display font-bold text-white text-sm sm:text-base leading-tight">
+            {video.title}
+          </p>
+          <p className="text-[11px] sm:text-xs text-white/70 mt-0.5 truncate">📺 {video.channel}</p>
+        </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); sfx.click(); onClose(); }}
+          className="flex-shrink-0 w-9 h-9 rounded-full bg-white/15 hover:bg-white/25
+                     text-white font-bold flex items-center justify-center
+                     active:scale-90 transition-all"
+          aria-label="ปิด"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Video frame — fixed 16:9, click ภายในไม่ปิด modal */}
+      <motion.div
+        initial={{ scale: 0.94, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.94, opacity: 0 }}
+        transition={{ duration: 0.22, type: 'spring', stiffness: 220, damping: 22 }}
+        className="flex-1 flex items-center justify-center min-h-0"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-full max-w-4xl bg-black rounded-2xl overflow-hidden shadow-2xl"
+             style={{ aspectRatio: '16 / 9' }}>
           <iframe
-            className="absolute inset-0 w-full h-full"
+            className="w-full h-full"
             src={embedUrl}
             title={video.title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerPolicy="strict-origin-when-cross-origin"
             allowFullScreen
           />
-        ) : (
-          <button
-            onClick={() => { sfx.click(); setPlaying(true); }}
-            className="absolute inset-0 w-full h-full group"
-            aria-label={`เล่นวิดีโอ ${video.title}`}
-          >
-            <img
-              src={thumb}
-              alt={video.title}
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-              <div className="w-16 h-16 rounded-full bg-white/95 flex items-center justify-center shadow-glow
-                              group-active:scale-90 transition-transform">
-                <div className="w-0 h-0 border-y-[10px] border-y-transparent border-l-[16px] border-l-detective-600 ml-1.5" />
-              </div>
-            </div>
-          </button>
-        )}
-      </div>
-      <div className="p-3">
-        <p className="font-semibold text-detective-700 text-sm leading-snug">{video.title}</p>
-        <p className="text-[11px] text-slate-500 mt-0.5">📺 {video.channel}</p>
-        <p className="text-[11px] text-slate-600 mt-1">{video.desc}</p>
-        <a
-          href={watchUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => sfx.click()}
-          className="mt-2 inline-block text-[11px] font-bold bg-detective-100 text-detective-700 px-2.5 py-1.5 rounded-xl hover:bg-detective-200 active:scale-95"
-        >
-          ▶ เปิดใน YouTube
-        </a>
-      </div>
-    </div>
+        </div>
+      </motion.div>
+
+      <p className="text-center text-[11px] text-white/60 mt-3">
+        แตะนอกวิดีโอเพื่อปิด · หรือกด ✕
+      </p>
+    </motion.div>
   );
 }
 
 type Tab = 'dangers' | 'videos' | 'tips' | 'glossary' | 'help';
 
+// ===== Category filter chip =====
+function CategoryChip({
+  active, onClick, label, emoji, count,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  emoji: string;
+  count: number;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold
+                  transition-all active:scale-95 ${
+        active
+          ? 'bg-detective-600 text-white shadow-glow-sm'
+          : 'bg-white border border-detective-100 text-slate-600 hover:border-detective-300 hover:text-detective-600'
+      }`}
+    >
+      <span>{emoji}</span>
+      <span>{label}</span>
+      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+        active ? 'bg-white/20' : 'bg-detective-50 text-detective-600'
+      }`}>
+        {count}
+      </span>
+    </button>
+  );
+}
+
 export default function Knowledge() {
   const nav = useNavigate();
   const [tab, setTab] = useState<Tab>('dangers');
   const [glossarySearch, setGlossarySearch] = useState('');
+  const [glossaryCat, setGlossaryCat] = useState<GlossaryCategory | 'all'>('all');
+  const [playingVideo, setPlayingVideo] = useState<VideoEntry | null>(null);
 
   const TABS: { id: Tab; label: string; emoji: string }[] = [
     { id: 'dangers',  label: 'ภัยอันตราย', emoji: '⚠️' },
@@ -231,46 +353,52 @@ export default function Knowledge() {
 
   const filteredGlossary = useMemo(() => {
     const q = glossarySearch.trim().toLowerCase();
-    if (!q) return GLOSSARY;
-    return GLOSSARY.filter(g =>
-      g.term.toLowerCase().includes(q) || g.def.toLowerCase().includes(q)
-    );
-  }, [glossarySearch]);
+    return GLOSSARY.filter(g => {
+      if (glossaryCat !== 'all' && g.category !== glossaryCat) return false;
+      if (!q) return true;
+      return g.term.toLowerCase().includes(q) || g.def.toLowerCase().includes(q);
+    });
+  }, [glossarySearch, glossaryCat]);
 
   return (
     <div className="min-h-full pb-10 relative">
       <PageHeader title="📖 ห้องสมุดความรู้" subtitle="รู้ทันภัยจากบุหรี่ไฟฟ้า" backTo="/" />
 
       <main className="max-w-md md:max-w-2xl mx-auto px-4 pt-3">
-        {/* Hero */}
-        <div className="card-hero mb-3 text-center py-3">
-          <div className="flex items-center gap-2 justify-center">
-            <div className="text-4xl">🚭</div>
-            <div className="text-left">
-              <h1 className="font-display font-bold text-base text-detective-700 leading-tight">
-                บุหรี่ไฟฟ้า รู้ไว้ ร้ายจัด
-              </h1>
-              <p className="text-[11px] text-slate-600">เลือกหัวข้อด้านล่างเพื่ออ่านต่อ</p>
-            </div>
+        {/* Hero — compact */}
+        <div className="card-hero mb-3 flex items-center gap-3 py-3 px-4">
+          <div className="text-3xl flex-shrink-0">🚭</div>
+          <div className="flex-1 min-w-0">
+            <h1 className="font-display font-bold text-sm text-detective-700 leading-tight">
+              บุหรี่ไฟฟ้า รู้ไว้ ร้ายจัด
+            </h1>
+            <p className="text-xs text-slate-600 mt-0.5 leading-snug">
+              เลือกหัวข้อด้านล่างเพื่ออ่านต่อ
+            </p>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="grid grid-cols-5 gap-1.5 mb-3">
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => { sfx.click(); setTab(t.id); }}
-              className={`rounded-2xl py-2 px-1 text-center transition-all active:scale-95 ${
-                tab === t.id
-                  ? 'bg-detective-600 text-white shadow-glow-sm'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:border-detective-300'
-              }`}
-            >
-              <div className="text-lg leading-none">{t.emoji}</div>
-              <p className="text-[10px] font-bold mt-1 leading-tight">{t.label}</p>
-            </button>
-          ))}
+        {/* Tabs — pill grid: active สีฟ้าเด่น, inactive ขาวขอบจาง */}
+        <div className="sticky top-0 z-10 -mx-4 px-4 py-2 mb-2 bg-white/95 backdrop-blur-sm">
+          <div className="grid grid-cols-5 gap-1.5">
+            {TABS.map(t => (
+              <button
+                key={t.id}
+                onClick={() => { sfx.click(); setTab(t.id); }}
+                className={`flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-2xl
+                            transition-all active:scale-95 ${
+                  tab === t.id
+                    ? 'bg-gradient-to-br from-detective-500 to-detective-700 text-white shadow-glow-sm'
+                    : 'bg-white border border-detective-100 text-slate-500 hover:border-detective-300 hover:text-detective-600'
+                }`}
+              >
+                <span className="text-lg leading-none">{t.emoji}</span>
+                <span className={`text-[10px] font-bold leading-tight ${
+                  tab === t.id ? 'text-white' : ''
+                }`}>{t.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <AnimatePresence mode="wait">
@@ -288,26 +416,29 @@ export default function Knowledge() {
                 return (
                   <div
                     key={i}
-                    className={`card border-l-4 ${c.accent}`}
+                    className={`card border-l-4 ${c.accent} space-y-2`}
                   >
                     <div className="flex items-start gap-2.5">
                       <div className={`icon-tile ${c.tile} text-2xl`}>{d.emoji}</div>
                       <div className="flex-1 min-w-0">
-                        <h4 className={`font-display font-bold ${c.text} text-sm leading-tight mb-0.5`}>
+                        <h4 className={`font-display font-bold ${c.text} text-sm leading-tight mb-1`}>
                           {d.title}
                         </h4>
-                        <p className="text-xs text-slate-700 leading-relaxed">{d.body}</p>
-                        <p className="text-[10px] text-slate-500 italic mt-1.5 leading-snug">
-                          📚 ที่มา: {d.source}
-                        </p>
+                        <p className="text-sm text-slate-700 leading-relaxed">{d.body}</p>
                       </div>
+                    </div>
+                    {/* source — แยกใต้ใน chip เล็ก */}
+                    <div className="ml-12 text-[10px] text-slate-500 leading-snug
+                                    bg-slate-50 rounded-lg px-2 py-1.5 border border-slate-100">
+                      📚 {d.source}
                     </div>
                   </div>
                 );
               })}
-              <div className="card text-center text-[10px] text-slate-500 leading-relaxed">
-                ข้อมูลรวบรวมจาก WHO, CDC, U.S. Surgeon General, NIDA, American Heart Association
-                และเอกสารกระทรวงสาธารณสุขของไทย
+              <div className="card text-center text-xs text-slate-500 leading-relaxed md:col-span-2">
+                <p className="font-semibold text-detective-700 mb-1">📚 แหล่งข้อมูล</p>
+                WHO · CDC · U.S. Surgeon General · NIDA · American Heart Association
+                · กระทรวงสาธารณสุขของไทย
               </div>
             </motion.div>
           )}
@@ -320,13 +451,18 @@ export default function Knowledge() {
               exit={{ opacity: 0, x: 8 }}
               transition={{ duration: 0.18 }}
             >
-              <p className="text-xs text-slate-600 text-center mb-3">
-                💡 กดปุ่ม ▶ บนรูป — ถ้าเล่นไม่ได้ในแอป ให้กด "เปิดใน YouTube"
-              </p>
-              <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
-                {VIDEOS.map(v => <VideoCard key={v.id} video={v} />)}
+              <div className="flex items-center justify-between mb-2 px-1">
+                <p className="text-xs text-slate-500">
+                  พบ <b className="text-detective-700">{VIDEOS.length}</b> คลิป
+                </p>
+                <p className="text-[10px] text-slate-400">💡 กด ▶ บนรูปเพื่อเล่น</p>
               </div>
-              <div className="card text-center text-[10px] text-slate-500 leading-relaxed mt-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+                {VIDEOS.map(v => (
+                  <VideoCard key={v.id} video={v} onPlay={() => setPlayingVideo(v)} />
+                ))}
+              </div>
+              <div className="card text-center text-[10px] text-slate-500 leading-relaxed mt-3 md:col-span-3">
                 เครดิตวิดีโอ: เป็นลิขสิทธิ์ของเจ้าของช่องตามที่ระบุ — ใช้เพื่อการศึกษา ไม่หากำไร
               </div>
             </motion.div>
@@ -341,26 +477,35 @@ export default function Knowledge() {
               transition={{ duration: 0.18 }}
             >
               <div className="card-hero">
-                <p className="text-xs text-slate-700 mb-2.5 text-center">
-                  มีคนชวนสูบบุหรี่ไฟฟ้า? ทำตาม 4 ขั้น
+                <p className="text-sm text-slate-700 mb-3 text-center font-semibold">
+                  ✋ มีคนชวนสูบบุหรี่ไฟฟ้า? ทำตาม 4 ขั้น
                 </p>
                 <div className="space-y-2">
                   {REJECT_TIPS.map((t, i) => (
                     <div
                       key={i}
-                      className="flex items-start gap-2.5 bg-white rounded-2xl p-2.5 border border-slate-200"
+                      className="relative flex items-start gap-3 bg-white rounded-2xl p-3
+                                 border border-detective-100 shadow-sm"
                     >
-                      <div className="w-7 h-7 rounded-full bg-detective-600 text-white font-bold flex items-center justify-center flex-shrink-0 text-sm">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-detective-500 to-detective-700
+                                      text-white font-display font-extrabold flex items-center justify-center
+                                      flex-shrink-0 text-base shadow-glow-sm">
                         {t.step}
                       </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-detective-700 text-sm leading-tight">{t.title}</p>
-                        <p className="text-[11px] text-slate-600 italic mt-0.5">"{t.example}"</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-detective-700 text-sm leading-tight">{t.title}</p>
+                        <p className="text-xs text-slate-600 italic mt-1 leading-snug">"{t.example}"</p>
                       </div>
+                      {i < REJECT_TIPS.length - 1 && (
+                        <span className="absolute -bottom-1.5 left-7 text-detective-300 text-xs" aria-hidden>
+                          ↓
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
-                <p className="text-[10px] text-slate-500 italic mt-3 text-center">
+                <p className="text-[10px] text-slate-500 italic mt-4 text-center
+                              bg-white/60 rounded-lg px-2 py-1.5 border border-slate-100">
                   📚 ปรับจาก: WHO Tobacco Cessation Guidelines + American Lung Association
                 </p>
               </div>
@@ -376,7 +521,7 @@ export default function Knowledge() {
               transition={{ duration: 0.18 }}
             >
               {/* search */}
-              <div className="relative mb-3">
+              <div className="relative mb-2">
                 <input
                   value={glossarySearch}
                   onChange={e => setGlossarySearch(e.target.value)}
@@ -395,28 +540,83 @@ export default function Knowledge() {
                 )}
               </div>
 
+              {/* Category filter chips */}
+              <div className="flex gap-1.5 mb-3 overflow-x-auto -mx-4 px-4 pb-1 scrollbar-none">
+                <CategoryChip
+                  active={glossaryCat === 'all'}
+                  onClick={() => setGlossaryCat('all')}
+                  label="ทั้งหมด"
+                  emoji="📚"
+                  count={GLOSSARY.length}
+                />
+                {(Object.keys(CATEGORY_INFO) as GlossaryCategory[]).map(cat => {
+                  const info = CATEGORY_INFO[cat];
+                  const count = GLOSSARY.filter(g => g.category === cat).length;
+                  return (
+                    <CategoryChip
+                      key={cat}
+                      active={glossaryCat === cat}
+                      onClick={() => setGlossaryCat(cat)}
+                      label={info.label}
+                      emoji={info.emoji}
+                      count={count}
+                    />
+                  );
+                })}
+              </div>
+
               {filteredGlossary.length === 0 ? (
-                <p className="text-center text-sm text-slate-500 py-8">ไม่พบคำที่ค้นหา</p>
-              ) : (
-                <div className="max-h-[60vh] overflow-y-auto overscroll-contain -mx-1 px-1 pb-1
-                                space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
-                  {filteredGlossary.map(g => (
-                    <div key={g.term} className="card border-l-4 border-detective-400">
-                      <div className="flex items-start gap-2.5">
-                        <div className="text-2xl flex-shrink-0 leading-none">{g.emoji}</div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-display font-bold text-detective-700 text-sm leading-tight mb-0.5">
-                            {g.term}
-                          </h4>
-                          <p className="text-xs text-slate-700 leading-relaxed">{g.def}</p>
-                          <p className="text-[10px] text-slate-500 italic mt-1.5 leading-snug">
-                            📚 {g.source}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="card text-center py-10">
+                  <div className="text-4xl mb-2">🔍</div>
+                  <p className="text-sm text-slate-600 font-semibold">ไม่พบคำที่ค้นหา</p>
+                  <p className="text-xs text-slate-500 mt-1">ลองค้นด้วยคำอื่น หรือเลือกหมวดอื่น</p>
                 </div>
+              ) : (
+                <>
+                  <p className="text-xs text-slate-500 mb-2 px-1">
+                    พบ <b className="text-detective-700">{filteredGlossary.length}</b> คำ ·
+                    <span className="text-slate-400"> กดที่คำเพื่อดูรายละเอียด</span>
+                  </p>
+                  <div className="space-y-1.5">
+                    {filteredGlossary.map(g => {
+                      const cat = CATEGORY_INFO[g.category];
+                      return (
+                        <details
+                          key={g.term}
+                          className="group card p-0 overflow-hidden hover:border-detective-300 transition-colors"
+                        >
+                          <summary
+                            className="flex items-center gap-3 px-3 py-2.5 cursor-pointer
+                                       list-none active:scale-[0.99] transition-transform select-none"
+                          >
+                            <span className="text-xl flex-shrink-0 leading-none">{g.emoji}</span>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-display font-bold text-detective-700 text-sm leading-tight truncate">
+                                {g.term}
+                              </h4>
+                              <span className="text-[10px] text-slate-400 leading-snug">
+                                {cat.emoji} {cat.label}
+                              </span>
+                            </div>
+                            <span className="text-detective-400 text-sm flex-shrink-0
+                                             group-open:rotate-180 transition-transform"
+                                  aria-hidden>
+                              ▾
+                            </span>
+                          </summary>
+                          <div className="px-3 pb-3 pt-1 border-t border-detective-100/50
+                                          animate-in fade-in slide-in-from-top-1 duration-200">
+                            <p className="text-sm text-slate-700 leading-relaxed mb-2">{g.def}</p>
+                            <div className="text-[10px] text-slate-500 leading-snug
+                                            bg-slate-50 rounded-lg px-2 py-1.5 border border-slate-100">
+                              📚 {g.source}
+                            </div>
+                          </div>
+                        </details>
+                      );
+                    })}
+                  </div>
+                </>
               )}
             </motion.div>
           )}
@@ -439,30 +639,34 @@ export default function Knowledge() {
                     className={`card block border-l-4 ${c.accent} active:scale-[0.98] transition-transform`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`w-14 h-14 rounded-2xl ${c.chip} flex items-center justify-center flex-shrink-0`}>
-                        <span className={`font-display font-extrabold ${c.text} text-lg leading-none`}>
+                      <div className={`w-16 h-16 rounded-2xl ${c.chip} flex flex-col items-center justify-center flex-shrink-0 shadow-sm`}>
+                        <span className="text-[9px] font-bold text-slate-500 leading-none mb-0.5">โทร</span>
+                        <span className={`font-display font-extrabold ${c.text} text-xl leading-none`}>
                           {h.number}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className={`font-bold ${c.text} text-sm leading-tight`}>{h.name}</p>
                         <p className="text-[10px] text-slate-500 leading-snug mt-0.5">{h.agency}</p>
-                        <p className="text-[11px] text-slate-700 mt-1.5 leading-relaxed">
-                          <b>ช่วยอะไรได้:</b> {h.help}
+                        <p className="text-xs text-slate-700 mt-2 leading-relaxed">
+                          <b className="text-slate-800">ช่วยอะไร:</b> {h.help}
                         </p>
-                        <p className="text-[10px] text-slate-500 mt-1">⏰ {h.desc}</p>
+                        <p className="text-[10px] text-slate-500 mt-1.5 flex items-center gap-1">
+                          <span>⏰</span> {h.desc}
+                        </p>
                       </div>
+                      <span className="text-detective-400 text-lg flex-shrink-0 self-center" aria-hidden>→</span>
                     </div>
                   </a>
                 );
               })}
 
-              <div className="card border border-candy-200 bg-candy-50">
-                <div className="flex items-start gap-2.5">
-                  <div className="text-2xl">👨‍⚕️</div>
-                  <div className="flex-1">
-                    <p className="font-bold text-candy-600 text-sm">บอกผู้ใหญ่ที่เชื่อใจ</p>
-                    <p className="text-[11px] text-slate-700 mt-1">
+              <div className="card border border-mint-200 bg-mint-50">
+                <div className="flex items-start gap-3">
+                  <div className="icon-tile bg-white text-mint-600">👨‍⚕️</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-mint-600 text-sm">บอกผู้ใหญ่ที่เชื่อใจ</p>
+                    <p className="text-xs text-slate-700 mt-1 leading-relaxed">
                       พ่อแม่ ครู หมอ พยาบาลที่ ร.ร. — ไม่ต้องอายที่จะขอความช่วยเหลือ
                       บุคคลเหล่านี้พร้อมรับฟังและช่วยน้องโดยไม่ตัดสิน
                     </p>
@@ -480,6 +684,13 @@ export default function Knowledge() {
           🎮 กลับไปเล่นเกม
         </button>
       </main>
+
+      {/* ===== Video player modal — full-width overlay ===== */}
+      <AnimatePresence>
+        {playingVideo && (
+          <VideoModal video={playingVideo} onClose={() => setPlayingVideo(null)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

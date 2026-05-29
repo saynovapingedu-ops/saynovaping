@@ -18,6 +18,9 @@ import { fetchLeaderboard } from '../lib/cloudSync';
 import type { LeaderboardEntry, LeaderboardResponse } from '../lib/cloudSync';
 import PageHeader from '../components/PageHeader';
 import { sfx } from '../lib/sound';
+import SkeletonCard from '../components/ui/SkeletonCard';
+import EmptyState from '../components/ui/EmptyState';
+import AnonymousAvatar from '../components/ui/AnonymousAvatar';
 
 function medal(rank: number): string {
   return rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}`;
@@ -82,31 +85,28 @@ export default function Leaderboard() {
 
         {/* ===== Loading ===== */}
         {status === 'loading' && (
-          <div className="text-center py-12">
-            <div className="text-4xl mb-2 animate-pulse">🏆</div>
-            <p className="text-sm text-slate-500">กำลังโหลดอันดับ...</p>
-          </div>
+          <SkeletonCard variant="row" count={5} label="กำลังโหลดอันดับ" />
         )}
 
         {/* ===== Error (network) ===== */}
         {status === 'error' && (
-          <div className="card text-center py-8">
-            <div className="text-4xl mb-2">📡</div>
-            <p className="font-semibold text-slate-700 mb-1">เชื่อมต่อไม่ได้</p>
-            <p className="text-xs text-slate-500 mb-3">ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง</p>
-            <button onClick={load} className="btn-secondary text-sm">ลองใหม่</button>
-          </div>
+          <EmptyState
+            icon="📡"
+            tone="error"
+            title="เชื่อมต่อไม่ได้"
+            description="ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง"
+            action={<button onClick={load} className="btn-secondary">ลองใหม่</button>}
+          />
         )}
 
         {/* ===== Backend ยังไม่รองรับ ===== */}
         {status === 'unsupported' && (
-          <div className="card border border-detective-100 bg-detective-50/40 text-center py-6">
-            <div className="text-4xl mb-2">🚧</div>
-            <p className="font-semibold text-detective-700 mb-1">กระดานอันดับกำลังเปิดเร็ว ๆ นี้</p>
-            <p className="text-xs text-slate-500">
-              เมื่อมีผู้เล่นเข้ามามากขึ้น อันดับจะปรากฏที่นี่
-            </p>
-          </div>
+          <EmptyState
+            icon="🚧"
+            tone="info"
+            title="กระดานอันดับกำลังเปิดเร็ว ๆ นี้"
+            description="เมื่อมีผู้เล่นเข้ามามากขึ้น อันดับจะปรากฏที่นี่"
+          />
         )}
 
         {/* ===== รายการอันดับ (ปิดชื่อคนอื่น) ===== */}
@@ -123,11 +123,11 @@ export default function Leaderboard() {
 
         {/* ว่างเปล่า */}
         {status === 'ok' && data && data.entries.length === 0 && (
-          <div className="card text-center py-8">
-            <div className="text-4xl mb-2">🌱</div>
-            <p className="font-semibold text-slate-700 mb-1">ยังไม่มีใครบนกระดาน</p>
-            <p className="text-xs text-slate-500">เล่นด่านให้จบเพื่อเป็นคนแรก!</p>
-          </div>
+          <EmptyState
+            icon="🌱"
+            title="ยังไม่มีใครบนกระดาน"
+            description="เล่นด่านให้จบเพื่อเป็นคนแรก!"
+          />
         )}
 
         {/* ===== หมายเหตุ PDPA ===== */}
@@ -177,24 +177,29 @@ function LeaderRow({ entry, index }: { entry: LeaderboardEntry; index: number })
         {medal(entry.rank)}
       </div>
 
+      {/* avatar — ใช้ AnonymousAvatar สำหรับคนอื่น (PDPA) */}
+      {!entry.isMe && <AnonymousAvatar rank={entry.rank} size={36} />}
+
       {/* ชื่อ (เฉพาะตัวเอง) + tier */}
       <div className="flex-1 min-w-0">
-        <p className={`font-semibold truncate ${entry.isMe ? 'text-detective-700' : 'text-gray-500'}`}>
+        <p className={`font-semibold truncate ${
+          entry.isMe ? 'text-detective-700' : 'text-slate-400 italic'
+        }`}>
           {displayName}
         </p>
         <div className="flex items-center gap-1.5 mt-0.5">
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white"
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white"
                 style={{ backgroundColor: tier.color }}>
             {tier.label}
           </span>
-          <span className="text-[11px] text-slate-500">{lv.emoji} Lv.{lv.level}</span>
+          <span className="text-xs text-slate-500">{lv.emoji} Lv.{lv.level}</span>
         </div>
       </div>
 
       {/* XP */}
       <div className="text-right flex-shrink-0">
         <p className="font-bold text-detective-700 leading-none">{entry.totalXP.toLocaleString()}</p>
-        <p className="text-[10px] text-slate-400">XP</p>
+        <p className="text-[11px] text-slate-400 mt-0.5">XP</p>
       </div>
     </motion.li>
   );

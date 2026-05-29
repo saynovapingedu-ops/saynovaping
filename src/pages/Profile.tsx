@@ -54,7 +54,7 @@ export default function Profile() {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm"
+          className="card p-5"
         >
           <div className="flex items-center gap-4 mb-4">
             <button
@@ -152,7 +152,7 @@ export default function Profile() {
         </button>
 
         {/* === Badges collection — ขาวล้วน ตัวที่ได้ปลด highlight ม่วงเบาๆ === */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm">
+        <div className="card">
           <div className="flex items-center justify-between mb-2">
             <h4 className="font-display font-bold text-slate-800 flex items-center gap-1.5">
               <span>🏅</span> Badges
@@ -202,7 +202,7 @@ export default function Profile() {
         )}
 
         {/* === Privacy/data — ซ่อนใน details === */}
-        <details className="bg-white rounded-2xl border border-slate-200 text-sm">
+        <details className="bg-white rounded-2xl border border-detective-100 text-sm">
           <summary className="font-semibold cursor-pointer text-slate-700 px-4 py-3
                               hover:bg-slate-50 rounded-2xl transition-colors">
             🔒 ข้อมูลความเป็นส่วนตัว

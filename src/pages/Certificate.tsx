@@ -11,6 +11,10 @@ import PageHeader from '../components/PageHeader';
 import CertNameDialog from '../components/CertNameDialog';
 import { SHOP_ITEMS } from '../lib/shopItems';
 import { useCertNameStore } from '../store/certNameStore';
+import SkeletonCard from '../components/ui/SkeletonCard';
+import EmptyState from '../components/ui/EmptyState';
+import Ribbon from '../components/ui/Ribbon';
+import CertSeal from '../components/ui/CertSeal';
 
 export default function Certificate() {
   const nav = useNavigate();
@@ -149,15 +153,24 @@ export default function Certificate() {
     return (
       <div className="min-h-screen flex flex-col">
         <PageHeader title="🏆 ประกาศนียบัตร" backTo="/" />
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <div className="text-5xl mb-4">🔒</div>
-          <h2 className="text-xl font-display font-bold text-detective-700 mb-2">ยังไม่ถึงเกณฑ์</h2>
-          <p className="text-slate-600 mb-6">
-            ต้องจบครบ 8 ด่าน หรือเก็บ XP ครบ 1,500
-            <br/>(ตอนนี้ {player.stagesCompleted.length}/8 ด่าน, {player.totalXP} XP)
-          </p>
-          <button onClick={() => nav('/')} className="btn-primary">กลับไปเล่นต่อ</button>
-        </div>
+        <main className="flex-1 max-w-md md:max-w-lg mx-auto p-4 w-full">
+          <EmptyState
+            hero
+            icon="🔒"
+            tone="info"
+            title="ยังไม่ถึงเกณฑ์"
+            description={
+              <>
+                ต้องจบครบ 8 ด่าน หรือเก็บ XP ครบ 1,500
+                <br />
+                (ตอนนี้ {player.stagesCompleted.length}/8 ด่าน, {player.totalXP.toLocaleString()} XP)
+              </>
+            }
+            action={
+              <button onClick={() => nav('/')} className="btn-primary">กลับไปเล่นต่อ</button>
+            }
+          />
+        </main>
       </div>
     );
   }
@@ -182,18 +195,22 @@ export default function Certificate() {
 
       <main className="max-w-md md:max-w-lg mx-auto p-4">
         {loading && (
-          <div className="card text-center py-12">
-            <div className="text-4xl mb-3 animate-pulse">⏳</div>
-            <p className="text-slate-600">กำลังออกประกาศนียบัตร ...</p>
+          <div role="status" aria-label="กำลังออกประกาศนียบัตร">
+            <SkeletonCard variant="cert" />
+            <p className="text-center text-sm text-slate-500 mt-3">กำลังออกประกาศนียบัตร...</p>
           </div>
         )}
 
         {error && (
-          <div className="card border-2 border-danger-400 text-center">
-            <p className="text-danger-500 font-semibold mb-2">เกิดข้อผิดพลาด</p>
-            <p className="text-sm text-slate-600 mb-4">{error}</p>
-            <button onClick={() => location.reload()} className="btn-primary">ลองใหม่</button>
-          </div>
+          <EmptyState
+            icon="⚠️"
+            tone="error"
+            title="เกิดข้อผิดพลาด"
+            description={error}
+            action={
+              <button onClick={() => location.reload()} className="btn-primary">ลองใหม่</button>
+            }
+          />
         )}
 
         {certNo && !loading && !error && (
@@ -201,27 +218,35 @@ export default function Certificate() {
             {/* ===== Certificate artwork — ทางการ พื้นขาวล้วน ===== */}
             <div
               id="cert-card"
-              className={`relative bg-white shadow-2xl font-official ${certDeco?.borderClass || ''}`}
+              className={`relative bg-white shadow-2xl font-official overflow-hidden ${certDeco?.borderClass || ''}`}
               style={{ aspectRatio: '1 / 1.414', fontFamily: '"Sukhumvit Set", "Noto Sans Thai", "IBM Plex Sans Thai", sans-serif' }}
             >
+              {/* === ขอบทอง outer (achievement accent — TMF gold #F59E0B) === */}
+              <div className="absolute inset-1 border-2 border-warning-500 pointer-events-none" />
               {/* === กรอบเส้นคู่ น้ำเงินเข้ม (หนา + บาง) === */}
               <div className="absolute inset-3 border-[3px] border-[#003C73] pointer-events-none" />
               <div className="absolute inset-[18px] border border-[#003C73] pointer-events-none" />
 
+              {/* === Watermark TMF Logo (subtle, behind content) === */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
+                   aria-hidden style={{ opacity: 0.04 }}>
+                <TMFLogo variant="bare" width={360} />
+              </div>
+
               {/* === Decorative corner emoji (จาก cert-deco ที่สวม) === */}
               {certDeco?.corner && (
                 <>
-                  <span className="absolute top-6 left-6 text-2xl pointer-events-none" aria-hidden>{certDeco.corner}</span>
-                  <span className="absolute top-6 right-6 text-2xl pointer-events-none" aria-hidden>{certDeco.corner}</span>
+                  <span className="absolute top-6 left-6 text-2xl pointer-events-none z-10" aria-hidden>{certDeco.corner}</span>
+                  <span className="absolute top-6 right-6 text-2xl pointer-events-none z-10" aria-hidden>{certDeco.corner}</span>
                 </>
               )}
 
-              {/* === ลวดลายเรขาคณิตที่มุมล่าง (สี่เหลี่ยมฟ้า-น้ำเงิน) === */}
+              {/* === ลวดลายเรขาคณิตที่มุมล่าง (ฟ้า + ทอง) === */}
               <CornerPattern position="bottom-left" />
               <CornerPattern position="bottom-right" />
 
               {/* === Content === */}
-              <div className="relative px-8 pt-8 pb-12 h-full flex flex-col items-center text-center">
+              <div className="relative px-8 pt-8 pb-12 h-full flex flex-col items-center text-center z-10">
                 {/* === Logos: TMF + ผู้รับทุน (กึ่งกลางบนสุด) === */}
                 <div className="flex items-center justify-center gap-6 mb-6 w-full">
                   <TMFLogo variant="bare" width={110} />
@@ -238,10 +263,11 @@ export default function Certificate() {
                 <h1 className="text-detective-800 font-bold text-[2.5rem] leading-tight tracking-wide">
                   ประกาศนียบัตร
                 </h1>
-                <div className="w-24 h-px bg-detective-700 my-3" />
+                {/* Ribbon ทอง แทน divider เส้นบาง */}
+                <Ribbon width={130} height={26} className="my-2" />
 
                 {/* === Issuing statement === */}
-                <p className="text-slate-700 text-sm mt-2">ฉบับนี้ไว้เพื่อแสดงว่า</p>
+                <p className="text-slate-700 text-sm mt-1">ฉบับนี้ไว้เพื่อแสดงว่า</p>
 
                 {/* === Recipient name === ชื่อจริงเป็นหลัก, ไม่ใส่ใช้ชื่อเล่น */}
                 <h2 className={`text-detective-800 font-bold my-1 leading-tight px-4 whitespace-nowrap w-full overflow-hidden text-ellipsis ${
@@ -264,6 +290,11 @@ export default function Certificate() {
                   และรู้เท่าทันภัยจากบุหรี่ไฟฟ้า สำหรับเยาวชน
                 </p>
 
+                {/* === Seal (ตราประทับ) === */}
+                <div className="mt-3">
+                  <CertSeal size={72} />
+                </div>
+
                 {/* === Date === */}
                 <p className="text-slate-700 text-sm mt-auto pt-4">
                   ให้ไว้ ณ วันที่ <span className="font-semibold text-detective-800">{formatThaiDate(issueDate)}</span>
@@ -277,7 +308,7 @@ export default function Certificate() {
 
               {/* === QR เล็ก มุมขวาล่าง === */}
               {qrDataUrl && (
-                <div className="absolute bottom-6 right-6 bg-white p-1 border border-slate-300">
+                <div className="absolute bottom-6 right-6 bg-white p-1 border border-slate-300 z-10">
                   <img src={qrDataUrl} alt="ตรวจสอบ" className="w-12 h-12 block" />
                   <p className="text-[7px] text-slate-500 text-center mt-0.5 leading-tight">ตรวจสอบ</p>
                 </div>
@@ -332,7 +363,7 @@ export default function Certificate() {
             <div className="mt-2 grid grid-cols-2 gap-2 print:hidden">
               <button
                 onClick={() => nav('/')}
-                className="btn-secondary w-full text-sm py-2"
+                className="btn-secondary w-full"
               >
                 ← หน้าแรก
               </button>
@@ -343,7 +374,7 @@ export default function Certificate() {
                     setShareMsg('ก๊อปรหัสแล้ว');
                     setTimeout(() => setShareMsg(null), 2000);
                   }}
-                  className="btn-secondary w-full text-sm py-2"
+                  className="btn-secondary w-full"
                 >
                   📋 ก๊อปรหัส
                 </button>
@@ -368,32 +399,34 @@ export default function Certificate() {
   );
 }
 
-// ===== ลวดลายเรขาคณิตสี่เหลี่ยมที่มุม — โทนฟ้า-น้ำเงิน =====
+// ===== ลวดลายเรขาคณิตสี่เหลี่ยมที่มุม — TMF ฟ้า + ทอง achievement =====
 function CornerPattern({ position }: { position: 'bottom-left' | 'bottom-right' }) {
   const flip = position === 'bottom-right';
   return (
     <div
-      className="absolute bottom-6 w-24 h-24 pointer-events-none"
+      className="absolute bottom-6 w-24 h-24 pointer-events-none z-[5]"
       style={{
         [flip ? 'right' : 'left']: '24px',
         transform: flip ? 'scaleX(-1)' : 'none',
       }}
     >
       <svg viewBox="0 0 96 96" className="w-full h-full" aria-hidden>
-        {/* layered rectangles — pattern เรขาคณิต TMF blue */}
+        {/* แถวล่าง */}
         <rect x="0"  y="72" width="20" height="20" fill="#003C73" />
         <rect x="22" y="72" width="20" height="20" fill="#0072CC" />
-        <rect x="44" y="72" width="20" height="20" fill="#008FFF" />
+        <rect x="44" y="72" width="20" height="20" fill="#F59E0B" />
         <rect x="66" y="72" width="20" height="20" fill="#ABDAFF" />
 
+        {/* แถวกลาง */}
         <rect x="0"  y="50" width="20" height="20" fill="#0072CC" />
-        <rect x="22" y="50" width="20" height="20" fill="#008FFF" />
+        <rect x="22" y="50" width="20" height="20" fill="#FBBF24" />
         <rect x="44" y="50" width="20" height="20" fill="#ABDAFF" opacity="0.7" />
 
+        {/* แถวบน */}
         <rect x="0"  y="28" width="20" height="20" fill="#008FFF" />
         <rect x="22" y="28" width="20" height="20" fill="#ABDAFF" opacity="0.6" />
 
-        <rect x="0"  y="6"  width="20" height="20" fill="#ABDAFF" opacity="0.5" />
+        <rect x="0"  y="6"  width="20" height="20" fill="#FEF3C7" opacity="0.7" />
       </svg>
     </div>
   );

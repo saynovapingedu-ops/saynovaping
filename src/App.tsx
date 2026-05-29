@@ -9,6 +9,8 @@ import { SHOP_ITEMS } from './lib/shopItems';
 import Toaster from './components/Toaster';
 import Onboarding from './pages/Onboarding';
 import Home from './pages/Home';
+import Skeleton from './components/ui/Skeleton';
+import SkeletonCard from './components/ui/SkeletonCard';
 
 // ===== Lazy-loaded routes — โหลดเฉพาะตอนเปิดหน้านั้นๆ =====
 const ScenarioPage = lazy(() => import('./pages/ScenarioPage'));
@@ -28,9 +30,15 @@ const Leaderboard  = lazy(() => import('./pages/Leaderboard'));
 
 function PageLoader() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-center p-6">
-      <div className="text-4xl mb-3 animate-pulse">✨</div>
-      <p className="text-detective-600 font-semibold text-sm">กำลังโหลด...</p>
+    <div className="min-h-screen p-4" role="status" aria-label="กำลังโหลดหน้า">
+      {/* header skeleton */}
+      <div className="flex items-center gap-3 mb-4">
+        <Skeleton width={40} height={40} rounded="xl" />
+        <Skeleton width="50%" height={20} rounded="md" />
+      </div>
+      <div className="max-w-md md:max-w-2xl mx-auto">
+        <SkeletonCard variant="card" />
+      </div>
     </div>
   );
 }
@@ -171,9 +179,14 @@ export default function App() {
 
   if (!ready) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center p-6">
-        <div className="text-5xl mb-4 animate-pulse">🔍</div>
-        <p className="text-detective-700 font-semibold">กำลังเตรียมเกม...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center text-center p-6"
+           role="status" aria-label="กำลังเตรียมเกม">
+        <svg width="64" height="64" viewBox="0 0 64 64" className="mb-4 animate-pulse-slow" aria-hidden>
+          <circle cx="26" cy="26" r="16" stroke="#008FFF" strokeWidth="4" fill="rgba(255,255,255,0.7)" />
+          <line x1="38" y1="38" x2="54" y2="54" stroke="#008FFF" strokeWidth="5" strokeLinecap="round" />
+        </svg>
+        <p className="text-detective-700 font-display font-bold text-base">กำลังเตรียมเกม</p>
+        <p className="text-slate-500 text-sm mt-1">กำลังโหลดข้อมูลผู้เล่น...</p>
       </div>
     );
   }

@@ -369,44 +369,60 @@ export default function ScenarioPage() {
         </button>
 
         <div className="flex-1 flex flex-col">
+          {/* === Hero: ปกแฟ้มคดี === */}
           <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 200 }}
-            className="self-start mb-2 inline-flex items-center gap-1.5 bg-detective-600
-                       text-white text-xs font-bold px-3 py-1 rounded-full shadow-glow-sm"
-          >
-            <span>🎯</span> ด่าน {scenario.id} · ⏱ ~{scenario.estMinutes} นาที
-          </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-2xl font-display font-bold text-detective-700 mb-1 leading-tight"
+            transition={{ duration: 0.4 }}
+            className="card-hero mb-3 relative overflow-hidden"
           >
-            {scenario.title}
-          </motion.h1>
-          {scenario.subtitle && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-sm text-gray-600 mb-3"
+            {/* ลวดลายเล็กๆ มุมขวา (case file vibe) */}
+            <div className="absolute -top-2 -right-2 text-7xl opacity-[0.06] rotate-12 pointer-events-none"
+                 aria-hidden>🔍</div>
+
+            <motion.div
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, type: 'spring', stiffness: 220, damping: 16 }}
+              className="inline-flex items-center gap-1.5 bg-gradient-to-r from-detective-500 to-detective-700
+                         text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-glow-sm"
             >
-              {scenario.subtitle}
-            </motion.p>
-          )}
+              <span>🎯</span> ด่าน {scenario.id} · ⏱ ~{scenario.estMinutes} นาที
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-2xl md:text-3xl font-display font-extrabold text-detective-800 mt-2 leading-tight"
+            >
+              {scenario.title}
+            </motion.h1>
+            {scenario.subtitle && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-sm text-slate-600 mt-1 leading-relaxed"
+              >
+                {scenario.subtitle}
+              </motion.p>
+            )}
+          </motion.div>
 
           {/* === Pre-game briefing — เล่นยังไง + เจออะไร === */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="card mb-3 border-l-4 border-l-mint-400"
+            transition={{ delay: 0.35 }}
+            className="card mb-3"
           >
-            <p className="text-[11px] font-bold text-mint-600 uppercase tracking-wider mb-1.5">
-              📋 ในด่านนี้คุณจะเจอ
-            </p>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="icon-tile-sm bg-mint-50 text-mint-600">📋</div>
+              <p className="text-xs font-bold text-mint-600 uppercase tracking-wider">
+                ในด่านนี้คุณจะเจอ
+              </p>
+            </div>
             <div className="flex flex-wrap gap-1.5">
               {hasDialogue && (
                 <span className="pill bg-detective-100 text-detective-700">💬 บทสนทนา</span>
@@ -418,35 +434,60 @@ export default function ScenarioPage() {
                 const m = MINIGAME_LABEL[g];
                 if (!m) return null;
                 return (
-                  <span key={g} className="pill bg-warning-100 text-warning-600">
+                  <span key={g} className="pill bg-warning-100 text-warning-700">
                     {m.emoji} {m.label}
                   </span>
                 );
               })}
             </div>
-            <p className="text-[11px] text-gray-600 mt-2 leading-relaxed">
+            <p className="text-xs text-slate-600 mt-2.5 leading-relaxed
+                          bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-100">
               อ่านสถานการณ์ → เลือกคำตอบหรือเล่นมินิเกม → รับ XP & เหรียญ 🪙
             </p>
           </motion.div>
 
-          {/* === Story intro lines === */}
+          {/* === Story intro — case file style + numbered timeline === */}
           {(scenario.intro || []).length > 0 && (
-            <div className="space-y-2 mb-3">
-              <p className="text-[11px] font-bold text-detective-500 uppercase tracking-wider">
-                📖 เรื่องราว
-              </p>
-              {(scenario.intro || []).map((line, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + i * 0.15 }}
-                  className="bg-white rounded-2xl p-3 border-l-4 border-l-detective-300 border border-slate-200"
-                >
-                  <p className="text-sm text-gray-700 leading-relaxed">{line}</p>
-                </motion.div>
-              ))}
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              className="relative rounded-3xl border-2 border-dashed border-detective-200
+                         bg-gradient-to-br from-detective-50/40 to-white p-4 pt-5 mb-3"
+            >
+              {/* "stamp" label หัวมุม */}
+              <span className="absolute -top-3 left-4 bg-white border border-detective-200
+                               px-2.5 py-0.5 rounded-full shadow-sm">
+                <span className="text-[11px] font-bold text-detective-600 uppercase tracking-wider">
+                  📖 เรื่องราว
+                </span>
+              </span>
+
+              {/* timeline ของ bullet พร้อม connector */}
+              <div className="relative pl-6 space-y-3
+                              before:absolute before:left-[11px] before:top-1 before:bottom-1 before:w-0.5
+                              before:bg-detective-200 before:rounded-full">
+                {(scenario.intro || []).map((line, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.55 + i * 0.12 }}
+                    className="relative"
+                  >
+                    {/* number dot บนเส้น */}
+                    <span className="absolute -left-[26px] top-0 w-6 h-6 rounded-full
+                                     bg-gradient-to-br from-detective-500 to-detective-700
+                                     text-white text-[11px] font-extrabold
+                                     flex items-center justify-center shadow-glow-sm
+                                     border-2 border-white">
+                      {i + 1}
+                    </span>
+                    <p className="text-sm text-slate-700 leading-relaxed pt-0.5">{line}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
           )}
         </div>
 

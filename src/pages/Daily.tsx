@@ -8,6 +8,10 @@ import QuizReview from '../components/QuizReview';
 import PageHeader from '../components/PageHeader';
 import Confetti from '../components/Confetti';
 import { sfx } from '../lib/sound';
+import ResultHero from '../components/ui/ResultHero';
+import ProgressCircle from '../components/ui/ProgressCircle';
+import CountUp from '../components/ui/CountUp';
+import StarRating from '../components/ui/StarRating';
 
 const COIN_PER_CORRECT = 4;
 
@@ -45,40 +49,55 @@ export default function Daily() {
 
   // ===== หน้าผลลัพธ์ =====
   if (result || alreadyDone) {
-    const score = result?.score;
+    const score = result?.score ?? 0;
+    const total = result?.total ?? 5;
+    const percent = result ? Math.round((result.score / result.total) * 100) : 0;
     return (
       <div className="min-h-full pb-10">
         <Confetti active={!!result} count={70} duration={2200} />
         <PageHeader title="📅 ภารกิจรายวัน" backTo="/" />
         <main className="max-w-md mx-auto px-4 pt-6">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="card-hero text-center py-8"
+          <ResultHero
+            tone={result ? 'success' : 'info'}
+            emoji={result ? '🎉' : '✅'}
+            title={result ? 'ทำภารกิจวันนี้สำเร็จ!' : 'วันนี้ทำแล้ว'}
+            subtitle={
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                💡 ภารกิจรายวันสุ่มคำถามใหม่ทุกวัน — ทำต่อเนื่องช่วยรักษาสถิติเล่นต่อเนื่อง 🔥
+              </p>
+            }
           >
-            <div className="text-6xl mb-3 leading-none">{result ? '🎉' : '✅'}</div>
-            <h2 className="font-display font-bold text-xl text-detective-700 mb-1">
-              {result ? 'ทำภารกิจวันนี้สำเร็จ!' : 'วันนี้ทำแล้ว'}
-            </h2>
             {result ? (
               <>
-                <p className="text-slate-600 mb-3">
-                  ตอบถูก <b className="text-success-600">{score}/{result.total}</b> ข้อ
-                </p>
+                <ProgressCircle
+                  percent={percent}
+                  tone="success"
+                  size={130}
+                  label={`ตอบถูก ${score} จาก ${total} ข้อ`}
+                >
+                  <span className="font-display font-extrabold text-3xl text-success-600 leading-none">
+                    <CountUp to={score} duration={900} />
+                    <span className="text-slate-400 text-xl">/{total}</span>
+                  </span>
+                  <span className="text-xs text-slate-500 mt-1">ข้อ</span>
+                </ProgressCircle>
+                <StarRating score={score} total={total} />
                 {result.coins > 0 && (
-                  <p className="inline-block bg-gradient-to-r from-warning-400 to-warning-500
-                                text-white font-bold px-5 py-2 rounded-full shadow-glow">
-                    +{result.coins} 🪙
-                  </p>
+                  <motion.span
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.55, type: 'spring', stiffness: 220 }}
+                    className="inline-block bg-gradient-to-r from-warning-400 to-warning-500
+                               text-white font-bold px-5 py-2 rounded-full shadow-glow-gold"
+                  >
+                    +<CountUp to={result.coins} duration={900} /> 🪙
+                  </motion.span>
                 )}
               </>
             ) : (
-              <p className="text-slate-600 mb-3">กลับมาทำชุดใหม่ได้พรุ่งนี้ 🌙</p>
+              <p className="text-slate-600">กลับมาทำชุดใหม่ได้พรุ่งนี้ 🌙</p>
             )}
-            <p className="text-[11px] text-slate-500 mt-4 leading-relaxed">
-              💡 ภารกิจรายวันสุ่มคำถามใหม่ทุกวัน — ทำต่อเนื่องช่วยรักษาสถิติเล่นต่อเนื่อง 🔥
-            </p>
-          </motion.div>
+          </ResultHero>
 
           {result && <QuizReview details={result.details} />}
 
