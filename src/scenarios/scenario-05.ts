@@ -5,7 +5,7 @@ export const scenario05: Scenario = {
   id: 5,
   title: 'DM ในเกมออนไลน์',
   subtitle: 'รู้จักถอย — บล็อก รายงาน เดินหนี',
-  estMinutes: 5,
+  estMinutes: 7,
   startNode: 'intro1',
   intro: [
     'คืนหนึ่งคุณเล่นเกมออนไลน์ในห้องนอน',
@@ -65,7 +65,7 @@ export const scenario05: Scenario = {
       ],
     },
     {
-      type: 'dialogue', id: 'right1', speaker: 'narrator', next: 'choice2',
+      type: 'dialogue', id: 'right1', speaker: 'narrator', next: 'right1b',
       text: 'คุณบล็อกบัญชีนั้นแล้ว — แต่ 5 นาทีต่อมา มีบัญชีใหม่ทักมาอีก',
     },
     {
@@ -144,10 +144,18 @@ export const scenario05: Scenario = {
         { id: 'c4', text: 'บอก — แจ้งผู้ใหญ่ที่ไว้ใจได้' },
       ],
       correctOrder: ['c1', 'c2', 'c3', 'c4'],
-      next: 'feedback1',
+      next: 'mg-run',
       xpOnSuccess: 90,
       badge: 'walk-away',
       source: 'Common Sense Media — Online Safety for Teens / รายงาน กสทช. 2566',
+    },
+    {
+      // เกมอาร์เคดคั่นด่าน — ฝึก "ถอย/หนี" ให้สนุกแบบ action
+      type: 'minigame', id: 'mg-run', game: 'runner',
+      title: 'วิ่งหนีบุหรี่ไฟฟ้า!',
+      goalScore: 6,
+      next: 'feedback1',
+      xpOnSuccess: 30,
     },
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
@@ -163,7 +171,7 @@ export const scenario05: Scenario = {
     {
       type: 'end', id: 'end1',
       title: 'จบด่าน 5!',
-      message: 'คุณรู้จักถอยจากภัยออนไลน์ — ทักษะ "ถอย" (Walk Away) ปลดล็อก',
+      message: 'คุณรู้จักถอยจากภัยออนไลน์ — ทักษะ "ถอย" (Walk Away) ปลดล็อก\n\n😟 มีน้องคนหนึ่งในกลุ่มกำลังลังเล... เหมือนเขากำลังจะลองของอันตราย',
       xp: 60,
       badge: 'walk-away',
     },

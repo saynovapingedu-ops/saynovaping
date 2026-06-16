@@ -43,6 +43,8 @@ interface PlayerState extends PlayerProfile {
   recordExam: (percent: number, passed: boolean, bonusCoins: number) => boolean;
   /** บันทึกผลแบบประเมิน pre/post */
   recordAssessment: (kind: 'pre' | 'post', percent: number) => void;
+  /** บันทึกคะแนนความสนุก/พึงพอใจ (ดาว 1-5) หลังจบด่าน */
+  rateFun: (stars: number) => void;
   /** เรียกตอนเล่นเกม — อัพเดท streak ถ้าเล่นต่อเนื่องได้ */
   pingDailyPlay: () => void;
   reset: () => void;
@@ -124,10 +126,12 @@ export const usePlayerStore = create<PlayerState>()(
         // ได้เหรียญ 1:5 ของ XP (ปัดลง) — booster coin-x2 = คูณ 2 ระหว่างที่ยังเหลือ
         const baseCoin = Math.floor(amount / 5);
         const coinReward = (cur.coinX2Remaining || 0) > 0 ? baseCoin * 2 : baseCoin;
+        // 🎉 โบนัสเลเวลอัป — เลื่อนระดับได้เหรียญพิเศษ (ระดับใหม่ × 10)
+        const levelUpBonus = newLevel > cur.level ? newLevel * 10 : 0;
         set({
           totalXP: newXP,
           level: newLevel,
-          coins: (cur.coins || 0) + coinReward,
+          coins: (cur.coins || 0) + coinReward + levelUpBonus,
           lastActiveAt: new Date().toISOString(),
         });
         get().syncIfReady();
@@ -193,6 +197,18 @@ export const usePlayerStore = create<PlayerState>()(
       equipBackdrop:  (id)    => set({ equippedBackdrop: id }),
       equipCertDeco:  (id)    => set({ equippedCertDeco: id }),
 
+      rateFun: (stars) => {
+        if (stars < 1 || stars > 5) return;
+        const cur = get();
+        set({
+          funRating: stars,
+          funRatingCount: (cur.funRatingCount || 0) + 1,
+          funRatingSum: (cur.funRatingSum || 0) + stars,
+          lastActiveAt: new Date().toISOString(),
+        });
+        get().syncIfReady();
+      },
+
       pingDailyPlay: () => {
         const cur = get();
         const today = todayDate();
@@ -214,6 +230,10 @@ export const usePlayerStore = create<PlayerState>()(
         // bonus เหรียญรายวัน 5 + streak (สูงสุด +20)
         const bonus = 5 + Math.min(streak, 20);
         set({ coins: (cur.coins || 0) + bonus });
+        // แบดจ์หมุดหมายเล่นต่อเนื่อง (awardBadge กันซ้ำให้เอง)
+        if (streak >= 7)  get().awardBadge('streak-7');
+        if (streak >= 14) get().awardBadge('streak-14');
+        if (streak >= 30) get().awardBadge('streak-30');
       },
 
       awardBadge: (id) => {
@@ -332,6 +352,9 @@ export const usePlayerStore = create<PlayerState>()(
               postTestScore: s.postTestScore,
               preTestAt: s.preTestAt,
               postTestAt: s.postTestAt,
+              funRating: s.funRating,
+              funRatingCount: s.funRatingCount,
+              funRatingSum: s.funRatingSum,
             }).catch(() => { /* silent */ });
           }, 800);
         };
@@ -377,6 +400,9 @@ export const usePlayerStore = create<PlayerState>()(
         postTestScore: s.postTestScore,
         preTestAt: s.preTestAt,
         postTestAt: s.postTestAt,
+        funRating: s.funRating,
+        funRatingCount: s.funRatingCount,
+        funRatingSum: s.funRatingSum,
         certificateNo: s.certificateNo,
         certificateIssuedAt: s.certificateIssuedAt,
         certNamePrompted: s.certNamePrompted,

@@ -74,7 +74,7 @@ export default function Leaderboard() {
               {myTier.label}
             </span>
             <span className="text-xs text-slate-600">
-              {myLevel.emoji} {player.totalXP.toLocaleString()} XP · {player.stagesCompleted.length} ด่าน
+              {myLevel.emoji} {player.totalXP.toLocaleString()} แต้ม · {player.stagesCompleted.length} ด่าน
             </span>
           </div>
         </motion.div>
@@ -192,14 +192,14 @@ function LeaderRow({ entry, index }: { entry: LeaderboardEntry; index: number })
                 style={{ backgroundColor: tier.color }}>
             {tier.label}
           </span>
-          <span className="text-xs text-slate-500">{lv.emoji} Lv.{lv.level}</span>
+          <span className="text-xs text-slate-500">{lv.emoji} ระดับ {lv.level}</span>
         </div>
       </div>
 
       {/* XP */}
       <div className="text-right flex-shrink-0">
         <p className="font-bold text-detective-700 leading-none">{entry.totalXP.toLocaleString()}</p>
-        <p className="text-[11px] text-slate-400 mt-0.5">XP</p>
+        <p className="text-[11px] text-slate-400 mt-0.5">แต้ม</p>
       </div>
     </motion.li>
   );

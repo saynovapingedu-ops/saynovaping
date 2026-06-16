@@ -21,7 +21,7 @@ export const useUIStore = create<UIState>((set) => ({
   toasts: [],
   pushXP: (amount) => {
     const id = ++counter;
-    set(s => ({ toasts: [...s.toasts, { id, type: 'xp', message: `+${amount} XP`, emoji: '⭐' }] }));
+    set(s => ({ toasts: [...s.toasts, { id, type: 'xp', message: `+${amount} แต้ม`, emoji: '⭐' }] }));
     setTimeout(() => set(s => ({ toasts: s.toasts.filter(t => t.id !== id) })), 2500);
   },
   pushBadge: (name, emoji) => {

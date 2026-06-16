@@ -407,7 +407,7 @@ export default function Shop() {
         )}
 
         <p className="text-[11px] text-gray-400 text-center mt-6">
-          💡 เก็บเหรียญด้วยการเล่นด่าน — XP ทุก 5 จะได้ 1 เหรียญ
+          💡 เก็บเหรียญด้วยการเล่นด่าน — ทุก 5 แต้ม จะได้ 1 เหรียญ
         </p>
       </main>
 

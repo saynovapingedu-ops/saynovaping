@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getScenarioById, SCENARIO_META, isStageUnlocked, CERT_STAGE_COUNT } from '../scenarios';
+import { getScenarioById, SCENARIO_META, isStageUnlocked, CERT_STAGE_COUNT, getStageDifficulty } from '../scenarios';
 import { getBadge } from '../lib/badges';
 import { usePlayerStore } from '../store/playerStore';
 import { useCertNameStore } from '../store/certNameStore';
@@ -9,6 +9,16 @@ import { useUIStore } from '../store/uiStore';
 import DialogueBubble from '../components/DialogueBubble';
 import ChoiceCard from '../components/ChoiceCard';
 import CertNameDialog from '../components/CertNameDialog';
+import RunnerGame from '../components/minigames/RunnerGame';
+import TapAdsGame from '../components/minigames/TapAdsGame';
+import CatchGame from '../components/minigames/CatchGame';
+import ShootMythGame from '../components/minigames/ShootMythGame';
+import QuickFireGame from '../components/minigames/QuickFireGame';
+import LaneRunGame from '../components/minigames/LaneRunGame';
+import SnakeGame from '../components/minigames/SnakeGame';
+import MazeGame from '../components/minigames/MazeGame';
+import ReactionGame from '../components/minigames/ReactionGame';
+import GameErrorBoundary from '../components/minigames/GameErrorBoundary';
 import SpotTheLie from '../components/minigames/SpotTheLie';
 import OrderCards from '../components/minigames/OrderCards';
 import WordMatch from '../components/minigames/WordMatch';
@@ -19,8 +29,107 @@ import RiskRank from '../components/minigames/RiskRank';
 import Confetti from '../components/Confetti';
 import { asset } from '../lib/asset';
 import { sfx, vibrate } from '../lib/sound';
+import { stopSpeaking } from '../lib/tts';
 import { useProgressStore } from '../store/progressStore';
+import { shareChallenge } from '../lib/liff';
+import {
+  getPendingChallenge, clearPendingChallenge, buildChallengeUrl,
+  type PendingChallenge,
+} from '../lib/challenge';
 import type { Choice, ScenarioNode } from '../types';
+
+// ===== เฉลยจบด่าน — รองรับทั้งข้อเลือกคำตอบ (choice) และมินิเกม =====
+type ReviewRow = { q: string; a: string; note?: string; source?: string };
+type ReviewEntry =
+  | {
+      kind: 'choice';
+      prompt: string;
+      pickedLabel: string;
+      pickedXp: number;
+      isBest: boolean;
+      bestLabel: string;
+      reflection?: string;
+      source?: string;
+      bestSource?: string;
+    }
+  | {
+      kind: 'minigame';
+      title: string;
+      gameLabel: string;
+      success: boolean;
+      rows: ReviewRow[];
+    };
+
+const DIFFICULTY_LABEL: Record<string, { label: string; cls: string }> = {
+  easy:    { label: '🟢 ง่าย',     cls: 'bg-success-100 text-success-700' },
+  medium:  { label: '🟡 ปานกลาง', cls: 'bg-detective-100 text-detective-700' },
+  hard:    { label: '🟠 ยาก',      cls: 'bg-warning-100 text-warning-700' },
+  advance: { label: '🔴 ขั้นกว่า', cls: 'bg-danger-100 text-danger-700' },
+};
+
+const GAME_REVIEW_LABEL: Record<string, string> = {
+  'spot-the-lie': '🕵️ จับโกหก',
+  'order-cards':  '🃏 เรียงลำดับ',
+  'word-match':   '🔗 จับคู่คำ',
+  'fill-blank':   '✍️ เติมคำ',
+  'swipe-decide': '👆 ปัดจริง-เท็จ',
+  'memory-match': '🧠 จับคู่ภาพ',
+  'risk-rank':    '📊 จัดอันดับเสี่ยง',
+  'runner':       '🏃 วิ่งหนีบุหรี่ไฟฟ้า',
+  'tap-ads':      '👆 ทุบโฆษณาหลอก',
+  'catch-lungs':  '🫁 ปอดสะอาด',
+  'shoot-myth':   '🎯 ยิงจับเท็จ',
+  'quick-fire':   '⚡ ตอบเร็วจับเวลา',
+  'lane-run':     '🛹 รูดหลบ 3 เลน',
+  'snake':        '🐍 งูกินของดี',
+  'maze':         '🌫️ หนีควันหาทางออก',
+  'reaction':     '✋ แตะให้ไว',
+};
+
+/** เกมอาร์เคดในด่าน — เล่นจนถึง goalScore แล้วผ่าน (เลี่ยงให้สั้น ไม่ล้า) */
+const ARCADE_GAME_TYPES = new Set([
+  'runner', 'tap-ads', 'catch-lungs',
+  'shoot-myth', 'quick-fire', 'lane-run', 'snake', 'maze', 'reaction',
+]);
+
+// สร้างแถวเฉลยของมินิเกม — โชว์คำถาม + คำตอบที่ถูก + คำอธิบาย + อ้างอิง
+function buildMinigameRows(node: Extract<ScenarioNode, { type: 'minigame' }>): ReviewRow[] {
+  switch (node.game) {
+    case 'spot-the-lie':
+      return (node.claims || []).map(c => ({
+        q: c.text, a: c.isLie ? 'เท็จ ✗' : 'จริง ✓', note: c.reveal, source: c.source,
+      }));
+    case 'order-cards': {
+      const byId = new Map((node.cards || []).map(c => [c.id, c.text]));
+      const ordered = (node.correctOrder || []).map((id, i) => `${i + 1}. ${byId.get(id) ?? id}`);
+      return [{ q: 'ลำดับที่ถูกต้อง', a: ordered.join('  →  '), source: node.source }];
+    }
+    case 'word-match':
+      return (node.pairs || []).map(p => ({
+        q: p.left, a: p.right, source: p.source || node.source,
+      }));
+    case 'fill-blank':
+      return (node.questions || []).map(q => ({
+        q: q.sentence.replace('___', '____'), a: q.options[q.correctIndex], note: q.reveal, source: q.source,
+      }));
+    case 'swipe-decide':
+      return (node.swipeCards || []).map(c => ({
+        q: c.text, a: c.isTrue ? 'จริง ✓' : 'เท็จ ✗', note: c.reveal, source: c.source,
+      }));
+    case 'memory-match':
+      return (node.memoryPairs || []).map(p => ({
+        q: p.a, a: p.b, note: p.reveal, source: p.source,
+      }));
+    case 'risk-rank': {
+      const bucketLabel = new Map((node.buckets || []).map(b => [b.id, b.label]));
+      return (node.riskItems || []).map(it => ({
+        q: it.text, a: bucketLabel.get(it.bucketId) ?? it.bucketId, source: it.source,
+      }));
+    }
+    default:
+      return [];
+  }
+}
 
 export default function ScenarioPage() {
   const { id } = useParams();
@@ -44,18 +153,17 @@ export default function ScenarioPage() {
   const hintTokens = usePlayerStore(s => s.hintTokens || 0);
   const coinX2Remaining = usePlayerStore(s => s.coinX2Remaining || 0);
   const useHintToken = usePlayerStore(s => s.useHintToken);
-  // เก็บ pick ของผู้เล่นทีละข้อ — ใช้สร้างเฉลยตอนจบด่าน
-  const [reviewLog, setReviewLog] = useState<Array<{
-    prompt: string;
-    pickedLabel: string;
-    pickedXp: number;
-    isBest: boolean;
-    bestLabel: string;
-    reflection?: string;
-    source?: string;
-    bestSource?: string;
-  }>>([]);
+  // เก็บคำตอบของผู้เล่นทีละข้อ (เลือกคำตอบ + มินิเกม) — ใช้สร้างเฉลยตอนจบด่าน
+  const [reviewLog, setReviewLog] = useState<ReviewEntry[]>([]);
   const [askResume, setAskResume] = useState(false);
+  // ===== ท้าเพื่อน (async) — แต้มที่ได้ในด่านนี้ + คำท้าที่ค้างอยู่ =====
+  const nickname = usePlayerStore(s => s.nickname);
+  const [stageScore, setStageScore] = useState(0);
+  const [challenge, setChallenge] = useState<PendingChallenge | null>(null);
+  const [shareMsg, setShareMsg] = useState<string | null>(null);
+  // ดาวประเมินความสนุก/พึงพอใจหลังจบด่าน (เก็บครั้งเดียวต่อด่าน)
+  const rateFun = usePlayerStore(s => s.rateFun);
+  const [funStars, setFunStars] = useState(0);
   // เลื่อนหน้าจอไปที่ฉากปัจจุบันอัตโนมัติ + ย่อบทสนทนาเก่าให้หน้าสั้นลง
   const currentRef = useRef<HTMLDivElement>(null);
   const [showOlder, setShowOlder] = useState(false);
@@ -68,6 +176,10 @@ export default function ScenarioPage() {
   useEffect(() => {
     setHistory([]);
     setCurrentNodeId(scenario?.startNode || '');
+    setStageScore(0);
+    // โหลดคำท้าถ้าเป็นด่านเดียวกับที่ถูกท้า
+    const pending = getPendingChallenge();
+    setChallenge(pending && pending.stageId === stageId ? pending : null);
     const saved = getProgress(stageId);
     if (saved && scenario) {
       // ตรวจสอบว่า save ยัง valid (node ยังอยู่)
@@ -185,6 +297,12 @@ export default function ScenarioPage() {
     return () => clearTimeout(t);
   }, [currentNodeId, showIntro]);
 
+  // หยุดเสียงอ่านบทสนทนาเมื่อออกจากด่าน
+  useEffect(() => stopSpeaking, []);
+
+  // รีเซ็ตดาวประเมินเมื่อเปลี่ยนด่าน (ให้คะแนนใหม่ได้ทุกด่าน)
+  useEffect(() => { setFunStars(0); }, [stageId]);
+
   if (!scenario) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
@@ -209,6 +327,7 @@ export default function ScenarioPage() {
     if (choice.xp && choice.xp > 0) {
       addXP(choice.xp);
       pushXP(choice.xp);
+      setStageScore(s => s + choice.xp!);
       sfx.xp();
     }
     if (choice.badge) {
@@ -221,23 +340,30 @@ export default function ScenarioPage() {
       }
     }
     // เก็บ pick สำหรับเฉลยจบด่าน — เทียบ XP กับตัวเลือกสูงสุดในชุดนี้
+    // ข้ามข้อเกริ่น/ถามเล่นๆ ที่ไม่มีเฉลย (ทุกตัวเลือกไปทางเดียวกัน + ไม่มี reflection)
     const curNode = scenario?.nodes.find(n => n.id === currentNodeId);
     if (curNode && curNode.type === 'choice') {
-      const maxXp = Math.max(...curNode.choices.map(c => c.xp || 0));
-      const best = curNode.choices.find(c => (c.xp || 0) === maxXp);
-      setReviewLog(prev => [
-        ...prev,
-        {
-          prompt: curNode.prompt,
-          pickedLabel: choice.label,
-          pickedXp: choice.xp || 0,
-          isBest: (choice.xp || 0) === maxXp,
-          bestLabel: best?.label || choice.label,
-          reflection: choice.reflection,
-          source: choice.source,
-          bestSource: best?.source,
-        },
-      ]);
+      const isThrowaway =
+        curNode.choices.every(c => !c.reflection) &&
+        new Set(curNode.choices.map(c => c.next)).size === 1;
+      if (!isThrowaway) {
+        const maxXp = Math.max(...curNode.choices.map(c => c.xp || 0));
+        const best = curNode.choices.find(c => (c.xp || 0) === maxXp);
+        setReviewLog(prev => [
+          ...prev,
+          {
+            kind: 'choice',
+            prompt: curNode.prompt,
+            pickedLabel: choice.label,
+            pickedXp: choice.xp || 0,
+            isBest: (choice.xp || 0) === maxXp,
+            bestLabel: best?.label || choice.label,
+            reflection: choice.reflection,
+            source: choice.source,
+            bestSource: best?.source,
+          },
+        ]);
+      }
     }
     const playerEcho: ScenarioNode = {
       type: 'dialogue',
@@ -255,11 +381,24 @@ export default function ScenarioPage() {
 
   const handleMinigameComplete = (success: boolean) => {
     if (!currentNode || currentNode.type !== 'minigame') return;
+    // เก็บเฉลยมินิเกมลง review — โชว์คำถาม/คำตอบที่ถูก/อ้างอิง ตอนจบด่าน
+    const mgNode = currentNode;
+    setReviewLog(prev => [
+      ...prev,
+      {
+        kind: 'minigame',
+        title: mgNode.title,
+        gameLabel: GAME_REVIEW_LABEL[mgNode.game] || 'มินิเกม',
+        success,
+        rows: buildMinigameRows(mgNode),
+      },
+    ]);
     if (success) {
       sfx.correct();
       vibrate([20, 30, 20]);
       addXP(currentNode.xpOnSuccess);
       pushXP(currentNode.xpOnSuccess);
+      setStageScore(s => s + currentNode.xpOnSuccess);
       if (currentNode.badge) {
         const newly = awardBadge(currentNode.badge);
         const b = getBadge(currentNode.badge);
@@ -275,6 +414,7 @@ export default function ScenarioPage() {
       const partial = Math.floor(currentNode.xpOnSuccess / 2);
       addXP(partial);
       pushXP(partial);
+      setStageScore(s => s + partial);
     }
     goToNext(currentNode.next);
   };
@@ -284,6 +424,7 @@ export default function ScenarioPage() {
     if (!currentNode || currentNode.type !== 'end') return;
     addXP(currentNode.xp);
     pushXP(currentNode.xp);
+    setStageScore(s => s + currentNode.xp);
     if (currentNode.badge) {
       const newly = awardBadge(currentNode.badge);
       const b = getBadge(currentNode.badge);
@@ -301,7 +442,16 @@ export default function ScenarioPage() {
 
   const goHome = () => {
     claimEndRewards();
+    clearPendingChallenge();
     nav('/');
+  };
+
+  // แชร์คำท้าไปยังเพื่อนผ่าน LINE (หรือ fallback)
+  const handleShareChallenge = async (finalScore: number) => {
+    const text = `🔍 ฉันทำได้ ${finalScore} แต้ม ในด่าน ${scenario.id}: ${scenario.title} — มาลองเอาชนะฉันสิ!`;
+    const url = buildChallengeUrl(stageId, finalScore, nickname || 'เพื่อน');
+    const ok = await shareChallenge(text, url);
+    setShareMsg(ok ? '✅ ส่งคำท้า/คัดลอกลิงก์ให้แล้ว!' : '❌ แชร์ไม่สำเร็จ ลองใหม่อีกครั้ง');
   };
 
   // หาด่านถัดไปที่จะปลดล็อกหลังจบด่านนี้
@@ -336,6 +486,19 @@ export default function ScenarioPage() {
       </motion.div>
     ) : null;
 
+  // ความคืบหน้าในด่าน — นับ node หลัก (ไม่นับ feedback/__pick_) ที่ผ่านแบบไม่ซ้ำ ÷ ทั้งหมด
+  // โตไปข้างหน้าเสมอ แม้วน loop ตอบผิด → ลดความรู้สึก "ยาว/น่าเบื่อ" ในด่านยาว (5,6,8,12)
+  const MAIN_TYPES = new Set(['dialogue', 'choice', 'minigame', 'end']);
+  const totalMainNodes = scenario.nodes.filter(n => MAIN_TYPES.has(n.type)).length;
+  const visitedMainNodes = new Set(
+    history
+      .filter(h => !h.id.startsWith('__pick_') && MAIN_TYPES.has(h.type))
+      .map(h => h.id)
+  ).size;
+  const stageProgress = totalMainNodes > 0
+    ? Math.min(1, visitedMainNodes / totalMainNodes)
+    : 0;
+
   // บทสนทนาที่ผ่านมา — โชว์แค่ 2 รายการล่าสุด ที่เหลือซ่อนไว้ (กดดูได้) เพื่อไม่ให้หน้ายาว
   const pastNodes = history.slice(0, -1);
   const RECENT = 2;
@@ -357,6 +520,15 @@ export default function ScenarioPage() {
       'swipe-decide':  { emoji: '👆',  label: 'ปัดจริง-เท็จ' },
       'memory-match':  { emoji: '🧠',  label: 'จับคู่ภาพ' },
       'risk-rank':     { emoji: '📊',  label: 'จัดอันดับเสี่ยง' },
+      'runner':        { emoji: '🏃',  label: 'วิ่งหลบ' },
+      'tap-ads':       { emoji: '👆',  label: 'ทุบโฆษณา' },
+      'catch-lungs':   { emoji: '🫁',  label: 'รับ-หลบ' },
+      'shoot-myth':    { emoji: '🎯',  label: 'ยิงจับเท็จ' },
+      'quick-fire':    { emoji: '⚡',  label: 'ตอบเร็ว' },
+      'lane-run':      { emoji: '🛹',  label: 'รูดหลบเลน' },
+      'snake':         { emoji: '🐍',  label: 'งูกินของดี' },
+      'maze':          { emoji: '🌫️',  label: 'หนีควัน' },
+      'reaction':      { emoji: '✋',  label: 'แตะให้ไว' },
     };
 
     return (
@@ -389,6 +561,15 @@ export default function ScenarioPage() {
             >
               <span>🎯</span> ด่าน {scenario.id} · ⏱ ~{scenario.estMinutes} นาที
             </motion.div>
+            <span className={`ml-2 inline-block text-[11px] font-bold px-2 py-1 rounded-full
+                              ${DIFFICULTY_LABEL[getStageDifficulty(scenario.id)].cls}`}>
+              {DIFFICULTY_LABEL[getStageDifficulty(scenario.id)].label}
+            </span>
+            {scenario.basedOnRealEvents && (
+              <span className="ml-2 inline-block text-[11px] font-bold px-2 py-1 rounded-full bg-danger-100 text-danger-700">
+                📰 อิงเหตุการณ์จริง
+              </span>
+            )}
 
             <motion.h1
               initial={{ opacity: 0, y: 8 }}
@@ -442,7 +623,7 @@ export default function ScenarioPage() {
             </div>
             <p className="text-xs text-slate-600 mt-2.5 leading-relaxed
                           bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-100">
-              อ่านสถานการณ์ → เลือกคำตอบหรือเล่นมินิเกม → รับ XP & เหรียญ 🪙
+              อ่านสถานการณ์ → เลือกคำตอบหรือเล่นมินิเกม → รับแต้ม & เหรียญ 🪙
             </p>
           </motion.div>
 
@@ -526,23 +707,49 @@ export default function ScenarioPage() {
     <div className="min-h-full pb-8 relative">
       <Confetti active={confettiActive} count={100} duration={2600} />
       <header className="sticky top-0 z-10 bg-detective-50/90 backdrop-blur-md border-b border-detective-100
-                         p-3 flex items-center gap-3">
-        <button
-          onClick={() => nav('/')}
-          className="text-detective-500 px-3 py-1.5 rounded-lg hover:bg-detective-50 active:scale-95"
-        >
-          ←
-        </button>
-        <div className="flex-1 min-w-0">
-          <p className="text-[11px] text-detective-400 font-semibold">ด่าน {scenario.id}</p>
-          <p className="font-semibold text-sm text-detective-700 truncate">{scenario.title}</p>
+                         px-3 pt-3 pb-2">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => nav('/')}
+            className="text-detective-500 px-3 py-1.5 rounded-lg hover:bg-detective-50 active:scale-95"
+          >
+            ←
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] text-detective-400 font-semibold">ด่าน {scenario.id}</p>
+            <p className="font-semibold text-sm text-detective-700 truncate">{scenario.title}</p>
+          </div>
+          {coinX2Remaining > 0 && (
+            <span className="flex-shrink-0 text-[10px] font-bold bg-warning-100 text-warning-700
+                             border border-warning-300 px-2 py-1 rounded-full"
+                  title="โบนัสเหรียญ x2 กำลังทำงาน">
+              💰 x2 · {coinX2Remaining}
+            </span>
+          )}
         </div>
-        {coinX2Remaining > 0 && (
-          <span className="flex-shrink-0 text-[10px] font-bold bg-warning-100 text-warning-700
-                           border border-warning-300 px-2 py-1 rounded-full"
-                title="โบนัสเหรียญ x2 กำลังทำงาน">
-            💰 x2 · {coinX2Remaining}
+        {/* แถบความคืบหน้าในด่าน — ให้ผู้เล่นเห็นว่าใกล้จบแค่ไหน */}
+        <div className="flex items-center gap-2 mt-2">
+          <div className="progress-track flex-1 h-1.5">
+            <div
+              className="progress-fill transition-all duration-500"
+              style={{ width: `${stageProgress * 100}%` }}
+            />
+          </div>
+          <span className="text-[10px] font-bold text-detective-500 flex-shrink-0 tabular-nums">
+            {Math.round(stageProgress * 100)}%
           </span>
+        </div>
+        {/* แบนเนอร์คำท้า — ถ้ามาจากลิงก์ท้าเพื่อน */}
+        {challenge && (
+          <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold
+                          bg-warning-50 border border-warning-300 text-warning-700
+                          rounded-full px-3 py-1">
+            <span>🎯</span>
+            <span className="flex-1 min-w-0 truncate">
+              คำท้าจาก <b>{challenge.by}</b> — ทำให้เกิน <b>{challenge.score}</b> แต้ม!
+            </span>
+            <span className="flex-shrink-0 tabular-nums">คุณ {stageScore}</span>
+          </div>
         )}
       </header>
 
@@ -618,7 +825,7 @@ export default function ScenarioPage() {
                     </div>
                     {hintShown && (
                       <div className="mb-3 text-[11px] bg-warning-50 border border-warning-300 rounded-xl p-2 text-warning-700">
-                        💡 ใบ้: ข้อ <b>{String.fromCharCode(65 + bestIdx)}</b> ดูจะให้ XP สูงสุด ({maxXp})
+                        💡 ใบ้: ข้อ <b>{String.fromCharCode(65 + bestIdx)}</b> ดูจะให้แต้มสูงสุด ({maxXp})
                       </div>
                     )}
                     {currentNode.choices.map((c, i) => (
@@ -666,6 +873,28 @@ export default function ScenarioPage() {
                   items={currentNode.riskItems}
                   source={currentNode.source}
                   onComplete={handleMinigameComplete} />
+              )}
+
+              {/* ===== เกมอาร์เคดในด่าน — ผ่านเมื่อถึง goalScore (ครอบ ErrorBoundary กันจอขาว) ===== */}
+              {currentNode.type === 'minigame' && ARCADE_GAME_TYPES.has(currentNode.game) && (
+                <GameErrorBoundary gameName={currentNode.title}>
+                  {(() => {
+                    const node = currentNode;
+                    const done = (success: boolean) => handleMinigameComplete(success);
+                    switch (node.game) {
+                      case 'runner':      return <RunnerGame goalScore={node.goalScore ?? 8} onComplete={done} />;
+                      case 'tap-ads':     return <TapAdsGame goalScore={node.goalScore ?? 12} onComplete={done} />;
+                      case 'catch-lungs': return <CatchGame goalScore={node.goalScore ?? 12} onComplete={done} />;
+                      case 'shoot-myth':  return <ShootMythGame goalScore={node.goalScore ?? 8} seconds={25} onComplete={done} />;
+                      case 'quick-fire':  return <QuickFireGame goalScore={node.goalScore ?? 8} seconds={25} onComplete={done} />;
+                      case 'lane-run':    return <LaneRunGame goalScore={node.goalScore ?? 10} onComplete={done} />;
+                      case 'snake':       return <SnakeGame goalScore={node.goalScore ?? 5} onComplete={done} />;
+                      case 'maze':        return <MazeGame goalScore={node.goalScore ?? 2} onComplete={done} />;
+                      case 'reaction':    return <ReactionGame goalScore={node.goalScore ?? 10} seconds={20} onComplete={done} />;
+                      default:            return null;
+                    }
+                  })()}
+                </GameErrorBoundary>
               )}
 
               {currentNode.type === 'feedback' && (
@@ -727,8 +956,26 @@ export default function ScenarioPage() {
                     className="inline-block bg-gradient-to-r from-warning-400 to-warning-500
                                text-white font-bold text-xl px-6 py-2 rounded-full shadow-glow mb-6 relative"
                   >
-                    +{currentNode.xp} XP
+                    +{currentNode.xp} แต้ม
                   </motion.p>
+
+                  {/* ผลคำท้า — เทียบแต้มรวมของด่านนี้กับเป้าของผู้ท้า */}
+                  {challenge && (() => {
+                    const finalScore = stageScore + currentNode.xp;
+                    const win = finalScore >= challenge.score;
+                    return (
+                      <div className={`relative mx-auto mb-5 max-w-xs rounded-2xl border-2 p-3 ${
+                        win ? 'border-success-300 bg-success-50' : 'border-warning-300 bg-warning-50'
+                      }`}>
+                        <p className="font-bold text-sm mb-1">
+                          {win ? '🏆 คุณชนะคำท้า!' : '💪 ยังไม่ชนะ — เล่นซ้ำเพื่อแก้มือได้!'}
+                        </p>
+                        <p className="text-xs text-slate-600">
+                          คุณ <b>{finalScore}</b> แต้ม · {challenge.by} <b>{challenge.score}</b> แต้ม
+                        </p>
+                      </div>
+                    );
+                  })()}
 
                   {/* === 📓 เฉลย — ตรวจคำตอบของผู้เล่นทุกข้อ + ที่มา === */}
                   {reviewLog.length > 0 && (
@@ -737,21 +984,21 @@ export default function ScenarioPage() {
                         <span>📓</span> ดูเฉลย — ตรวจคำตอบ ({reviewLog.length} ข้อ)
                       </summary>
                       <div className="mt-3 space-y-3">
-                        {reviewLog.map((r, i) => (
+                        {reviewLog.map((r, i) => r.kind === 'choice' ? (
                           <div key={i} className={`rounded-xl p-2.5 border-l-4 ${
                             r.isBest
                               ? 'border-success-500 bg-success-50'
                               : 'border-warning-500 bg-warning-50'
                           }`}>
                             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                              ข้อ {i + 1} · {r.isBest ? '✓ ถูกที่สุด' : '○ ดีกว่านี้ได้'}
+                              ข้อ {i + 1} · เลือกคำตอบ · {r.isBest ? '✓ ถูกที่สุด' : '○ ดีกว่านี้ได้'}
                             </p>
                             <p className="text-[11px] text-slate-700 mb-2 italic">"{r.prompt}"</p>
                             <div className="space-y-1.5 text-[11px]">
                               <div>
                                 <span className="text-slate-500">คุณตอบ:</span>{' '}
                                 <span className={r.isBest ? 'text-success-700 font-semibold' : 'text-warning-700 font-semibold'}>
-                                  "{r.pickedLabel}" (+{r.pickedXp} XP)
+                                  "{r.pickedLabel}" (+{r.pickedXp} แต้ม)
                                 </span>
                               </div>
                               {!r.isBest && (
@@ -776,6 +1023,33 @@ export default function ScenarioPage() {
                               )}
                             </div>
                           </div>
+                        ) : (
+                          <div key={i} className={`rounded-xl p-2.5 border-l-4 ${
+                            r.success ? 'border-success-500 bg-success-50' : 'border-warning-500 bg-warning-50'
+                          }`}>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                              ข้อ {i + 1} · {r.gameLabel} · {r.success ? '✓ ผ่าน' : '○ ฝึกต่อได้'}
+                            </p>
+                            <p className="text-[11px] text-slate-700 mb-2 italic">"{r.title}"</p>
+                            <div className="space-y-2">
+                              {r.rows.map((row, j) => (
+                                <div key={j} className="bg-white rounded-md p-2 text-[11px]">
+                                  <p className="text-slate-700 leading-snug">{row.q}</p>
+                                  <p className="text-success-700 font-semibold mt-0.5">
+                                    ✓ {row.a}
+                                  </p>
+                                  {row.note && (
+                                    <p className="text-slate-600 leading-snug mt-1">{row.note}</p>
+                                  )}
+                                  {row.source && (
+                                    <p className="text-[10px] text-slate-500 italic leading-snug mt-1">
+                                      📚 อ้างอิง: {row.source}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </details>
@@ -798,6 +1072,27 @@ export default function ScenarioPage() {
                     </details>
                   )}
 
+                  {/* === ⭐ ดาวประเมินความสนุก — เก็บค่า + ส่งขึ้น Sheets === */}
+                  <div className="relative mb-4 rounded-2xl border-2 border-detective-100 bg-white/80 p-3">
+                    <p className="text-sm font-semibold text-detective-700 mb-2">ด่านนี้สนุกแค่ไหน?</p>
+                    <div className="flex justify-center gap-1.5">
+                      {[1, 2, 3, 4, 5].map(n => (
+                        <button
+                          key={n}
+                          aria-label={`${n} ดาว`}
+                          disabled={funStars > 0}
+                          onClick={() => { setFunStars(n); rateFun(n); sfx.pick(); }}
+                          className="text-3xl active:scale-90 transition-transform disabled:cursor-default"
+                        >
+                          {n <= funStars ? '⭐' : '☆'}
+                        </button>
+                      ))}
+                    </div>
+                    {funStars > 0 && (
+                      <p className="text-xs text-success-600 mt-2 text-center">ขอบคุณสำหรับคะแนน! 🙏</p>
+                    )}
+                  </div>
+
                   <div className="space-y-2 relative">
                     {canPlayNext && nextMeta && (
                       <button
@@ -807,6 +1102,13 @@ export default function ScenarioPage() {
                         ▶ ไปด่าน {nextMeta.id}: {nextMeta.title}
                       </button>
                     )}
+                    <button
+                      onClick={() => handleShareChallenge(stageScore + currentNode.xp)}
+                      className="btn-secondary w-full"
+                    >
+                      🎯 ท้าเพื่อนให้เอาชนะ {stageScore + currentNode.xp} แต้ม
+                    </button>
+                    {shareMsg && <p className="text-xs text-slate-500">{shareMsg}</p>}
                     <button
                       onClick={goHome}
                       className={canPlayNext ? 'btn-secondary w-full' : 'btn-primary w-full'}

@@ -123,8 +123,15 @@ export const scenario06: Scenario = {
       ],
     },
     {
-      type: 'dialogue', id: 'right3', speaker: 'baitoey', next: 'mg1',
+      type: 'dialogue', id: 'right3', speaker: 'baitoey', next: 'mg-catch',
       text: 'ขอบใจมากนะ... ฉันเกือบไปทำเรื่องที่อาจเสียใจตลอดชีวิต เธอเป็นเพื่อนแท้',
+    },
+    {
+      type: 'minigame', id: 'mg-catch', game: 'catch-lungs',
+      title: '🫁 รับของดีคลายเครียด — เลี่ยงบุหรี่ไฟฟ้า',
+      goalScore: 10,
+      next: 'mg1',
+      xpOnSuccess: 40,
     },
     {
       type: 'minigame', id: 'mg1', game: 'order-cards',
@@ -144,8 +151,8 @@ export const scenario06: Scenario = {
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
       title: 'บันทึกนักสืบ 📓',
-      body: 'ALGEE (Approach-Listen-Give reassurance-Encourage help-Encourage self-help) จากหลักสูตร MHFA (Mental Health First Aid) คือลำดับช่วยเพื่อนที่เปราะบาง — เทียบกับเวอร์ชันสั้นไทย "ฟัง-ยอมรับ-ห่วง-นำพา". มันได้ผลเพราะคนที่เครียดต้องการ "พื้นที่ปลอดภัย" ก่อนคำแนะนำ การห้ามทันทีกลับผลักเขาออก. ฟังจบประโยคก่อนพูดสวน อย่ารีบเสนอทางออก',
-      source: 'Mental Health First Aid (MHFA) Australia — Youth Mental Health First Aid Manual',
+      body: 'จำไว้: ฟัง → ยอมรับ → ห่วงใย → ชวนหาทางออก 🤝\nคนที่เครียดอยากได้ "คนเข้าใจ" ก่อน ไม่ใช่คนสั่งสอน ยิ่งห้ามตรงๆ ยิ่งผลักเขาออก\nฟังให้จบก่อนพูดสวน อย่าเพิ่งรีบเสนอวิธีแก้',
+      source: 'ALGEE — Mental Health First Aid (MHFA) Australia, Youth Module',
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'end1',
@@ -155,7 +162,7 @@ export const scenario06: Scenario = {
     {
       type: 'end', id: 'end1',
       title: 'จบด่าน 6!',
-      message: 'คุณช่วยเพื่อนพ้นภัย — ทักษะ "พี่ช่วยน้อง" ปลดล็อก',
+      message: 'คุณช่วยเพื่อนพ้นภัย — ทักษะ "พี่ช่วยน้อง" ปลดล็อก\n\n🏪 ร้านสะดวกซื้อใกล้บ้านมีของใหม่วางขาย... คุณลุงเจ้าของร้านรู้ไหมว่ามันผิดกฎหมาย?',
       xp: 70,
       badge: 'buddy-saver',
     },

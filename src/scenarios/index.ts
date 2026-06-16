@@ -37,7 +37,7 @@ export const SCENARIO_META: ScenarioMeta[] = [
   { id: 2,  arc: 'hero',   title: 'เพื่อนคนใหม่ในห้องน้ำ', subtitle: 'สูตรปฏิเสธ 3 ขั้น',      estMinutes: 6,  available: true,  unlockAfter: 1 },
   { id: 3,  arc: 'hero',   title: 'ปาร์ตี้วันเกิด',         subtitle: 'ใช้เหตุผลโน้มน้าว',        estMinutes: 7,  available: true,  unlockAfter: 2 },
   { id: 4,  arc: 'hero',   title: 'ห้างใหญ่หลังเลิกเรียน',  subtitle: 'ยืนยันคำเดิมไม่หวั่น',     estMinutes: 6,  available: true,  unlockAfter: 3 },
-  { id: 5,  arc: 'hero',   title: 'ข้อความส่วนตัวในเกมออนไลน์', subtitle: 'รู้จักถอย',          estMinutes: 5,  available: true,  unlockAfter: 4 },
+  { id: 5,  arc: 'hero',   title: 'ข้อความส่วนตัวในเกมออนไลน์', subtitle: 'รู้จักถอย',          estMinutes: 7,  available: true,  unlockAfter: 4 },
   { id: 6,  arc: 'hero',   title: 'น้องใบเตยกำลังจะลอง',  subtitle: 'ช่วยเพื่อน',              estMinutes: 7,  available: true,  unlockAfter: 5 },
   { id: 7,  arc: 'hero',   title: 'คุณลุงที่ร้านสะดวกซื้อ', subtitle: 'รู้กฎหมาย — เติมคำ + จับคู่', estMinutes: 6, available: true,  unlockAfter: 6 },
   { id: 8,  arc: 'hero',   title: 'บุก Vapor Corp (ด่านบอสใหญ่)', subtitle: 'รวมทุกทักษะ 5 ช่วง',   estMinutes: 12, available: true,  unlockAfter: 7 },
@@ -61,6 +61,23 @@ export const SCENARIO_META: ScenarioMeta[] = [
 export const TOTAL_STAGES = SCENARIO_META.length;
 /** ผ่าน Hero Arc ครบ = ได้ Certificate */
 export const CERT_STAGE_COUNT = 8;
+
+/** ระดับความยากของด่าน — ใช้โชว์ป้าย + จัดโครง 10 หลัก / 5 ขั้นกว่า */
+export type Difficulty = 'easy' | 'medium' | 'hard' | 'advance';
+export function getStageDifficulty(id: number): Difficulty {
+  if (id <= 3) return 'easy';
+  if (id <= 7) return 'medium';
+  if (id <= 10) return 'hard';
+  return 'advance';
+}
+
+/** โซนบนแผนที่ — ด่านหลัก 1-10 / ขั้นกว่า 11-15 / เจาะลึก(โบนัส) 16-20 */
+export type StageSection = 'core' | 'advance' | 'deep';
+export function getStageSection(id: number): StageSection {
+  if (id <= 10) return 'core';
+  if (id <= 15) return 'advance';
+  return 'deep';
+}
 
 export function getScenarioById(id: number): Scenario | null {
   switch (id) {

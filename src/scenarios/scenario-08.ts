@@ -56,30 +56,11 @@ export const scenario08: Scenario = {
       type: 'dialogue', id: 'phase2-intro', speaker: 'vapor', next: 'mg1',
       text: 'แน่จริง... งั้นลองพิสูจน์สิ ข้อกล่าวอ้างที่ฉันใช้โฆษณา — แกแยกได้ไหมว่าอะไรจริงอะไรเท็จ?',
     },
-    // === Phase 2: Spot the Lie (ทักษะด่าน 1) ===
+    // === Phase 2: ยิงจับเท็จ (ทักษะด่าน 1 — แบบแอ็กชัน) ===
     {
-      type: 'minigame', id: 'mg1', game: 'spot-the-lie',
-      title: 'Phase 2 — แยกความจริงจากโฆษณา',
-      claims: [
-        {
-          text: '"บุหรี่ไฟฟ้าช่วยให้คนเลิกบุหรี่มวนได้"',
-          isLie: true,
-          reveal: 'เท็จ — งานวิจัยพบว่าผู้ใช้บุหรี่ไฟฟ้ามักกลายเป็นใช้ทั้งสองอย่าง (dual use = ใช้ทั้งบุหรี่ไฟฟ้าและบุหรี่ปกติคู่กัน) ไม่ใช่เลิกได้จริง',
-          source: 'BMJ 2022 / WHO Report on Tobacco Epidemic',
-        },
-        {
-          text: '"กลิ่นรสผลไม้ดึงดูดเด็กให้เริ่มเสพติด"',
-          isLie: false,
-          reveal: 'จริง — กลิ่นหวาน/ผลไม้คือเครื่องมือออกแบบให้ติดตลาดเยาวชนโดยเฉพาะ',
-          source: 'CDC Youth Vaping Report 2023',
-        },
-        {
-          text: '"ไอน้ำของบุหรี่ไฟฟ้าไม่อันตรายต่อคนรอบข้าง"',
-          isLie: true,
-          reveal: 'เท็จ — secondhand vapor มีโลหะหนักและสารระเหยที่ผู้อื่นสูดเข้าไปก็เสี่ยง',
-          source: 'American Lung Association 2023',
-        },
-      ],
+      type: 'minigame', id: 'mg1', game: 'shoot-myth',
+      title: 'Phase 2 — ยิงทำลายคำโฆษณาลวงของ Vapor',
+      goalScore: 7,
       next: 'phase3-intro',
       xpOnSuccess: 80,
       badge: 'truth-finder',
@@ -221,7 +202,7 @@ export const scenario08: Scenario = {
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
       title: 'บันทึกนักสืบ (สรุปส่งท้าย) 📓',
-      body: 'การรวมหลายทักษะ (refusal + media literacy + helping peers + law) คือแนวคิด Comprehensive Prevention ของ NIDA — ป้องกันได้ผลที่สุดเมื่อใช้หลายชั้นพร้อมกัน. มันได้ผลเพราะปัจจัยเสี่ยงของวัยรุ่นมาจากหลายด้าน (สื่อ-เพื่อน-ครอบครัว-อารมณ์) ทักษะเดียวไม่พอ. ส่งต่อสิ่งที่เรียน — Peer Education (เพื่อนสอนเพื่อน) เพิ่มผลป้องกันได้ 2-3 เท่าตามงานวิจัยไทย',
+      body: 'นักสืบตัวจริงใช้หลายทักษะรวมกัน: ปฏิเสธ + รู้ทันสื่อ + ช่วยเพื่อน + รู้กฎหมาย 🛡️\nเพราะภัยมาจากหลายทาง (สื่อ-เพื่อน-ครอบครัว-อารมณ์) ทักษะเดียวไม่พอ\nที่เด็ดสุด — เอาที่เรียนไปบอกต่อเพื่อน ยิ่งช่วยกันยิ่งได้ผล',
       source: 'NIDA Principles of Substance Use Prevention for Adolescents 2022 / งานวิจัย ม.มหิดล + สสส. 2566 — Peer Education Effectiveness',
     },
     {
@@ -232,7 +213,7 @@ export const scenario08: Scenario = {
     {
       type: 'end', id: 'end1',
       title: '🏆 จบเกม! ตำนานสุขภาพ',
-      message: 'คุณเป็นนักสืบสุขภาพระดับตำนาน — ปกป้องลมหายใจของเพื่อนรุ่นต่อไปได้แล้ว!',
+      message: 'คุณเป็นนักสืบสุขภาพระดับตำนาน — ปกป้องลมหายใจของเพื่อนรุ่นต่อไปได้แล้ว!\n\n🎓 จบภารกิจหลักครบ 10 ด่าน = จบหลักสูตร! ถ้าอยากเก่งขึ้นอีก ยังมี "ด่านท้าทาย (โบนัส)" รออยู่',
       xp: 200,
       badge: 'health-legend',
     },

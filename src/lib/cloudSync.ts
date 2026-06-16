@@ -49,6 +49,10 @@ export interface SyncPayload {
   postTestScore?: number;
   preTestAt?: string;
   postTestAt?: string;
+  // ความพึงพอใจ/ความสนุก (ดาว 1-5)
+  funRating?: number;
+  funRatingCount?: number;
+  funRatingSum?: number;
   avatar?: number;
 }
 
@@ -114,6 +118,9 @@ export interface RestoreResponse {
     postTestScore?: number;
     preTestAt?: string;
     postTestAt?: string;
+    funRating?: number;
+    funRatingCount?: number;
+    funRatingSum?: number;
   };
 }
 

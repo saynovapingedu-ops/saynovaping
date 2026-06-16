@@ -149,7 +149,7 @@ export const scenario09: Scenario = {
     {
       type: 'end', id: 'end1',
       title: '🎓 Master 1 ผ่าน!',
-      message: 'คุณเป็นโค้ชเลิกบุหรี่แล้ว — ทักษะ "Recovery Coach" ปลดล็อก',
+      message: 'คุณเป็นโค้ชเลิกบุหรี่แล้ว — ทักษะ "Recovery Coach" ปลดล็อก\n\n📱 ใบเตยส่งคลิป TikTok แปลกๆ มาให้ดู... มีคำลับที่เราอ่านไม่ออก',
       xp: 80,
       badge: 'recovery-coach',
     },

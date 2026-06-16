@@ -74,10 +74,10 @@ export default function Stats() {
 
             <div className="mt-3">
               <div className="flex justify-between text-xs mb-1">
-                <span className="text-gray-600">{player.totalXP} XP</span>
+                <span className="text-gray-600">{player.totalXP} แต้ม</span>
                 {next ? (
                   <span className="text-warning-600 font-semibold">
-                    อีก {next.minXP - player.totalXP} XP → {next.name}
+                    อีก {next.minXP - player.totalXP} แต้ม → {next.name}
                   </span>
                 ) : (
                   <span className="text-success-600 font-semibold">🏆 ระดับสูงสุดแล้ว!</span>
@@ -115,6 +115,7 @@ export default function Stats() {
           <StatBox emoji="🎓" label="บทขั้นสูง" value={`${masterDone}/4`} />
           <StatBox emoji="🎯" label="บทเชี่ยวชาญ" value={`${proDone}/3`} />
           <StatBox emoji="🔬" label="บทเจาะลึก" value={`${expertDone}/5`} />
+          <StatBox emoji="📅" label="ชาเลนจ์รายวัน" value={`${player.dailyDoneCount || 0} ครั้ง`} />
         </div>
 
         {(player.streakDays || 0) > 0 && (

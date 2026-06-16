@@ -72,6 +72,39 @@ export function isMockMode(): boolean {
   return MOCK_MODE;
 }
 
+/**
+ * แชร์คำท้าไปยังเพื่อน — ลอง LINE shareTargetPicker ก่อน
+ * (ต้องเปิดสิทธิ์ใน LINE Developers console) แล้ว fallback เป็น Web Share / คัดลอกลิงก์
+ * คืน true ถ้าแชร์/คัดลอกสำเร็จ
+ */
+export async function shareChallenge(text: string, url: string): Promise<boolean> {
+  const message = `${text}\n${url}`;
+  // 1) LINE shareTargetPicker (เฉพาะในแอป LINE + เปิดสิทธิ์แล้ว)
+  try {
+    if (!MOCK_MODE && liff.isApiAvailable && liff.isApiAvailable('shareTargetPicker')) {
+      const res = await liff.shareTargetPicker([{ type: 'text', text: message }]);
+      // res เป็น undefined ถ้าผู้ใช้ปิด picker — ถือว่าไม่ได้แชร์
+      return !!res;
+    }
+  } catch (e) {
+    console.warn('[LIFF] shareTargetPicker failed, fallback:', e);
+  }
+  // 2) Web Share API (มือถือทั่วไป)
+  try {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      await navigator.share({ text, url });
+      return true;
+    }
+  } catch { /* ผู้ใช้ยกเลิก */ }
+  // 3) คัดลอกลิงก์ลงคลิปบอร์ด
+  try {
+    await navigator.clipboard.writeText(message);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** SHA-256 → hex string (web crypto API) */
 export async function sha256Hex(input: string): Promise<string> {
   const buf = new TextEncoder().encode(input);

@@ -70,8 +70,8 @@ export const scenario15: Scenario = {
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
       title: '📓 บันทึกครบแล้ว',
-      body: 'การมองเห็น "พฤติกรรม → ผลกระทบ" คือทักษะ Consequential Thinking (คิดถึงผลที่ตามมาก่อนตัดสินใจ) ที่ CASEL บอกว่าเป็นพื้นฐานของ SEL (Social-Emotional Learning). มันได้ผลเพราะสมองวัยรุ่นยังพัฒนา Prefrontal Cortex (ส่วนคิดผลที่ตามมา) ไม่เต็มที่ จึงต้องฝึกซ้ำๆ ผ่านเคสจริง. เวลาจะตัดสินใจอะไร — ถามตัวเอง "แล้วต่อจากนั้นเกิดอะไรขึ้นได้บ้าง?" เป็นนิสัย',
-      source: 'CASEL — SEL Framework (Collaborative for Academic, Social, and Emotional Learning) / WHO Life Skills Education for Children and Adolescents (1997, updated 2020)',
+      body: 'ทักษะสำคัญคือ "คิดถึงผลที่ตามมา" ก่อนตัดสินใจ 🤔\nสมองวัยรุ่นส่วนที่คิดเรื่องนี้ยังพัฒนาไม่เต็มที่ เลยต้องฝึกบ่อยๆ ผ่านเคสจริง\nก่อนตัดสินใจอะไร ลองถามตัวเอง "แล้วต่อจากนั้นจะเกิดอะไรขึ้นบ้าง?"',
+      source: 'Consequential Thinking — CASEL SEL Framework / WHO Life Skills Education (1997, upd. 2020)',
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'd-end',

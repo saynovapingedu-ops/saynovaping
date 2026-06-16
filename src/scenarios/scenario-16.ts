@@ -66,8 +66,15 @@ export const scenario16: Scenario = {
       source: 'NIDA — Tobacco, Nicotine, and E-Cigarettes Research Report',
     },
     {
-      type: 'dialogue', id: 'd5', speaker: 'doctor', next: 'mg1',
+      type: 'dialogue', id: 'd5', speaker: 'doctor', next: 'mg-react',
       text: 'เก่งมาก! ลองมาดูกัน — เหตุการณ์ไหนเกิดในสมองตามลำดับ',
+    },
+    {
+      type: 'minigame', id: 'mg-react', game: 'reaction',
+      title: '✋ แตะของดีให้ไว — สมองได้โดปามีนจากกิจกรรมดีๆ',
+      goalScore: 8,
+      next: 'mg1',
+      xpOnSuccess: 40,
     },
     {
       type: 'minigame', id: 'mg1', game: 'order-cards',

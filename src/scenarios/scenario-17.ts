@@ -6,6 +6,7 @@ export const scenario17: Scenario = {
   title: 'แชทแปลกใน Discord',
   subtitle: 'บทเจาะลึก 2 — รับมือคนขายในเกมออนไลน์',
   estMinutes: 6,
+  basedOnRealEvents: true,
   startNode: 'd1',
   intro: [
     'คุณกำลังเล่นเกมกับเพื่อนใน Discord server',

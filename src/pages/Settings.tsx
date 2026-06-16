@@ -73,6 +73,13 @@ export default function Settings() {
           value={s.vibrationEnabled}
           onToggle={s.toggleVibration}
         />
+        <Toggle
+          emoji="🔊"
+          label="อ่านบทสนทนาออกเสียง"
+          description="โชว์ปุ่ม 'ฟังเสียง' ใต้บทสนทนา (ต้องมีเสียงไทยในเครื่อง)"
+          value={s.ttsEnabled}
+          onToggle={s.toggleTts}
+        />
 
         <p className="text-xs text-gray-500 px-1 pt-3">การแสดงผล</p>
         <div className="card">
@@ -112,8 +119,8 @@ export default function Settings() {
         <p className="text-xs text-gray-500 px-1 pt-3">เกี่ยวกับ</p>
         <div className="card text-sm text-gray-700 space-y-1">
           <p className="flex justify-between"><span>เวอร์ชัน</span><span className="font-mono">v0.8.0</span></p>
-          <p className="flex justify-between"><span>มินิเกม</span><span>7 แบบ</span></p>
-          <p className="flex justify-between"><span>ด่านทั้งหมด</span><span>{SCENARIO_META.length} ด่าน</span></p>
+          <p className="flex justify-between"><span>มินิเกม</span><span>หลายแบบ</span></p>
+          <p className="flex justify-between"><span>ด่านทั้งหมด</span><span>{SCENARIO_META.length} ด่าน (หลัก 10 + โบนัส 10)</span></p>
         </div>
 
         {/* === TMF funding credit === */}

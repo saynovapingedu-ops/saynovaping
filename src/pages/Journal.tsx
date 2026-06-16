@@ -97,7 +97,7 @@ export default function Journal() {
     <div className="min-h-screen pb-10 relative" style={backdropCss ? { background: backdropCss } : undefined}>
       <PageHeader
         title="📓 สมุดบันทึกนักสืบ"
-        subtitle={`ปิดคดีแล้ว ${clearedCount}/${totalCount} · ${player.totalXP} XP`}
+        subtitle={`ปิดคดีแล้ว ${clearedCount}/${totalCount} · ${player.totalXP} แต้ม`}
         backTo="/"
       />
 

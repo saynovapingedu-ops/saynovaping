@@ -58,7 +58,7 @@ export default function Verify() {
                   <p><b>เลขที่:</b> <span className="font-mono">{result.certificateNo}</span></p>
                   <p><b>ผู้ได้รับ:</b> {result.nickname}</p>
                   <p><b>วันที่ออก:</b> {result.issueDate && new Date(result.issueDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                  <p><b>คะแนนรวม:</b> {result.totalXP} XP</p>
+                  <p><b>คะแนนรวม:</b> {result.totalXP} แต้ม</p>
                   <p><b>ด่านที่จบ:</b> {result.stagesCount}/8</p>
                 </div>
                 <p className="text-xs text-gray-500 mt-4">

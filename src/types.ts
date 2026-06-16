@@ -97,7 +97,9 @@ export interface MinigameNode {
   id: string;
   game:
     | 'spot-the-lie' | 'order-cards' | 'word-match' | 'fill-blank'
-    | 'swipe-decide' | 'memory-match' | 'risk-rank';
+    | 'swipe-decide' | 'memory-match' | 'risk-rank'
+    | 'runner' | 'tap-ads' | 'catch-lungs'
+    | 'shoot-myth' | 'quick-fire' | 'lane-run' | 'snake' | 'maze' | 'reaction';
   title: string;
   // สำหรับ spot-the-lie
   claims?: SpotTheLieClaim[];
@@ -115,6 +117,8 @@ export interface MinigameNode {
   // สำหรับ risk-rank
   buckets?: RiskBucket[];
   riskItems?: RiskItem[];
+  /** เกมอาร์เคด (runner/tap-ads/catch-lungs) — เป้าคะแนนที่ต้องทำให้ถึงเพื่อผ่าน */
+  goalScore?: number;
   next: string;
   xpOnSuccess: number;
   badge?: string;
@@ -163,6 +167,8 @@ export interface Scenario {
   nodes: ScenarioNode[];
   /** แหล่งอ้างอิงรวมของด่าน — แสดงตอนจบด่านเพื่อความน่าเชื่อถือของเนื้อหา */
   references?: string[];
+  /** ด่านนี้ดัดแปลงจากเหตุการณ์/ข่าวจริง — แสดงป้ายบนหน้า intro */
+  basedOnRealEvents?: boolean;
 }
 
 export interface Badge {
@@ -213,6 +219,10 @@ export interface PlayerProfile {
   postTestScore?: number;   // % แบบประเมินหลังเรียน
   preTestAt?: string;
   postTestAt?: string;
+  // ความพึงพอใจ/ความสนุก (ดาว 1-5) — เก็บล่าสุด + ผลรวมเพื่อหาค่าเฉลี่ยเชิงวิจัย
+  funRating?: number;       // ดาวล่าสุดที่ให้
+  funRatingCount?: number;  // จำนวนครั้งที่ให้คะแนน
+  funRatingSum?: number;    // ผลรวมดาว (หาค่าเฉลี่ย = sum/count)
   certificateNo?: string;
   certificateIssuedAt?: string;
   /** เคยถูกถามเรื่องใส่ชื่อจริงบนเกียรติบัตรแล้วหรือยัง (กัน popup ซ้ำ) */

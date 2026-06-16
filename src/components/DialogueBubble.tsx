@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import type { SpeakerKey } from '../types';
 import { usePlayerStore } from '../store/playerStore';
+import { useSettingsStore } from '../store/settingsStore';
+import { speak, useTtsAvailable } from '../lib/tts';
 import Avatar from './Avatar';
 import { NPC_CHARACTERS } from '../lib/characters';
 
@@ -29,6 +31,10 @@ export default function DialogueBubble({ speaker, text }: Props) {
   const isPlayer = speaker === 'player';
   // ตัวละครหลักที่มีรูป PNG จริง (หมอ + Vapor)
   const npc = NPC_CHARACTERS[speaker];
+  // ปุ่มอ่านออกเสียง — โผล่เฉพาะเมื่อเปิดในตั้งค่า + เครื่องมีเสียงไทย
+  const ttsEnabled = useSettingsStore(st => st.ttsEnabled);
+  const ttsAvailable = useTtsAvailable();
+  const showTts = ttsEnabled && ttsAvailable && !!text;
 
   return (
     <motion.div
@@ -56,9 +62,19 @@ export default function DialogueBubble({ speaker, text }: Props) {
         <span className="text-xs text-slate-500 mb-1 px-1">
           {isPlayer ? player.nickname || s.name : s.name}
         </span>
-        <div className={`px-4 py-2.5 rounded-2xl ${s.bg} ${s.align === 'right' ? 'rounded-br-sm' : 'rounded-bl-sm'}`}>
-          <p className="leading-relaxed whitespace-pre-line">{text}</p>
+        <div className={`px-4 py-3 rounded-2xl ${s.bg} ${s.align === 'right' ? 'rounded-br-sm' : 'rounded-bl-sm'}`}>
+          <p className="leading-loose whitespace-pre-line break-words">{text}</p>
         </div>
+        {showTts && (
+          <button
+            type="button"
+            onClick={() => speak(text)}
+            aria-label="อ่านออกเสียง"
+            className="mt-1 px-2 py-0.5 text-xs text-slate-500 hover:text-detective-600 active:opacity-70 flex items-center gap-1"
+          >
+            🔊 ฟังเสียง
+          </button>
+        )}
       </div>
     </motion.div>
   );

@@ -98,6 +98,10 @@ export const scenario04: Scenario = {
           next: 'right1', xp: 35,
         },
         {
+          label: 'ขอบายพี่ ไม่ใช่ไวบ์เราอะ 😆',
+          next: 'right1', xp: 33,
+        },
+        {
           label: 'พี่อย่ามายุ่งกับผม',
           next: 'okay3', xp: 10,
           reflection: 'หงุดหงิดได้ แต่ ยืนยันคำเดิม (Broken Record) คือสงบและคงคำเดิม',
@@ -143,8 +147,8 @@ export const scenario04: Scenario = {
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
       title: 'บันทึกนักสืบ 📓',
-      body: 'Broken Record (เทคนิคยืนคำตอบเดิมซ้ำๆ ไม่หาเหตุผลใหม่) คือทักษะ assertive จากหนังสือคลาสสิกของ Manuel J. Smith ปี 1975. มันได้ผลเพราะการโต้เถียงด้วยเหตุผลใหม่ทุกครั้ง = เปิดประตูให้เขาหาข้อโต้ตอบใหม่ แต่การพูดประโยคเดิมสงบๆ ทำให้เขารู้ว่าไม่มีทางต่อรอง. ฝึก 1 ประโยคสั้น เช่น "ไม่ครับ ผมไม่สูบ" แล้วใช้ซ้ำได้ทุกครั้ง',
-      source: 'Manuel J. Smith — When I Say No, I Feel Guilty (Bantam Books, 1975)',
+      body: 'เทคนิค "ยืนยันคำเดิม": เลือก 1 ประโยคสั้นๆ เช่น "ไม่ครับ ผมไม่สูบ" แล้วพูดซ้ำสงบๆ 🔁\nถ้าเถียงด้วยเหตุผลใหม่ทุกครั้ง เขาจะหาทางตื๊อต่อได้เรื่อยๆ\nแต่พอเราพูดเดิมไม่หวั่น เขาจะรู้เองว่าไม่มีทางต่อรอง',
+      source: 'Broken Record — Manuel J. Smith, When I Say No, I Feel Guilty (1975)',
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'end1',
@@ -154,7 +158,7 @@ export const scenario04: Scenario = {
     {
       type: 'end', id: 'end1',
       title: 'จบด่าน 4!',
-      message: 'คุณยืนหยัดได้ในสถานการณ์กดดัน — ทักษะ "ยืนยันคำเดิม (Broken Record)" ปลดล็อก',
+      message: 'คุณยืนหยัดได้ในสถานการณ์กดดัน — ทักษะ "ยืนยันคำเดิม (Broken Record)" ปลดล็อก\n\n📱 มือถือสั่น... มีข้อความแปลกจากคนไม่รู้จักในเกมออนไลน์เด้งขึ้นมา',
       xp: 60,
       badge: 'stage-4-clear',
     },

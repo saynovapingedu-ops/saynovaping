@@ -161,9 +161,9 @@ export default function Certificate() {
             title="ยังไม่ถึงเกณฑ์"
             description={
               <>
-                ต้องจบครบ 8 ด่าน หรือเก็บ XP ครบ 1,500
+                ต้องจบครบ 8 ด่าน หรือเก็บแต้มครบ 1,500
                 <br />
-                (ตอนนี้ {player.stagesCompleted.length}/8 ด่าน, {player.totalXP.toLocaleString()} XP)
+                (ตอนนี้ {player.stagesCompleted.length}/8 ด่าน, {player.totalXP.toLocaleString()} แต้ม)
               </>
             }
             action={

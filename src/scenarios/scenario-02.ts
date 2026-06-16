@@ -56,11 +56,11 @@ export const scenario02: Scenario = {
     },
     {
       type: 'choice', id: 'choice1b', speaker: 'player',
-      prompt: 'ลองตอบใหม่ — ปฏิเสธชัดเจนแต่ไม่สร้างความขัดแย้ง',
+      prompt: 'ลองตอบใหม่ — ปฏิเสธชัดเจนแต่ไม่สร้างความขัดแย้ง (จะสุภาพหรือกวนๆ ก็ได้)',
       choices: [
         { label: 'ไม่ครับ ผมไม่สูบ', next: 'right1', xp: 30 },
         { label: 'ขอบคุณครับพี่ แต่ผมไม่สูบจริงๆ', next: 'right1', xp: 28 },
-        { label: 'ไม่เอาครับ ผมไม่ยุ่งกับบุหรี่ไฟฟ้า', next: 'right1', xp: 30 },
+        { label: 'ขอบายแหละพี่ ไม่ใช่ไวบ์เราว่ะ 😆', next: 'right1', xp: 30 },
       ],
     },
     {
@@ -85,7 +85,7 @@ export const scenario02: Scenario = {
       choices: [
         { label: 'มันผิดกฎหมายในไทย ผมไม่อยากเสี่ยง', next: 'right2', xp: 25 },
         { label: 'นิโคตินทำลายปอด ผมเล่นกีฬาอยู่ ไม่ลองดีกว่า', next: 'right2', xp: 25 },
-        { label: 'ถ้าพ่อแม่รู้คงเสียใจมาก ผมไม่อยากให้เขาผิดหวัง', next: 'right2', xp: 25 },
+        { label: 'เงินเราจะหมดแล้วพี่ เก็บไว้กินหมูกระทะดีกว่า 🥩', next: 'right2', xp: 25 },
       ],
     },
     {
@@ -113,12 +113,19 @@ export const scenario02: Scenario = {
       choices: [
         { label: 'ไปต่อแถวกินข้าวกันไหมครับ ผมหิวแล้ว', next: 'right3', xp: 25 },
         { label: 'พี่ ผมขอชวนไปเตะบอลตอนเย็นนะครับ', next: 'right3', xp: 25 },
-        { label: 'พี่ไปร้านน้ำหวานหน้าโรงเรียนกันไหมครับ ผมเลี้ยง', next: 'right3', xp: 25 },
+        { label: 'ขอพาสนะพี่ เดี๋ยวไปกินชาบูกับเพื่อนก่อน 🍲', next: 'right3', xp: 25 },
       ],
     },
     {
-      type: 'dialogue', id: 'right3', speaker: 'friend1', next: 'mg2',
+      type: 'dialogue', id: 'right3', speaker: 'friend1', next: 'mg-run',
       text: 'เออ ก็ได้น้อง... แล้วเจอกันนะ',
+    },
+    {
+      type: 'minigame', id: 'mg-run', game: 'lane-run',
+      title: '🛹 รีบเดินออกจากห้องน้ำ — หลบควัน เก็บของดี',
+      goalScore: 6,
+      next: 'mg2',
+      xpOnSuccess: 40,
     },
     {
       type: 'minigame', id: 'mg2', game: 'order-cards',
@@ -137,8 +144,8 @@ export const scenario02: Scenario = {
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
       title: 'บันทึกนักสืบ 📓',
-      body: 'สูตรปฏิเสธ 3 ขั้น "ไม่ → เพราะ → ไปทำอย่างอื่นแทน" มาจาก Life Skills Training (LST) ของ Dr. Gilbert Botvin มหาวิทยาลัย Cornell ปี 1980s. มันได้ผลเพราะการ "เสนอทางเลือก" ลดความอึดอัดในกลุ่มเพื่อน (peer pressure) มากกว่าการปฏิเสธเฉยๆ ที่ดูเย็นชา. ฝึกซ้อมจริงหน้ากระจกหรือกับเพื่อน — จะพูดได้คล่องเมื่อถึงเวลาจริง',
-      source: 'Botvin Life Skills Training (LST), Cornell University — Refusal Skills Module / NIDA Principles of Substance Use Prevention for Adolescents 2022',
+      body: 'จำสูตรง่ายๆ: ไม่ → เพราะ → ชวนไปทำอย่างอื่น 💡\nที่เวิร์กเพราะการชวนไปทำอย่างอื่นทำให้ไม่กระอักกระอ่วน ดีกว่าปฏิเสธห้วนๆ\nลองซ้อมหน้ากระจกหรือกับเพื่อนดู เดี๋ยวพูดได้ลื่นเอง',
+      source: 'Botvin Life Skills Training (LST), Cornell University — Refusal Skills Module / NIDA 2022',
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'end1',
@@ -148,7 +155,7 @@ export const scenario02: Scenario = {
     {
       type: 'end', id: 'end1',
       title: 'จบด่าน 2!',
-      message: 'คุณปฏิเสธได้อย่างมีชั้นเชิง — ทักษะ "ปฏิเสธตรงไปตรงมา" ปลดล็อกแล้ว',
+      message: 'คุณปฏิเสธได้อย่างมีชั้นเชิง — ทักษะ "ปฏิเสธตรงไปตรงมา" ปลดล็อกแล้ว\n\n🎂 สุดสัปดาห์นี้มีปาร์ตี้วันเกิดเพื่อนสนิท... แต่มีบางอย่างซ่อนอยู่ในกระเป๋าใครบางคน',
       xp: 50,
       badge: 'stage-2-clear',
     },

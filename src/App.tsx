@@ -2,11 +2,13 @@ import { useEffect, useState, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { initLiff, getUserIdHash, isMockMode } from './lib/liff';
 import { flushQueue, restoreProgress } from './lib/cloudSync';
+import { parseChallengeFromSearch, setPendingChallenge } from './lib/challenge';
 import { startBgm } from './lib/bgm';
 import { usePlayerStore } from './store/playerStore';
 import { useSettingsStore } from './store/settingsStore';
 import { SHOP_ITEMS } from './lib/shopItems';
 import Toaster from './components/Toaster';
+import LevelUpModal from './components/LevelUpModal';
 import Onboarding from './pages/Onboarding';
 import Home from './pages/Home';
 import Skeleton from './components/ui/Skeleton';
@@ -27,6 +29,7 @@ const Exam         = lazy(() => import('./pages/Exam'));
 const Achievements = lazy(() => import('./pages/Achievements'));
 const Assessment   = lazy(() => import('./pages/Assessment'));
 const Leaderboard  = lazy(() => import('./pages/Leaderboard'));
+const Arcade       = lazy(() => import('./pages/Arcade'));
 
 function PageLoader() {
   return (
@@ -149,6 +152,9 @@ export default function App() {
                 postTestScore: p.postTestScore,
                 preTestAt: p.preTestAt,
                 postTestAt: p.postTestAt,
+                funRating: p.funRating,
+                funRatingCount: p.funRatingCount ?? 0,
+                funRatingSum: p.funRatingSum ?? 0,
                 certificateNo: p.certificateNo || undefined,
                 certificateIssuedAt: p.certificateIssuedAt || undefined,
                 createdAt: p.createdAt || new Date().toISOString(),
@@ -163,10 +169,20 @@ export default function App() {
         }
 
         flushQueue().catch(() => { /* silent */ });
-        const target = sessionStorage.getItem('hd_liff_target');
-        if (target && target !== '/') {
-          sessionStorage.removeItem('hd_liff_target');
-          navigate(target, { replace: true });
+
+        // คำท้าจากเพื่อน (?challenge=...) — มาก่อน target ปกติ
+        const challenge = parseChallengeFromSearch(window.location.search);
+        if (challenge) {
+          setPendingChallenge(challenge);
+          // ล้าง query กัน trigger ซ้ำตอน refresh
+          window.history.replaceState({}, '', import.meta.env.BASE_URL);
+          navigate(`/scenario/${challenge.stageId}`, { replace: true });
+        } else {
+          const target = sessionStorage.getItem('hd_liff_target');
+          if (target && target !== '/') {
+            sessionStorage.removeItem('hd_liff_target');
+            navigate(target, { replace: true });
+          }
         }
       } catch (err) {
         console.error('App init error:', err);
@@ -207,6 +223,7 @@ export default function App() {
           <Route path="/knowledge" element={<Knowledge />} />
           <Route path="/journal" element={<Journal />} />
           <Route path="/daily" element={<Daily />} />
+          <Route path="/arcade" element={<Arcade />} />
           <Route path="/exam" element={<Exam />} />
           <Route path="/achievements" element={<Achievements />} />
           <Route path="/assessment" element={<Assessment />} />
@@ -217,6 +234,7 @@ export default function App() {
         </Routes>
       </Suspense>
       <Toaster />
+      <LevelUpModal />
       {/* แบนเนอร์เตือน: production แต่ยังรัน mock mode = ข้อมูลไม่ผูกบัญชี LINE (config ผิด) */}
       {isMockMode() && import.meta.env.PROD && (
         <div className="fixed bottom-2 inset-x-0 z-[60] flex justify-center px-3 pointer-events-none">
