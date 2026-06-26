@@ -20,10 +20,10 @@ import { sfx } from '../lib/sound';
  */
 
 const ARC_COLOR: Record<string, { bg: string; border: string; text: string; tape: string }> = {
-  hero:   { bg: 'from-detective-50 to-white',  border: 'border-detective-300',  text: 'text-detective-700', tape: 'bg-detective-300' },
-  master: { bg: 'from-warning-50 to-white',    border: 'border-warning-300',    text: 'text-warning-700',   tape: 'bg-warning-300' },
-  pro:    { bg: 'from-mint-50 to-white',       border: 'border-mint-300',       text: 'text-mint-700',      tape: 'bg-mint-300' },
-  expert: { bg: 'from-purple-50 to-white',     border: 'border-purple-300',     text: 'text-purple-700',    tape: 'bg-purple-300' },
+  hero:   { bg: 'from-detective-50 to-[#FFFCF7]',  border: 'border-detective-300',  text: 'text-detective-700', tape: 'bg-detective-300' },
+  master: { bg: 'from-warning-50 to-[#FFFCF7]',    border: 'border-warning-300',    text: 'text-warning-700',   tape: 'bg-warning-300' },
+  pro:    { bg: 'from-mint-50 to-[#FFFCF7]',       border: 'border-mint-300',       text: 'text-mint-700',      tape: 'bg-mint-300' },
+  expert: { bg: 'from-purple-50 to-[#FFFCF7]',     border: 'border-purple-300',     text: 'text-purple-700',    tape: 'bg-purple-300' },
 };
 
 type ArcKey = 'hero' | 'master' | 'pro' | 'expert';
@@ -68,10 +68,10 @@ export default function Journal() {
   }, [cases]);
 
   const arcLabel: Record<ArcKey, { name: string; subtitle: string; emoji: string }> = {
-    hero:   { name: 'บทที่ 1: เส้นทางนักสืบ', subtitle: 'ด่าน 1-8 · เส้นทางนักสืบ',  emoji: '🦸' },
-    master: { name: 'บทที่ 2: ขั้นสูง',        subtitle: 'ด่าน 9-12 · ขั้นสูง',        emoji: '🎓' },
-    pro:    { name: 'บทที่ 3: เกมเพลย์ใหม่',   subtitle: 'ด่าน 13-15 · เกมเพลย์ใหม่',  emoji: '🎯' },
-    expert: { name: 'บทที่ 4: เชี่ยวชาญบุหรี่ไฟฟ้า', subtitle: 'ด่าน 16-20 · เชี่ยวชาญบุหรี่ไฟฟ้า', emoji: '🔬' },
+    hero:   { name: 'บทที่ 1: เปิดสำนวนแรก',     subtitle: 'ก้าวแรกของนักสืบมือใหม่ · ด่าน 1-8',     emoji: '🔍' },
+    master: { name: 'บทที่ 2: ตามรอยเบาะแส',     subtitle: 'คดีซับซ้อนขึ้น ต้องสืบให้ลึก · ด่าน 9-12', emoji: '🧩' },
+    pro:    { name: 'บทที่ 3: ลงพื้นที่จริง',      subtitle: 'ภาคสนาม เจอกลลวงรูปแบบใหม่ · ด่าน 13-15', emoji: '📍' },
+    expert: { name: 'บทที่ 4: ปิดคดีบุหรี่ไฟฟ้า',  subtitle: 'เจาะลึกถึงต้นตอ คดีใหญ่สุดท้าย · ด่าน 16-20', emoji: '🔬' },
   };
 
   // หาบทที่กำลังเล่นอยู่ = แฟ้มแรกที่ปลดล็อกแต่ยังไม่ปิดคดี → เปิดบทนั้นไว้
@@ -196,7 +196,7 @@ function CaseCard({
       whileTap={{ scale: 0.97 }}
       onClick={() => onTap(c)}
       className={`relative rounded-2xl p-3 pt-5 border-2 text-left bg-gradient-to-br ${colors.bg} ${colors.border}
-                  shadow-sm hover:shadow-md transition-all overflow-hidden
+                  shadow-clay-sm hover:shadow-clay transition-all overflow-hidden
                   ${!unlocked ? 'opacity-60 grayscale' : ''}`}
     >
       {/* เทปกาวด้านบน (scrapbook) */}
@@ -279,7 +279,7 @@ function CaseModal({
         exit={{ y: 30, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 240, damping: 24 }}
         onClick={e => e.stopPropagation()}
-        className={`bg-white rounded-3xl w-full max-w-md shadow-xl overflow-hidden relative
+        className={`liquid-modal rounded-[28px] w-full max-w-md overflow-hidden relative
                     border-2 ${colors.border}`}
       >
         {/* เทปกาวด้านบน */}
@@ -365,7 +365,7 @@ function CaseModal({
             </div>
           ) : unlocked ? (
             <>
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-3 text-center">
+              <div className="bg-[#F3EADD] shadow-clay-pressed rounded-xl p-3 mb-3 text-center">
                 <div className="text-3xl mb-1 leading-none">📋</div>
                 <p className="text-sm text-slate-700 leading-relaxed">
                   คดีนี้รอให้คุณไปสืบ — หลักฐานยังไม่ปรากฏ
@@ -380,7 +380,7 @@ function CaseModal({
             </>
           ) : (
             <>
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-3 text-center">
+              <div className="bg-[#F3EADD] shadow-clay-pressed rounded-xl p-3 mb-3 text-center">
                 <div className="text-3xl mb-1 leading-none">🔒</div>
                 <p className="text-sm text-slate-700 leading-relaxed">
                   คดีนี้ยังไม่เปิด

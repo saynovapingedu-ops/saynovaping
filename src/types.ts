@@ -169,6 +169,8 @@ export interface Scenario {
   references?: string[];
   /** ด่านนี้ดัดแปลงจากเหตุการณ์/ข่าวจริง — แสดงป้ายบนหน้า intro */
   basedOnRealEvents?: boolean;
+  /** บทเรียนสั้นๆ สอน "ก่อนเริ่ม" บนหน้า intro (เช่น ด่านกฎหมาย — รู้ก่อนเล่นจะตอบถูก) */
+  preLesson?: { title: string; emoji?: string; points: string[]; source?: string };
 }
 
 export interface Badge {

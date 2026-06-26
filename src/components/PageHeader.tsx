@@ -5,6 +5,7 @@
 //  ยกเว้นหน้าแรก (Home) ที่มี layout เฉพาะ
 // ============================================================================
 
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { sfx } from '../lib/sound';
 import BrandHeader from './BrandHeader';
@@ -18,9 +19,11 @@ interface Props {
   onBack?: () => void;
   /** sticky บนสุดของหน้า */
   sticky?: boolean;
+  /** ปุ่ม/ชิปด้านขวา (เช่น เหรียญ, ลิงก์) — วางข้างชื่อ ก่อนโลโก้แบรนด์ */
+  actions?: ReactNode;
 }
 
-export default function PageHeader({ title, subtitle, backTo = '/', onBack, sticky = true }: Props) {
+export default function PageHeader({ title, subtitle, backTo = '/', onBack, sticky = true, actions }: Props) {
   const nav = useNavigate();
 
   const handleBack = () => {
@@ -33,15 +36,16 @@ export default function PageHeader({ title, subtitle, backTo = '/', onBack, stic
     <header
       className={`${sticky ? 'sticky top-0 z-20' : ''}
                   px-3.5 py-2.5 flex items-center gap-2.5
-                  bg-detective-50/90 backdrop-blur-md border-b border-detective-100
+                  liquid-header rounded-b-[28px]
+                  shadow-[0_6px_18px_-10px_rgba(176,138,104,0.5)]
                   pt-[max(0.625rem,calc(env(safe-area-inset-top)+0.3rem))]`}
     >
       {/* Back button */}
       <button
         onClick={handleBack}
-        className="bg-white hover:bg-detective-50 text-detective-700 w-9 h-9 rounded-2xl
-                   flex items-center justify-center border border-detective-100
-                   active:scale-95 transition-all flex-shrink-0"
+        className="bg-[#FFFCF7] hover:bg-detective-50 text-detective-700 w-9 h-9 rounded-2xl
+                   flex items-center justify-center shadow-clay-sm
+                   active:scale-95 active:shadow-clay-pressed transition-all flex-shrink-0"
         aria-label="กลับ"
       >
         <span className="text-lg leading-none">←</span>
@@ -56,6 +60,11 @@ export default function PageHeader({ title, subtitle, backTo = '/', onBack, stic
           <p className="text-[11px] text-slate-500 leading-tight truncate">{subtitle}</p>
         )}
       </div>
+
+      {/* ปุ่ม/ชิปด้านขวา (ออปชัน) — เช่น เหรียญ/ลิงก์ */}
+      {actions && (
+        <div className="flex items-center gap-1.5 flex-shrink-0">{actions}</div>
+      )}
 
       {/* Brand pill (TMF + SayNo) */}
       <BrandHeader variant="pill" />

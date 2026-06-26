@@ -192,10 +192,10 @@ export default function RunnerGame({ goalScore, onComplete, facts }: Props) {
       </div>
 
       <div
-        className="relative w-full rounded-2xl overflow-hidden border-2 border-detective-200 shadow-glow-sm cursor-pointer"
+        className="relative w-full max-w-[360px] mx-auto h-[400px] rounded-[24px] overflow-hidden shadow-clay bg-[#EAF4FF] cursor-pointer"
         onPointerDown={() => { if (phase === 'playing') jump(); else if (phase === 'ready') start(); }}
       >
-        <canvas ref={canvasRef} width={W} height={H} className="w-full block" style={{ touchAction: 'none' }} />
+        <canvas ref={canvasRef} width={W} height={H} className="w-full h-full block" style={{ objectFit: 'contain', touchAction: 'none' }} />
 
         {/* overlay: ready */}
         {phase === 'ready' && (
@@ -223,6 +223,13 @@ export default function RunnerGame({ goalScore, onComplete, facts }: Props) {
           </div>
         )}
       </div>
+      <button
+        type="button"
+        onPointerDown={(e) => { e.preventDefault(); if (phase === 'playing') jump(); else if (phase !== 'win') start(); }}
+        className="mt-3 w-full max-w-[360px] mx-auto block py-3.5 rounded-[18px] bg-detective-500 text-white font-bold text-lg shadow-clay-blue active:shadow-clay-pressed active:translate-y-px select-none touch-none"
+      >
+        ⬆️ กระโดด
+      </button>
     </div>
   );
 }

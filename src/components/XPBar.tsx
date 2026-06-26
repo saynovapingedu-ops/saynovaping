@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { usePlayerStore } from '../store/playerStore';
 import { getLevelByXP, getNextLevel, getProgressToNextLevel, TIER_INFO } from '../lib/levels';
 
@@ -17,7 +18,7 @@ export default function XPBar({ variant = 'light' }: Props) {
   const isDark = variant === 'dark';
   const labelText = isDark ? 'text-white drop-shadow-sm' : 'text-detective-700';
   const xpText    = isDark ? 'text-white/90'             : 'text-gray-500';
-  const trackBg   = isDark ? 'bg-white/15 border border-white/10' : 'bg-detective-100';
+  const trackBg   = isDark ? 'bg-black/15 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.25)]' : 'bg-[#EFE3D2] shadow-clay-pressed';
   const captionText = isDark ? 'text-white/80'           : 'text-gray-500';
 
   return (
@@ -50,15 +51,15 @@ export default function XPBar({ variant = 'light' }: Props) {
         </div>
       </div>
 
-      {showInfo && (
+      {showInfo && createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-6"
           onClick={() => setShowInfo(false)}
         >
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" aria-hidden />
           <div
             className="relative w-80 max-w-[85vw] text-left
-                       bg-white rounded-2xl shadow-glow border border-detective-100 p-4"
+                       liquid-modal rounded-[28px] p-4"
             onClick={e => e.stopPropagation()}
           >
             <p className="font-bold text-detective-700 text-base mb-2">⭐ แต้มประสบการณ์ คืออะไร?</p>
@@ -77,7 +78,8 @@ export default function XPBar({ variant = 'light' }: Props) {
               เข้าใจแล้ว
             </button>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
       <div className={`relative h-2.5 rounded-full overflow-hidden ${trackBg}`}>
         <div

@@ -39,7 +39,7 @@ export default function LevelUpModal() {
           role="dialog" aria-label="เลเวลอัป"
         >
           <motion.div
-            className="bg-white rounded-3xl shadow-glow p-6 text-center max-w-xs w-full"
+            className="liquid-modal rounded-[28px] p-6 text-center max-w-xs w-full"
             initial={reducedMotion ? false : { scale: 0.7, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 260, damping: 20 }}

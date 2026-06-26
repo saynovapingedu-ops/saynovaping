@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { motion } from 'framer-motion';
@@ -16,6 +16,10 @@ import EmptyState from '../components/ui/EmptyState';
 import Ribbon from '../components/ui/Ribbon';
 import CertSeal from '../components/ui/CertSeal';
 
+// ขนาดออกแบบคงที่ของใบ (A-ratio 1:1.414) — เรนเดอร์ที่ขนาดนี้เสมอแล้วย่อให้พอดีจอ
+const CERT_W = 420;
+const CERT_H = Math.round(CERT_W * 1.414); // 594
+
 export default function Certificate() {
   const nav = useNavigate();
   const player = usePlayerStore();
@@ -32,6 +36,19 @@ export default function Certificate() {
   const realName = useCertNameStore(s => s.realName);
   const displayName = realName.trim() || player.nickname;
   const [editNameOpen, setEditNameOpen] = useState(false);
+
+  // ย่อใบให้พอดีความกว้างจอ (กันเนื้อหาล้นกรอบบนจอแคบ)
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [certScale, setCertScale] = useState(1);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const update = () => setCertScale(Math.min(1, el.clientWidth / CERT_W));
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [certNo, loading, error]);
 
   useEffect(() => {
     const eligible = player.stagesCompleted.length >= 8 || player.totalXP >= 1500;
@@ -215,11 +232,14 @@ export default function Certificate() {
 
         {certNo && !loading && !error && (
           <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}>
-            {/* ===== Certificate artwork — ทางการ พื้นขาวล้วน ===== */}
+            {/* ===== Certificate artwork — ทางการ พื้นขาวล้วน (เรนเดอร์ 420px แล้วย่อพอดีจอ) ===== */}
+            <div ref={wrapRef} className="relative w-full mx-auto overflow-hidden"
+                 style={{ maxWidth: CERT_W, height: CERT_H * certScale }}>
+            <div style={{ width: CERT_W, height: CERT_H, transform: `scale(${certScale})`, transformOrigin: 'top left' }}>
             <div
               id="cert-card"
               className={`relative bg-white shadow-2xl font-official overflow-hidden ${certDeco?.borderClass || ''}`}
-              style={{ aspectRatio: '1 / 1.414', fontFamily: '"Sukhumvit Set", "Noto Sans Thai", "IBM Plex Sans Thai", sans-serif' }}
+              style={{ width: CERT_W, height: CERT_H, fontFamily: '"Sukhumvit Set", "Noto Sans Thai", "IBM Plex Sans Thai", sans-serif' }}
             >
               {/* === ขอบทอง outer (achievement accent — TMF gold #F59E0B) === */}
               <div className="absolute inset-1 border-2 border-warning-500 pointer-events-none" />
@@ -269,9 +289,9 @@ export default function Certificate() {
                 {/* === Issuing statement === */}
                 <p className="text-slate-700 text-sm mt-1">ฉบับนี้ไว้เพื่อแสดงว่า</p>
 
-                {/* === Recipient name === ชื่อจริงเป็นหลัก, ไม่ใส่ใช้ชื่อเล่น */}
-                <h2 className={`text-detective-800 font-bold my-1 leading-tight px-4 whitespace-nowrap w-full overflow-hidden text-ellipsis ${
-                  displayName.length > 25 ? 'text-xl' : displayName.length > 15 ? 'text-2xl' : 'text-3xl'}`} >
+                {/* === Recipient name === ชื่อจริงเป็นหลัก, ไม่ใส่ใช้ชื่อเล่น — ตัดบรรทัดแสดงเต็มไม่ตัดทิ้ง */}
+                <h2 className={`text-detective-800 font-bold my-1 leading-tight px-4 w-full break-words ${
+                  displayName.length > 30 ? 'text-lg' : displayName.length > 22 ? 'text-xl' : displayName.length > 14 ? 'text-2xl' : 'text-3xl'}`} >
                   {displayName}
                 </h2>
                 {realName.trim() && player.nickname && (
@@ -313,6 +333,8 @@ export default function Certificate() {
                   <p className="text-[7px] text-slate-500 text-center mt-0.5 leading-tight">ตรวจสอบ</p>
                 </div>
               )}
+            </div>
+            </div>
             </div>
 
             {/* ===== ชื่อบนเกียรติบัตร ===== */}

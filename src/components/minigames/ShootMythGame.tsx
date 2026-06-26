@@ -103,15 +103,15 @@ export default function ShootMythGame({ goalScore, onComplete, seconds = 35, fac
         </p>
       </div>
 
-      <div className="relative rounded-2xl border-2 border-detective-200 bg-detective-50/40 overflow-hidden shadow-glow-sm"
-           style={{ height: 280 }}>
+      <div className="relative w-full max-w-[360px] mx-auto rounded-[24px] bg-detective-50/40 overflow-hidden shadow-clay"
+           style={{ height: 400 }}>
         {floaters.map(f => (
           <button
             key={f.id}
             onPointerDown={() => shoot(f)}
-            className="absolute max-w-[60%] text-left text-[11px] font-semibold leading-snug
-                       px-2.5 py-1.5 rounded-xl shadow active:scale-95 transition-transform
-                       bg-white border border-detective-200 text-detective-800"
+            className="absolute whitespace-nowrap text-left text-xs font-semibold leading-snug
+                       px-2.5 py-1.5 rounded-xl shadow-clay-sm active:scale-95 transition-transform
+                       bg-[#FFFCF7] text-detective-800"
             style={{ left: `${f.x}%`, top: `${f.y}%` }}
           >
             🗯️ {f.text}

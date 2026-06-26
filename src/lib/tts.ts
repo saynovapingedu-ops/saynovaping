@@ -23,10 +23,29 @@ function loadVoices(): SpeechSynthesisVoice[] {
   return cachedVoices;
 }
 
+// ===== ปลุกระบบเสียง (prime) ตอนผู้ใช้แตะครั้งแรก =====
+// Android Chrome บล็อก speechSynthesis.speak() ที่ไม่ได้อยู่ใน user-gesture โดยตรง
+// (การพากย์อัตโนมัติยิงจาก useEffect เลยถูกเมินบน Android) — จึงต้อง "ปลุก" 1 ครั้ง
+// ด้วย utterance เงียบภายในการแตะแรกของผู้ใช้ หลังจากนั้น speak() จาก effect จะทำงาน
+let primed = false;
+export function primeTts(): void {
+  if (primed || !ttsSupported()) return;
+  primed = true;
+  try {
+    const u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0;          // เงียบ ไม่ให้ผู้ใช้ได้ยินตอนปลุก (แต่ยังนับเป็นการปลดล็อกภายใน gesture)
+    window.speechSynthesis.speak(u);
+    loadVoices();          // กระตุ้นให้รายชื่อเสียงโหลด (Android มักว่างจนกว่าจะมี gesture)
+  } catch { /* ignore */ }
+}
+
 if (ttsSupported()) {
   loadVoices();
   // เสียงมักโหลดแบบ async — อัปเดต cache เมื่อพร้อม
   window.speechSynthesis.addEventListener?.('voiceschanged', loadVoices);
+  // ปลุกระบบเสียงตอนแตะ/คลิกแรกของผู้ใช้ (ครั้งเดียว)
+  window.addEventListener('pointerdown', primeTts, { once: true });
+  window.addEventListener('keydown', primeTts, { once: true });
 }
 
 function thaiVoice(): SpeechSynthesisVoice | null {
@@ -56,15 +75,13 @@ export function stopSpeaking(): void {
   if (ttsSupported()) window.speechSynthesis.cancel();
 }
 
-/** Hook: มีเสียงไทยพร้อมใช้ไหม (เผื่อเสียงโหลดช้าหลัง render แรก) */
+/** Hook: เบราว์เซอร์รองรับการอ่านออกเสียงไหม
+ *  หมายเหตุ: ไม่บังคับว่าต้องมี voice ไทยโดยเฉพาะแล้ว — ถ้ามีจะใช้, ถ้าไม่มีจะลองอ่านด้วย lang th-TH
+ *  (เครื่องเป้าหมายเป็นมือถือ Android/iOS ที่มีเสียงไทยอยู่แล้ว ปุ่มจะได้ไม่หายไปเฉยๆ บนเครื่องทดสอบ) */
 export function useTtsAvailable(): boolean {
-  const [ok, setOk] = useState(() => ttsThaiAvailable());
+  const [ok, setOk] = useState(() => ttsSupported());
   useEffect(() => {
-    if (!ttsSupported()) return;
-    const check = () => setOk(ttsThaiAvailable());
-    check();
-    window.speechSynthesis.addEventListener?.('voiceschanged', check);
-    return () => window.speechSynthesis.removeEventListener?.('voiceschanged', check);
+    setOk(ttsSupported());
   }, []);
   return ok;
 }

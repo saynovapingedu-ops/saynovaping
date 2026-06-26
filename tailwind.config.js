@@ -65,6 +65,15 @@ export default {
           500: '#EF4444',
           600: '#DC2626',
         },
+        // 'coral' = ส้มอมชมพูนุ่ม — accent ที่ 3 (liquid glass / ป้ายเด่น)
+        coral: {
+          50:  '#FFF1ED',
+          100: '#FFE0D6',
+          200: '#FFC4B3',
+          400: '#FF9374',
+          500: '#FF7755',
+          600: '#E85C3D',
+        },
       },
       fontFamily: {
         sans: ['"IBM Plex Sans Thai"', 'sans-serif'],
@@ -83,6 +92,26 @@ export default {
         'glow-pink':  '0 8px 24px -8px rgba(236, 72, 153, 0.45)',
         'glow-mint':  '0 8px 24px -8px rgba(43, 202, 171, 0.45)',
         'inner-soft': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.04)',
+
+        // ===== Claymorphism — เงา 3 ชั้น (นอก + ไฮไลต์ขอบใน + เงาในนุ่ม) =====
+        // เงานอกใช้โทนน้ำตาลอุ่น (176,138,104) ให้เข้าโทนพาสเทลอุ่น
+        'clay':         '6px 6px 14px rgba(176,138,104,0.18), -4px -4px 12px rgba(255,255,255,0.9), inset 2px 2px 4px rgba(255,255,255,0.65), inset -3px -3px 6px rgba(176,138,104,0.10)',
+        'clay-sm':      '4px 4px 10px rgba(176,138,104,0.16), -3px -3px 8px rgba(255,255,255,0.85), inset 1px 1px 2px rgba(255,255,255,0.6)',
+        'clay-pressed': 'inset 3px 3px 7px rgba(176,138,104,0.22), inset -2px -2px 5px rgba(255,255,255,0.7)',
+        // ปุ่มสี — เงานูนแบบเคลย์ "ไม่มีไฮไลต์ขาวด้านนอก" (กันเกิดกรอบขาวบนพื้นครีม)
+        // outer drop วางกึ่งกลาง (x=0) ไม่เยื้องข้าง · ไฮไลต์ขาวอยู่ inset ในปุ่มเท่านั้น
+        'clay-blue':    '0 5px 13px -2px rgba(0,90,160,0.40), inset 2px 2px 5px rgba(255,255,255,0.40), inset -2px -4px 8px rgba(0,80,150,0.35)',
+        'clay-gold':    '0 5px 13px -2px rgba(190,110,20,0.42), inset 2px 2px 5px rgba(255,255,255,0.45), inset -2px -4px 8px rgba(170,90,20,0.35)',
+      },
+      // มุมโค้งมนขึ้นทั้งระบบ — ลบความเหลี่ยม ให้เข้าธีมเคลย์ "ไม่มีขอบคม"
+      borderRadius: {
+        'sm':      '0.375rem',  // 6px
+        DEFAULT:   '0.5rem',    // 8px
+        'md':      '0.6875rem', // 11px
+        'lg':      '0.875rem',  // 14px
+        'xl':      '1.125rem',  // 18px
+        '2xl':     '1.5rem',    // 24px
+        '3xl':     '1.875rem',  // 30px
       },
       keyframes: {
         'pulse-slow': {

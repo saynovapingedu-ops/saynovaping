@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
-import { SCENARIO_META, isStageUnlocked, CERT_STAGE_COUNT, getStageDifficulty } from '../scenarios';
+import { SCENARIO_META, isStageUnlocked, CERT_STAGE_COUNT } from '../scenarios';
 import { SHOP_ITEMS } from '../lib/shopItems';
 import XPBar from '../components/XPBar';
 import Avatar from '../components/Avatar';
@@ -12,14 +12,6 @@ import { sfx } from '../lib/sound';
 import { CHANGELOG, hasUnseenChangelog, markChangelogSeen } from '../lib/changelog';
 
 const INTRO_SEEN_KEY = 'hd_game_intro_seen_v1';
-
-// ป้ายระดับความยาก — โชว์บนการ์ดด่าน
-const DIFFICULTY_INFO: Record<string, { label: string; cls: string }> = {
-  easy:    { label: '🟢 ง่าย',     cls: 'bg-success-100 text-success-700' },
-  medium:  { label: '🟡 ปานกลาง', cls: 'bg-detective-100 text-detective-700' },
-  hard:    { label: '🟠 ยาก',      cls: 'bg-warning-100 text-warning-700' },
-  advance: { label: '🔴 ขั้นกว่า', cls: 'bg-danger-100 text-danger-700' },
-};
 
 interface IntroSection {
   emoji: string;
@@ -43,9 +35,6 @@ export default function Home() {
     try { return localStorage.getItem(INTRO_SEEN_KEY) !== '1'; }
     catch { return true; }
   });
-
-  // ย่อ/ขยายแต่ละบท — เปิดเฉพาะบทที่กำลังเล่นอยู่ ที่เหลือพับไว้ให้หน้าสั้น
-  const [openArcs, setOpenArcs] = useState<Record<string, boolean>>({});
 
   // ป๊อปอัป "มีอะไรใหม่" — โชว์ครั้งเดียวต่อเวอร์ชัน (ไม่ชนกับ intro ผู้เล่นใหม่)
   const [showChangelog, setShowChangelog] = useState(false);
@@ -103,7 +92,7 @@ export default function Home() {
             className="flex-1 flex flex-col gap-3 p-4"
           >
             {/* Hero */}
-            <div className="rainbow-header rounded-3xl p-4 text-white shadow-glow flex items-center gap-3">
+            <div className="rainbow-header rounded-3xl p-4 text-white shadow-clay flex items-center gap-3">
               <div className="text-5xl drop-shadow-lg">🔍</div>
               <div className="flex-1">
                 <h1 className="text-xl md:text-2xl font-display font-extrabold leading-tight drop-shadow">
@@ -124,7 +113,7 @@ export default function Home() {
               ))}
             </div>
 
-            <div className="card py-2.5 border-2 border-warning-200 bg-gradient-to-br from-warning-50 to-white">
+            <div className="card py-2.5 border-2 border-warning-200 bg-gradient-to-br from-warning-50 to-[#FFFCF7]">
               <p className="text-xs md:text-sm text-gray-700 leading-relaxed">
                 <b className="text-warning-600">💡 เคล็ดลับ:</b> ดู
                 <button
@@ -155,7 +144,7 @@ export default function Home() {
 
   // ===== Main game home =====
   return (
-    <div className="min-h-screen pb-24 relative bg-white">
+    <div className="min-h-screen pb-28 relative bg-[#FBF3EA]">
       {/* ===== TMF blue header — extend to safe-area top (no white gap) ===== */}
       <section className="rainbow-header text-white relative overflow-hidden
                           pt-[max(2rem,calc(env(safe-area-inset-top)+1rem))]
@@ -198,55 +187,67 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ===== Glass cards: เหรียญ + ห้อง + ใบประกาศ ===== */}
+          {/* ===== Glass cards: เหรียญ + แฟ้มคดี + เกียรติบัตร ===== */}
           <div className="mt-4 grid grid-cols-3 gap-2">
             <button
               onClick={() => { sfx.click(); nav('/shop'); }}
-              className="flex flex-col items-center justify-center gap-0.5
-                         bg-white/15 hover:bg-white/25 backdrop-blur-md
-                         border border-white/25 rounded-2xl px-2 py-2.5
+              className="clay-glass flex flex-col items-center justify-center gap-0.5
+                         rounded-[18px] px-2 py-2.5
                          active:scale-[0.97] transition-all"
             >
               <span className="flex items-center gap-1">
                 <span className="text-base">🪙</span>
                 <span className="font-bold text-sm">{player.coins || 0}</span>
               </span>
-              <span className="text-[10px] font-semibold opacity-90">🛍 ร้านค้า</span>
+              <span className="text-[10px] font-semibold opacity-90">🛍 ร้านคุณลุง</span>
             </button>
             <button
               onClick={() => { sfx.click(); nav('/journal'); }}
-              className="flex flex-col items-center justify-center gap-0.5
-                         bg-white/15 hover:bg-white/25 backdrop-blur-md
-                         border border-white/25 rounded-2xl px-2 py-2.5
+              className="clay-glass flex flex-col items-center justify-center gap-0.5
+                         rounded-[18px] px-2 py-2.5
                          active:scale-[0.97] transition-all"
             >
-              <span className="text-lg">📓</span>
-              <span className="text-[10px] font-semibold">สมุดบันทึก</span>
+              <span className="text-lg">🗂️</span>
+              <span className="text-[10px] font-semibold">แฟ้มคดี</span>
             </button>
             <button
               onClick={() => { sfx.click(); nav('/certificate'); }}
-              className="flex flex-col items-center justify-center gap-0.5
-                         bg-white/15 hover:bg-white/25 backdrop-blur-md
-                         border border-white/25 rounded-2xl px-2 py-2.5
+              className="clay-glass flex flex-col items-center justify-center gap-0.5
+                         rounded-[18px] px-2 py-2.5
                          active:scale-[0.97] transition-all"
             >
               <span className="text-lg">🏆</span>
-              <span className="text-[10px] font-semibold">ใบประกาศ</span>
+              <span className="text-[10px] font-semibold">เกียรติบัตร</span>
             </button>
           </div>
 
           {/* ===== Glass: หลอด XP ===== */}
-          <div className="mt-3 bg-white/10 backdrop-blur-md border border-white/30
-                          rounded-2xl p-3 shadow-inner">
+          <div className="clay-glass mt-3 rounded-[20px] p-3">
             <XPBar variant="dark" />
           </div>
         </div>
       </section>
 
-      {/* ===== White sheet ขอบโค้งซ้อนทับสีฟ้า ===== */}
+      {/* ===== Cream sheet ขอบโค้งซ้อนทับสีฟ้า ===== */}
       <main className="max-w-md md:max-w-3xl mx-auto px-4 pt-6 -mt-8 relative z-10
-                       bg-white rounded-t-[28px]
-                       shadow-[0_-6px_20px_-4px_rgba(0,0,0,0.08)]">
+                       bg-[#FBF3EA] rounded-t-[32px]
+                       shadow-[0_-6px_20px_-4px_rgba(176,138,104,0.14)]">
+        {/* ลิงก์ช่วยเหลือ — บนสุด เห็นชัดสำหรับคนใหม่/งง */}
+        <div className="flex items-center justify-center gap-2 mb-3 -mt-1">
+          <button
+            onClick={() => { sfx.click(); setShowChangelog(true); }}
+            className="text-xs text-detective-600 font-semibold bg-[#FFFCF7] shadow-clay-sm rounded-full px-3.5 py-1.5 active:scale-95 flex items-center gap-1"
+          >
+            🆕 มีอะไรใหม่
+          </button>
+          <button
+            onClick={() => { sfx.click(); setShowIntro(true); }}
+            className="text-xs text-detective-600 font-semibold bg-[#FFFCF7] shadow-clay-sm rounded-full px-3.5 py-1.5 active:scale-95 flex items-center gap-1"
+          >
+            ℹ️ วิธีเล่น
+          </button>
+        </div>
+
         {certEligible && !player.certificateNo && (
           <div className="card relative overflow-hidden mb-4 border border-warning-300
                           bg-warning-50">
@@ -272,11 +273,12 @@ export default function Home() {
         {activeStage ? (
           <button
             onClick={() => { sfx.click(); nav(`/scenario/${activeStage.id}`); }}
-            className="card-hero w-full text-left mb-4 flex items-center gap-3 px-4 py-4
-                       active:scale-[0.99] transition-all hover:shadow-glow"
+            className="w-full text-left mb-4 flex items-center gap-3 px-4 py-4 rounded-[28px]
+                       bg-gradient-to-br from-detective-100 to-[#FFFCF7] shadow-clay
+                       active:translate-y-px transition-all"
           >
             <div className="icon-tile bg-gradient-to-br from-detective-500 to-detective-700
-                            text-white font-extrabold text-lg shadow-glow-sm flex-shrink-0">
+                            text-white font-extrabold text-lg shadow-clay-blue flex-shrink-0">
               {activeStage.id}
             </div>
             <div className="flex-1 min-w-0">
@@ -296,11 +298,12 @@ export default function Home() {
         ) : examEligible ? (
           <button
             onClick={() => { sfx.click(); nav('/exam'); }}
-            className="card-hero w-full text-left mb-4 flex items-center gap-3 px-4 py-4
-                       active:scale-[0.99] transition-all hover:shadow-glow"
+            className="w-full text-left mb-4 flex items-center gap-3 px-4 py-4 rounded-[28px]
+                       bg-gradient-to-br from-warning-100 to-[#FFFCF7] shadow-clay
+                       active:translate-y-px transition-all"
           >
             <div className="icon-tile bg-gradient-to-br from-warning-400 to-warning-500
-                            text-white text-lg shadow-glow-sm flex-shrink-0">🎓</div>
+                            text-white text-lg shadow-clay-gold flex-shrink-0">🎓</div>
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-wider text-warning-600">
                 ✓ จบครบทุกด่านแล้ว
@@ -314,8 +317,31 @@ export default function Home() {
           </button>
         ) : null}
 
-        {/* === Quick actions: Daily / Exam / Pre-test === แถวเดียว 3 col */}
-        <div className="mb-4 grid grid-cols-3 gap-2">
+        {/* === แผนที่ภารกิจ + แถบความคืบหน้า — อยู่คู่กับปุ่มเล่นต่อ === */}
+        <button
+          onClick={() => { sfx.click(); nav('/map'); }}
+          className="w-full text-left card-hero mb-4 px-4 py-3.5 flex items-center gap-3 active:scale-[0.99] transition-all"
+        >
+          <div className="icon-tile bg-detective-50 text-detective-600 text-2xl flex-shrink-0">🗺️</div>
+          <div className="flex-1 min-w-0">
+            <p className="section-label text-base">แผนที่ภารกิจ</p>
+            {(() => {
+              const mainDone = player.stagesCompleted.filter(id => id <= CERT_STAGE_COUNT).length;
+              return (
+                <>
+                  <div className="progress-track mt-1.5">
+                    <div className="progress-fill" style={{ width: `${(mainDone / CERT_STAGE_COUNT) * 100}%` }} />
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1">บทหลัก {mainDone}/{CERT_STAGE_COUNT} · แตะดูด่านทั้งหมด</p>
+                </>
+              );
+            })()}
+          </div>
+          <span className="text-2xl text-detective-400 flex-shrink-0">→</span>
+        </button>
+
+        {/* === Quick actions: Daily / Leaderboard / [สลับ] / เกมสนุก === แถวเดียว 4 col */}
+        <div className="mb-4 grid grid-cols-4 gap-1.5">
           {/* Daily Challenge — always */}
           <button
             onClick={() => { sfx.click(); nav('/daily'); }}
@@ -328,7 +354,7 @@ export default function Home() {
               {dailyDone ? '✓ วันนี้ทำแล้ว' : 'ควิซ 5 ข้อ รับเหรียญ'}
             </p>
             {!dailyDone
-              ? <span className="absolute top-1.5 right-1.5 pill bg-detective-100 text-detective-600">ใหม่</span>
+              ? <span className="absolute top-1.5 right-1.5 pill bg-coral-500 text-white">ใหม่</span>
               : <span className="absolute top-1.5 right-1.5 text-success-500 text-sm">✓</span>}
           </button>
 
@@ -392,248 +418,18 @@ export default function Home() {
               </p>
             </button>
           )}
+
+          {/* โซนเกมสนุก (อาร์เคด) — ช่องที่ 4 ในแถว เขียวมิ้นต์ TMF */}
+          <button
+            onClick={() => { sfx.click(); nav('/arcade'); }}
+            className="card flex flex-col items-center text-center gap-1.5 p-3
+                       active:scale-[0.97] transition-all"
+          >
+            <div className="icon-tile bg-mint-50 text-mint-600">🎮</div>
+            <p className="font-bold text-detective-700 text-xs leading-tight">เกมสนุก</p>
+            <p className="text-[10px] text-slate-500 leading-snug line-clamp-2">มินิเกมพักสมอง</p>
+          </button>
         </div>
-
-        {/* === โซนเกมสนุก (อาร์เคด) — แยกชัดจากด่านบทเรียน ด้วยโทนม่วง === */}
-        <button
-          onClick={() => { sfx.click(); nav('/arcade'); }}
-          className="w-full text-left mb-4 flex items-center gap-3 px-4 py-3 rounded-2xl
-                     bg-gradient-to-r from-purple-500 to-indigo-500 text-white
-                     shadow-glow-sm active:scale-[0.99] transition-all"
-        >
-          <span className="text-3xl flex-shrink-0">🎮</span>
-          <div className="flex-1 min-w-0">
-            <p className="font-display font-extrabold text-base leading-tight">โซนเกมสนุก</p>
-            <p className="text-xs text-white/85 leading-snug">มินิเกมอาร์เคด เล่นพักสมอง — ไม่ใช่ด่านบทเรียน</p>
-          </div>
-          <span className="text-2xl flex-shrink-0">→</span>
-        </button>
-
-        {/* === Section header: แผนที่ภารกิจ + progress รวม === */}
-        <div className="card-hero mb-4 px-4 py-3">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="section-label text-lg">
-              <span className="text-2xl">📍</span> แผนที่ภารกิจ
-            </h3>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => { sfx.click(); setShowChangelog(true); }}
-                className="text-xs text-detective-500 font-semibold hover:text-detective-700
-                           active:opacity-70 flex items-center gap-1"
-              >
-                🆕 ใหม่
-              </button>
-              <button
-                onClick={() => { sfx.click(); setShowIntro(true); }}
-                className="text-xs text-detective-500 font-semibold hover:text-detective-700
-                           active:opacity-70 flex items-center gap-1"
-              >
-                ℹ️ วิธีเล่น
-              </button>
-            </div>
-          </div>
-          {(() => {
-            // โฟกัสความคืบหน้าที่ "ภารกิจหลัก 10 ด่าน" — เล่นครบ = จบหลักสูตร (ที่เหลือเป็นโบนัส)
-            const mainDone = player.stagesCompleted.filter(id => id <= 10).length;
-            return (
-              <div className="flex items-center gap-2">
-                <div className="progress-track flex-1">
-                  <div className="progress-fill" style={{ width: `${(mainDone / 10) * 100}%` }} />
-                </div>
-                <span className="text-xs font-bold text-detective-700 flex-shrink-0">
-                  ภารกิจหลัก {mainDone}/10
-                </span>
-              </div>
-            );
-          })()}
-        </div>
-
-        {(() => {
-          // จัดโครงใหม่ตามผู้ประเมิน: ด่านหลัก 10 + ขั้นกว่า 5 + เจาะลึก(โบนัส) 5 — ไม่ลบด่าน
-          const SECTIONS = [
-            { key: 'core',    name: 'ภารกิจหลัก',          emoji: '🎯', desc: 'ด่าน 1-10 — เล่นครบ = จบหลักสูตร 🎓', min: 1,  max: 10 },
-            { key: 'advance', name: 'ด่านท้าทาย (โบนัส)',  emoji: '🔥', desc: 'ด่าน 11-15 — เล่นเสริม ไม่บังคับ',     min: 11, max: 15 },
-            { key: 'deep',    name: 'เจาะลึก (โบนัส)',     emoji: '🔬', desc: 'ด่าน 16-20 — เนื้อหาเฉพาะทาง ไม่บังคับ', min: 16, max: 20 },
-          ] as const;
-          // เปิดโซนที่ "กำลังเล่นอยู่" ไว้
-          const activeArc = activeStage
-            ? (activeStage.id <= 10 ? 'core' : activeStage.id <= 15 ? 'advance' : 'deep')
-            : 'core';
-          return SECTIONS.map((sec) => {
-          const arc = sec.key;
-          const stages = SCENARIO_META.filter(m => m.id >= sec.min && m.id <= sec.max);
-          if (stages.length === 0) return null;
-          const arcLabel = { name: sec.name, emoji: sec.emoji, desc: sec.desc };
-          const arcCompleted = stages.filter(m => player.stagesCompleted.includes(m.id)).length;
-          const isOpen = openArcs[arc] ?? (arc === activeArc);
-
-          const arcPct = (arcCompleted / stages.length) * 100;
-          const arcAllDone = arcCompleted === stages.length;
-
-          return (
-            <div key={arc} className="mb-3">
-              <button
-                onClick={() => { sfx.click(); setOpenArcs(o => ({ ...o, [arc]: !isOpen })); }}
-                className={`w-full text-left rounded-2xl px-3 py-3 transition-all
-                            active:scale-[0.99]
-                            ${arcAllDone
-                              ? 'bg-success-50 border border-success-200'
-                              : arc === activeArc
-                              ? 'bg-white border-2 border-detective-300 shadow-glow-sm'
-                              : 'surface-soft hover:bg-detective-50/80'}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`icon-tile shadow-sm flex-shrink-0
-                                   ${arcAllDone
-                                     ? 'bg-success-500 text-white'
-                                     : 'bg-white text-detective-600'}`}>
-                    {arcAllDone ? '✓' : arcLabel.emoji}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-display font-bold text-detective-700 text-base leading-tight">
-                      {arcLabel.name}
-                    </h4>
-                    <p className="text-xs text-slate-500 leading-snug mt-0.5">{arcLabel.desc}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className={`pill ${arcAllDone
-                      ? 'bg-success-500 text-white'
-                      : 'bg-white text-detective-700 border border-detective-200'}`}>
-                      {arcCompleted}/{stages.length}
-                    </span>
-                    <span className="text-detective-400 text-xs">
-                      {isOpen ? '▴ ย่อ' : '▾ ขยาย'}
-                    </span>
-                  </div>
-                </div>
-                {/* Progress bar ใต้ header — แสดงเฉพาะตอน collapsed เพื่อไม่รก */}
-                {!isOpen && arcCompleted > 0 && (
-                  <div className="progress-track mt-2.5 h-1.5">
-                    <div
-                      className={arcAllDone
-                        ? 'h-full rounded-full bg-gradient-to-r from-success-400 to-success-500'
-                        : 'progress-fill'}
-                      style={{ width: `${arcPct}%` }}
-                    />
-                  </div>
-                )}
-              </button>
-
-              {/* Stages — connector line ซ้าย เชื่อมกับบท */}
-              <AnimatePresence initial={false}>
-              {isOpen && (
-              <motion.div
-                key={`${arc}-stages`}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                className="overflow-hidden"
-              >
-                <div className="relative pl-6 mt-2 ml-4 md:ml-6 md:grid md:grid-cols-2 md:gap-2
-                                md:pl-0 md:ml-0 space-y-1.5 md:space-y-0
-                                before:absolute before:left-2 before:top-1 before:bottom-1 before:w-0.5
-                                before:bg-gradient-to-b before:from-detective-200 before:to-detective-100
-                                md:before:hidden">
-                  {stages.map((meta) => {
-                    const unlocked = isStageUnlocked(meta.id, player.stagesCompleted);
-                    const completed = player.stagesCompleted.includes(meta.id);
-                    const playable = meta.available && unlocked;
-
-                    // ====== Locked stage — compact, ไม่กดได้ ======
-                    if (!playable) {
-                      return (
-                        <div
-                          key={meta.id}
-                          className="relative flex items-center gap-3 px-3 py-2 rounded-xl
-                                     bg-slate-50/70 border border-slate-200/70 opacity-75"
-                        >
-                          {/* dot บนเส้น connector */}
-                          <span className="absolute -left-[26px] top-1/2 -translate-y-1/2 w-3 h-3
-                                           rounded-full bg-slate-300 border-2 border-white md:hidden"
-                                aria-hidden />
-                          <div className="w-9 h-9 rounded-xl bg-slate-200 text-slate-500 font-bold
-                                          flex items-center justify-center text-sm flex-shrink-0">
-                            {meta.id}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-slate-500 text-sm truncate">{meta.title}</p>
-                            <p className="text-[11px] text-slate-400 truncate flex items-center gap-1">
-                              <span>🔒</span>
-                              {!meta.available
-                                ? 'เร็วๆ นี้'
-                                : `ปลดล็อกหลังจบด่าน ${meta.unlockAfter}`}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    // ====== Playable / Completed stage — เด่น ======
-                    return (
-                      <button
-                        key={meta.id}
-                        onClick={() => nav(`/scenario/${meta.id}`)}
-                        className={`relative w-full text-left card flex items-center gap-3 py-3
-                                    active:scale-[0.98] transition-all hover:shadow-glow-sm ${
-                          completed
-                            ? 'border-l-4 border-l-success-400 bg-success-50/30'
-                            : 'border-l-4 border-l-detective-400'
-                        }`}
-                      >
-                        {/* dot บนเส้น connector */}
-                        <span className={`absolute -left-[26px] top-1/2 -translate-y-1/2 w-3.5 h-3.5
-                                         rounded-full border-2 border-white md:hidden shadow-sm
-                                         ${completed ? 'bg-success-500' : 'bg-detective-500'}`}
-                              aria-hidden />
-
-                        <span className={`absolute top-1.5 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          completed
-                            ? 'text-success-600 bg-success-100'
-                            : 'text-detective-600 bg-detective-100'
-                        }`}>
-                          {completed ? '🔄 REPLAY' : 'NEW'}
-                        </span>
-
-                        <div
-                          className={`icon-tile font-bold shadow-glow-sm flex-shrink-0 ${
-                            completed
-                              ? 'bg-gradient-to-br from-success-400 to-success-600 text-white'
-                              : 'bg-gradient-to-br from-detective-500 to-detective-700 text-white'
-                          }`}
-                        >
-                          {completed ? '✓' : meta.id}
-                        </div>
-                        <div className="flex-1 min-w-0 pr-12">
-                          <p className="font-bold text-slate-800 truncate">{meta.title}</p>
-                          <p className="text-xs text-slate-500 truncate">{meta.subtitle}</p>
-                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${DIFFICULTY_INFO[getStageDifficulty(meta.id)].cls}`}>
-                              {DIFFICULTY_INFO[getStageDifficulty(meta.id)].label}
-                            </span>
-                            {meta.estMinutes && (
-                              <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                                <span>⏱</span> ~{meta.estMinutes} นาที
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <span className={`text-2xl flex-shrink-0 ${
-                          completed ? 'text-success-500' : 'text-detective-500'
-                        }`}>
-                          →
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-              )}
-              </AnimatePresence>
-            </div>
-          );
-          });
-        })()}
 
         {/* footer ของ Home ตัดออก — แบรนด์ย้ายขึ้น header บนสุดแล้ว
             (อาจารย์ทักว่าไม่ควรไว้ล่างสุด) */}
@@ -641,10 +437,10 @@ export default function Home() {
 
       {/* ===== Sticky bottom nav — โทนฟ้า TMF เด่นขึ้น 3 ปุ่ม ===== */}
       <nav className="fixed bottom-0 left-0 right-0 z-30
-                      pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 px-3
-                      bg-white/95 backdrop-blur-md border-t border-detective-100
-                      shadow-[0_-4px_16px_-6px_rgba(0,143,255,0.12)]">
-        <div className="max-w-md md:max-w-3xl mx-auto grid grid-cols-3 gap-2">
+                      pb-[max(0.9rem,calc(env(safe-area-inset-bottom)+0.5rem))] pt-3 px-4
+                      liquid-header rounded-t-[28px]
+                      shadow-[0_-6px_18px_-10px_rgba(176,138,104,0.5)]">
+        <div className="max-w-md md:max-w-3xl mx-auto grid grid-cols-3 gap-2.5">
           {[
             { to: '/stats',     emoji: '📊', label: 'คะแนน',  iconBg: 'bg-detective-50 text-detective-600' },
             { to: '/knowledge', emoji: '📖', label: 'ความรู้', iconBg: 'bg-mint-50 text-mint-600' },
@@ -653,9 +449,8 @@ export default function Home() {
             <button
               key={item.to}
               onClick={() => { sfx.click(); nav(item.to); }}
-              className="flex flex-col items-center gap-1 py-2 rounded-2xl
-                         bg-white border border-detective-100
-                         hover:border-detective-300 hover:shadow-glow-sm
+              className="flex flex-col items-center gap-1 py-2 rounded-[18px]
+                         bg-[#FFFCF7] shadow-clay-sm hover:shadow-clay
                          active:scale-95 transition-all"
             >
               <span className={`icon-tile-sm ${item.iconBg}`}>{item.emoji}</span>
@@ -673,8 +468,7 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="relative w-full max-w-sm bg-white rounded-3xl shadow-glow
-                       border border-detective-100 p-5"
+            className="relative w-full max-w-sm liquid-modal rounded-[28px] p-5"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center gap-2 mb-1">

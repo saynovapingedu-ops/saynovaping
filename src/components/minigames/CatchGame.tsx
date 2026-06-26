@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { sfx, vibrate } from '../../lib/sound';
+import { LRPad } from './GamePad';
 
 // ============================================================================
 //  CatchGame — "ปอดสะอาด" เลื่อนตะกร้ารับของดี หลบควันพิษ
@@ -28,6 +29,7 @@ export default function CatchGame({ goalScore, onComplete, seconds = 30 }: Props
   const [timeLeft, setTimeLeft] = useState(seconds);
 
   const basketX = useRef(W / 2 - BASKET_W / 2);
+  const held = useRef(0);   // -1 ซ้าย · 0 หยุด · 1 ขวา (จากปุ่มกดค้าง)
   const items = useRef<Item[]>([]);
   const scoreRef = useRef(0);
   const spawnT = useRef(0);
@@ -59,15 +61,6 @@ export default function CatchGame({ goalScore, onComplete, seconds = 30 }: Props
     }, 1000);
   };
 
-  // pointer move → ย้ายตะกร้า
-  const moveTo = (clientX: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const rel = ((clientX - rect.left) / rect.width) * W;
-    basketX.current = Math.max(0, Math.min(W - BASKET_W, rel - BASKET_W / 2));
-  };
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -80,6 +73,8 @@ export default function CatchGame({ goalScore, onComplete, seconds = 30 }: Props
       if (phaseRef.current === 'playing') {
         const dt = lastTs.current ? Math.min((ts - lastTs.current) / 16.67, 2.5) : 1;
         lastTs.current = ts;
+
+        basketX.current = Math.max(0, Math.min(W - BASKET_W, basketX.current + held.current * 9 * dt));
 
         spawnT.current -= dt;
         if (spawnT.current <= 0) {
@@ -142,22 +137,20 @@ export default function CatchGame({ goalScore, onComplete, seconds = 30 }: Props
         </p>
       </div>
 
-      <div className="relative rounded-2xl overflow-hidden border-2 border-detective-200 shadow-glow-sm">
+      <div className="relative w-full max-w-[360px] mx-auto h-[400px] rounded-[24px] overflow-hidden shadow-clay bg-[#EAF4FF]">
         <canvas
           ref={canvasRef}
           width={W}
           height={H}
-          className="w-full block"
-          style={{ touchAction: 'none' }}
-          onPointerMove={e => phase === 'playing' && moveTo(e.clientX)}
-          onPointerDown={e => phase === 'playing' && moveTo(e.clientX)}
+          className="w-full h-full block"
+          style={{ objectFit: 'contain', touchAction: 'none' }}
         />
         {phase !== 'playing' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/85 backdrop-blur-[1px] text-center px-4">
             {phase === 'ready' ? (
               <>
                 <p className="text-3xl mb-1">🧺💧</p>
-                <p className="font-display font-bold text-detective-800">เลื่อนตะกร้ารับของดี!</p>
+                <p className="font-display font-bold text-detective-800">กดค้าง ◀ ▶ ขยับตะกร้ารับของดี!</p>
                 <p className="text-xs text-slate-500 mt-1">รับ 💧🍎🏃 หลบ 🚬💨 ควันพิษ</p>
               </>
             ) : (
@@ -172,6 +165,12 @@ export default function CatchGame({ goalScore, onComplete, seconds = 30 }: Props
           </div>
         )}
       </div>
+      <LRPad
+        onLeft={() => { held.current = -1; }}
+        onRight={() => { held.current = 1; }}
+        onRelease={() => { held.current = 0; }}
+        disabled={phase !== 'playing'}
+      />
     </div>
   );
 }

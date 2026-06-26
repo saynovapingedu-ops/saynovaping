@@ -18,15 +18,15 @@ export default function ChoiceCard({ choice, index, onPick, disabled }: Props) {
       whileHover={{ y: -2 }}
       onClick={() => onPick(choice)}
       disabled={disabled}
-      className="group w-full text-left bg-white border border-detective-100
-                 hover:border-detective-400 hover:bg-detective-50/40 rounded-2xl p-4 mb-2.5
-                 shadow-[0_1px_3px_rgba(15,23,42,0.04)] hover:shadow-glow-sm
+      className="group w-full text-left bg-[#FFFCF7]
+                 hover:bg-detective-50/40 rounded-[22px] p-4 mb-2.5
+                 shadow-clay-sm hover:shadow-clay
                  transition-all disabled:opacity-50"
     >
       <div className="flex items-start gap-3">
-        <span className="bg-gradient-to-br from-detective-500 to-detective-600 text-white rounded-xl
+        <span className="bg-gradient-to-br from-detective-400 to-detective-600 text-white rounded-[14px]
                          w-8 h-8 flex items-center justify-center text-sm font-bold flex-shrink-0
-                         shadow-glow-sm group-hover:scale-110 transition-transform">
+                         shadow-clay-blue group-hover:scale-110 transition-transform">
           {String.fromCharCode(65 + index)}
         </span>
         <span className="text-gray-800 leading-relaxed pt-0.5 flex-1">{choice.label}</span>

@@ -113,9 +113,9 @@ export default function FlappyGame({ goalScore, onComplete }: Props) {
         <p className="text-sm font-bold text-detective-700">🐦 บินหลบท่อบุหรี่ {goalScore ? `(เป้า ${goalScore})` : ''}</p>
         <p className="text-sm font-bold text-warning-600 tabular-nums">ผ่าน {score}</p>
       </div>
-      <div className="relative rounded-2xl overflow-hidden border-2 border-detective-200 shadow-glow-sm cursor-pointer"
+      <div className="relative w-full max-w-[360px] mx-auto h-[400px] rounded-[24px] overflow-hidden shadow-clay bg-[#EAF4FF] cursor-pointer"
            onPointerDown={() => { if (phase === 'playing') flap(); else start(); }}>
-        <canvas ref={canvasRef} width={W} height={H} className="w-full block" style={{ touchAction: 'none' }} />
+        <canvas ref={canvasRef} width={W} height={H} className="w-full h-full block" style={{ objectFit: 'contain', touchAction: 'none' }} />
         {phase !== 'playing' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[1px] text-center px-4">
             <p className="text-2xl mb-1">{phase === 'over' ? (goalScore && scoreRef.current >= goalScore ? '🏆 ผ่าน!' : '💥 ชน!') : '🐦'}</p>
@@ -124,6 +124,13 @@ export default function FlappyGame({ goalScore, onComplete }: Props) {
           </div>
         )}
       </div>
+      <button
+        type="button"
+        onPointerDown={(e) => { e.preventDefault(); if (phase === 'playing') flap(); else start(); }}
+        className="mt-3 w-full max-w-[360px] mx-auto block py-3.5 rounded-[18px] bg-detective-500 text-white font-bold text-lg shadow-clay-blue active:shadow-clay-pressed active:translate-y-px select-none touch-none"
+      >
+        🐦 ตีปีกบิน
+      </button>
     </div>
   );
 }

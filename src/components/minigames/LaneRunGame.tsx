@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { sfx, vibrate } from '../../lib/sound';
+import { LRPad } from './GamePad';
 
 // ============================================================================
 //  LaneRunGame — "รูดหลบ 3 เลน" ปัดซ้าย/ขวาหลบบุหรี่ เก็บน้ำ (แนว Subway)
@@ -105,37 +106,23 @@ export default function LaneRunGame({ goalScore, onComplete }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [move]);
 
-  // ปัดซ้าย/ขวา หรือแตะครึ่งซ้าย/ขวา
-  const touchStart = useRef<number | null>(null);
-  const onDown = (x: number) => { touchStart.current = x; };
-  const onUp = (x: number, rectLeft: number, rectWidth: number) => {
-    if (touchStart.current == null) return;
-    const dx = x - touchStart.current;
-    if (Math.abs(dx) > 24) move(dx > 0 ? 1 : -1);
-    else { const rel = (x - rectLeft) / rectWidth; move(rel < 0.5 ? -1 : 1); }
-    touchStart.current = null;
-  };
-
   return (
     <div className="select-none">
       <div className="flex items-center justify-between mb-2">
         <p className="text-sm font-bold text-detective-700">🛹 รูดหลบ 3 เลน {goalScore ? `(เป้า ${goalScore})` : ''}</p>
         <p className="text-sm font-bold text-warning-600 tabular-nums">เก็บได้ {score}</p>
       </div>
-      <div
-        className="relative rounded-2xl overflow-hidden border-2 border-detective-200 shadow-glow-sm"
-        onPointerDown={(e) => { onDown(e.clientX); }}
-        onPointerUp={(e) => { const r = e.currentTarget.getBoundingClientRect(); onUp(e.clientX, r.left, r.width); }}
-      >
-        <canvas ref={canvasRef} width={W} height={H} className="w-full block" style={{ touchAction: 'none' }} />
+      <div className="relative w-full max-w-[360px] mx-auto h-[400px] rounded-[24px] overflow-hidden shadow-clay bg-[#EAF4FF]">
+        <canvas ref={canvasRef} width={W} height={H} className="w-full h-full block" style={{ objectFit: 'contain', touchAction: 'none' }} />
         {phase !== 'playing' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[1px] text-center px-4">
             <p className="text-2xl mb-1">{phase === 'over' ? (goalScore && scoreRef.current >= goalScore ? '🏆 ผ่าน!' : '💥 ชน 🚬!') : '🛹'}</p>
-            <p className="font-display font-bold text-detective-800">{phase === 'over' ? `เก็บน้ำได้ ${score} · สถิติ ${best}` : 'ปัด/แตะ ซ้าย-ขวา หลบ 🚬 เก็บ 💧'}</p>
+            <p className="font-display font-bold text-detective-800">{phase === 'over' ? `เก็บน้ำได้ ${score} · สถิติ ${best}` : 'กดปุ่ม ◀ ▶ หลบ 🚬 เก็บ 💧'}</p>
             <button onClick={(e) => { e.stopPropagation(); start(); }} className="btn-primary mt-3 px-6">{phase === 'over' ? 'เล่นอีกครั้ง 🔄' : 'เริ่ม! ▶'}</button>
           </div>
         )}
       </div>
+      <LRPad onLeft={() => move(-1)} onRight={() => move(1)} disabled={phase !== 'playing'} />
     </div>
   );
 }

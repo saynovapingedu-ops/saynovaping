@@ -378,8 +378,8 @@ export default function Knowledge() {
           </div>
         </div>
 
-        {/* Tabs — pill grid: active สีฟ้าเด่น, inactive ขาวขอบจาง */}
-        <div className="sticky top-0 z-10 -mx-4 px-4 py-2 mb-2 bg-white/95 backdrop-blur-sm">
+        {/* Tabs — pill grid: active สีฟ้าเด่น (เคลย์), inactive ครีมเคลย์ */}
+        <div className="sticky top-0 z-10 -mx-4 px-4 py-2 mb-2 bg-[#FBF3EA]/95 backdrop-blur-sm">
           <div className="grid grid-cols-5 gap-1.5">
             {TABS.map(t => (
               <button
@@ -388,8 +388,8 @@ export default function Knowledge() {
                 className={`flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-2xl
                             transition-all active:scale-95 ${
                   tab === t.id
-                    ? 'bg-gradient-to-br from-detective-500 to-detective-700 text-white shadow-glow-sm'
-                    : 'bg-white border border-detective-100 text-slate-500 hover:border-detective-300 hover:text-detective-600'
+                    ? 'bg-gradient-to-br from-detective-500 to-detective-700 text-white shadow-clay-blue'
+                    : 'bg-[#FFFCF7] shadow-clay-sm text-slate-500 hover:text-detective-600'
                 }`}
               >
                 <span className="text-lg leading-none">{t.emoji}</span>
@@ -484,8 +484,7 @@ export default function Knowledge() {
                   {REJECT_TIPS.map((t, i) => (
                     <div
                       key={i}
-                      className="relative flex items-start gap-3 bg-white rounded-2xl p-3
-                                 border border-detective-100 shadow-sm"
+                      className="relative flex items-start gap-3 bg-[#FFFCF7] rounded-2xl p-3 shadow-clay-sm"
                     >
                       <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-detective-500 to-detective-700
                                       text-white font-display font-extrabold flex items-center justify-center
@@ -505,7 +504,7 @@ export default function Knowledge() {
                   ))}
                 </div>
                 <p className="text-[10px] text-slate-500 italic mt-4 text-center
-                              bg-white/60 rounded-lg px-2 py-1.5 border border-slate-100">
+                              bg-[#FBF6EE] rounded-lg px-2 py-1.5 border border-warning-100">
                   📚 ปรับจาก: WHO Tobacco Cessation Guidelines + American Lung Association
                 </p>
               </div>

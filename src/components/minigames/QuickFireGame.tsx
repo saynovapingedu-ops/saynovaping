@@ -69,7 +69,7 @@ export default function QuickFireGame({ goalScore, onComplete, seconds = 30, fac
         </p>
       </div>
 
-      <div className={`relative rounded-2xl border-2 p-5 min-h-[200px] flex flex-col items-center justify-center text-center shadow-glow-sm transition-colors ${
+      <div className={`relative w-full max-w-[360px] mx-auto rounded-[24px] border-2 p-5 h-[400px] flex flex-col items-center justify-center text-center shadow-clay transition-colors ${
         feedback === 'ok' ? 'border-success-400 bg-success-50'
         : feedback === 'no' ? 'border-danger-400 bg-danger-50'
         : 'border-detective-200 bg-detective-50/40'

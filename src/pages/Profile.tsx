@@ -107,7 +107,7 @@ export default function Profile() {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="mb-4 p-3 rounded-2xl bg-slate-50 border border-slate-200"
+              className="mb-4 p-3 rounded-2xl bg-[#F3EADD] shadow-clay-pressed"
             >
               <AvatarFolder
                 preset={player.avatar}
@@ -157,7 +157,7 @@ export default function Profile() {
             <h4 className="font-display font-bold text-slate-800 flex items-center gap-1.5">
               <span>🏅</span> Badges
             </h4>
-            <span className="text-[11px] text-slate-500 bg-slate-100 rounded-full px-2 py-0.5">
+            <span className="text-[11px] text-slate-500 bg-[#F3EADD] rounded-full px-2 py-0.5 shadow-clay-sm">
               {earned.size}/{BADGES.length}
             </span>
           </div>
@@ -171,10 +171,10 @@ export default function Profile() {
                 <div
                   key={b.id}
                   title={b.description}
-                  className={`p-2 rounded-2xl text-center transition-all border ${
+                  className={`p-2 rounded-[18px] text-center transition-all ${
                     got
-                      ? 'bg-detective-50 border-detective-200'
-                      : 'bg-slate-50 border-slate-100 opacity-50'
+                      ? 'bg-detective-50 shadow-clay-sm'
+                      : 'bg-[#F3EADD] shadow-clay-pressed opacity-60'
                   }`}
                 >
                   <div className={`text-3xl ${got ? '' : 'grayscale'}`}>{b.emoji}</div>
@@ -193,16 +193,17 @@ export default function Profile() {
         {player.certificateNo && (
           <button
             onClick={() => nav('/certificate')}
-            className="w-full rounded-2xl py-3 px-4 font-bold text-white shadow-sm active:scale-[0.99]
+            className="w-full rounded-[20px] py-3 px-4 font-bold text-white shadow-clay-gold
+                       active:shadow-clay-pressed active:translate-y-px
                        bg-gradient-to-r from-warning-500 to-warning-600
-                       flex items-center justify-center gap-2 transition-transform"
+                       flex items-center justify-center gap-2 transition-all"
           >
             <span>🏆</span> ดูเกียรติบัตร
           </button>
         )}
 
         {/* === Privacy/data — ซ่อนใน details === */}
-        <details className="bg-white rounded-2xl border border-detective-100 text-sm">
+        <details className="bg-[#FFFCF7] rounded-2xl shadow-clay-sm text-sm">
           <summary className="font-semibold cursor-pointer text-slate-700 px-4 py-3
                               hover:bg-slate-50 rounded-2xl transition-colors">
             🔒 ข้อมูลความเป็นส่วนตัว
@@ -239,7 +240,7 @@ export default function Profile() {
 // ===== Stat card subcomponent — ขาวล้วน ตัวเลขสีม่วงเดียว =====
 function StatCard({ label, value, icon }: { label: string; value: string; icon: string }) {
   return (
-    <div className="bg-white rounded-2xl p-3 text-center border border-slate-200 shadow-sm">
+    <div className="bg-[#FFFCF7] rounded-[18px] p-3 text-center shadow-clay-sm">
       <div className="text-lg leading-none mb-1 opacity-80">{icon}</div>
       <p className="text-xl font-bold leading-tight text-detective-700">{value}</p>
       <p className="text-[10px] text-slate-500 mt-0.5">{label}</p>

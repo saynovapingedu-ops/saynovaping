@@ -12,7 +12,7 @@ export default function Toaster() {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className={`px-5 py-3 rounded-full shadow-lg font-semibold text-white flex items-center gap-2 ${
+            className={`px-5 py-3 rounded-full shadow-[0_6px_16px_-4px_rgba(0,0,0,0.22)] font-semibold text-white flex items-center gap-2 ${
               t.type === 'xp' ? 'bg-warning-500'
               : t.type === 'badge' ? 'bg-success-500'
               : 'bg-detective-500'

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { sfx, vibrate } from '../../lib/sound';
+import { DPad } from './GamePad';
 
 // ============================================================================
 //  SnakeGame — "งูกินของดี" บังคับงูกิน 💧🍎 เลี่ยง 🚬 (คลาสสิก)
@@ -40,16 +41,25 @@ export default function SnakeGame({ goalScore, onComplete }: Props) {
 
   const draw = useCallback(() => {
     const ctx = canvasRef.current?.getContext('2d'); if (!ctx) return;
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#EAF4FF'; ctx.fillRect(0, 0, W, H);
-    ctx.font = '17px serif'; ctx.textBaseline = 'top';
-    ctx.fillText('💧', food.current.x * CELL + 1, food.current.y * CELL + 1);
-    ctx.fillText('🚬', bad.current.x * CELL + 1, bad.current.y * CELL + 1);
-    ctx.fillStyle = '#2563EB';
+    // จอ LCD เขียวสไตล์ Nokia
+    ctx.fillStyle = '#C7D89B'; ctx.fillRect(0, 0, W, H);
+    // เส้นกริดจางๆ
+    ctx.strokeStyle = 'rgba(43,58,16,0.07)'; ctx.lineWidth = 1;
+    for (let x = 0; x <= COLS; x++) { ctx.beginPath(); ctx.moveTo(x * CELL, 0); ctx.lineTo(x * CELL, H); ctx.stroke(); }
+    for (let y = 0; y <= ROWS; y++) { ctx.beginPath(); ctx.moveTo(0, y * CELL); ctx.lineTo(W, y * CELL); ctx.stroke(); }
+    // อาหาร 💧 / อันตราย 🚬
+    ctx.font = '15px serif'; ctx.textBaseline = 'top';
+    ctx.fillText('💧', food.current.x * CELL + 2, food.current.y * CELL + 2);
+    ctx.fillText('🚬', bad.current.x * CELL + 2, bad.current.y * CELL + 2);
+    // งู — บล็อกพิกเซลเข้ม หัวเข้มกว่าลำตัว
     snake.current.forEach((s, i) => {
-      ctx.fillStyle = i === 0 ? '#1D4ED8' : '#60A5FA';
+      ctx.fillStyle = i === 0 ? '#1B2608' : '#3A4A1A';
       ctx.fillRect(s.x * CELL + 1, s.y * CELL + 1, CELL - 2, CELL - 2);
     });
+    // ตาบนหัวงู
+    const head = snake.current[0];
+    ctx.fillStyle = '#C7D89B';
+    ctx.fillRect(head.x * CELL + CELL - 7, head.y * CELL + 5, 3, 3);
   }, []);
 
   const over = () => {
@@ -108,36 +118,29 @@ export default function SnakeGame({ goalScore, onComplete }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [turn]);
 
-  const ts = useRef<Pt | null>(null);
-  const onUp = (x: number, y: number) => {
-    if (!ts.current) return;
-    const dx = x - ts.current.x, dy = y - ts.current.y;
-    if (Math.abs(dx) > Math.abs(dy)) turn({ x: dx > 0 ? 1 : -1, y: 0 });
-    else turn({ x: 0, y: dy > 0 ? 1 : -1 });
-    ts.current = null;
-  };
-
   return (
     <div className="select-none">
       <div className="flex items-center justify-between mb-2">
         <p className="text-sm font-bold text-detective-700">🐍 งูกินของดี {goalScore ? `(เป้า ${goalScore})` : ''}</p>
         <p className="text-sm font-bold text-warning-600 tabular-nums">กิน 💧 {score}</p>
       </div>
-      <div
-        className="relative rounded-2xl overflow-hidden border-2 border-detective-200 shadow-glow-sm mx-auto"
-        style={{ maxWidth: W }}
-        onPointerDown={(e) => { ts.current = { x: e.clientX, y: e.clientY }; }}
-        onPointerUp={(e) => onUp(e.clientX, e.clientY)}
-      >
-        <canvas ref={canvasRef} width={W} height={H} className="w-full block" style={{ touchAction: 'none' }} />
+      <div className="relative w-full max-w-[360px] mx-auto h-[400px] rounded-[24px] overflow-hidden shadow-clay bg-[#C7D89B]">
+        <canvas ref={canvasRef} width={W} height={H} className="w-full h-full block" style={{ objectFit: 'contain', touchAction: 'none' }} />
         {phase !== 'playing' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[1px] text-center px-4">
             <p className="text-2xl mb-1">{phase === 'over' ? (goalScore && scoreRef.current >= goalScore ? '🏆 ผ่าน!' : '💥 จบเกม!') : '🐍'}</p>
-            <p className="font-display font-bold text-detective-800">{phase === 'over' ? `กินของดี ${score} ชิ้น` : 'ปัดทิศทางให้งูกิน 💧 เลี่ยง 🚬'}</p>
+            <p className="font-display font-bold text-detective-800">{phase === 'over' ? `กินของดี ${score} ชิ้น` : 'กดปุ่มทิศทางให้งูกิน 💧 เลี่ยง 🚬'}</p>
             <button onClick={(e) => { e.stopPropagation(); start(); }} className="btn-primary mt-3 px-6">{phase === 'over' ? 'เล่นอีกครั้ง 🔄' : 'เริ่ม! ▶'}</button>
           </div>
         )}
       </div>
+      <DPad
+        onUp={() => turn({ x: 0, y: -1 })}
+        onDown={() => turn({ x: 0, y: 1 })}
+        onLeft={() => turn({ x: -1, y: 0 })}
+        onRight={() => turn({ x: 1, y: 0 })}
+        disabled={phase !== 'playing'}
+      />
     </div>
   );
 }

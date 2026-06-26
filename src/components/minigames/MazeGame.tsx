@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { sfx, vibrate } from '../../lib/sound';
+import { DPad } from './GamePad';
 
 // ============================================================================
 //  MazeGame — "หนีควันไปให้ถึงประตู" ลากนักสืบเลี่ยงควัน หลายด่านยากขึ้นเรื่อยๆ
@@ -25,6 +26,7 @@ export default function MazeGame({ goalScore, onComplete }: Props) {
 
   const player = useRef({ x: 28, y: H / 2 });
   const target = useRef({ x: 28, y: H / 2 });
+  const heldDir = useRef({ x: 0, y: 0 });   // ทิศจากปุ่มกดค้าง
   const door = useRef({ x: W - 24, y: H / 2 });
   const smoke = useRef<Smoke[]>([]);
   const levelRef = useRef(1);
@@ -70,6 +72,8 @@ export default function MazeGame({ goalScore, onComplete }: Props) {
       if (phaseRef.current === 'playing') {
         const dt = lastTs.current ? Math.min((ts - lastTs.current) / 16.67, 2.5) : 1;
         lastTs.current = ts;
+        target.current.x = Math.max(PR, Math.min(W - PR, target.current.x + heldDir.current.x * 5.5 * dt));
+        target.current.y = Math.max(PR, Math.min(H - PR, target.current.y + heldDir.current.y * 5.5 * dt));
         player.current.x += (target.current.x - player.current.x) * 0.25 * dt;
         player.current.y += (target.current.y - player.current.y) * 0.25 * dt;
         if (grace.current > 0) grace.current -= dt;
@@ -109,37 +113,33 @@ export default function MazeGame({ goalScore, onComplete }: Props) {
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [goalScore]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const moveTo = (clientX: number, clientY: number, el: HTMLElement) => {
-    const r = el.getBoundingClientRect();
-    target.current = {
-      x: Math.max(PR, Math.min(W - PR, ((clientX - r.left) / r.width) * W)),
-      y: Math.max(PR, Math.min(H - PR, ((clientY - r.top) / r.height) * H)),
-    };
-  };
-
   return (
     <div className="select-none">
       <div className="flex items-center justify-between mb-2">
         <p className="text-sm font-bold text-detective-700">🧩 เขาวงกตหนีควัน</p>
         <p className="text-sm font-bold text-warning-600 tabular-nums">ด่าน {level}{goalScore ? `/${goalScore}` : ''}</p>
       </div>
-      <div
-        className="relative rounded-2xl overflow-hidden border-2 border-detective-200 shadow-glow-sm"
-        onPointerMove={(e) => phase === 'playing' && moveTo(e.clientX, e.clientY, e.currentTarget)}
-        onPointerDown={(e) => phase === 'playing' && moveTo(e.clientX, e.clientY, e.currentTarget)}
-      >
-        <canvas ref={canvasRef} width={W} height={H} className="w-full block" style={{ touchAction: 'none' }} />
+      <div className="relative w-full max-w-[360px] mx-auto h-[400px] rounded-[24px] overflow-hidden shadow-clay bg-[#EAF4FF]">
+        <canvas ref={canvasRef} width={W} height={H} className="w-full h-full block" style={{ objectFit: 'contain', touchAction: 'none' }} />
         {phase !== 'playing' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[1px] text-center px-4">
             <p className="text-2xl mb-1">{phase === 'win' ? '🏆 หนีรอดครบ!' : phase === 'over' ? '💨 โดนควัน!' : '🧩'}</p>
             <p className="font-display font-bold text-detective-800">
-              {phase === 'ready' ? 'ลากนักสืบ 🕵️ ไปประตู 🚪 เลี่ยงควัน 💨' : `ผ่าน ${Math.max(0, level - 1)} ด่าน`}
+              {phase === 'ready' ? 'กดปุ่มทิศทางพานักสืบ 🕵️ ไปประตู 🚪 เลี่ยงควัน 💨' : `ผ่าน ${Math.max(0, level - 1)} ด่าน`}
             </p>
             <p className="text-xs text-slate-500 mt-1">ยิ่งด่านสูง ควันยิ่งเยอะและเร็วขึ้น</p>
             <button onClick={(e) => { e.stopPropagation(); start(); }} className="btn-primary mt-3 px-6">{phase === 'ready' ? 'เริ่ม! ▶' : 'เล่นอีกครั้ง 🔄'}</button>
           </div>
         )}
       </div>
+      <DPad
+        onUp={() => { heldDir.current = { x: 0, y: -1 }; }}
+        onDown={() => { heldDir.current = { x: 0, y: 1 }; }}
+        onLeft={() => { heldDir.current = { x: -1, y: 0 }; }}
+        onRight={() => { heldDir.current = { x: 1, y: 0 }; }}
+        onRelease={() => { heldDir.current = { x: 0, y: 0 }; }}
+        disabled={phase !== 'playing'}
+      />
     </div>
   );
 }

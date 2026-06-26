@@ -44,7 +44,7 @@ export default function Avatar({
   // overflow-visible (default) เพื่อให้ accessory ที่ออกนอกวงไม่โดนตัด
   const ringClass = ring ? 'ring-2 ring-white/40 ring-offset-2 ring-offset-transparent' : '';
   const wrapperClass = `relative inline-block rounded-full ${ringClass} ${className}`;
-  const innerClass = 'rounded-full overflow-hidden flex items-center justify-center bg-white w-full h-full';
+  const innerClass = 'rounded-full overflow-hidden flex items-center justify-center bg-white w-full h-full shadow-clay-sm';
 
   // accessory overlay node — สเกลตามขนาด avatar
   const accessoryNode = accessory ? (

@@ -83,27 +83,25 @@ export default function Arcade() {
   return (
     <div className="min-h-screen pb-10">
       <PageHeader title="🎮 โซนเกมสนุก" subtitle="เล่นพักสมอง ไม่ใช่ข้อสอบ" backTo="/" />
-      <main className="max-w-md md:max-w-2xl mx-auto p-4 space-y-3">
+      <main className="max-w-md md:max-w-2xl mx-auto p-4 grid grid-cols-2 gap-2.5">
         {GAMES.map((g, i) => (
           <motion.button
             key={g.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06 }}
+            transition={{ delay: i * 0.04 }}
             onClick={() => { sfx.click(); setActive(g.id); }}
-            className="w-full text-left card flex items-center gap-3 py-4 active:scale-[0.98] hover:shadow-glow-sm"
+            className="card flex flex-col items-start text-left gap-1.5 p-3 active:scale-[0.97]"
           >
-            <div className="icon-tile bg-gradient-to-br from-detective-500 to-detective-700 text-white text-2xl flex-shrink-0">
-              {g.emoji}
+            <div className="flex items-center justify-between w-full">
+              <div className="icon-tile bg-gradient-to-br from-detective-500 to-detective-700 text-white text-2xl flex-shrink-0">
+                {g.emoji}
+              </div>
+              {g.edu && <span className="pill bg-mint-100 text-mint-600 text-[10px]">ได้ความรู้</span>}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-detective-800 flex items-center gap-1.5">
-                {g.title}
-                {g.edu && <span className="pill bg-mint-100 text-mint-600 text-[10px]">ได้ความรู้</span>}
-              </p>
-              <p className="text-xs text-slate-500 leading-snug">{g.desc}</p>
-            </div>
-            <span className="text-xs font-bold flex-shrink-0 text-detective-500">เล่น →</span>
+            <p className="font-bold text-detective-800 text-sm leading-tight">{g.title}</p>
+            <p className="text-[11px] text-slate-500 leading-snug line-clamp-2 min-h-[28px]">{g.desc}</p>
+            <span className="text-xs font-bold text-detective-500 mt-0.5">เล่น →</span>
           </motion.button>
         ))}
       </main>

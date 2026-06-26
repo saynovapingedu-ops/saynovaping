@@ -8,7 +8,7 @@ import BrandHeader from '../components/BrandHeader';
 function PDPAAccordion({ title, children }: { title: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-white/90 rounded-2xl border border-detective-100 overflow-hidden">
+    <div className="bg-[#FFFCF7] rounded-2xl shadow-clay-sm overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
@@ -69,9 +69,12 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen flex flex-col max-w-md md:max-w-lg mx-auto relative">
-      <BrandHeader />
+      {/* โลโก้แบรนด์ลอยกลางบน — ไม่ใช้แถบฟ้าเต็มกว้าง (ดูโล่ง) */}
+      <div className="flex justify-center pt-[max(1rem,calc(env(safe-area-inset-top)+0.5rem))] pb-1">
+        <BrandHeader variant="pill" />
+      </div>
 
-      <div className="flex flex-col flex-1 p-6">
+      <div className="flex flex-col flex-1 p-6 pt-2">
       <div className="flex justify-center gap-2 mb-6">
         {[0, 1, 2].map(i => (
           <div
@@ -99,7 +102,7 @@ export default function Onboarding() {
               🔍
             </motion.div>
             <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-detective-600
-                           to-warning-500 bg-clip-text text-transparent mb-2
+                           to-mint-500 bg-clip-text text-transparent mb-2
                            leading-[1.4] pt-1 pb-2 overflow-visible">
               นักสืบสุขภาพ
             </h1>
@@ -132,8 +135,8 @@ export default function Onboarding() {
               onChange={e => setNickname(e.target.value)}
               maxLength={20}
               placeholder="เช่น น้องเอ, นักสืบจุก"
-              className="w-full p-3 mt-1 mb-4 rounded-2xl border-2 border-detective-100 bg-white/90
-                         focus:border-detective-500 focus:shadow-glow-sm outline-none transition-all"
+              className="w-full p-3 mt-1 mb-4 rounded-2xl bg-[#F3EADD] shadow-clay-pressed
+                         focus:bg-[#FBF6EE] outline-none transition-all"
             />
 
             <label className="text-sm font-semibold text-gray-700 mb-2 block">เลือกอวตารน่ารักๆ</label>
@@ -143,7 +146,7 @@ export default function Onboarding() {
 
             <div className="sticky bottom-0 -mx-6 px-6 pt-3
                             pb-[max(0.75rem,env(safe-area-inset-bottom))]
-                            mt-auto bg-gradient-to-t from-white via-white/95 to-white/0
+                            mt-auto bg-gradient-to-t from-[#FBF3EA] via-[#FBF3EA]/95 to-transparent
                             backdrop-blur-sm">
               <button onClick={() => setStep(2)} disabled={!nickname.trim()}
                 className="btn-primary w-full">
@@ -200,7 +203,7 @@ export default function Onboarding() {
               </PDPAAccordion>
             </div>
 
-            <label className="flex items-start gap-3 mb-24 cursor-pointer bg-detective-50/70 rounded-2xl p-3 border-2 border-detective-100">
+            <label className="flex items-start gap-3 mb-24 cursor-pointer surface-soft p-3">
               <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)}
                 className="mt-1 w-5 h-5 accent-detective-500" />
               <span className="text-sm text-gray-700 font-medium">
@@ -210,7 +213,7 @@ export default function Onboarding() {
 
             <div className="sticky bottom-0 -mx-6 px-6 pt-3
                             pb-[max(0.75rem,env(safe-area-inset-bottom))]
-                            mt-auto bg-gradient-to-t from-white via-white/95 to-white/0
+                            mt-auto bg-gradient-to-t from-[#FBF3EA] via-[#FBF3EA]/95 to-transparent
                             backdrop-blur-sm">
               <div className="flex gap-2">
                 <button onClick={() => setStep(1)} className="btn-secondary flex-1">← กลับ</button>

@@ -30,6 +30,7 @@ const Achievements = lazy(() => import('./pages/Achievements'));
 const Assessment   = lazy(() => import('./pages/Assessment'));
 const Leaderboard  = lazy(() => import('./pages/Leaderboard'));
 const Arcade       = lazy(() => import('./pages/Arcade'));
+const MissionMap   = lazy(() => import('./pages/MissionMap'));
 
 function PageLoader() {
   return (
@@ -224,6 +225,7 @@ export default function App() {
           <Route path="/journal" element={<Journal />} />
           <Route path="/daily" element={<Daily />} />
           <Route path="/arcade" element={<Arcade />} />
+          <Route path="/map" element={<MissionMap />} />
           <Route path="/exam" element={<Exam />} />
           <Route path="/achievements" element={<Achievements />} />
           <Route path="/assessment" element={<Assessment />} />

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { sfx, vibrate } from '../../lib/sound';
+import { LRPad } from './GamePad';
 
 // ============================================================================
 //  JumpUpGame — "กระโดดสะสมสุขภาพ" เด้งขึ้นแพลตฟอร์ม เก็บ 🪙 บนแต่ละแผ่น
@@ -28,6 +29,7 @@ export default function JumpUpGame({ goalScore, onComplete }: Props) {
   const px = useRef(W / 2);
   const py = useRef(H - 70);
   const vy = useRef(0);
+  const held = useRef(0);   // -1 ซ้าย · 0 หยุด · 1 ขวา (จากปุ่มกดค้าง)
   const plats = useRef<Plat[]>([]);
   const scoreRef = useRef(0);
   const rafRef = useRef<number | null>(null);
@@ -58,16 +60,6 @@ export default function JumpUpGame({ goalScore, onComplete }: Props) {
     const canvas = canvasRef.current; if (!canvas) return;
     const ctx = canvas.getContext('2d'); if (!ctx) return;
 
-    const roundRect = (x: number, y: number, w: number, h: number, r: number) => {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      ctx.closePath();
-    };
-
     const loop = (ts: number) => {
       rafRef.current = requestAnimationFrame(loop);
       if (phaseRef.current === 'playing') {
@@ -75,6 +67,7 @@ export default function JumpUpGame({ goalScore, onComplete }: Props) {
         lastTs.current = ts;
         vy.current += 0.45 * dt;
         py.current += vy.current * dt;
+        px.current += held.current * 6 * dt;
         if (px.current < -PR) px.current = W + PR;
         if (px.current > W + PR) px.current = -PR;
 
@@ -106,45 +99,34 @@ export default function JumpUpGame({ goalScore, onComplete }: Props) {
         if (py.current > H + 20) { over(); return; }
       }
 
-      // ===== draw =====
-      const g = ctx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, '#DBEAFE'); g.addColorStop(1, '#EFF6FF');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      // ===== draw (จอ LCD เขียว Nokia) =====
+      ctx.fillStyle = '#C7D89B'; ctx.fillRect(0, 0, W, H);
 
       for (const p of plats.current) {
-        // แพลตฟอร์มมน
-        ctx.fillStyle = '#34D399';
-        roundRect(p.x, p.y, PW, PH, 7); ctx.fill();
-        ctx.fillStyle = '#10B981';
-        roundRect(p.x, p.y + PH - 5, PW, 5, 4); ctx.fill();
-        // เหรียญ
+        // แพลตฟอร์มบล็อกพิกเซลเข้ม
+        ctx.fillStyle = '#3A4A1A';
+        ctx.fillRect(p.x, p.y, PW, PH);
+        // เหรียญ — บล็อกเล็กมีตัวอักษร
         if (p.coin) {
-          ctx.fillStyle = '#FBBF24';
-          ctx.beginPath(); ctx.arc(p.x + PW / 2, p.y - 12, 8, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#B45309'; ctx.font = 'bold 10px sans-serif';
+          ctx.fillStyle = '#1B2608';
+          ctx.fillRect(p.x + PW / 2 - 6, p.y - 18, 12, 12);
+          ctx.fillStyle = '#C7D89B'; ctx.font = 'bold 9px monospace';
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText('฿', p.x + PW / 2, p.y - 11);
+          ctx.fillText('฿', p.x + PW / 2, p.y - 12);
           ctx.textAlign = 'left';
         }
       }
-      // ผู้เล่น — ตัวกลมฟ้า + หน้า
-      ctx.fillStyle = '#3B82F6';
-      ctx.beginPath(); ctx.arc(px.current, py.current, PR, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.arc(px.current - 5, py.current - 3, 3, 0, Math.PI * 2); ctx.arc(px.current + 5, py.current - 3, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#1E3A8A';
-      ctx.beginPath(); ctx.arc(px.current - 5, py.current - 3, 1.5, 0, Math.PI * 2); ctx.arc(px.current + 5, py.current - 3, 1.5, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#1E3A8A'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(px.current, py.current + 3, 5, 0.1 * Math.PI, 0.9 * Math.PI); ctx.stroke();
+      // ผู้เล่น — บล็อกพิกเซลเข้ม + ตา
+      const s = PR + 1;
+      ctx.fillStyle = '#1B2608';
+      ctx.fillRect(px.current - s, py.current - s, s * 2, s * 2);
+      ctx.fillStyle = '#C7D89B';
+      ctx.fillRect(px.current - 5, py.current - 4, 3, 3);
+      ctx.fillRect(px.current + 2, py.current - 4, 3, 3);
     };
     rafRef.current = requestAnimationFrame(loop);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [goalScore]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const moveTo = (clientX: number, el: HTMLElement) => {
-    const r = el.getBoundingClientRect();
-    px.current = Math.max(0, Math.min(W, ((clientX - r.left) / r.width) * W));
-  };
 
   return (
     <div className="select-none">
@@ -152,21 +134,22 @@ export default function JumpUpGame({ goalScore, onComplete }: Props) {
         <p className="text-sm font-bold text-detective-700">⬆️ กระโดดสะสมสุขภาพ {goalScore ? `(เป้า ${goalScore})` : ''}</p>
         <p className="text-sm font-bold text-warning-600 tabular-nums">🪙 เก็บ {score}</p>
       </div>
-      <div
-        className="relative rounded-2xl overflow-hidden border-2 border-detective-200 shadow-glow-sm mx-auto"
-        style={{ maxWidth: W }}
-        onPointerMove={(e) => phase === 'playing' && moveTo(e.clientX, e.currentTarget)}
-        onPointerDown={(e) => phase === 'playing' && moveTo(e.clientX, e.currentTarget)}
-      >
-        <canvas ref={canvasRef} width={W} height={H} className="w-full block" style={{ touchAction: 'none' }} />
+      <div className="relative w-full max-w-[360px] mx-auto h-[400px] rounded-[24px] overflow-hidden shadow-clay bg-[#C7D89B]">
+        <canvas ref={canvasRef} width={W} height={H} className="w-full h-full block" style={{ objectFit: 'contain', touchAction: 'none' }} />
         {phase !== 'playing' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[1px] text-center px-4">
             <p className="text-2xl mb-1">{phase === 'over' ? (goalScore && scoreRef.current >= goalScore ? '🏆 ผ่าน!' : '⬇️ ตกแล้ว!') : '⬆️'}</p>
-            <p className="font-display font-bold text-detective-800">{phase === 'over' ? `เก็บเหรียญได้ ${score} · สถิติ ${best}` : 'เลื่อนนิ้วซ้าย-ขวา เด้งเก็บ 🪙 ให้ได้มากสุด'}</p>
+            <p className="font-display font-bold text-detective-800">{phase === 'over' ? `เก็บเหรียญได้ ${score} · สถิติ ${best}` : 'กดค้าง ◀ ▶ เด้งเก็บ 🪙 ให้ได้มากสุด'}</p>
             <button onClick={(e) => { e.stopPropagation(); start(); }} className="btn-primary mt-3 px-6">{phase === 'over' ? 'เล่นอีกครั้ง 🔄' : 'เริ่ม! ▶'}</button>
           </div>
         )}
       </div>
+      <LRPad
+        onLeft={() => { held.current = -1; }}
+        onRight={() => { held.current = 1; }}
+        onRelease={() => { held.current = 0; }}
+        disabled={phase !== 'playing'}
+      />
     </div>
   );
 }

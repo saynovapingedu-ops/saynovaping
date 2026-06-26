@@ -29,7 +29,8 @@ import RiskRank from '../components/minigames/RiskRank';
 import Confetti from '../components/Confetti';
 import { asset } from '../lib/asset';
 import { sfx, vibrate } from '../lib/sound';
-import { stopSpeaking } from '../lib/tts';
+import { speak, stopSpeaking, ttsSupported } from '../lib/tts';
+import { useSettingsStore } from '../store/settingsStore';
 import { useProgressStore } from '../store/progressStore';
 import { shareChallenge } from '../lib/liff';
 import {
@@ -299,6 +300,17 @@ export default function ScenarioPage() {
 
   // หยุดเสียงอ่านบทสนทนาเมื่อออกจากด่าน
   useEffect(() => stopSpeaking, []);
+
+  // พากย์บทสนทนาอัตโนมัติเมื่อขึ้น dialogue ใหม่ (ถ้าเปิด TTS ในตั้งค่า)
+  const ttsEnabled = useSettingsStore(s => s.ttsEnabled);
+  useEffect(() => {
+    if (showIntro || !ttsEnabled || !ttsSupported()) return;
+    const node = scenario?.nodes.find(n => n.id === currentNodeId);
+    if (node && node.type === 'dialogue' && node.text) {
+      speak(node.text);
+    }
+    return () => stopSpeaking();
+  }, [currentNodeId, showIntro, ttsEnabled, scenario]);
 
   // รีเซ็ตดาวประเมินเมื่อเปลี่ยนด่าน (ให้คะแนนใหม่ได้ทุกด่าน)
   useEffect(() => { setFunStars(0); }, [stageId]);
@@ -633,12 +645,12 @@ export default function ScenarioPage() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.45 }}
-              className="relative rounded-3xl border-2 border-dashed border-detective-200
-                         bg-gradient-to-br from-detective-50/40 to-white p-4 pt-5 mb-3"
+              className="relative rounded-[24px]
+                         bg-[#F3EADD] shadow-clay-pressed p-4 pt-5 mb-3"
             >
               {/* "stamp" label หัวมุม */}
-              <span className="absolute -top-3 left-4 bg-white border border-detective-200
-                               px-2.5 py-0.5 rounded-full shadow-sm">
+              <span className="absolute -top-3 left-4 bg-[#FFFCF7]
+                               px-2.5 py-0.5 rounded-full shadow-clay-sm">
                 <span className="text-[11px] font-bold text-detective-600 uppercase tracking-wider">
                   📖 เรื่องราว
                 </span>
@@ -658,10 +670,9 @@ export default function ScenarioPage() {
                   >
                     {/* number dot บนเส้น */}
                     <span className="absolute -left-[26px] top-0 w-6 h-6 rounded-full
-                                     bg-gradient-to-br from-detective-500 to-detective-700
+                                     bg-gradient-to-br from-detective-400 to-detective-600
                                      text-white text-[11px] font-extrabold
-                                     flex items-center justify-center shadow-glow-sm
-                                     border-2 border-white">
+                                     flex items-center justify-center shadow-clay-blue">
                       {i + 1}
                     </span>
                     <p className="text-sm text-slate-700 leading-relaxed pt-0.5">{line}</p>
@@ -670,11 +681,38 @@ export default function ScenarioPage() {
               </div>
             </motion.div>
           )}
+
+          {/* === บทเรียนสอนก่อนเริ่ม (เช่น ด่านกฎหมาย) — รู้ก่อนเล่นจะตอบถูก === */}
+          {scenario.preLesson && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="card mb-3 border-2 border-warning-300 bg-gradient-to-br from-warning-50 to-[#FFFCF7]"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <div className="icon-tile-sm bg-warning-100 text-warning-600">{scenario.preLesson.emoji || '📚'}</div>
+                <p className="text-sm font-bold text-warning-700 leading-tight">{scenario.preLesson.title}</p>
+              </div>
+              <ul className="space-y-1.5">
+                {scenario.preLesson.points.map((pt, i) => (
+                  <li key={i} className="flex gap-2 text-sm text-slate-700 leading-relaxed">
+                    <span className="text-warning-500 flex-shrink-0 font-bold">•</span>
+                    <span>{pt}</span>
+                  </li>
+                ))}
+              </ul>
+              {scenario.preLesson.source && (
+                <p className="text-[10px] text-slate-500 mt-2 leading-snug">📚 อ้างอิง: {scenario.preLesson.source}</p>
+              )}
+              <p className="text-[11px] text-warning-600 font-semibold mt-2">💡 จำไว้แล้วจะตอบมินิเกมได้ถูก!</p>
+            </motion.div>
+          )}
         </div>
 
         <div className="sticky bottom-0 -mx-4 px-4 pt-3
                         pb-[max(0.75rem,env(safe-area-inset-bottom))]
-                        bg-gradient-to-t from-white via-white/95 to-white/0
+                        bg-gradient-to-t from-[#FBF3EA] via-[#FBF3EA]/95 to-transparent
                         backdrop-blur-sm">
           {askResume ? (
             <div className="space-y-2">
@@ -979,7 +1017,7 @@ export default function ScenarioPage() {
 
                   {/* === 📓 เฉลย — ตรวจคำตอบของผู้เล่นทุกข้อ + ที่มา === */}
                   {reviewLog.length > 0 && (
-                    <details className="relative text-left bg-white rounded-2xl border-2 border-mint-200 p-3 mb-3 shadow-glow-sm">
+                    <details className="relative text-left bg-[#FFFCF7] rounded-2xl border-2 border-mint-200 p-3 mb-3 shadow-clay-sm">
                       <summary className="cursor-pointer text-sm font-bold text-mint-600 flex items-center gap-1.5 select-none">
                         <span>📓</span> ดูเฉลย — ตรวจคำตอบ ({reviewLog.length} ข้อ)
                       </summary>
@@ -1057,7 +1095,7 @@ export default function ScenarioPage() {
 
                   {/* === แหล่งอ้างอิงของด่าน === */}
                   {scenario.references && scenario.references.length > 0 && (
-                    <details className="relative text-left bg-white/70 rounded-xl border border-detective-100 p-3 mb-4">
+                    <details className="relative text-left bg-[#FFFCF7] rounded-xl border border-detective-100 p-3 mb-4">
                       <summary className="cursor-pointer text-xs font-bold text-detective-700 flex items-center gap-1.5 select-none">
                         <span>📚</span> แหล่งอ้างอิงรวมของด่านนี้ ({scenario.references.length})
                       </summary>
@@ -1073,7 +1111,7 @@ export default function ScenarioPage() {
                   )}
 
                   {/* === ⭐ ดาวประเมินความสนุก — เก็บค่า + ส่งขึ้น Sheets === */}
-                  <div className="relative mb-4 rounded-2xl border-2 border-detective-100 bg-white/80 p-3">
+                  <div className="relative mb-4 rounded-2xl border-2 border-detective-100 bg-[#FFFCF7] p-3">
                     <p className="text-sm font-semibold text-detective-700 mb-2">ด่านนี้สนุกแค่ไหน?</p>
                     <div className="flex justify-center gap-1.5">
                       {[1, 2, 3, 4, 5].map(n => (

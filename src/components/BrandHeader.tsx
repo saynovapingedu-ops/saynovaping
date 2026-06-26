@@ -22,8 +22,7 @@ interface Props {
 function LogoPill() {
   return (
     <div className="inline-flex items-center gap-2 bg-white rounded-2xl
-                    pl-2.5 pr-2.5 py-1 border border-detective-100
-                    shadow-[0_4px_16px_-6px_rgba(0,143,255,0.22)]">
+                    pl-2.5 pr-2.5 py-1 shadow-[0_4px_12px_-3px_rgba(0,0,0,0.20)]">
       {/* TMF logo — clamp ความสูงสูงสุดด้วย max-h เพื่อไม่ให้ pill อ้วน */}
       {/* container ตัด whitespace ของไฟล์ — logo จริงใหญ่ขึ้นแต่ pill ยังเตี้ย
          marginTop ติดลบ shift image ขึ้น เพราะ visual center ของไฟล์เลื่อนล่าง
@@ -64,7 +63,8 @@ export default function BrandHeader({ variant = 'bar' }: Props) {
   return (
     <header
       className="px-4 py-2.5 flex items-center justify-end relative
-                 bg-detective-50/90 backdrop-blur-md border-b border-detective-100
+                 liquid-header rounded-b-[28px]
+                 shadow-[0_6px_18px_-10px_rgba(176,138,104,0.5)]
                  pt-[max(0.625rem,calc(env(safe-area-inset-top)+0.3rem))]"
     >
       <LogoPill />

@@ -48,12 +48,12 @@ export default function DialogueBubble({ speaker, text }: Props) {
           <Avatar preset={player.avatar} customId={player.customAvatarId} size={36} />
         ) : npc ? (
           // ใช้รูป PNG จริงของหมอ/Vapor
-          <div className="w-9 h-9 rounded-full overflow-hidden bg-white shadow-sm border border-slate-200">
+          <div className="w-9 h-9 rounded-full overflow-hidden bg-[#FFFCF7] shadow-clay-sm">
             <img src={npc.src} alt={npc.label} className="w-full h-full object-cover" loading="lazy" />
           </div>
         ) : (
           // NPC ที่เหลือใช้ emoji
-          <div className="w-9 h-9 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center text-xl">
+          <div className="w-9 h-9 rounded-full bg-[#FFFCF7] shadow-clay-sm flex items-center justify-center text-xl">
             {s.emoji}
           </div>
         )}
@@ -62,7 +62,7 @@ export default function DialogueBubble({ speaker, text }: Props) {
         <span className="text-xs text-slate-500 mb-1 px-1">
           {isPlayer ? player.nickname || s.name : s.name}
         </span>
-        <div className={`px-4 py-3 rounded-2xl ${s.bg} ${s.align === 'right' ? 'rounded-br-sm' : 'rounded-bl-sm'}`}>
+        <div className={`px-4 py-3 rounded-[20px] shadow-clay-sm ${s.bg} ${s.align === 'right' ? 'rounded-br-md' : 'rounded-bl-md'}`}>
           <p className="leading-loose whitespace-pre-line break-words">{text}</p>
         </div>
         {showTts && (
@@ -72,7 +72,7 @@ export default function DialogueBubble({ speaker, text }: Props) {
             aria-label="อ่านออกเสียง"
             className="mt-1 px-2 py-0.5 text-xs text-slate-500 hover:text-detective-600 active:opacity-70 flex items-center gap-1"
           >
-            🔊 ฟังเสียง
+            🔊 ฟังอีกครั้ง
           </button>
         )}
       </div>

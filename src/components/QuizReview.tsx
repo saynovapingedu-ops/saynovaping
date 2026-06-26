@@ -17,7 +17,7 @@ export default function QuizReview({ details, defaultOpen = false }: Props) {
   return (
     <details
       open={defaultOpen}
-      className="mt-4 text-left bg-white rounded-2xl border-2 border-detective-200 p-3 shadow-sm"
+      className="mt-4 text-left bg-[#FFFCF7] rounded-2xl border-2 border-detective-200 p-3 shadow-clay-sm"
     >
       <summary className="cursor-pointer text-sm font-bold text-detective-600 flex items-center gap-1.5 select-none">
         <span>📓</span> ดูเฉลย — ตรวจคำตอบ ({correct}/{details.length} ข้อ)
@@ -69,7 +69,7 @@ export default function QuizReview({ details, defaultOpen = false }: Props) {
               </div>
 
               {/* เฉลย + แหล่งอ้างอิง */}
-              <div className="bg-white/70 rounded-xl p-2">
+              <div className="bg-[#FBF6EE] rounded-xl p-2">
                 <p className="text-[12px] text-slate-700 leading-relaxed">{d.explain}</p>
                 <p className="text-[10px] text-slate-500 italic mt-1.5 leading-snug">📚 อ้างอิง: {d.source}</p>
               </div>

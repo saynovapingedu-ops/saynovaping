@@ -74,7 +74,7 @@ export default function CertNameDialog({ open, onClose, title, subtitle }: Props
             exit={{ y: 30, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 240, damping: 24 }}
             onClick={e => e.stopPropagation()}
-            className="bg-white rounded-3xl w-full max-w-sm p-5 shadow-xl"
+            className="liquid-modal rounded-[28px] w-full max-w-sm p-5"
           >
             <div className="text-center mb-3">
               <div className="icon-tile bg-warning-50 text-warning-600 mx-auto mb-2">🏆</div>
@@ -90,8 +90,8 @@ export default function CertNameDialog({ open, onClose, title, subtitle }: Props
               onChange={e => setName(e.target.value)}
               maxLength={60}
               placeholder="เช่น สมชาย ใจดี"
-              className="w-full p-3 mt-1 mb-3 rounded-2xl border-2 border-detective-100 bg-white
-                         focus:border-detective-500 focus:shadow-glow-sm outline-none transition-all"
+              className="w-full p-3 mt-1 mb-3 rounded-2xl bg-[#F3EADD] shadow-clay-pressed
+                         focus:bg-[#FBF6EE] outline-none transition-all"
             />
 
             <label className="flex items-start gap-2.5 mb-4 cursor-pointer surface-soft p-3">

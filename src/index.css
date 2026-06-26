@@ -13,16 +13,16 @@
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
     @apply font-sans text-slate-800 antialiased;
-    /* minimal: soft lavender single-tone bg, ไม่ใช้ gradient รุ้ง */
-    background: #F6F4FA;
+    /* claymorphism: พื้นครีมอุ่นนุ่ม + ลายเนียนเบาๆ ให้ดูเหมือนดินปั้น */
+    background: #FBF3EA;
     background-attachment: fixed;
   }
-  /* เมื่อสวม theme — body bg มี tint สีเด่นของ theme ลายอ่อนๆ */
+  /* เมื่อสวม theme — body bg มี tint สีเด่นของ theme ลายอ่อนๆ (base ครีมอุ่น) */
   html.has-theme body {
     background:
       radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--theme-1) 18%, transparent), transparent 50%),
       radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--theme-3) 18%, transparent), transparent 50%),
-      #F6F4FA;
+      #FBF3EA;
   }
   h1, h2, h3 {
     @apply font-display;
@@ -32,11 +32,11 @@
     background: rgba(0, 143, 255, 0.18);  /* TMF blue selection */
   }
 
-  /* scrollbar เรียบ — slate เทา hover เป็น TMF blue */
+  /* scrollbar เรียบ — โทนน้ำตาลอุ่น hover เป็น TMF blue */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: #C7CFDB;
+    background: #D8C3AC;
     border-radius: 999px;
   }
   ::-webkit-scrollbar-thumb:hover { background: #008FFF; }
@@ -61,57 +61,61 @@
      หลักการ: "สีอยู่บนชิป/ไอคอน ไม่ใช่ทั้งการ์ด" — การ์ดพื้นขาว เงานุ่มชั้นเดียว
      ============================================================================ */
 
-  /* ปุ่มหลัก — solid detective (เดียว) ไม่ใช้ gradient รุ้ง
+  /* ปุ่มหลัก — claymorphism: ฟ้า TMF อวบนูน กดแล้วยุบ (clay-pressed)
      ถ้ามี theme equipped ใช้สี theme-1/theme-2 */
   .btn-primary {
-    @apply relative bg-detective-600 hover:bg-detective-700
-           text-white font-semibold rounded-2xl px-5 py-3 shadow-sm active:scale-95 transition-all
+    @apply relative bg-detective-500 hover:bg-detective-600
+           text-white font-semibold rounded-[20px] px-5 py-3 shadow-clay-blue
+           active:shadow-clay-pressed active:translate-y-px transition-all
            disabled:opacity-50;
   }
   .has-theme .btn-primary {
     background: linear-gradient(135deg, var(--theme-1) 0%, var(--theme-2) 100%);
   }
   .has-theme .btn-primary:hover {
-    filter: brightness(0.92);
+    filter: brightness(0.95);
   }
 
   .btn-secondary {
-    @apply bg-white text-detective-700 border border-slate-200
-           font-semibold rounded-2xl px-5 py-3 active:scale-95 transition-all
-           hover:border-detective-400 hover:bg-detective-50;
+    @apply bg-[#FFFCF7] text-detective-700
+           font-semibold rounded-[20px] px-5 py-3 shadow-clay
+           active:shadow-clay-pressed active:translate-y-px transition-all
+           hover:text-detective-600;
   }
 
-  /* ปุ่มสีทอง — เก็บไว้ใช้กับ achievement ที่ต้องโดดเด่นเท่านั้น (Certificate ฯลฯ) */
+  /* ปุ่มสีทอง — achievement ที่ต้องโดดเด่น (Certificate ฯลฯ) — เคลย์ทอง */
   .btn-sunny {
     @apply bg-warning-500 hover:bg-warning-600 text-white font-semibold
-           rounded-2xl px-5 py-3 shadow-sm active:scale-95 transition-all;
+           rounded-[20px] px-5 py-3 shadow-clay-gold
+           active:shadow-clay-pressed active:translate-y-px transition-all;
   }
 
-  /* การ์ดพื้นฐาน — ขาวล้วน ขอบเทาบาง เงานุ่มชั้นเดียว */
+  /* การ์ดพื้นฐาน — เคลย์: พื้นขาวอุ่น มุมโค้งใหญ่ เงา 3 ชั้นนูน */
   .card {
-    @apply bg-white rounded-3xl p-4 border border-slate-200
-           shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.10)];
+    @apply bg-[#FFFCF7] rounded-[28px] p-4 shadow-clay;
   }
 
-  /* การ์ดเด่น — โทนฟ้าจางมาก (subtle) ไม่ใช่รุ้ง */
+  /* การ์ดเด่น — เคลย์ฟ้าจางอุ่น */
   .card-hero {
-    @apply rounded-3xl p-5 border border-detective-100/70
-           bg-gradient-to-br from-detective-50/40 to-white
-           shadow-[0_1px_3px_rgba(15,23,42,0.04),0_10px_30px_-14px_rgba(0,143,255,0.18)];
+    @apply rounded-[28px] p-5
+           bg-gradient-to-br from-detective-50/70 to-[#FFFCF7]
+           shadow-clay;
   }
 
-  /* ===== Progress bars — มาตรฐานเดียว =====
+  /* ===== Progress bars — เคลย์: รางเป็นร่องกดเข้า (clay-pressed) =====
      .progress-fill = ฟ้า (ความคืบหน้า) · --xp = ทอง (XP/level achievement) */
   .progress-track {
-    @apply relative h-2.5 rounded-full overflow-hidden bg-detective-100/70;
+    @apply relative h-3 rounded-full overflow-hidden bg-[#EFE3D2] shadow-clay-pressed;
   }
   .progress-fill {
     @apply h-full rounded-full bg-gradient-to-r from-detective-400 to-detective-600
-           transition-all duration-700;
+           transition-all duration-700
+           shadow-[inset_0_2px_2px_rgba(255,255,255,0.45)];
   }
   .progress-fill--xp {
     @apply h-full rounded-full bg-gradient-to-r from-warning-400 to-warning-500
-           transition-all duration-700;
+           transition-all duration-700
+           shadow-[inset_0_2px_2px_rgba(255,255,255,0.5)];
   }
 
   /* ===== หัวข้อ section มาตรฐาน ===== */
@@ -119,26 +123,34 @@
     @apply font-display font-bold text-detective-700 text-base flex items-center gap-2;
   }
 
-  /* ===== พื้นจางสำหรับกล่องข้อมูล/hint ===== */
+  /* ===== พื้นจางสำหรับกล่องข้อมูล/hint — เคลย์ยุบเข้า (inset) ===== */
   .surface-soft {
-    @apply rounded-2xl border border-detective-100 bg-detective-50/60;
+    @apply rounded-[20px] bg-[#F3EADD] shadow-clay-pressed;
   }
 
-  /* ===== Icon tile — ชิปไอคอนสี่เหลี่ยมมน ขนาด/มุม/เงาเท่ากัน =====
+  /* ===== Icon tile — ชิปไอคอนเคลย์นูน (clay-sm) =====
      ใส่ emoji/ตัวเลขบนการ์ด (quick-action, stat, hotline) — สีพื้นกำหนดเพิ่มเองได้ */
   .icon-tile {
-    @apply flex items-center justify-center rounded-2xl w-12 h-12 text-2xl leading-none flex-shrink-0;
+    @apply flex items-center justify-center rounded-[18px] w-12 h-12 text-2xl leading-none flex-shrink-0 shadow-clay-sm;
   }
   .icon-tile-sm {
-    @apply flex items-center justify-center rounded-xl w-9 h-9 text-lg leading-none flex-shrink-0;
+    @apply flex items-center justify-center rounded-2xl w-9 h-9 text-lg leading-none flex-shrink-0 shadow-clay-sm;
   }
 
-  /* hero header — TMF blue (default) หรือ theme ที่สวมอยู่ */
+  /* hero header — TMF blue (นุ่มลง+นูนเคลย์) หรือ theme ที่สวมอยู่
+     inner-glow ด้านบน + เงาลึกด้านล่าง = แบนเนอร์ปั้นนูนเข้าโทนเคลย์ */
   .rainbow-header {
-    background: linear-gradient(135deg, #008FFF 0%, #0072CC 100%);
+    background:
+      linear-gradient(125deg, rgba(255,150,130,0.10) 0%, rgba(255,255,255,0) 35%,
+                       rgba(150,255,225,0.10) 70%, rgba(255,255,255,0) 100%),
+      linear-gradient(160deg, #3D8AC4 0%, #357FB8 55%, #366FA6 100%);
+    box-shadow: inset 0 3px 18px rgba(255,255,255,0.22),
+                inset 0 -10px 26px rgba(0,50,95,0.16);
   }
   .has-theme .rainbow-header {
-    background: linear-gradient(135deg, var(--theme-1) 0%, var(--theme-2) 100%);
+    background: linear-gradient(160deg, var(--theme-1) 0%, var(--theme-2) 100%);
+    box-shadow: inset 0 3px 18px rgba(255,255,255,0.22),
+                inset 0 -10px 26px rgba(0,0,0,0.14);
   }
 
   /* shimmer */
@@ -154,7 +166,55 @@
   }
 
   .pill {
-    @apply inline-flex items-center gap-1 text-[10px] font-bold rounded-full px-2 py-0.5;
+    @apply inline-flex items-center gap-1 text-[10px] font-bold rounded-full px-2 py-0.5 shadow-clay-sm;
+  }
+
+  /* Liquid Glass — แผงแก้วโปร่งแสง iridescent (oil-slick) + ไฮไลต์แวบบนขอบ
+     ใช้บน glass card / XP bar บน rainbow-header — แสงรุ้งคอรัล/ฟ้า/มิ้นต์จางๆ */
+  .clay-glass {
+    background:
+      linear-gradient(to bottom, rgba(255,255,255,0.22), rgba(255,255,255,0) 45%),
+      linear-gradient(125deg, rgba(255,150,130,0.14) 0%, rgba(255,255,255,0) 30%,
+                       rgba(120,220,255,0.12) 55%, rgba(255,255,255,0) 75%, rgba(150,255,225,0.14) 100%),
+      rgba(255,255,255,0.22);
+    border: 1px solid rgba(255,255,255,0.40);
+    box-shadow:
+      3px 5px 14px rgba(0,40,90,0.16),
+      inset 1px 1px 2px rgba(255,255,255,0.65),
+      inset -2px -3px 6px rgba(0,80,150,0.12);
+    backdrop-filter: blur(10px) saturate(1.3);
+    -webkit-backdrop-filter: blur(10px) saturate(1.3);
+  }
+  .clay-glass:hover {
+    background:
+      linear-gradient(to bottom, rgba(255,255,255,0.30), rgba(255,255,255,0) 45%),
+      linear-gradient(125deg, rgba(255,150,130,0.18) 0%, rgba(255,255,255,0) 30%,
+                       rgba(120,220,255,0.16) 55%, rgba(255,255,255,0) 75%, rgba(150,255,225,0.18) 100%),
+      rgba(255,255,255,0.30);
+  }
+
+  /* Liquid glass — แถบหัว/แถบติดขอบจอ (frosted + แสงรุ้งจางๆ) */
+  .liquid-header {
+    background:
+      linear-gradient(125deg, rgba(255,150,130,0.07), rgba(255,255,255,0) 40%,
+                       rgba(150,255,225,0.07) 80%, transparent),
+      rgba(235,246,255,0.80);
+    backdrop-filter: blur(12px) saturate(1.25);
+    -webkit-backdrop-filter: blur(12px) saturate(1.25);
+  }
+
+  /* Liquid glass — modal/ป๊อปอัป (frosted ครีม โปร่งพอควร อ่านง่าย + ขอบแก้ว) */
+  .liquid-modal {
+    background:
+      linear-gradient(125deg, rgba(255,150,130,0.08), rgba(255,255,255,0) 35%,
+                       rgba(150,255,225,0.08) 75%, transparent),
+      rgba(255,252,247,0.86);
+    backdrop-filter: blur(14px) saturate(1.2);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    border: 1px solid rgba(255,255,255,0.5);
+    box-shadow:
+      0 14px 42px -8px rgba(0,40,90,0.28),
+      inset 1px 1px 2px rgba(255,255,255,0.7);
   }
 
   /* ===== Skeleton — placeholder ระหว่างโหลด ===== */

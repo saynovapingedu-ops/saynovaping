@@ -73,8 +73,8 @@ export default function Achievements() {
                 onClick={() => { sfx.click(); setFilter(f.id); }}
                 className={`rounded-2xl py-2 px-1 text-center transition-all active:scale-95 ${
                   filter === f.id
-                    ? 'bg-detective-600 text-white shadow-glow-sm'
-                    : 'bg-white text-slate-600 border border-slate-200'
+                    ? 'bg-detective-500 text-white shadow-clay-blue'
+                    : 'bg-[#FFFCF7] text-slate-600 shadow-clay-sm'
                 }`}
               >
                 <div className="text-lg leading-none">{f.emoji}</div>

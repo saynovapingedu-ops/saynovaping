@@ -6,6 +6,7 @@ import { SHOP_ITEMS, type ShopItem, type ItemCategory } from '../lib/shopItems';
 import { sfx, vibrate } from '../lib/sound';
 import Avatar from '../components/Avatar';
 import PageHeader from '../components/PageHeader';
+import { NPC_CHARACTERS } from '../lib/characters';
 
 const CATS: { id: ItemCategory; label: string; emoji: string }[] = [
   { id: 'title',     label: 'ตำแหน่ง', emoji: '🏷️' },
@@ -16,6 +17,17 @@ const CATS: { id: ItemCategory; label: string; emoji: string }[] = [
   { id: 'cert-deco', label: 'กรอบเซอร์', emoji: '📜' },
   { id: 'booster',   label: 'บูสต์',    emoji: '⚡' },
 ];
+
+// คุณลุงเจ้าของร้านพูดแนะนำตามหมวดที่เปิดดู — ให้รู้สึกเหมือนคนขายของจริง
+const SHOPKEEPER_LINES: Record<ItemCategory, string> = {
+  title:       'อยากได้ฉายาเท่ๆ ไว้อวดเพื่อนมั้ยล่ะหลาน? เลือกได้เลยจ้ะ',
+  frame:       'กรอบสวยๆ ใส่รูปโปรไฟล์ให้เด่น ลุงคัดมาให้แล้ว ลองดูสิ',
+  accessory:   'ของแต่งน่ารักๆ แต่งตัวละครให้มีสไตล์กันหน่อยเป็นไง',
+  backdrop:    'พื้นหลังสวยๆ เปลี่ยนบรรยากาศโปรไฟล์ ถูกใจอันไหนบอกลุงนะ',
+  theme:       'ธีมสีถูกใจ จัดให้ทั้งแอปเปลี่ยนสีตามใจเลยจ้ะ',
+  'cert-deco': 'กรอบเกียรติบัตรหรูๆ ไว้ตอนเรียนจบ ภูมิใจไปเลย!',
+  booster:     'ไอเทมช่วยเล่น! ลุงมีของดีช่วยให้หลานเก่งขึ้นนะ',
+};
 
 export default function Shop() {
   const nav = useNavigate();
@@ -156,23 +168,70 @@ export default function Shop() {
 
   return (
     <div className="min-h-full pb-8 relative">
-      <PageHeader title="🛍 ร้านค้านักสืบ" subtitle="แลกของรางวัลด้วยเหรียญ" backTo="/" />
-      <div className="sticky top-0 z-10 bg-detective-50/90 backdrop-blur-md border-b border-detective-100
-                      p-3 flex items-center justify-end gap-2">
-        <button
-          onClick={() => { sfx.click(); nav('/journal'); }}
-          className="text-xs bg-detective-100 text-detective-700 font-semibold rounded-full px-2.5 py-1.5 active:scale-95"
-        >
-          📓 สมุดบันทึก
-        </button>
-        <div className="flex items-center gap-1.5 bg-gradient-to-br from-warning-400 to-warning-500
-                        text-white font-bold rounded-full px-3 py-1.5 shadow-glow-sm">
-          <span className="text-base">🪙</span>
-          <span className="text-sm">{coins}</span>
-        </div>
-      </div>
+      <PageHeader
+        title="🧓 ร้านค้าของคุณลุง"
+        subtitle="เก็บเหรียญมาแลกของดีกับคุณลุง"
+        backTo="/"
+        actions={
+          <>
+            <button
+              onClick={() => { sfx.click(); nav('/journal'); }}
+              className="text-[11px] bg-detective-100 text-detective-700 font-semibold rounded-full px-2.5 py-1.5 active:scale-95 flex-shrink-0"
+            >
+              🗂️ แฟ้มคดี
+            </button>
+            <div className="flex items-center gap-1 bg-gradient-to-br from-warning-400 to-warning-500
+                            text-white font-bold rounded-full px-2.5 py-1.5 shadow-clay-gold flex-shrink-0">
+              <span className="text-sm leading-none">🪙</span>
+              <span className="text-sm">{coins}</span>
+            </div>
+          </>
+        }
+      />
 
       <main className="max-w-md md:max-w-3xl mx-auto px-4 pt-4">
+        {/* === แผงร้านคุณลุง — ผ้ากันสาด + คุณลุงทักทาย/แนะนำตามหมวด (โต้ตอบจริง) === */}
+        <div className="relative mb-4 rounded-[24px] overflow-hidden shadow-clay bg-gradient-to-b from-warning-50 to-[#FFFCF7]">
+          {/* ผ้ากันสาดลายทางส้ม-ครีม */}
+          <div className="h-3 w-full"
+               style={{ background: 'repeating-linear-gradient(90deg,#F59E0B 0 16px,#FFE7C2 16px 32px)' }} />
+          <div className="flex items-center gap-3 px-3.5 py-3">
+            <motion.div
+              animate={{ y: [0, -3, 0] }}
+              transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+              className="w-[66px] h-[66px] flex-shrink-0 rounded-full overflow-hidden bg-[#FFFCF7] shadow-clay-sm"
+            >
+              <img
+                src={NPC_CHARACTERS.shopkeeper.src}
+                alt="คุณลุงเจ้าของร้าน"
+                className="w-full h-full object-cover"
+                loading="eager"
+              />
+            </motion.div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-warning-600 mb-0.5 flex items-center gap-1">
+                🧓 คุณลุงเจ้าของร้าน
+              </p>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={purchaseMsg ? `msg-${purchaseMsg}` : coins <= 0 ? 'broke' : tab}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.18 }}
+                  className="text-sm text-slate-700 leading-snug"
+                >
+                  {purchaseMsg
+                    ? purchaseMsg
+                    : coins <= 0
+                    ? 'ยังไม่มีเหรียญเลยนี่หลาน 🪙 ไปเล่นด่าน/เกมเก็บเหรียญมาก่อนนะ เดี๋ยวลุงเก็บของไว้ให้!'
+                    : SHOPKEEPER_LINES[tab]}
+                </motion.p>
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+
         {/* === Avatar preview — แสดงผลตามที่กำลังลอง / สวมอยู่ === */}
         {(() => {
           const shownFrameId = previewFrameId ?? player.equippedFrame;
@@ -260,10 +319,10 @@ export default function Shop() {
             <button
               key={c.id}
               onClick={() => switchTab(c.id)}
-              className={`flex-shrink-0 snap-start py-2 px-3 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex-shrink-0 snap-start py-2 px-3 rounded-[14px] text-xs font-semibold transition-all ${
                 tab === c.id
-                  ? 'bg-detective-600 text-white shadow-glow-sm'
-                  : 'bg-white/80 text-gray-600 border border-detective-100'
+                  ? 'bg-detective-500 text-white shadow-clay-blue'
+                  : 'bg-[#FFFCF7] text-gray-600 shadow-clay-sm'
               }`}
             >
               <span className="text-base mr-1">{c.emoji}</span>
@@ -427,7 +486,7 @@ export default function Shop() {
               exit={{ y: 30, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 240, damping: 24 }}
               onClick={e => e.stopPropagation()}
-              className="bg-white rounded-3xl w-full max-w-sm p-5 shadow-xl"
+              className="liquid-modal rounded-[28px] w-full max-w-sm p-5"
             >
               <div className="text-center">
                 <div className="text-5xl mb-2 leading-none">{confirmItem.emoji}</div>
