@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
+import { useAdminStore } from '../store/adminStore';
 import { SCENARIO_META, isStageUnlocked, CERT_STAGE_COUNT } from '../scenarios';
 import { SHOP_ITEMS } from '../lib/shopItems';
 import XPBar from '../components/XPBar';
@@ -65,6 +66,14 @@ export default function Home() {
   const heroDone = player.stagesCompleted.filter(id => id <= CERT_STAGE_COUNT).length;
   const certEligible = heroDone >= CERT_STAGE_COUNT || player.totalXP >= 1500;
 
+  // === Admin Exam Controls Flags ===
+  const admin = useAdminStore();
+  const preTestNeeded = admin.preTestEnabled && player.preTestScore === undefined;
+  const postTestUnlocked = admin.postTestEnabled && (heroDone >= CERT_STAGE_COUNT || admin.allowBypassStages);
+  const postTestNeeded = postTestUnlocked && player.postTestScore === undefined;
+  const bothTestsDone = player.preTestScore !== undefined && player.postTestScore !== undefined;
+  const delta = bothTestsDone ? player.postTestScore! - player.preTestScore! : 0;
+
   // === quick actions flags ===
   const today = (() => {
     const d = new Date();
@@ -72,7 +81,6 @@ export default function Home() {
   })();
   const dailyDone = player.lastDailyDate === today;
   const examEligible = player.stagesCompleted.length >= SCENARIO_META.length || !!player.certificateNo;
-  const showPreTest = player.preTestScore === undefined && player.stagesCompleted.length === 0;
 
   // ===== ด่านที่ "ควรเล่นต่อ" = ด่านแรกที่เล่นได้แต่ยังไม่จบ — ใช้ทำปุ่มเริ่ม/เล่นต่อ + เปิดบทบนแผนที่ =====
   const activeStage = SCENARIO_META.find(
@@ -269,6 +277,86 @@ export default function Home() {
           </div>
         )}
 
+        {/* === แบนเนอร์ 1: แบบประเมินก่อนเรียน (Pre-test) — ถ้าอาจารย์เปิดและยังไม่ทำ === */}
+        {preTestNeeded && (
+          <button
+            onClick={() => { sfx.click(); nav('/assessment?kind=pre'); }}
+            className="w-full text-left mb-3.5 flex items-center gap-3 px-4 py-4 rounded-[28px]
+                       bg-gradient-to-br from-sky-100 via-white to-sky-50 shadow-clay
+                       border-2 border-sky-400 active:translate-y-px transition-all"
+          >
+            <div className="icon-tile bg-gradient-to-br from-sky-500 to-indigo-600
+                            text-white font-extrabold text-lg shadow-clay-blue flex-shrink-0">
+              📝
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-sky-700">
+                ขั้นตอนที่ 1: แบบประเมินก่อนเรียน (Pre-test)
+              </p>
+              <p className="font-display font-extrabold text-slate-900 text-base leading-tight truncate">
+                ทำแบบประเมินก่อนเริ่มเล่น
+              </p>
+              <p className="text-xs text-slate-500 truncate mt-0.5">
+                {admin.part3Enabled ? `ความรู้ ${admin.knowledgeQuestionCount === 10 ? '10' : '21'} ข้อ` : ''}
+                {admin.part3Enabled && admin.part4Enabled ? ' + ' : ''}
+                {admin.part4Enabled ? 'ทักษะ 20 ข้อ' : ''}
+              </p>
+            </div>
+            <span className="text-3xl text-sky-600 flex-shrink-0">→</span>
+          </button>
+        )}
+
+        {/* === แบนเนอร์ 2: แบบประเมินหลังเรียน (Post-test) — เมื่อจบด่าน หรืออาจารย์เปิด Bypass === */}
+        {postTestNeeded && (
+          <button
+            onClick={() => { sfx.click(); nav('/assessment?kind=post'); }}
+            className="w-full text-left mb-3.5 flex items-center gap-3 px-4 py-4 rounded-[28px]
+                       bg-gradient-to-br from-emerald-100 via-white to-emerald-50 shadow-clay
+                       border-2 border-emerald-400 active:translate-y-px transition-all animate-pulse-subtle"
+          >
+            <div className="icon-tile bg-gradient-to-br from-emerald-500 to-teal-600
+                            text-white font-extrabold text-lg shadow-clay-green flex-shrink-0">
+              🎯
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                {admin.allowBypassStages && heroDone < CERT_STAGE_COUNT
+                  ? '🔓 โหมดอาจารย์: ปลดล็อกแบบประเมินหลังเรียน'
+                  : 'ขั้นตอนสุดท้าย: แบบประเมินหลังเรียน (Post-test)'}
+              </p>
+              <p className="font-display font-extrabold text-slate-900 text-base leading-tight truncate">
+                ทำแบบประเมินหลังเรียน & ดูพัฒนาการ
+              </p>
+              <p className="text-xs text-slate-500 truncate mt-0.5">
+                เปรียบเทียบผลความรู้และทักษะทันที
+              </p>
+            </div>
+            <span className="text-3xl text-emerald-600 flex-shrink-0">→</span>
+          </button>
+        )}
+
+        {/* === แบนเนอร์ 3: สรุปพัฒนาการ (Gain Delta) — เมื่อทำครบทั้ง Pre และ Post === */}
+        {bothTestsDone && (
+          <div
+            onClick={() => { sfx.click(); nav('/assessment'); }}
+            className="w-full mb-3.5 p-3.5 rounded-[24px] bg-gradient-to-r from-emerald-50 to-sky-50 border border-emerald-200/90 shadow-clay-sm flex items-center justify-between cursor-pointer hover:border-emerald-300 transition-all"
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="text-2xl">🚀</span>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500">ผลการเรียนรู้ของคุณ (Gain Delta)</p>
+                <p className="text-xs font-semibold text-slate-800">
+                  ก่อน <b>{player.preTestScore}%</b> → หลัง <b>{player.postTestScore}%</b>
+                  <span className={`ml-1.5 font-extrabold ${delta >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
+                    ({delta >= 0 ? `+${delta}%` : `${delta}%`})
+                  </span>
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-bold text-detective-600">ดูผล →</span>
+          </div>
+        )}
+
         {/* === ปุ่มหลัก: เริ่ม / เล่นต่อ — เด่นบนสุด ตัดปัญหา "งงไม่รู้เริ่มตรงไหน" === */}
         {activeStage ? (
           <button
@@ -295,7 +383,7 @@ export default function Home() {
             </div>
             <span className="text-3xl text-detective-500 flex-shrink-0">→</span>
           </button>
-        ) : examEligible ? (
+        ) : examEligible && admin.finalExamEnabled ? (
           <button
             onClick={() => { sfx.click(); nav('/exam'); }}
             className="w-full text-left mb-4 flex items-center gap-3 px-4 py-4 rounded-[28px]
@@ -340,7 +428,7 @@ export default function Home() {
           <span className="text-2xl text-detective-400 flex-shrink-0">→</span>
         </button>
 
-        {/* === Quick actions: Daily / Leaderboard / [สลับ] / เกมสนุก === แถวเดียว 4 col */}
+        {/* === Quick actions: Daily / Leaderboard / Assessment / Arcade === แถวเดียว 4 col */}
         <div className="mb-4 grid grid-cols-4 gap-1.5">
           {/* Daily Challenge — always */}
           <button
@@ -371,53 +459,36 @@ export default function Home() {
             </p>
           </button>
 
-          {/* Pre-test — เฉพาะผู้เล่นใหม่ที่ยังไม่ทำ */}
-          {showPreTest && (
-            <button
-              onClick={() => { sfx.click(); nav('/assessment?kind=pre'); }}
-              className="card flex flex-col items-center text-center gap-1.5 p-3
-                         active:scale-[0.97] transition-all"
-            >
-              <div className="icon-tile bg-detective-50 text-detective-600">🅰️</div>
-              <p className="font-bold text-detective-700 text-xs leading-tight">แบบประเมินก่อนเรียน</p>
-              <p className="text-[10px] text-slate-500 leading-snug line-clamp-2">
-                ทำก่อนเล่น วัดความรู้
-              </p>
-            </button>
-          )}
-
-          {/* Final Exam — เมื่อจบครบ */}
-          {examEligible && (
-            <button
-              onClick={() => { sfx.click(); nav('/exam'); }}
-              className="card flex flex-col items-center text-center gap-1.5 p-3
-                         active:scale-[0.97] transition-all"
-            >
-              <div className="icon-tile bg-warning-50 text-warning-600">🎓</div>
-              <p className="font-bold text-detective-700 text-xs leading-tight">แบบทดสอบรวม</p>
-              <p className="text-[10px] text-slate-500 leading-snug line-clamp-2">
-                ผ่าน 80% รับเหรียญตรา
-                {player.examBestScore !== undefined && ` · สูงสุด ${player.examBestScore}%`}
-              </p>
-            </button>
-          )}
-
-          {/* เหรียญตรา/ความสำเร็จ — เติมช่องที่ 3 ตอนผู้เล่นกลางเกม (ไม่โชว์ pre-test/exam) */}
-          {!showPreTest && !examEligible && (
-            <button
-              onClick={() => { sfx.click(); nav('/achievements'); }}
-              className="card flex flex-col items-center text-center gap-1.5 p-3 relative
-                         active:scale-[0.97] transition-all"
-            >
-              <div className="icon-tile bg-mint-50 text-mint-600">🎖️</div>
-              <p className="font-bold text-detective-700 text-xs leading-tight">เหรียญตรา</p>
-              <p className="text-[10px] text-slate-500 leading-snug line-clamp-2">
-                {player.badges.length > 0
-                  ? `สะสมแล้ว ${player.badges.length} ตรา`
-                  : 'สะสมตราจากการเล่น'}
-              </p>
-            </button>
-          )}
+          {/* Assessment / Research Button — ช่องที่ 3 สอดคล้องกับ Exam Controls */}
+          <button
+            onClick={() => { sfx.click(); nav('/assessment'); }}
+            className="card flex flex-col items-center text-center gap-1.5 p-3 relative
+                       active:scale-[0.97] transition-all"
+          >
+            <div className={`icon-tile ${
+              player.postTestScore !== undefined
+                ? 'bg-emerald-50 text-emerald-600'
+                : player.preTestScore !== undefined
+                ? 'bg-amber-50 text-amber-600'
+                : 'bg-sky-50 text-sky-600'
+            }`}>
+              {player.postTestScore !== undefined ? '📊' : player.preTestScore !== undefined ? '🎯' : '📝'}
+            </div>
+            <p className="font-bold text-detective-700 text-xs leading-tight">
+              {player.postTestScore !== undefined
+                ? 'ผลประเมิน'
+                : player.preTestScore !== undefined
+                ? 'หลังเรียน'
+                : 'ก่อนเรียน'}
+            </p>
+            <p className="text-[10px] text-slate-500 leading-snug line-clamp-2">
+              {player.postTestScore !== undefined
+                ? `ความรู้ ${player.postTestScore}%`
+                : player.preTestScore !== undefined
+                ? (postTestUnlocked ? 'ทำแบบหลังเรียน' : 'รอเล่นจบด่าน')
+                : (admin.preTestEnabled ? 'ทำก่อนเริ่มเล่น' : 'แบบประเมิน')}
+            </p>
+          </button>
 
           {/* โซนเกมสนุก (อาร์เคด) — ช่องที่ 4 ในแถว เขียวมิ้นต์ TMF */}
           <button

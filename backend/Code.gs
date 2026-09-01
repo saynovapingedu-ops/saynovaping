@@ -5,89 +5,161 @@
  *  Project    : นักสืบสุขภาพ: ภารกิจปกป้องลมหายใจ
  *  Account    : saynovaping.edu@gmail.com
  *  Frontend   : https://saynovapingedu-ops.github.io/saynovaping/
- *  Version    : 1.3.0  (เพิ่ม funRating — ดาวประเมินความพึงพอใจ/ความสนุกหลังจบด่าน)
+ *  Version    : 2.4.0 (Clear Differentiation: [ใหม่-ข้อสอบวิจัย] VS [ระบบเกมเดิม])
  *
- *  Endpoints  :
- *    POST  body {action:'sync', ...}        บันทึก/อัปเดต progress (รับ field ครบ)
- *    POST  body {action:'issueCert', ...}   ออกเกียรติบัตร
- *    GET   ?action=verify&code=XXXXXX       ตรวจเกียรติบัตร
- *    GET   ?action=restore&hash=...         กู้ progress (เปลี่ยนเครื่อง)
- *    GET   ?action=ping                     เช็ค backend ทำงานไหม
- *    GET   ?action=leaderboard&hash=...     กระดานอันดับรวม (PDPA)
- *
- *  Sheet "Players" — 38 columns:
- *    A  userIdHash         B  nickname        C  grade               D  school
- *    E  createdAt          F  lastActiveAt    G  totalXP             H  level
- *    I  stagesCompleted    J  badges          K  certificateNo       L  certificateIssuedAt
- *    M  avatar             N  coins           O  ownedItems (JSON)
- *    P  equippedTitle      Q  equippedFrame   R  equippedTheme
- *    S  equippedAccessory  T  equippedBackdrop  U  equippedCertDeco
- *    V  hintTokens         W  coinX2Remaining  X  streakShields
- *    Y  streakDays         Z  lastPlayDate     AA lastDailyDate
- *    AB dailyDoneCount     AC dailyBestScore
- *    AD examBestScore      AE examBonusClaimed
- *    AF preTestScore       AG postTestScore   AH preTestAt          AI postTestAt
- *    AJ funRating          AK funRatingCount  AL funRatingSum
- *
- *  ⚠️ ต้องรัน `setupSheets()` ครั้งเดียวก่อนใช้ — เพิ่ม columns ใหม่ใน Players sheet
- *     ผู้ใช้เก่า: รัน `setupSheets()` (หรือ `migrateToV130()`) ทับได้ — แค่เขียน header ใหม่ ข้อมูลเดิมไม่หาย
+ *  โครงสร้างการแยกชื่อหัวตารางชัดเจน 100%:
+ *   1. 👤 [ข้อมูลผู้เรียน]        : รหัสนักศึกษา, ชื่อ-นามสกุลจริง, ชื่อบัญชี LINE, ชื่อเล่น, ชั้น, โรงเรียน
+ *   2. 📝 [ใหม่-ก่อนเรียน]      : ความรู้บุหรี่ไฟฟ้า (%), ทักษะการปฏิเสธ (/100)
+ *   3. 📝 [ใหม่-หลังเรียน]      : ความรู้บุหรี่ไฟฟ้า (%), ทักษะการปฏิเสธ (/100)
+ *   4. 📊 [ผลวิจัย]             : พัฒนาการความรู้ (Gain Delta %)
+ *   5. 🕹️ [ด่านเกม]            : บทหลักเกียรติบัตร (ด่าน 1-8), เล่นจบครบทุกด่าน (20 ด่าน)
+ *   6. ⭐ [คะแนนเกม]           : คะแนน XP สะสม, เลเวลผู้เล่น
+ *   7. 🤖 [ใหม่-ประเมินแอป]    : ความพึงพอใจแชตบอต 7 ข้อ (1.00-5.00)
+ *   8. 🎓 [เกียรติบัตร]          : เลขที่เกียรติบัตร, วันที่ออกเกียรติบัตร
+ *   9. 🕒 [วันเวลา & ข้อมูลดิบ]  : เวลาส่งข้อสอบ และ Demographics JSON
  * ============================================================================
  */
 
 const CONFIG = {
   CERT_PREFIX: 'HD',
   CERT_YEAR: new Date().getFullYear(),
-  STAGES_REQUIRED: 8,
+  STAGES_REQUIRED: 8,          // จบด่าน 1-8 ครบ 8 ด่านเพื่อรับเกียรติบัตร
+  TOTAL_STAGES: 20,            // ด่านเนื้อหาทั้งหมดในเกม 20 ด่าน (4 บท)
   MIN_XP_FOR_CERT: 1500,
+  TEACHER_PASSCODE: 'wu2535',
   SHEET_NAMES: {
-    PLAYERS: 'Players',
-    EVENTS: 'Events',
-    CERTIFICATES: 'Certificates',
+    PLAYERS: 'Players',           // แท็บ 1: คะแนน & ข้อมูลวิจัย (หลัก)
+    GAME_STATS: 'GameStats',     // แท็บ 2: ไอเทม & ระบบเกม (ย่อย)
+    CERTIFICATES: 'Certificates', // แท็บ 3: ทะเบียนเกียรติบัตร
+    EVENTS: 'Events',             // แท็บ 4: ประวัติระบบ
   },
 };
 
-// ตำแหน่ง column (1-indexed) ใน sheet Players
-const COL = {
-  USER_ID_HASH: 1,
-  NICKNAME: 2,
-  GRADE: 3,
-  SCHOOL: 4,
-  CREATED_AT: 5,
-  LAST_ACTIVE_AT: 6,
-  TOTAL_XP: 7,
-  LEVEL: 8,
-  STAGES_COMPLETED: 9,
-  BADGES: 10,
-  CERTIFICATE_NO: 11,
-  CERTIFICATE_ISSUED_AT: 12,
-  AVATAR: 13,
-  COINS: 14,
-  OWNED_ITEMS: 15,
-  EQUIPPED_TITLE: 16,
-  EQUIPPED_FRAME: 17,
-  EQUIPPED_THEME: 18,
-  EQUIPPED_ACCESSORY: 19,
-  EQUIPPED_BACKDROP: 20,
-  EQUIPPED_CERT_DECO: 21,
-  HINT_TOKENS: 22,
-  COIN_X2_REMAINING: 23,
-  STREAK_SHIELDS: 24,
-  STREAK_DAYS: 25,
-  LAST_PLAY_DATE: 26,
-  LAST_DAILY_DATE: 27,
-  DAILY_DONE_COUNT: 28,
-  DAILY_BEST_SCORE: 29,
-  EXAM_BEST_SCORE: 30,
-  EXAM_BONUS_CLAIMED: 31,
-  PRE_TEST_SCORE: 32,
-  POST_TEST_SCORE: 33,
-  PRE_TEST_AT: 34,
-  POST_TEST_AT: 35,
-  FUN_RATING: 36,
-  FUN_RATING_COUNT: 37,
-  FUN_RATING_SUM: 38,
+// ============================================================================
+// แท็บ 1: PLAYERS (สมุดเกรดคะแนน & งานวิจัย 25 คอลัมน์ — หัวข้อแยกชัดเจน 100%)
+// ============================================================================
+const COL_PLAYER = {
+  ID_CODE: 1,                 // 👤 รหัสนักศึกษา (Student ID)
+  REAL_NAME: 2,               // 👤 ชื่อ-นามสกุลจริง
+  LINE_NAME: 3,               // 📲 ชื่อบัญชีใน LINE
+  NICKNAME: 4,               // 🎮 ชื่อเล่นในเกม
+  GRADE: 5,                  // 🏫 ระดับชั้น
+  SCHOOL: 6,                 // 🏫 โรงเรียน
+  PRE_TEST_SCORE: 7,         // 📝 [ใหม่-ก่อนเรียน] ความรู้บุหรี่ไฟฟ้า (%)
+  PRE_TEST_SKILL_SCORE: 8,   // 📝 [ใหม่-ก่อนเรียน] ทักษะการปฏิเสธ (/100)
+  POST_TEST_SCORE: 9,        // 📝 [ใหม่-หลังเรียน] ความรู้บุหรี่ไฟฟ้า (%)
+  POST_TEST_SKILL_SCORE: 10, // 📝 [ใหม่-หลังเรียน] ทักษะการปฏิเสธ (/100)
+  GAIN_DELTA_KNOWLEDGE: 11,  // 📊 [ผลวิจัย] พัฒนาการความรู้ (Gain Delta %)
+  HERO_STAGES_COUNT: 12,     // 🕹️ [ด่านเกม] บทหลักรับเกียรติบัตร (ด่าน 1-8)
+  TOTAL_STAGES_COUNT: 13,    // 🕹️ [ด่านเกม] เล่นจบครบทุกด่าน (20 ด่าน)
+  TOTAL_XP: 14,              // ⭐ [คะแนนเกม] คะแนน XP สะสมในเกม
+  LEVEL: 15,                 // ⭐ [คะแนนเกม] เลเวลผู้เล่น (Level 1-5)
+  EVAL_PART5_AVG: 16,        // 🤖 [ใหม่-ประเมินแอป] ความพึงพอใจแชตบอต (1-5)
+  CERTIFICATE_NO: 17,        // 🎓 [เกียรติบัตร] เลขที่เกียรติบัตร (Cert No)
+  CERTIFICATE_ISSUED_AT: 18, // 🎓 [เกียรติบัตร] วันที่ออกเกียรติบัตร
+  PRE_TEST_AT: 19,           // 🕒 [วันเวลา] เวลาส่ง Pre-test
+  POST_TEST_AT: 20,          // 🕒 [วันเวลา] เวลาส่ง Post-test
+  LAST_ACTIVE_AT: 21,        // 🕒 [วันเวลา] เวลาเข้าเล่นล่าสุด
+  CREATED_AT: 22,            // 🕒 [วันเวลา] วันที่เริ่มเล่นครั้งแรก
+  DEMOGRAPHICS: 23,          // 📦 [ข้อมูลดิบ] แบบสำรวจข้อมูลส่วนบุคคล (JSON)
+  EVAL_PART5_DETAILS: 24,    // 📦 [ข้อมูลดิบ] ประเมินบอทรายข้อ 7 ข้อ (JSON)
+  USER_ID_HASH: 25,          // 🔑 [ระบบ] LINE User ID Hash
 };
-const PLAYERS_COLS = 38;
+const PLAYERS_COLS = 25;
+
+const PLAYERS_HEADERS = [
+  '👤 รหัสนักศึกษา (idCode)',
+  '👤 ชื่อ-นามสกุลจริง (realName)',
+  '📲 ชื่อบัญชี LINE (lineName)',
+  '🎮 ชื่อเล่นในเกม (nickname)',
+  '🏫 ระดับชั้น (grade)',
+  '🏫 โรงเรียน (school)',
+  '📝 [ใหม่-ก่อนเรียน] ความรู้บุหรี่ไฟฟ้า (%)',
+  '📝 [ใหม่-ก่อนเรียน] ทักษะการปฏิเสธ (/100)',
+  '📝 [ใหม่-หลังเรียน] ความรู้บุหรี่ไฟฟ้า (%)',
+  '📝 [ใหม่-หลังเรียน] ทักษะการปฏิเสธ (/100)',
+  '📊 [ผลวิจัย] พัฒนาการความรู้ (Gain Delta %)',
+  '🕹️ [ด่านเกม] บทหลักรับเกียรติบัตร (ด่าน 1-8)',
+  '🕹️ [ด่านเกม] เล่นจบครบทุกด่าน (20 ด่าน)',
+  '⭐ [คะแนนเกม] คะแนน XP สะสมในเกม',
+  '⭐ [คะแนนเกม] เลเวลผู้เล่น (Level 1-5)',
+  '🤖 [ใหม่-ประเมินแอป] ความพึงพอใจแชตบอต (1-5)',
+  '🎓 [เกียรติบัตร] เลขที่เกียรติบัตร (Cert No)',
+  '🎓 [เกียรติบัตร] วันที่ออกเกียรติบัตร',
+  '🕒 [วันเวลา] เวลาส่ง Pre-test',
+  '🕒 [วันเวลา] เวลาส่ง Post-test',
+  '🕒 [วันเวลา] เวลาเข้าเล่นล่าสุด',
+  '🕒 [วันเวลา] วันที่เริ่มเล่นครั้งแรก',
+  '📦 [ข้อมูลดิบ] แบบสำรวจข้อมูลส่วนบุคคล (JSON)',
+  '📦 [ข้อมูลดิบ] ประเมินบอทรายข้อ 7 ข้อ (JSON)',
+  '🔑 [ระบบ] LINE User ID Hash',
+];
+
+// ============================================================================
+// แท็บ 2: GAME_STATS (คลังไอเทม & ระบบเกม 28 คอลัมน์)
+// ============================================================================
+const COL_GAME = {
+  ID_CODE: 1,
+  REAL_NAME: 2,
+  LINE_NAME: 3,
+  NICKNAME: 4,
+  USER_ID_HASH: 5,
+  COINS: 6,
+  OWNED_ITEMS: 7,
+  AVATAR: 8,
+  EQUIPPED_TITLE: 9,
+  EQUIPPED_FRAME: 10,
+  EQUIPPED_THEME: 11,
+  EQUIPPED_ACCESSORY: 12,
+  EQUIPPED_BACKDROP: 13,
+  EQUIPPED_CERT_DECO: 14,
+  HINT_TOKENS: 15,
+  COIN_X2_REMAINING: 16,
+  STREAK_SHIELDS: 17,
+  STREAK_DAYS: 18,
+  LAST_PLAY_DATE: 19,
+  LAST_DAILY_DATE: 20,
+  DAILY_DONE_COUNT: 21,
+  DAILY_BEST_SCORE: 22,
+  EXAM_BEST_SCORE: 23,
+  EXAM_BONUS_CLAIMED: 24,
+  STAGES_COMPLETED_LIST: 25,
+  BADGES: 26,
+  FUN_RATING: 27,
+  FUN_RATING_COUNT: 28,
+};
+const GAME_COLS = 28;
+
+const GAME_HEADERS = [
+  '👤 รหัสนักศึกษา (idCode)',
+  '👤 ชื่อ-นามสกุลจริง (realName)',
+  '📲 ชื่อบัญชี LINE (lineName)',
+  '🎮 ชื่อเล่นในเกม (nickname)',
+  '🔑 LINE User ID Hash (ระบบ)',
+  '💰 เหรียญ (coins)',
+  '🛍️ ไอเทมในร้าน (ownedItems)',
+  '🖼️ รูปโปรไฟล์ (avatar)',
+  '🎖️ ฉายา (equippedTitle)',
+  '🖼️ กรอบรูป (equippedFrame)',
+  '🎨 ธีมสี (equippedTheme)',
+  '👓 เครื่องประดับ (equippedAccessory)',
+  '🌄 พื้นหลัง (equippedBackdrop)',
+  '📜 ตราเกียรติบัตร (equippedCertDeco)',
+  '💡 เหรียญใบ้ (hintTokens)',
+  '⚡ บูสเตอร์ X2 (coinX2Remaining)',
+  '🛡️ โล่สตรีค (streakShields)',
+  '🔥 เล่นต่อเนื่องวัน (streakDays)',
+  '📅 วันที่เล่นล่าสุด (lastPlayDate)',
+  '📅 วันที่ทำ Daily (lastDailyDate)',
+  '🏆 จำนวนวัน Daily (dailyDoneCount)',
+  '🎯 คะแนน Daily สูงสุด (dailyBestScore)',
+  '📝 คะแนน Final Exam (examBestScore)',
+  '🎁 รับโบนัส Exam (examBonusClaimed)',
+  '🗺️ รายชื่อด่านที่จบ (stagesCompletedList)',
+  '🏅 เหรียญตรา (badges)',
+  '⭐ ดาวความสนุก (funRating)',
+  '🗳️ จำนวนโหวตดาว (funRatingCount)',
+];
 
 // ---------- Helpers ----------
 function getSheet_(name) {
@@ -99,16 +171,18 @@ function getSheet_(name) {
   return sheet;
 }
 
-function findRowByUserHash_(sheet, userIdHash) {
-  const data = sheet.getRange('A:A').getValues();
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === userIdHash) return i + 1;
+function findRowByUserHashInSheet_(sheet, hashColIdx, userIdHash) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return -1;
+  const data = sheet.getRange(2, hashColIdx, lastRow - 1, 1).getValues();
+  for (let i = 0; i < data.length; i++) {
+    if (data[i][0] === userIdHash) return i + 2;
   }
   return -1;
 }
 
 function isValidHash_(s) {
-  return typeof s === 'string' && /^[a-f0-9]{64}$/i.test(s);
+  return typeof s === 'string' && s.length > 0;
 }
 
 function generateVerifyCode_() {
@@ -138,23 +212,22 @@ function logEvent_(userIdHash, event, detail, xpDelta) {
   } catch (e) { console.error('logEvent failed:', e); }
 }
 
-// แปลงค่าจาก cell → number (รับ '' เป็น default)
 function numOr_(v, def) {
   if (v === '' || v === null || v === undefined) return def;
   const n = Number(v);
   return isNaN(n) ? def : n;
 }
-// แปลงค่า cell ที่ "ว่าง" → undefined (สำหรับ optional string)
+
 function strOrUndef_(v) {
   if (v === '' || v === null || v === undefined) return undefined;
   return String(v);
 }
-// แปลงค่า cell → boolean
+
 function boolOf_(v) {
   if (v === true || v === 'true' || v === 1 || v === '1' || v === 'TRUE') return true;
   return false;
 }
-// parse JSON cell ปลอดภัย (คืน [] ถ้าเสีย)
+
 function parseJsonArray_(v) {
   if (!v) return [];
   try {
@@ -163,16 +236,80 @@ function parseJsonArray_(v) {
   } catch (e) { return []; }
 }
 
-// ---------- Build Players row (merge payload + existing) ----------
-/**
- * สร้าง row ของ Players sheet จาก payload ที่ส่งมา
- * - ถ้า field ใน payload === undefined  → คงค่าเดิม (ถ้ามี existing)
- * - ถ้า field ใน payload มีค่า          → ใช้ค่าใหม่
- * เป้าหมาย: รองรับ partial update ไม่ให้ field ที่ไม่ได้ส่งโดน overwrite เป็น 0/ว่าง
- */
-function buildPlayerRow_(p, existing) {
+// ---------- Build Player Research Row (แท็บ Players) ----------
+function buildPlayerResearchRow_(p, existing) {
   function pick(newVal, colIdx, def) {
-    if (newVal !== undefined && newVal !== null) return newVal;
+    if (newVal !== undefined && newVal !== null && newVal !== '') return newVal;
+    if (existing) {
+      const ex = existing[colIdx - 1];
+      if (ex !== undefined && ex !== '') return ex;
+    }
+    return def;
+  }
+  function pickArrayJson(newArr, colIdx) {
+    if (newArr !== undefined && newArr !== null) return JSON.stringify(newArr || []);
+    if (existing) return String(existing[colIdx - 1] || '[]');
+    return '[]';
+  }
+
+  let lineName = pick(p.lineName, COL_PLAYER.LINE_NAME, '');
+  if (!lineName && p.demographics && p.demographics.lineName) {
+    lineName = p.demographics.lineName;
+  }
+
+  // คำนวณ Gain Delta
+  const preK = pick(p.preTestScore, COL_PLAYER.PRE_TEST_SCORE, '');
+  const postK = pick(p.postTestScore, COL_PLAYER.POST_TEST_SCORE, '');
+  let gainDelta = '';
+  if (preK !== '' && postK !== '') {
+    const d = Number(postK) - Number(preK);
+    gainDelta = (d >= 0 ? '+' : '') + d + '%';
+  }
+
+  // คำนวณจำนวนด่านบทหลัก (1-8) และด่านรวมทั้งหมด (1-20)
+  let stagesList = [];
+  if (p.stagesCompleted !== undefined && Array.isArray(p.stagesCompleted)) {
+    stagesList = p.stagesCompleted;
+  }
+  const heroCount = stagesList.filter(function(stg) { return Number(stg) >= 1 && Number(stg) <= 8; }).length;
+  const totalStagesCount = stagesList.length;
+
+  let heroStr = heroCount > 0 ? (heroCount + '/8') : (existing ? (existing[COL_PLAYER.HERO_STAGES_COUNT - 1] || '0/8') : '0/8');
+  let totalStagesStr = totalStagesCount > 0 ? (totalStagesCount + '/20') : (existing ? (existing[COL_PLAYER.TOTAL_STAGES_COUNT - 1] || '0/20') : '0/20');
+
+  const row = new Array(PLAYERS_COLS).fill('');
+  row[COL_PLAYER.ID_CODE - 1]                 = pick(p.idCode, COL_PLAYER.ID_CODE, '');
+  row[COL_PLAYER.REAL_NAME - 1]               = pick(p.realName, COL_PLAYER.REAL_NAME, '');
+  row[COL_PLAYER.LINE_NAME - 1]               = lineName;
+  row[COL_PLAYER.NICKNAME - 1]                = pick(p.nickname, COL_PLAYER.NICKNAME, '');
+  row[COL_PLAYER.GRADE - 1]                   = pick(p.grade, COL_PLAYER.GRADE, '');
+  row[COL_PLAYER.SCHOOL - 1]                  = pick(p.school, COL_PLAYER.SCHOOL, '');
+  row[COL_PLAYER.PRE_TEST_SCORE - 1]          = preK !== '' ? Number(preK) : '';
+  row[COL_PLAYER.PRE_TEST_SKILL_SCORE - 1]    = pick(p.preTestSkillScore, COL_PLAYER.PRE_TEST_SKILL_SCORE, '');
+  row[COL_PLAYER.POST_TEST_SCORE - 1]         = postK !== '' ? Number(postK) : '';
+  row[COL_PLAYER.POST_TEST_SKILL_SCORE - 1]   = pick(p.postTestSkillScore, COL_PLAYER.POST_TEST_SKILL_SCORE, '');
+  row[COL_PLAYER.GAIN_DELTA_KNOWLEDGE - 1]    = gainDelta;
+  row[COL_PLAYER.HERO_STAGES_COUNT - 1]       = heroStr;
+  row[COL_PLAYER.TOTAL_STAGES_COUNT - 1]      = totalStagesStr;
+  row[COL_PLAYER.TOTAL_XP - 1]                = pick(p.totalXP, COL_PLAYER.TOTAL_XP, 0);
+  row[COL_PLAYER.LEVEL - 1]                   = pick(p.level, COL_PLAYER.LEVEL, 1);
+  row[COL_PLAYER.EVAL_PART5_AVG - 1]          = pick(p.evalPart5Avg, COL_PLAYER.EVAL_PART5_AVG, '');
+  row[COL_PLAYER.CERTIFICATE_NO - 1]          = existing ? (existing[COL_PLAYER.CERTIFICATE_NO - 1] || '') : '';
+  row[COL_PLAYER.CERTIFICATE_ISSUED_AT - 1]   = existing ? (existing[COL_PLAYER.CERTIFICATE_ISSUED_AT - 1] || '') : '';
+  row[COL_PLAYER.PRE_TEST_AT - 1]             = pick(p.preTestAt, COL_PLAYER.PRE_TEST_AT, '');
+  row[COL_PLAYER.POST_TEST_AT - 1]            = pick(p.postTestAt, COL_PLAYER.POST_TEST_AT, '');
+  row[COL_PLAYER.LAST_ACTIVE_AT - 1]          = nowIso_();
+  row[COL_PLAYER.CREATED_AT - 1]              = existing ? (existing[COL_PLAYER.CREATED_AT - 1] || nowIso_()) : nowIso_();
+  row[COL_PLAYER.DEMOGRAPHICS - 1]            = p.demographics ? JSON.stringify(p.demographics) : (existing ? (existing[COL_PLAYER.DEMOGRAPHICS - 1] || '{}') : '{}');
+  row[COL_PLAYER.EVAL_PART5_DETAILS - 1]      = pickArrayJson(p.evalPart5Details, COL_PLAYER.EVAL_PART5_DETAILS);
+  row[COL_PLAYER.USER_ID_HASH - 1]            = p.userIdHash;
+  return row;
+}
+
+// ---------- Build Game Stats Row (แท็บ GameStats) ----------
+function buildGameStatsRow_(p, existing) {
+  function pick(newVal, colIdx, def) {
+    if (newVal !== undefined && newVal !== null && newVal !== '') return newVal;
     if (existing) {
       const ex = existing[colIdx - 1];
       if (ex !== undefined && ex !== '') return ex;
@@ -190,75 +327,77 @@ function buildPlayerRow_(p, existing) {
     return '[]';
   }
 
-  const row = new Array(PLAYERS_COLS).fill('');
-  row[COL.USER_ID_HASH - 1]          = p.userIdHash;
-  row[COL.NICKNAME - 1]              = pick(p.nickname, COL.NICKNAME, '');
-  row[COL.GRADE - 1]                 = pick(p.grade, COL.GRADE, '');
-  row[COL.SCHOOL - 1]                = pick(p.school, COL.SCHOOL, '');
-  row[COL.CREATED_AT - 1]            = existing ? (existing[COL.CREATED_AT - 1] || nowIso_()) : nowIso_();
-  row[COL.LAST_ACTIVE_AT - 1]        = nowIso_();
-  row[COL.TOTAL_XP - 1]              = pick(p.totalXP, COL.TOTAL_XP, 0);
-  row[COL.LEVEL - 1]                 = pick(p.level, COL.LEVEL, 1);
-  row[COL.STAGES_COMPLETED - 1]      = pickArrayCsv(p.stagesCompleted, COL.STAGES_COMPLETED);
-  row[COL.BADGES - 1]                = pickArrayCsv(p.badges, COL.BADGES);
-  // certificate fields — sync ไม่ touch (handleIssueCert_ เป็นคน set)
-  row[COL.CERTIFICATE_NO - 1]        = existing ? (existing[COL.CERTIFICATE_NO - 1] || '') : '';
-  row[COL.CERTIFICATE_ISSUED_AT - 1] = existing ? (existing[COL.CERTIFICATE_ISSUED_AT - 1] || '') : '';
-  // ของในร้าน / booster
-  row[COL.AVATAR - 1]                = pick(p.avatar, COL.AVATAR, 1);
-  row[COL.COINS - 1]                 = pick(p.coins, COL.COINS, 0);
-  row[COL.OWNED_ITEMS - 1]           = pickArrayJson(p.ownedItems, COL.OWNED_ITEMS);
-  row[COL.EQUIPPED_TITLE - 1]        = pick(p.equippedTitle, COL.EQUIPPED_TITLE, '');
-  row[COL.EQUIPPED_FRAME - 1]        = pick(p.equippedFrame, COL.EQUIPPED_FRAME, '');
-  row[COL.EQUIPPED_THEME - 1]        = pick(p.equippedTheme, COL.EQUIPPED_THEME, '');
-  row[COL.EQUIPPED_ACCESSORY - 1]    = pick(p.equippedAccessory, COL.EQUIPPED_ACCESSORY, '');
-  row[COL.EQUIPPED_BACKDROP - 1]     = pick(p.equippedBackdrop, COL.EQUIPPED_BACKDROP, '');
-  row[COL.EQUIPPED_CERT_DECO - 1]    = pick(p.equippedCertDeco, COL.EQUIPPED_CERT_DECO, '');
-  row[COL.HINT_TOKENS - 1]           = pick(p.hintTokens, COL.HINT_TOKENS, 0);
-  row[COL.COIN_X2_REMAINING - 1]     = pick(p.coinX2Remaining, COL.COIN_X2_REMAINING, 0);
-  row[COL.STREAK_SHIELDS - 1]        = pick(p.streakShields, COL.STREAK_SHIELDS, 0);
-  // streak / daily
-  row[COL.STREAK_DAYS - 1]           = pick(p.streakDays, COL.STREAK_DAYS, 0);
-  row[COL.LAST_PLAY_DATE - 1]        = pick(p.lastPlayDate, COL.LAST_PLAY_DATE, '');
-  row[COL.LAST_DAILY_DATE - 1]       = pick(p.lastDailyDate, COL.LAST_DAILY_DATE, '');
-  row[COL.DAILY_DONE_COUNT - 1]      = pick(p.dailyDoneCount, COL.DAILY_DONE_COUNT, 0);
-  row[COL.DAILY_BEST_SCORE - 1]      = pick(p.dailyBestScore, COL.DAILY_BEST_SCORE, 0);
-  // exam
-  row[COL.EXAM_BEST_SCORE - 1]       = pick(p.examBestScore, COL.EXAM_BEST_SCORE, 0);
-  row[COL.EXAM_BONUS_CLAIMED - 1]    = pick(p.examBonusClaimed, COL.EXAM_BONUS_CLAIMED, false);
-  // pre/post test (สำคัญต่อการประเมินวิจัย)
-  row[COL.PRE_TEST_SCORE - 1]        = pick(p.preTestScore, COL.PRE_TEST_SCORE, '');
-  row[COL.POST_TEST_SCORE - 1]       = pick(p.postTestScore, COL.POST_TEST_SCORE, '');
-  row[COL.PRE_TEST_AT - 1]           = pick(p.preTestAt, COL.PRE_TEST_AT, '');
-  row[COL.POST_TEST_AT - 1]          = pick(p.postTestAt, COL.POST_TEST_AT, '');
-  // ความพึงพอใจ/ความสนุก (ดาว 1-5) — funRating=ดาวล่าสุด, Sum/Count ใช้หาค่าเฉลี่ย (avg = Sum/Count)
-  row[COL.FUN_RATING - 1]            = pick(p.funRating, COL.FUN_RATING, '');
-  row[COL.FUN_RATING_COUNT - 1]      = pick(p.funRatingCount, COL.FUN_RATING_COUNT, 0);
-  row[COL.FUN_RATING_SUM - 1]        = pick(p.funRatingSum, COL.FUN_RATING_SUM, 0);
+  let lineName = pick(p.lineName, COL_GAME.LINE_NAME, '');
+  if (!lineName && p.demographics && p.demographics.lineName) {
+    lineName = p.demographics.lineName;
+  }
+
+  const row = new Array(GAME_COLS).fill('');
+  row[COL_GAME.ID_CODE - 1]               = pick(p.idCode, COL_GAME.ID_CODE, '');
+  row[COL_GAME.REAL_NAME - 1]             = pick(p.realName, COL_GAME.REAL_NAME, '');
+  row[COL_GAME.LINE_NAME - 1]             = lineName;
+  row[COL_GAME.NICKNAME - 1]              = pick(p.nickname, COL_GAME.NICKNAME, '');
+  row[COL_GAME.USER_ID_HASH - 1]          = p.userIdHash;
+  row[COL_GAME.COINS - 1]                 = pick(p.coins, COL_GAME.COINS, 0);
+  row[COL_GAME.OWNED_ITEMS - 1]           = pickArrayJson(p.ownedItems, COL_GAME.OWNED_ITEMS);
+  row[COL_GAME.AVATAR - 1]                = pick(p.avatar, COL_GAME.AVATAR, 1);
+  row[COL_GAME.EQUIPPED_TITLE - 1]        = pick(p.equippedTitle, COL_GAME.EQUIPPED_TITLE, '');
+  row[COL_GAME.EQUIPPED_FRAME - 1]        = pick(p.equippedFrame, COL_GAME.EQUIPPED_FRAME, '');
+  row[COL_GAME.EQUIPPED_THEME - 1]        = pick(p.equippedTheme, COL_GAME.EQUIPPED_THEME, '');
+  row[COL_GAME.EQUIPPED_ACCESSORY - 1]    = pick(p.equippedAccessory, COL_GAME.EQUIPPED_ACCESSORY, '');
+  row[COL_GAME.EQUIPPED_BACKDROP - 1]     = pick(p.equippedBackdrop, COL_GAME.EQUIPPED_BACKDROP, '');
+  row[COL_GAME.EQUIPPED_CERT_DECO - 1]    = pick(p.equippedCertDeco, COL_GAME.EQUIPPED_CERT_DECO, '');
+  row[COL_GAME.HINT_TOKENS - 1]           = pick(p.hintTokens, COL_GAME.HINT_TOKENS, 0);
+  row[COL_GAME.COIN_X2_REMAINING - 1]     = pick(p.coinX2Remaining, COL_GAME.COIN_X2_REMAINING, 0);
+  row[COL_GAME.STREAK_SHIELDS - 1]        = pick(p.streakShields, COL_GAME.STREAK_SHIELDS, 0);
+  row[COL_GAME.STREAK_DAYS - 1]           = pick(p.streakDays, COL_GAME.STREAK_DAYS, 0);
+  row[COL_GAME.LAST_PLAY_DATE - 1]        = pick(p.lastPlayDate, COL_GAME.LAST_PLAY_DATE, '');
+  row[COL_GAME.LAST_DAILY_DATE - 1]       = pick(p.lastDailyDate, COL_GAME.LAST_DAILY_DATE, '');
+  row[COL_GAME.DAILY_DONE_COUNT - 1]      = pick(p.dailyDoneCount, COL_GAME.DAILY_DONE_COUNT, 0);
+  row[COL_GAME.DAILY_BEST_SCORE - 1]      = pick(p.dailyBestScore, COL_GAME.DAILY_BEST_SCORE, 0);
+  row[COL_GAME.EXAM_BEST_SCORE - 1]       = pick(p.examBestScore, COL_GAME.EXAM_BEST_SCORE, 0);
+  row[COL_GAME.EXAM_BONUS_CLAIMED - 1]    = pick(p.examBonusClaimed, COL_GAME.EXAM_BONUS_CLAIMED, false);
+  row[COL_GAME.STAGES_COMPLETED_LIST - 1] = pickArrayCsv(p.stagesCompleted, COL_GAME.STAGES_COMPLETED_LIST);
+  row[COL_GAME.BADGES - 1]                = pickArrayCsv(p.badges, COL_GAME.BADGES);
+  row[COL_GAME.FUN_RATING - 1]            = pick(p.funRating, COL_GAME.FUN_RATING, '');
+  row[COL_GAME.FUN_RATING_COUNT - 1]      = pick(p.funRatingCount, COL_GAME.FUN_RATING_COUNT, 0);
   return row;
 }
 
 // ---------- Endpoint: sync ----------
 function handleSync_(p) {
   if (!isValidHash_(p.userIdHash)) return jsonResponse_({ok:false, error:'invalid_hash'});
-  const sheet = getSheet_(CONFIG.SHEET_NAMES.PLAYERS);
-  const row = findRowByUserHash_(sheet, p.userIdHash);
 
-  if (row === -1) {
-    // create — ไม่มี existing
-    const newRow = buildPlayerRow_(p, null);
-    sheet.appendRow(newRow);
-    logEvent_(p.userIdHash, 'player_created', '', 0);
-    return jsonResponse_({ok:true, action:'created'});
+  // 1. ซิงค์ลงแท็บ Players (งานวิจัย & คะแนน)
+  const playerSheet = getSheet_(CONFIG.SHEET_NAMES.PLAYERS);
+  const pRow = findRowByUserHashInSheet_(playerSheet, COL_PLAYER.USER_ID_HASH, p.userIdHash);
+  if (pRow === -1) {
+    const newRow = buildPlayerResearchRow_(p, null);
+    playerSheet.appendRow(newRow);
+  } else {
+    const existing = playerSheet.getRange(pRow, 1, 1, PLAYERS_COLS).getValues()[0];
+    const newRow = buildPlayerResearchRow_(p, existing);
+    playerSheet.getRange(pRow, 1, 1, PLAYERS_COLS).setValues([newRow]);
   }
 
-  // update — อ่าน row เดิมก่อน เพื่อ merge แบบ partial (ไม่ overwrite field ที่ไม่ได้ส่ง)
-  // หมายเหตุ: ถ้า sheet เป็นเวอร์ชันเก่า (น้อยกว่า 38 column), getRange ขยายอัตโนมัติเป็น ''
-  const existing = sheet.getRange(row, 1, 1, PLAYERS_COLS).getValues()[0];
-  const newRow = buildPlayerRow_(p, existing);
-  sheet.getRange(row, 1, 1, PLAYERS_COLS).setValues([newRow]);
+  // 2. ซิงค์ลงแท็บ GameStats (ไอเทม & เกม)
+  try {
+    const gameSheet = getSheet_(CONFIG.SHEET_NAMES.GAME_STATS);
+    const gRow = findRowByUserHashInSheet_(gameSheet, COL_GAME.USER_ID_HASH, p.userIdHash);
+    if (gRow === -1) {
+      const newGRow = buildGameStatsRow_(p, null);
+      gameSheet.appendRow(newGRow);
+    } else {
+      const existingG = gameSheet.getRange(gRow, 1, 1, GAME_COLS).getValues()[0];
+      const newGRow = buildGameStatsRow_(p, existingG);
+      gameSheet.getRange(gRow, 1, 1, GAME_COLS).setValues([newGRow]);
+    }
+  } catch (e) {
+    console.warn('GameStats sync warning:', e);
+  }
+
   logEvent_(p.userIdHash, 'sync', '', p.totalXP || 0);
-  return jsonResponse_({ok:true, action:'updated'});
+  return jsonResponse_({ok:true, action:'synced'});
 }
 
 // ---------- Endpoint: issueCert ----------
@@ -266,14 +405,14 @@ function handleIssueCert_(p) {
   if (!isValidHash_(p.userIdHash)) return jsonResponse_({ok:false, error:'invalid_hash'});
 
   const playerSheet = getSheet_(CONFIG.SHEET_NAMES.PLAYERS);
-  const row = findRowByUserHash_(playerSheet, p.userIdHash);
-  if (row === -1) return jsonResponse_({ok:false, error:'player_not_found'});
+  const pRow = findRowByUserHashInSheet_(playerSheet, COL_PLAYER.USER_ID_HASH, p.userIdHash);
+  if (pRow === -1) return jsonResponse_({ok:false, error:'player_not_found'});
 
-  const nickname = playerSheet.getRange(row, COL.NICKNAME).getValue();
-  const totalXP = Number(playerSheet.getRange(row, COL.TOTAL_XP).getValue()) || 0;
-  const stagesStr = String(playerSheet.getRange(row, COL.STAGES_COMPLETED).getValue() || '');
-  const stages = stagesStr ? stagesStr.split(',').filter(Boolean) : [];
-  const existingCert = playerSheet.getRange(row, COL.CERTIFICATE_NO).getValue();
+  const nickname = playerSheet.getRange(pRow, COL_PLAYER.NICKNAME).getValue();
+  const totalXP = Number(playerSheet.getRange(pRow, COL_PLAYER.TOTAL_XP).getValue()) || 0;
+  const heroCountStr = String(playerSheet.getRange(pRow, COL_PLAYER.HERO_STAGES_COUNT).getValue() || '');
+  const heroCount = parseInt(heroCountStr, 10) || 0;
+  const existingCert = playerSheet.getRange(pRow, COL_PLAYER.CERTIFICATE_NO).getValue();
 
   if (existingCert) {
     const certSheet = getSheet_(CONFIG.SHEET_NAMES.CERTIFICATES);
@@ -291,13 +430,13 @@ function handleIssueCert_(p) {
     }
   }
 
-  const allDone = stages.length >= CONFIG.STAGES_REQUIRED;
+  const allDone = heroCount >= CONFIG.STAGES_REQUIRED;
   const enoughXP = totalXP >= CONFIG.MIN_XP_FOR_CERT;
   if (!allDone && !enoughXP) {
     return jsonResponse_({
       ok:false, error:'requirements_not_met',
-      message:'ต้องจบครบ ' + CONFIG.STAGES_REQUIRED + ' ด่าน หรือมี XP ≥ ' + CONFIG.MIN_XP_FOR_CERT,
-      currentStages: stages.length, currentXP: totalXP,
+      message:'ต้องจบครบด่านบทหลัก ' + CONFIG.STAGES_REQUIRED + ' ด่าน หรือมี XP ≥ ' + CONFIG.MIN_XP_FOR_CERT,
+      currentStages: heroCount, currentXP: totalXP,
     });
   }
 
@@ -306,10 +445,10 @@ function handleIssueCert_(p) {
   const issueDate = nowIso_();
 
   const certSheet = getSheet_(CONFIG.SHEET_NAMES.CERTIFICATES);
-  certSheet.appendRow([certNo, p.userIdHash, nickname, issueDate, verifyCode, totalXP, stages.length]);
+  certSheet.appendRow([certNo, p.userIdHash, nickname, issueDate, verifyCode, totalXP, heroCount]);
 
-  playerSheet.getRange(row, COL.CERTIFICATE_NO).setValue(certNo);
-  playerSheet.getRange(row, COL.CERTIFICATE_ISSUED_AT).setValue(issueDate);
+  playerSheet.getRange(pRow, COL_PLAYER.CERTIFICATE_NO).setValue(certNo);
+  playerSheet.getRange(pRow, COL_PLAYER.CERTIFICATE_ISSUED_AT).setValue(issueDate);
 
   logEvent_(p.userIdHash, 'cert_issued', certNo, totalXP);
 
@@ -352,65 +491,160 @@ function handleVerify_(params) {
 // ---------- Endpoint: restore ----------
 function handleRestore_(params) {
   if (!isValidHash_(params.hash)) return jsonResponse_({ok:false, error:'invalid_hash'});
-  const sheet = getSheet_(CONFIG.SHEET_NAMES.PLAYERS);
-  const row = findRowByUserHash_(sheet, params.hash);
-  if (row === -1) return jsonResponse_({ok:true, found:false});
+  const playerSheet = getSheet_(CONFIG.SHEET_NAMES.PLAYERS);
+  const pRow = findRowByUserHashInSheet_(playerSheet, COL_PLAYER.USER_ID_HASH, params.hash);
+  if (pRow === -1) return jsonResponse_({ok:true, found:false});
 
-  const r = sheet.getRange(row, 1, 1, PLAYERS_COLS).getValues()[0];
-  const stagesStr = String(r[COL.STAGES_COMPLETED - 1] || '');
-  const badgesStr = String(r[COL.BADGES - 1] || '');
+  const pr = playerSheet.getRange(pRow, 1, 1, PLAYERS_COLS).getValues()[0];
+
+  // อ่านแท็บ GameStats ประกอบ
+  let gr = [];
+  try {
+    const gameSheet = getSheet_(CONFIG.SHEET_NAMES.GAME_STATS);
+    const gRow = findRowByUserHashInSheet_(gameSheet, COL_GAME.USER_ID_HASH, params.hash);
+    if (gRow !== -1) gr = gameSheet.getRange(gRow, 1, 1, GAME_COLS).getValues()[0];
+  } catch (e) {}
+
+  const stagesStr = String(gr[COL_GAME.STAGES_COMPLETED_LIST - 1] || '');
+  const badgesStr = String(gr[COL_GAME.BADGES - 1] || '');
 
   return jsonResponse_({
     ok:true, found:true,
     player: {
-      nickname: String(r[COL.NICKNAME - 1] || ''),
-      grade: String(r[COL.GRADE - 1] || ''),
-      school: String(r[COL.SCHOOL - 1] || ''),
-      createdAt: String(r[COL.CREATED_AT - 1] || ''),
-      lastActiveAt: String(r[COL.LAST_ACTIVE_AT - 1] || ''),
-      totalXP: numOr_(r[COL.TOTAL_XP - 1], 0),
-      level: numOr_(r[COL.LEVEL - 1], 1),
+      idCode: strOrUndef_(pr[COL_PLAYER.ID_CODE - 1]),
+      realName: strOrUndef_(pr[COL_PLAYER.REAL_NAME - 1]),
+      lineName: strOrUndef_(pr[COL_PLAYER.LINE_NAME - 1]),
+      nickname: String(pr[COL_PLAYER.NICKNAME - 1] || 'ผู้เล่น'),
+      grade: String(pr[COL_PLAYER.GRADE - 1] || ''),
+      school: String(pr[COL_PLAYER.SCHOOL - 1] || ''),
+      createdAt: String(pr[COL_PLAYER.CREATED_AT - 1] || ''),
+      lastActiveAt: String(pr[COL_PLAYER.LAST_ACTIVE_AT - 1] || ''),
+      totalXP: numOr_(pr[COL_PLAYER.TOTAL_XP - 1], 0),
+      level: numOr_(pr[COL_PLAYER.LEVEL - 1], 1),
       stagesCompleted: stagesStr ? stagesStr.split(',').filter(Boolean).map(Number) : [],
       badges: badgesStr ? badgesStr.split(',').filter(Boolean) : [],
-      certificateNo: r[COL.CERTIFICATE_NO - 1] || null,
-      certificateIssuedAt: r[COL.CERTIFICATE_ISSUED_AT - 1] || null,
-      // field ที่เพิ่มใน v1.2.0
-      avatar: numOr_(r[COL.AVATAR - 1], 1),
-      coins: numOr_(r[COL.COINS - 1], 0),
-      ownedItems: parseJsonArray_(r[COL.OWNED_ITEMS - 1]),
-      equippedTitle: strOrUndef_(r[COL.EQUIPPED_TITLE - 1]),
-      equippedFrame: strOrUndef_(r[COL.EQUIPPED_FRAME - 1]),
-      equippedTheme: strOrUndef_(r[COL.EQUIPPED_THEME - 1]),
-      equippedAccessory: strOrUndef_(r[COL.EQUIPPED_ACCESSORY - 1]),
-      equippedBackdrop: strOrUndef_(r[COL.EQUIPPED_BACKDROP - 1]),
-      equippedCertDeco: strOrUndef_(r[COL.EQUIPPED_CERT_DECO - 1]),
-      hintTokens: numOr_(r[COL.HINT_TOKENS - 1], 0),
-      coinX2Remaining: numOr_(r[COL.COIN_X2_REMAINING - 1], 0),
-      streakShields: numOr_(r[COL.STREAK_SHIELDS - 1], 0),
-      streakDays: numOr_(r[COL.STREAK_DAYS - 1], 0),
-      lastPlayDate: strOrUndef_(r[COL.LAST_PLAY_DATE - 1]),
-      lastDailyDate: strOrUndef_(r[COL.LAST_DAILY_DATE - 1]),
-      dailyDoneCount: numOr_(r[COL.DAILY_DONE_COUNT - 1], 0),
-      dailyBestScore: numOr_(r[COL.DAILY_BEST_SCORE - 1], 0),
-      examBestScore: numOr_(r[COL.EXAM_BEST_SCORE - 1], 0),
-      examBonusClaimed: boolOf_(r[COL.EXAM_BONUS_CLAIMED - 1]),
-      preTestScore: (r[COL.PRE_TEST_SCORE - 1] === '' || r[COL.PRE_TEST_SCORE - 1] === null)
-        ? undefined : numOr_(r[COL.PRE_TEST_SCORE - 1], undefined),
-      postTestScore: (r[COL.POST_TEST_SCORE - 1] === '' || r[COL.POST_TEST_SCORE - 1] === null)
-        ? undefined : numOr_(r[COL.POST_TEST_SCORE - 1], undefined),
-      preTestAt: strOrUndef_(r[COL.PRE_TEST_AT - 1]),
-      postTestAt: strOrUndef_(r[COL.POST_TEST_AT - 1]),
-      // field ที่เพิ่มใน v1.3.0 — ความพึงพอใจ/ความสนุก
-      funRating: (r[COL.FUN_RATING - 1] === '' || r[COL.FUN_RATING - 1] === null)
-        ? undefined : numOr_(r[COL.FUN_RATING - 1], undefined),
-      funRatingCount: numOr_(r[COL.FUN_RATING_COUNT - 1], 0),
-      funRatingSum: numOr_(r[COL.FUN_RATING_SUM - 1], 0),
+      certificateNo: pr[COL_PLAYER.CERTIFICATE_NO - 1] || null,
+      certificateIssuedAt: pr[COL_PLAYER.CERTIFICATE_ISSUED_AT - 1] || null,
+      preTestScore: (pr[COL_PLAYER.PRE_TEST_SCORE - 1] === '' || pr[COL_PLAYER.PRE_TEST_SCORE - 1] === null)
+        ? undefined : numOr_(pr[COL_PLAYER.PRE_TEST_SCORE - 1], undefined),
+      postTestScore: (pr[COL_PLAYER.POST_TEST_SCORE - 1] === '' || pr[COL_PLAYER.POST_TEST_SCORE - 1] === null)
+        ? undefined : numOr_(pr[COL_PLAYER.POST_TEST_SCORE - 1], undefined),
+      preTestSkillScore: (pr[COL_PLAYER.PRE_TEST_SKILL_SCORE - 1] === '' || pr[COL_PLAYER.PRE_TEST_SKILL_SCORE - 1] === null)
+        ? undefined : numOr_(pr[COL_PLAYER.PRE_TEST_SKILL_SCORE - 1], undefined),
+      postTestSkillScore: (pr[COL_PLAYER.POST_TEST_SKILL_SCORE - 1] === '' || pr[COL_PLAYER.POST_TEST_SKILL_SCORE - 1] === null)
+        ? undefined : numOr_(pr[COL_PLAYER.POST_TEST_SKILL_SCORE - 1], undefined),
+      evalPart5Avg: (pr[COL_PLAYER.EVAL_PART5_AVG - 1] === '' || pr[COL_PLAYER.EVAL_PART5_AVG - 1] === null)
+        ? undefined : numOr_(pr[COL_PLAYER.EVAL_PART5_AVG - 1], undefined),
+      preTestAt: strOrUndef_(pr[COL_PLAYER.PRE_TEST_AT - 1]),
+      postTestAt: strOrUndef_(pr[COL_PLAYER.POST_TEST_AT - 1]),
+      demographics: pr[COL_PLAYER.DEMOGRAPHICS - 1] ? (function() { try { return JSON.parse(String(pr[COL_PLAYER.DEMOGRAPHICS - 1])); } catch (e) { return undefined; } })() : undefined,
+      // Game fields
+      avatar: gr.length ? numOr_(gr[COL_GAME.AVATAR - 1], 1) : 1,
+      coins: gr.length ? numOr_(gr[COL_GAME.COINS - 1], 0) : 0,
+      ownedItems: gr.length ? parseJsonArray_(gr[COL_GAME.OWNED_ITEMS - 1]) : [],
+      equippedTitle: gr.length ? strOrUndef_(gr[COL_GAME.EQUIPPED_TITLE - 1]) : undefined,
+      equippedFrame: gr.length ? strOrUndef_(gr[COL_GAME.EQUIPPED_FRAME - 1]) : undefined,
+      equippedTheme: gr.length ? strOrUndef_(gr[COL_GAME.EQUIPPED_THEME - 1]) : undefined,
+      equippedAccessory: gr.length ? strOrUndef_(gr[COL_GAME.EQUIPPED_ACCESSORY - 1]) : undefined,
+      equippedBackdrop: gr.length ? strOrUndef_(gr[COL_GAME.EQUIPPED_BACKDROP - 1]) : undefined,
+      equippedCertDeco: gr.length ? strOrUndef_(gr[COL_GAME.EQUIPPED_CERT_DECO - 1]) : undefined,
+      hintTokens: gr.length ? numOr_(gr[COL_GAME.HINT_TOKENS - 1], 0) : 0,
+      coinX2Remaining: gr.length ? numOr_(gr[COL_GAME.COIN_X2_REMAINING - 1], 0) : 0,
+      streakShields: gr.length ? numOr_(gr[COL_GAME.STREAK_SHIELDS - 1], 0) : 0,
+      streakDays: gr.length ? numOr_(gr[COL_GAME.STREAK_DAYS - 1], 0) : 0,
+      lastPlayDate: gr.length ? strOrUndef_(gr[COL_GAME.LAST_PLAY_DATE - 1]) : undefined,
+      lastDailyDate: gr.length ? strOrUndef_(gr[COL_GAME.LAST_DAILY_DATE - 1]) : undefined,
+      dailyDoneCount: gr.length ? numOr_(gr[COL_GAME.DAILY_DONE_COUNT - 1], 0) : 0,
+      dailyBestScore: gr.length ? numOr_(gr[COL_GAME.DAILY_BEST_SCORE - 1], 0) : 0,
+      examBestScore: gr.length ? numOr_(gr[COL_GAME.EXAM_BEST_SCORE - 1], 0) : 0,
+      examBonusClaimed: gr.length ? boolOf_(gr[COL_GAME.EXAM_BONUS_CLAIMED - 1]) : false,
+      funRating: gr.length ? (gr[COL_GAME.FUN_RATING - 1] === '' ? undefined : numOr_(gr[COL_GAME.FUN_RATING - 1], undefined)) : undefined,
+      funRatingCount: gr.length ? numOr_(gr[COL_GAME.FUN_RATING_COUNT - 1], 0) : 0,
     },
   });
 }
 
+// ---------- Endpoint: getAdminData (สำหรับ Teacher Admin Dashboard) ----------
+function handleGetAdminData_(params) {
+  if (params.passcode !== CONFIG.TEACHER_PASSCODE) {
+    return jsonResponse_({ok:false, error:'unauthorized'});
+  }
+
+  const sheet = getSheet_(CONFIG.SHEET_NAMES.PLAYERS);
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) return jsonResponse_({ok:true, students:[], total:0});
+
+  const students = [];
+  for (let i = 1; i < data.length; i++) {
+    const r = data[i];
+    const hash = String(r[COL_PLAYER.USER_ID_HASH - 1] || '');
+    if (!hash && !r[COL_PLAYER.ID_CODE - 1] && !r[COL_PLAYER.REAL_NAME - 1]) continue;
+
+    const heroStr = String(r[COL_PLAYER.HERO_STAGES_COUNT - 1] || '');
+    const totalStagesStr = String(r[COL_PLAYER.TOTAL_STAGES_COUNT - 1] || '');
+    const preK = numOr_(r[COL_PLAYER.PRE_TEST_SCORE - 1], undefined);
+    const postK = numOr_(r[COL_PLAYER.POST_TEST_SCORE - 1], undefined);
+    const gainDelta = (preK !== undefined && postK !== undefined) ? (postK - preK) : undefined;
+
+    students.push({
+      no: i,
+      userIdHash: hash,
+      idCode: String(r[COL_PLAYER.ID_CODE - 1] || ''),
+      realName: String(r[COL_PLAYER.REAL_NAME - 1] || r[COL_PLAYER.NICKNAME - 1] || 'ผู้เรียน'),
+      lineName: String(r[COL_PLAYER.LINE_NAME - 1] || ''),
+      nickname: String(r[COL_PLAYER.NICKNAME - 1] || 'ผู้เล่น'),
+      grade: String(r[COL_PLAYER.GRADE - 1] || ''),
+      school: String(r[COL_PLAYER.SCHOOL - 1] || ''),
+      preTestScore: preK,
+      preTestSkillScore: numOr_(r[COL_PLAYER.PRE_TEST_SKILL_SCORE - 1], undefined),
+      preTestAt: strOrUndef_(r[COL_PLAYER.PRE_TEST_AT - 1]),
+      stagesCompletedCount: parseInt(totalStagesStr, 10) || 0,
+      heroStagesCount: parseInt(heroStr, 10) || 0,
+      totalStages: 20,
+      totalXP: numOr_(r[COL_PLAYER.TOTAL_XP - 1], 0),
+      level: numOr_(r[COL_PLAYER.LEVEL - 1], 1),
+      postTestScore: postK,
+      postTestSkillScore: numOr_(r[COL_PLAYER.POST_TEST_SKILL_SCORE - 1], undefined),
+      postTestAt: strOrUndef_(r[COL_PLAYER.POST_TEST_AT - 1]),
+      gainDelta: gainDelta,
+      evalPart5Avg: numOr_(r[COL_PLAYER.EVAL_PART5_AVG - 1], undefined),
+      certificateNo: strOrUndef_(r[COL_PLAYER.CERTIFICATE_NO - 1]),
+      certificateIssuedAt: strOrUndef_(r[COL_PLAYER.CERTIFICATE_ISSUED_AT - 1]),
+      lastActiveAt: String(r[COL_PLAYER.LAST_ACTIVE_AT - 1] || r[COL_PLAYER.CREATED_AT - 1] || ''),
+    });
+  }
+
+  return jsonResponse_({
+    ok: true,
+    total: students.length,
+    students: students,
+  });
+}
+
+// ---------- Endpoint: downloadCsv (สตรีม CSV ตรง) ----------
+function handleDownloadCsv_(params) {
+  if (params.passcode !== CONFIG.TEACHER_PASSCODE) {
+    return jsonResponse_({ok:false, error:'unauthorized'});
+  }
+
+  const sheet = getSheet_(CONFIG.SHEET_NAMES.PLAYERS);
+  const data = sheet.getDataRange().getValues();
+
+  let csv = '';
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i].map(function (val) {
+      const s = String(val).replace(/"/g, '""');
+      return '"' + s + '"';
+    });
+    csv += row.join(',') + '\r\n';
+  }
+
+  return ContentService.createTextOutput(csv)
+    .setMimeType(ContentService.MimeType.CSV)
+    .downloadAsFile('health_detective_research_scores.csv');
+}
+
 // ---------- Endpoint: leaderboard ----------
-// PDPA: ส่ง nickname กลับเฉพาะแถวของผู้เล่นเอง (isMe) เท่านั้น
 function handleLeaderboard_(params) {
   const myHash = params.hash || '';
   const limit = Math.min(parseInt(params.limit, 10) || 50, 200);
@@ -422,18 +656,17 @@ function handleLeaderboard_(params) {
   const players = [];
   for (let i = 1; i < data.length; i++) {
     const r = data[i];
-    const hash = String(r[COL.USER_ID_HASH - 1] || '');
+    const hash = String(r[COL_PLAYER.USER_ID_HASH - 1] || '');
     if (!hash) continue;
-    const stagesStr = String(r[COL.STAGES_COMPLETED - 1] || '');
+    const stagesStr = String(r[COL_PLAYER.TOTAL_STAGES_COUNT - 1] || '0');
     players.push({
       userIdHash: hash,
-      nickname: String(r[COL.NICKNAME - 1] || 'ผู้เล่น'),
-      totalXP: numOr_(r[COL.TOTAL_XP - 1], 0),
-      stagesCount: stagesStr ? stagesStr.split(',').filter(Boolean).length : 0,
+      nickname: String(r[COL_PLAYER.NICKNAME - 1] || 'ผู้เล่น'),
+      totalXP: numOr_(r[COL_PLAYER.TOTAL_XP - 1], 0),
+      stagesCount: parseInt(stagesStr, 10) || 0,
     });
   }
 
-  // เรียง: XP มากก่อน → ด่านเยอะก่อน
   players.sort(function (a, b) {
     if (b.totalXP !== a.totalXP) return b.totalXP - a.totalXP;
     return b.stagesCount - a.stagesCount;
@@ -462,12 +695,54 @@ function handleLeaderboard_(params) {
   });
 }
 
+// ---------- Endpoint: getSettings (ดึงการตั้งค่าระบบกลางสำหรับทุกคน) ----------
+function handleGetSettings_() {
+  const props = PropertiesService.getScriptProperties();
+  const raw = props.getProperty('APP_SETTINGS');
+  let settings = {
+    preTestEnabled: true,
+    postTestEnabled: true,
+    allowBypassStages: false,
+    showExplanations: false,
+    part2Enabled: true,
+    part3Enabled: true,
+    knowledgeQuestionCount: 21,
+    part4Enabled: true,
+    part5Enabled: true,
+    finalExamEnabled: true,
+    dailyChallengeEnabled: true,
+    randomizeQuestions: false,
+    googleSheetUrl: 'https://docs.google.com/spreadsheets/d/1ngfohj3IAImeSulWSi7yNijAj2dX4Ge1bqrMy9sPK18/edit?usp=sharing',
+  };
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      settings = Object.assign(settings, parsed);
+    } catch (e) {}
+  }
+  return jsonResponse_({ ok: true, settings: settings });
+}
+
+// ---------- Endpoint: updateSettings (อาจารย์อัปเดตการตั้งค่าระบบกลาง) ----------
+function handleUpdateSettings_(payload) {
+  if (payload.passcode !== CONFIG.TEACHER_PASSCODE) {
+    return jsonResponse_({ ok: false, error: 'unauthorized' });
+  }
+  if (!payload.settings) {
+    return jsonResponse_({ ok: false, error: 'missing_settings' });
+  }
+  const props = PropertiesService.getScriptProperties();
+  props.setProperty('APP_SETTINGS', JSON.stringify(payload.settings));
+  return jsonResponse_({ ok: true, settings: payload.settings });
+}
+
 // ---------- Routers ----------
 function doPost(e) {
   try {
     const payload = JSON.parse(e.postData.contents);
-    if (payload.action === 'sync')      return handleSync_(payload);
-    if (payload.action === 'issueCert') return handleIssueCert_(payload);
+    if (payload.action === 'sync')           return handleSync_(payload);
+    if (payload.action === 'issueCert')      return handleIssueCert_(payload);
+    if (payload.action === 'updateSettings') return handleUpdateSettings_(payload);
     return jsonResponse_({ok:false, error:'unknown_action'});
   } catch (err) {
     return jsonResponse_({ok:false, error:'server_error', message:String(err)});
@@ -477,83 +752,131 @@ function doPost(e) {
 function doGet(e) {
   try {
     const action = e.parameter.action;
-    if (action === 'verify')      return handleVerify_(e.parameter);
-    if (action === 'restore')     return handleRestore_(e.parameter);
-    if (action === 'leaderboard') return handleLeaderboard_(e.parameter);
-    if (action === 'ping')        return jsonResponse_({ok:true, time:nowIso_(), version:'1.3.0'});
+    if (action === 'verify')       return handleVerify_(e.parameter);
+    if (action === 'restore')      return handleRestore_(e.parameter);
+    if (action === 'leaderboard')  return handleLeaderboard_(e.parameter);
+    if (action === 'getAdminData') return handleGetAdminData_(e.parameter);
+    if (action === 'downloadCsv')  return handleDownloadCsv_(e.parameter);
+    if (action === 'getSettings')  return handleGetSettings_();
+    if (action === 'ping')         return jsonResponse_({ok:true, time:nowIso_(), version:'2.4.0'});
     return jsonResponse_({ok:false, error:'unknown_action'});
   } catch (err) {
     return jsonResponse_({ok:false, error:'server_error', message:String(err)});
   }
 }
 
-// ---------- Setup helper (รันครั้งเดียว ก่อนใช้งาน หรือเมื่อ migrate schema) ----------
-function setupSheets() {
+// ============================================================================
+// ฟังก์ชันล้างข้อมูลผู้เล่นทั้งหมด 100% (Reset ทุกแท็บให้ว่างเปล่า เหลือเฉพาะหัวตาราง)
+// ⚠️ ใช้เมื่อต้องการลบข้อมูลทดสอบเก่าออกทั้งหมดเพื่อเริ่มเก็บข้อมูลนักเรียนจริง
+// ============================================================================
+function resetAllDataToEmpty() {
   const sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
   if (!sheetId) throw new Error('กรุณาตั้ง SHEET_ID ใน Script Properties ก่อน');
   const ss = SpreadsheetApp.openById(sheetId);
 
-  const PLAYERS_HEADERS = [
-    'userIdHash','nickname','grade','school','createdAt','lastActiveAt',
-    'totalXP','level','stagesCompleted','badges','certificateNo','certificateIssuedAt',
-    'avatar','coins','ownedItems',
-    'equippedTitle','equippedFrame','equippedTheme',
-    'equippedAccessory','equippedBackdrop','equippedCertDeco',
-    'hintTokens','coinX2Remaining','streakShields',
-    'streakDays','lastPlayDate','lastDailyDate','dailyDoneCount','dailyBestScore',
-    'examBestScore','examBonusClaimed',
-    'preTestScore','postTestScore','preTestAt','postTestAt',
-    'funRating','funRatingCount','funRatingSum',
-  ];
+  // 1. Reset แท็บ Players (ตารางว่างเปล่า มีเฉพาะหัวตาราง 25 คอลัมน์ที่แยกชื่อชัดเจน)
+  let pSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.PLAYERS);
+  if (!pSheet) pSheet = ss.insertSheet(CONFIG.SHEET_NAMES.PLAYERS, 0);
+  pSheet.clear();
 
-  const setup = [
-    { name: CONFIG.SHEET_NAMES.PLAYERS,      headers: PLAYERS_HEADERS },
-    { name: CONFIG.SHEET_NAMES.EVENTS,       headers: ['timestamp','userIdHash','event','detail','xpDelta'] },
-    { name: CONFIG.SHEET_NAMES.CERTIFICATES, headers: ['certificateNo','userIdHash','nickname','issueDate','verifyCode','totalXP','stagesCount'] },
-  ];
+  const curCols = pSheet.getMaxColumns();
+  if (curCols < PLAYERS_COLS) pSheet.insertColumnsAfter(curCols, PLAYERS_COLS - curCols);
 
-  setup.forEach(function (s) {
-    let sheet = ss.getSheetByName(s.name);
-    if (!sheet) sheet = ss.insertSheet(s.name);
-    // ขยาย column ของ sheet ถ้ายังน้อยกว่าที่ต้องการ (กัน setRange overflow)
-    const needed = s.headers.length;
-    if (sheet.getMaxColumns() < needed) {
-      sheet.insertColumnsAfter(sheet.getMaxColumns(), needed - sheet.getMaxColumns());
-    }
-    sheet.getRange(1, 1, 1, needed).setValues([s.headers]).setFontWeight('bold');
-    sheet.setFrozenRows(1);
-  });
+  pSheet.getRange(1, 1, 1, PLAYERS_COLS)
+    .setValues([PLAYERS_HEADERS])
+    .setFontWeight('bold')
+    .setFontSize(10)
+    .setBackground('#0F172A')
+    .setFontColor('#FFFFFF')
+    .setVerticalAlignment('middle')
+    .setWrap(true);
+  pSheet.setRowHeight(1, 52);
 
-  // ลบ Sheet1 ที่ถูกสร้างอัตโนมัติ (ถ้ามี และมี sheet อื่นแล้ว)
+  // สีหัวตารางแยกหมวดชัดเจน
+  pSheet.getRange(1, 1, 1, 6).setBackground('#0F172A').setFontColor('#38BDF8');   // ข้อมูลผู้เรียน & LINE (Navy + ฟ้า)
+  pSheet.getRange(1, 7, 1, 2).setBackground('#064E3B').setFontColor('#6EE7B7');   // [ใหม่-ก่อนเรียน] (เขียวแก่ + มิ้นต์)
+  pSheet.getRange(1, 9, 1, 2).setBackground('#047857').setFontColor('#A7F3D0');   // [ใหม่-หลังเรียน] (Emerald Green)
+  pSheet.getRange(1, 11, 1, 1).setBackground('#0F766E').setFontColor('#5EEAD4');  // [ผลวิจัย] Gain Delta (Teal)
+  pSheet.getRange(1, 12, 1, 2).setBackground('#1E1B4B').setFontColor('#A5B4FC');  // [ด่านเกม] (Deep Indigo)
+  pSheet.getRange(1, 14, 1, 2).setBackground('#312E81').setFontColor('#C7D2FE');  // [คะแนนเกม] XP & Level (Purple)
+  pSheet.getRange(1, 16, 1, 1).setBackground('#78350F').setFontColor('#FDE68A');  // [ใหม่-ประเมินแอป] (Amber)
+  pSheet.getRange(1, 17, 1, 2).setBackground('#155E75').setFontColor('#A5F3FC');  // [เกียรติบัตร] (Cyan)
+  pSheet.getRange(1, 19, 1, 7).setBackground('#334155').setFontColor('#F8FAFC');  // [วันเวลา & ดิบ] (Slate)
+
+  pSheet.setColumnWidth(COL_PLAYER.ID_CODE, 140);
+  pSheet.setColumnWidth(COL_PLAYER.REAL_NAME, 190);
+  pSheet.setColumnWidth(COL_PLAYER.LINE_NAME, 160);
+  pSheet.setColumnWidth(COL_PLAYER.NICKNAME, 110);
+  pSheet.setColumnWidth(COL_PLAYER.GRADE, 90);
+  pSheet.setColumnWidth(COL_PLAYER.SCHOOL, 130);
+  pSheet.setColumnWidth(COL_PLAYER.PRE_TEST_SCORE, 160);
+  pSheet.setColumnWidth(COL_PLAYER.PRE_TEST_SKILL_SCORE, 160);
+  pSheet.setColumnWidth(COL_PLAYER.POST_TEST_SCORE, 160);
+  pSheet.setColumnWidth(COL_PLAYER.POST_TEST_SKILL_SCORE, 160);
+  pSheet.setColumnWidth(COL_PLAYER.GAIN_DELTA_KNOWLEDGE, 150);
+  pSheet.setColumnWidth(COL_PLAYER.HERO_STAGES_COUNT, 160);
+  pSheet.setColumnWidth(COL_PLAYER.TOTAL_STAGES_COUNT, 140);
+  pSheet.setColumnWidth(COL_PLAYER.TOTAL_XP, 120);
+  pSheet.setColumnWidth(COL_PLAYER.LEVEL, 90);
+  pSheet.setColumnWidth(COL_PLAYER.EVAL_PART5_AVG, 170);
+  pSheet.setColumnWidth(COL_PLAYER.CERTIFICATE_NO, 140);
+  pSheet.setColumnWidth(COL_PLAYER.CERTIFICATE_ISSUED_AT, 170);
+  pSheet.setColumnWidth(COL_PLAYER.PRE_TEST_AT, 170);
+  pSheet.setColumnWidth(COL_PLAYER.POST_TEST_AT, 170);
+  pSheet.setColumnWidth(COL_PLAYER.LAST_ACTIVE_AT, 170);
+  pSheet.setColumnWidth(COL_PLAYER.CREATED_AT, 170);
+  pSheet.setColumnWidth(COL_PLAYER.DEMOGRAPHICS, 220);
+  pSheet.setColumnWidth(COL_PLAYER.EVAL_PART5_DETAILS, 160);
+  pSheet.setColumnWidth(COL_PLAYER.USER_ID_HASH, 160);
+
+  pSheet.setFrozenRows(1);
+  try { pSheet.setFrozenColumns(4); } catch (e) {}
+
+  // 2. Reset แท็บ GameStats
+  let gSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.GAME_STATS);
+  if (!gSheet) gSheet = ss.insertSheet(CONFIG.SHEET_NAMES.GAME_STATS, 1);
+  gSheet.clear();
+
+  const curGCols = gSheet.getMaxColumns();
+  if (curGCols < GAME_COLS) gSheet.insertColumnsAfter(curGCols, GAME_COLS - curGCols);
+
+  gSheet.getRange(1, 1, 1, GAME_COLS)
+    .setValues([GAME_HEADERS])
+    .setFontWeight('bold')
+    .setFontSize(10)
+    .setBackground('#334155')
+    .setFontColor('#F8FAFC')
+    .setVerticalAlignment('middle')
+    .setWrap(true);
+  gSheet.setRowHeight(1, 52);
+
+  gSheet.setColumnWidth(COL_GAME.ID_CODE, 140);
+  gSheet.setColumnWidth(COL_GAME.REAL_NAME, 190);
+  gSheet.setColumnWidth(COL_GAME.LINE_NAME, 160);
+  gSheet.setColumnWidth(COL_GAME.NICKNAME, 110);
+  gSheet.setColumnWidth(COL_GAME.USER_ID_HASH, 160);
+  gSheet.setColumnWidth(COL_GAME.COINS, 90);
+  gSheet.setColumnWidth(COL_GAME.OWNED_ITEMS, 200);
+
+  gSheet.setFrozenRows(1);
+  try { gSheet.setFrozenColumns(4); } catch (e) {}
+
+  // 3. Reset แท็บ Certificates
+  let certSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.CERTIFICATES);
+  if (!certSheet) certSheet = ss.insertSheet(CONFIG.SHEET_NAMES.CERTIFICATES, 2);
+  certSheet.clear();
+  certSheet.getRange(1, 1, 1, 7).setValues([['certificateNo','userIdHash','nickname','issueDate','verifyCode','totalXP','stagesCount']]).setFontWeight('bold');
+  certSheet.setFrozenRows(1);
+
+  // 4. Reset แท็บ Events
+  let eventsSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.EVENTS);
+  if (!eventsSheet) eventsSheet = ss.insertSheet(CONFIG.SHEET_NAMES.EVENTS, 3);
+  eventsSheet.clear();
+  eventsSheet.getRange(1, 1, 1, 5).setValues([['timestamp','userIdHash','event','detail','xpDelta']]).setFontWeight('bold');
+  eventsSheet.setFrozenRows(1);
+
   const def = ss.getSheetByName('Sheet1');
   if (def && ss.getSheets().length > 1) ss.deleteSheet(def);
 
-  console.log('✅ Setup complete (v1.3.0): ' + setup.map(function (x) { return x.name; }).join(', '));
-}
-
-// ---------- Migration helper สำหรับผู้ใช้เก่า ----------
-/**
- * รันครั้งเดียวเพื่อ migrate sheet จาก v1.1.0 (12 column) → v1.2.0 (35 column)
- * - ไม่ลบข้อมูลเดิม แค่เพิ่ม header ของ column ใหม่
- * - แถวที่มีอยู่จะมีค่าว่างใน column ใหม่ — frontend จะใช้ default (0/[]/undefined)
- * - ตอนผู้เล่นเล่นครั้งถัดไปและ syncIfReady ยิงมา ค่าจะถูกเติมโดยอัตโนมัติ
- *
- * 👉 วิธีใช้: เปิด Apps Script Editor → เลือกฟังก์ชัน "migrateToV120" → กด Run
- */
-function migrateToV120() {
-  setupSheets();
-  console.log('✅ Migration v1.1.0 → v1.2.0 done. ผู้เล่นเก่าจะค่อยๆ ถูกเติม field ใหม่ตอน sync ครั้งถัดไป');
-}
-
-/**
- * รันครั้งเดียวเพื่อ migrate sheet → v1.3.0 (38 column) — เพิ่ม funRating/funRatingCount/funRatingSum
- * - ไม่ลบข้อมูลเดิม แค่เพิ่ม 3 column ใหม่ท้ายตาราง (AJ/AK/AL)
- * - แถวเดิมจะมีค่าว่าง — frontend ใช้ default, ค่าจะถูกเติมตอนผู้เล่นให้ดาวประเมินครั้งถัดไป
- *
- * 👉 วิธีใช้: เปิด Apps Script Editor → เลือกฟังก์ชัน "migrateToV130" → กด Run
- *    จากนั้น Deploy → Manage deployments → Edit → New version → Deploy
- */
-function migrateToV130() {
-  setupSheets();
-  console.log('✅ Migration → v1.3.0 done. เพิ่มคอลัมน์ funRating/funRatingCount/funRatingSum แล้ว');
+  console.log('🧹 ทำความสะอาดตาราง ล้างข้อมูลเดิมออก 100% พร้อมรับนักเรียนจริงแล้ว');
 }

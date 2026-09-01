@@ -11,6 +11,8 @@ const MOCK_USER_KEY = 'hd_mock_user_id';
 
 let initialized = false;
 let cachedUserId: string | null = null;
+let cachedDisplayName: string | null = null;
+let cachedPictureUrl: string | null = null;
 
 /** สร้างหรืออ่าน mock user ID (เก็บใน localStorage) */
 function getOrCreateMockUserId(): string {
@@ -27,18 +29,25 @@ export async function initLiff(): Promise<void> {
   if (initialized) return;
   if (MOCK_MODE) {
     cachedUserId = getOrCreateMockUserId();
+    cachedDisplayName = 'ผู้เล่นทดสอบ';
     initialized = true;
     console.info('[LIFF] Forced MOCK mode. UserID:', cachedUserId);
     return;
   }
   try {
-    await liff.init({ liffId: LIFF_ID });
-    if (liff.isInClient() && liff.isLoggedIn()) {
-      const profile = await liff.getProfile();
-      cachedUserId = profile.userId;
-      initialized = true;
-      console.info('[LIFF] Real mode in LINE app. UserID:', cachedUserId);
-      return;
+    await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: false });
+    if (liff.isLoggedIn()) {
+      try {
+        const profile = await liff.getProfile();
+        cachedUserId = profile.userId;
+        cachedDisplayName = profile.displayName;
+        cachedPictureUrl = profile.pictureUrl || null;
+        initialized = true;
+        console.info('[LIFF] Real mode in LINE app. UserID:', cachedUserId, 'Name:', cachedDisplayName);
+        return;
+      } catch (profErr) {
+        console.warn('[LIFF] getProfile failed during init:', profErr);
+      }
     }
     // นอกแอป LINE หรือยังไม่ login → ไม่เรียก liff.login() (กัน redirect loop)
     // ใช้ mock user แทน เพื่อให้ทดสอบใน browser ปกติได้
@@ -59,7 +68,36 @@ export async function getUserIdHash(): Promise<string> {
   return await sha256Hex(cachedUserId);
 }
 
+/** ดึงข้อมูล LINE Profile ของผู้ใช้ (ชื่อที่แสดงใน LINE) */
+export async function getLineProfile(): Promise<{ userId?: string; displayName?: string; pictureUrl?: string } | null> {
+  if (!initialized) await initLiff();
+  if (cachedDisplayName) {
+    return {
+      userId: cachedUserId || undefined,
+      displayName: cachedDisplayName,
+      pictureUrl: cachedPictureUrl || undefined,
+    };
+  }
+  try {
+    if (liff.isLoggedIn && liff.isLoggedIn()) {
+      const profile = await liff.getProfile();
+      cachedDisplayName = profile.displayName;
+      cachedUserId = profile.userId;
+      cachedPictureUrl = profile.pictureUrl || null;
+      return {
+        userId: profile.userId,
+        displayName: profile.displayName,
+        pictureUrl: profile.pictureUrl,
+      };
+    }
+  } catch (e) {
+    console.warn('[LIFF] getProfile failed:', e);
+  }
+  return null;
+}
+
 export function getDisplayName(): string {
+  if (cachedDisplayName) return cachedDisplayName;
   if (MOCK_MODE) return 'ผู้ทดสอบ';
   try {
     return liff.isInClient() ? 'ผู้เล่น' : 'ผู้ทดสอบ';

@@ -47,8 +47,16 @@ export interface SyncPayload {
   examBonusClaimed?: boolean;
   preTestScore?: number;
   postTestScore?: number;
+  preTestSkillScore?: number;
+  postTestSkillScore?: number;
   preTestAt?: string;
   postTestAt?: string;
+  idCode?: string;
+  realName?: string;
+  lineName?: string;
+  evalPart5Avg?: number;
+  evalPart5Details?: number[];
+  demographics?: Record<string, any>;
   // ความพึงพอใจ/ความสนุก (ดาว 1-5)
   funRating?: number;
   funRatingCount?: number;
@@ -304,3 +312,76 @@ export async function pingBackend(): Promise<boolean> {
     return false;
   }
 }
+
+export interface AdminStudentsResponse {
+  ok: boolean;
+  students?: any[];
+  total?: number;
+  error?: string;
+}
+
+/**
+ * ดึงข้อมูลนักศึกษาทั้งหมดสำหรับหน้า Teacher Admin Dashboard
+ */
+export async function fetchAdminStudents(passcode = 'wu2535'): Promise<AdminStudentsResponse> {
+  if (!SYNC_URL) return { ok: false, error: 'no_sync_url' };
+  try {
+    const url = `${SYNC_URL}?action=getAdminData&passcode=${encodeURIComponent(passcode)}`;
+    const res = await fetchWithRetry(url, { method: 'GET' });
+    const data = await res.json();
+    if (data && data.ok) {
+      return { ok: true, students: data.students || [], total: data.total || 0 };
+    }
+    return { ok: false, error: data?.error || 'failed_to_fetch' };
+  } catch (err) {
+    console.warn('[cloudSync] fetchAdminStudents failed:', err);
+    return { ok: false, error: String(err) };
+  }
+}
+
+/**
+ * ดึงการตั้งค่าระบบกลาง (Exam Controls) จากคลาวด์สำหรับนักเรียนทุกคน
+ */
+export async function fetchAppSettings(): Promise<Record<string, any> | null> {
+  if (!SYNC_URL) return null;
+  try {
+    const url = `${SYNC_URL}?action=getSettings`;
+    const res = await fetchWithRetry(url, { method: 'GET' });
+    const data = await res.json();
+    if (data && data.ok && data.settings) {
+      return data.settings;
+    }
+    return null;
+  } catch (err) {
+    console.warn('[cloudSync] fetchAppSettings failed:', err);
+    return null;
+  }
+}
+
+/**
+ * บันทึกการตั้งค่าระบบกลาง (Exam Controls) ขึ้นคลาวด์เพื่อให้มีผลกับทุกคน
+ */
+export async function saveAppSettingsToCloud(
+  settings: Record<string, any>,
+  passcode = 'wu2535'
+): Promise<boolean> {
+  if (!SYNC_URL) return false;
+  try {
+    const res = await fetchWithRetry(SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'updateSettings',
+        passcode: passcode,
+        settings: settings,
+      }),
+    });
+    const data = await res.json();
+    return data && data.ok === true;
+  } catch (err) {
+    console.warn('[cloudSync] saveAppSettingsToCloud failed:', err);
+    return false;
+  }
+}
+
+

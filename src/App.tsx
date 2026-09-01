@@ -1,11 +1,12 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { initLiff, getUserIdHash, isMockMode } from './lib/liff';
-import { flushQueue, restoreProgress } from './lib/cloudSync';
+import { flushQueue, restoreProgress, fetchAppSettings } from './lib/cloudSync';
 import { parseChallengeFromSearch, setPendingChallenge } from './lib/challenge';
 import { startBgm } from './lib/bgm';
 import { usePlayerStore } from './store/playerStore';
 import { useSettingsStore } from './store/settingsStore';
+import { useAdminStore } from './store/adminStore';
 import { SHOP_ITEMS } from './lib/shopItems';
 import Toaster from './components/Toaster';
 import LevelUpModal from './components/LevelUpModal';
@@ -31,6 +32,7 @@ const Assessment   = lazy(() => import('./pages/Assessment'));
 const Leaderboard  = lazy(() => import('./pages/Leaderboard'));
 const Arcade       = lazy(() => import('./pages/Arcade'));
 const MissionMap   = lazy(() => import('./pages/MissionMap'));
+const TeacherAdmin = lazy(() => import('./pages/TeacherAdmin'));
 
 function PageLoader() {
   return (
@@ -102,6 +104,33 @@ export default function App() {
     };
   }, [musicEnabled]);
 
+  // Real-time Teacher Exam Controls sync (เมื่อนักเรียนสลับหน้าจอเข้ามา หรือทุก 20 วินาที)
+  useEffect(() => {
+    const syncTeacherSettings = () => {
+      fetchAppSettings().then((settings) => {
+        if (settings) {
+          useAdminStore.getState().updateSettings(settings);
+        }
+      }).catch(() => {});
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        syncTeacherSettings();
+      }
+    };
+
+    window.addEventListener('focus', syncTeacherSettings);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    const interval = setInterval(syncTeacherSettings, 20000);
+
+    return () => {
+      window.removeEventListener('focus', syncTeacherSettings);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      clearInterval(interval);
+    };
+  }, []);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       console.warn('[App] init timeout 5s — forcing ready');
@@ -171,6 +200,13 @@ export default function App() {
 
         flushQueue().catch(() => { /* silent */ });
 
+        // ดึงการตั้งค่าระบบกลางจากอาจารย์ (Exam Controls) สำหรับทุกคน
+        fetchAppSettings().then((settings) => {
+          if (settings) {
+            useAdminStore.getState().updateSettings(settings);
+          }
+        }).catch(() => { /* silent */ });
+
         // คำท้าจากเพื่อน (?challenge=...) — มาก่อน target ปกติ
         const challenge = parseChallengeFromSearch(window.location.search);
         if (challenge) {
@@ -230,6 +266,7 @@ export default function App() {
           <Route path="/achievements" element={<Achievements />} />
           <Route path="/assessment" element={<Assessment />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/teacher-admin" element={<TeacherAdmin />} />
           {/* legacy /room → redirect ไปที่ Journal เพื่อไม่ให้ลิงก์เก่าเสีย */}
           <Route path="/room" element={<Navigate to="/journal" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />

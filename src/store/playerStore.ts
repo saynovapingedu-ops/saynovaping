@@ -43,6 +43,18 @@ interface PlayerState extends PlayerProfile {
   recordExam: (percent: number, passed: boolean, bonusCoins: number) => boolean;
   /** บันทึกผลแบบประเมิน pre/post */
   recordAssessment: (kind: 'pre' | 'post', percent: number) => void;
+  /** บันทึกผลแบบประเมินวิจัยเต็มรูปแบบ (ความรู้ + ทักษะ + ข้อมูลส่วนบุคคล) */
+  recordAssessmentFull: (data: {
+    kind: 'pre' | 'post';
+    knowledgePercent: number;
+    skillPercent: number;
+    idCode?: string;
+    realName?: string;
+    lineName?: string;
+    demographics?: Record<string, any>;
+  }) => void;
+  /** บันทึกผลแบบประเมินแชตบอต ตอนที่ 5 */
+  recordEvaluationPart5: (avgScore: number, details: number[]) => void;
   /** บันทึกคะแนนความสนุก/พึงพอใจ (ดาว 1-5) หลังจบด่าน */
   rateFun: (stars: number) => void;
   /** เรียกตอนเล่นเกม — อัพเดท streak ถ้าเล่นต่อเนื่องได้ */
@@ -304,6 +316,46 @@ export const usePlayerStore = create<PlayerState>()(
         get().syncIfReady();
       },
 
+      recordAssessmentFull: ({ kind, knowledgePercent, skillPercent, idCode, realName, lineName, demographics }) => {
+        const now = new Date().toISOString();
+        if (realName) {
+          try { useCertNameStore.getState().setRealName(realName); } catch { /* ignore */ }
+        }
+        const identityPatch = {
+          ...(idCode ? { idCode } : {}),
+          ...(realName ? { realName } : {}),
+          ...(lineName ? { lineName } : {}),
+          ...(demographics ? { demographics } : {}),
+        };
+        if (kind === 'pre') {
+          set({
+            preTestScore: knowledgePercent,
+            preTestSkillScore: skillPercent,
+            preTestAt: now,
+            ...identityPatch,
+            lastActiveAt: now,
+          });
+        } else {
+          set({
+            postTestScore: knowledgePercent,
+            postTestSkillScore: skillPercent,
+            postTestAt: now,
+            ...identityPatch,
+            lastActiveAt: now,
+          });
+        }
+        get().syncIfReady();
+      },
+
+      recordEvaluationPart5: (avgScore, details) => {
+        set({
+          evalPart5Avg: avgScore,
+          evalPart5Details: details,
+          lastActiveAt: new Date().toISOString(),
+        });
+        get().syncIfReady();
+      },
+
       reset: () => {
         set({ ...blankProfile(), isInitialized: false });
         // ลบชื่อจริงบนเกียรติบัตร (local-only) ออกด้วยเมื่อล้างข้อมูล
@@ -350,8 +402,16 @@ export const usePlayerStore = create<PlayerState>()(
               examBonusClaimed: s.examBonusClaimed,
               preTestScore: s.preTestScore,
               postTestScore: s.postTestScore,
+              preTestSkillScore: s.preTestSkillScore,
+              postTestSkillScore: s.postTestSkillScore,
               preTestAt: s.preTestAt,
               postTestAt: s.postTestAt,
+              idCode: s.idCode,
+              realName: s.realName,
+              lineName: s.lineName,
+              evalPart5Avg: s.evalPart5Avg,
+              evalPart5Details: s.evalPart5Details,
+              demographics: s.demographics,
               funRating: s.funRating,
               funRatingCount: s.funRatingCount,
               funRatingSum: s.funRatingSum,
@@ -398,8 +458,16 @@ export const usePlayerStore = create<PlayerState>()(
         examBonusClaimed: s.examBonusClaimed,
         preTestScore: s.preTestScore,
         postTestScore: s.postTestScore,
+        preTestSkillScore: s.preTestSkillScore,
+        postTestSkillScore: s.postTestSkillScore,
         preTestAt: s.preTestAt,
         postTestAt: s.postTestAt,
+        idCode: s.idCode,
+        realName: s.realName,
+        lineName: s.lineName,
+        evalPart5Avg: s.evalPart5Avg,
+        evalPart5Details: s.evalPart5Details,
+        demographics: s.demographics,
         funRating: s.funRating,
         funRatingCount: s.funRatingCount,
         funRatingSum: s.funRatingSum,

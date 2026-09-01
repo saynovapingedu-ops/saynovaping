@@ -1,4 +1,7 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSettingsStore } from '../store/settingsStore';
+import { useAdminStore } from '../store/adminStore';
 import { sfx } from '../lib/sound';
 import { startBgm, stopBgm } from '../lib/bgm';
 import PageHeader from '../components/PageHeader';
@@ -39,7 +42,25 @@ function Toggle({ label, description, value, onToggle, emoji }: ToggleProps) {
 }
 
 export default function Settings() {
+  const nav = useNavigate();
   const s = useSettingsStore();
+  const admin = useAdminStore();
+
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [passcode, setPasscode] = useState('');
+  const [passError, setPassError] = useState(false);
+
+  const handleAdminAuth = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (admin.loginTeacher(passcode)) {
+      sfx.correct();
+      setShowAdminModal(false);
+      nav('/teacher-admin');
+    } else {
+      sfx.wrong();
+      setPassError(true);
+    }
+  };
 
   return (
     <div className="min-h-full pb-8 relative">
@@ -116,9 +137,37 @@ export default function Settings() {
           onToggle={s.toggleReducedMotion}
         />
 
+        {/* Section: Teacher Admin Access */}
+        <p className="text-xs text-gray-500 px-1 pt-3">สำหรับครู / อาจารย์</p>
+        <button
+          onClick={() => {
+            sfx.click();
+            if (admin.isTeacherAuthenticated) {
+              nav('/teacher-admin');
+            } else {
+              setShowAdminModal(true);
+            }
+          }}
+          className="w-full card flex items-center gap-3 active:scale-[0.99] transition-all bg-gradient-to-r from-sky-50 to-indigo-50/40 border-2 border-detective-200 hover:border-detective-400"
+        >
+          <span className="text-2xl">👨‍🏫</span>
+          <div className="flex-1 text-left min-w-0">
+            <p className="font-bold text-detective-800 flex items-center gap-1.5">
+              <span>แดชบอร์ดอาจารย์ (Teacher Admin)</span>
+              <span className="text-[10px] bg-detective-600 text-white px-2 py-0.2 rounded-full font-bold">
+                🔒 ป้องกันด้วยรหัสผ่าน
+              </span>
+            </p>
+            <p className="text-xs text-slate-600">
+              ดูพัฒนาการของนักเรียน (Pre/Post-test), รายงานคะแนน Google Sheets, และตั้งค่าระบบ
+            </p>
+          </div>
+          <span className="text-detective-500 font-bold">→</span>
+        </button>
+
         <p className="text-xs text-gray-500 px-1 pt-3">เกี่ยวกับ</p>
         <div className="card text-sm text-gray-700 space-y-1">
-          <p className="flex justify-between"><span>เวอร์ชัน</span><span className="font-mono">v0.8.0</span></p>
+          <p className="flex justify-between"><span>เวอร์ชัน</span><span className="font-mono">v1.4.0 (Research Edition)</span></p>
           <p className="flex justify-between"><span>มินิเกม</span><span>หลายแบบ</span></p>
           <p className="flex justify-between"><span>ด่านทั้งหมด</span><span>{SCENARIO_META.length} ด่าน (หลัก 10 + โบนัส 10)</span></p>
         </div>
@@ -136,6 +185,58 @@ export default function Settings() {
           <p className="text-[11px] text-slate-500 italic">THAI MEDIA FUND</p>
         </div>
       </main>
+
+      {/* Admin Passcode Modal */}
+      {showAdminModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 space-y-4">
+            <div className="text-center space-y-1">
+              <span className="text-3xl">🔒</span>
+              <h3 className="font-display font-bold text-slate-900 text-base">
+                เข้าสู่แดชบอร์ดอาจารย์
+              </h3>
+              <p className="text-xs text-slate-500">
+                กรุณาใส่รหัสผ่านเพื่อเข้าใช้งานแดชบอร์ด
+              </p>
+            </div>
+
+            <form onSubmit={handleAdminAuth} className="space-y-3 pt-1">
+              <input
+                type="password"
+                value={passcode}
+                onChange={(e) => {
+                  setPasscode(e.target.value);
+                  setPassError(false);
+                }}
+                placeholder="ใส่รหัสผ่าน"
+                className="w-full px-3.5 py-2.5 rounded-xl border text-center font-bold tracking-widest text-sm focus:outline-none focus:ring-2 focus:ring-detective-400 bg-slate-50"
+                autoFocus
+              />
+              {passError && (
+                <p className="text-[11px] font-semibold text-rose-500 text-center">
+                  ❌ รหัสผ่านไม่ถูกต้อง
+                </p>
+              )}
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowAdminModal(false)}
+                  className="btn-secondary flex-1 py-2 text-xs"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary flex-1 py-2 text-xs font-bold shadow-clay"
+                >
+                  เข้าสู่ระบบ
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -217,10 +217,20 @@ export interface PlayerProfile {
   examBestScore?: number;   // % คะแนนสูงสุดในแบบทดสอบรวม
   examBonusClaimed?: boolean; // รับโบนัสเหรียญครั้งแรกแล้วหรือยัง
   // pre/post assessment
-  preTestScore?: number;    // % แบบประเมินก่อนเรียน
-  postTestScore?: number;   // % แบบประเมินหลังเรียน
+  preTestScore?: number;    // % แบบประเมินความรู้ก่อนเรียน (0-100)
+  postTestScore?: number;   // % แบบประเมินความรู้หลังเรียน (0-100)
+  preTestSkillScore?: number;  // % ทักษะปฏิเสธก่อนเรียน (0-100)
+  postTestSkillScore?: number; // % ทักษะปฏิเสธหลังเรียน (0-100)
   preTestAt?: string;
   postTestAt?: string;
+  // รหัสประจำตัววิจัย (ID Code), ชื่อจริง และชื่อ LINE
+  idCode?: string;
+  realName?: string;
+  lineName?: string;
+  demographics?: Record<string, any>;
+  // ตอนที่ 5 ประเมินประโยชน์แชตบอท (1.00 - 5.00)
+  evalPart5Avg?: number;
+  evalPart5Details?: number[];
   // ความพึงพอใจ/ความสนุก (ดาว 1-5) — เก็บล่าสุด + ผลรวมเพื่อหาค่าเฉลี่ยเชิงวิจัย
   funRating?: number;       // ดาวล่าสุดที่ให้
   funRatingCount?: number;  // จำนวนครั้งที่ให้คะแนน

@@ -106,6 +106,59 @@ export default function Stats() {
           <span className="text-warning-500 flex-shrink-0">→</span>
         </motion.button>
 
+        {/* Research Assessment Growth Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="card p-4 space-y-2.5 bg-gradient-to-br from-sky-50/70 to-indigo-50/40 border border-sky-100"
+        >
+          <div className="flex items-center justify-between">
+            <p className="font-bold text-detective-800 text-xs flex items-center gap-1.5">
+              <span>📋</span> ผลการประเมินวิจัย & พัฒนาการ
+            </p>
+            <button
+              onClick={() => { sfx.click(); nav('/assessment'); }}
+              className="text-[11px] font-bold text-detective-600 hover:underline"
+            >
+              เปิดแบบประเมิน →
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="bg-white/80 rounded-xl p-2 border border-slate-100">
+              <p className="text-[10px] text-slate-500 font-medium">Pre-test</p>
+              <p className="font-bold text-slate-800 mt-0.5">
+                {player.preTestScore !== undefined ? `${player.preTestScore}%` : 'ยังไม่ทำ'}
+              </p>
+            </div>
+            <div className="bg-white/80 rounded-xl p-2 border border-slate-100">
+              <p className="text-[10px] text-slate-500 font-medium">Post-test</p>
+              <p className="font-bold text-slate-800 mt-0.5">
+                {player.postTestScore !== undefined ? `${player.postTestScore}%` : 'ยังไม่ทำ'}
+              </p>
+            </div>
+            <div className="bg-white/80 rounded-xl p-2 border border-slate-100">
+              <p className="text-[10px] text-slate-500 font-medium">พัฒนาการ</p>
+              <p
+                className={`font-bold mt-0.5 ${
+                  player.preTestScore !== undefined && player.postTestScore !== undefined
+                    ? player.postTestScore >= player.preTestScore
+                      ? 'text-emerald-600'
+                      : 'text-rose-500'
+                    : 'text-slate-400'
+                }`}
+              >
+                {player.preTestScore !== undefined && player.postTestScore !== undefined
+                  ? `${player.postTestScore - player.preTestScore > 0 ? '+' : ''}${
+                      player.postTestScore - player.preTestScore
+                    }%`
+                  : '-'}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Quick stats grid */}
         <div className="grid grid-cols-3 gap-2">
           <StatBox emoji="🏁" label="ด่านที่ผ่าน" value={`${player.stagesCompleted.length}/${SCENARIO_META.length}`} />
