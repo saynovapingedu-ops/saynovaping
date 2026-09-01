@@ -109,7 +109,11 @@ export const useAdminStore = create<AdminState>()(
       },
 
       updateSettings: (newSettings) => {
-        set((state) => ({ ...state, ...newSettings }));
+        const sanitized = { ...newSettings };
+        if (sanitized.googleSheetUrl && sanitized.googleSheetUrl.includes('1ngfohj3IAImeSulWSi7yNijAj2dX4Ge1bqrMy9sPK18')) {
+          sanitized.googleSheetUrl = DEFAULT_GOOGLE_SHEET_URL;
+        }
+        set((state) => ({ ...state, ...sanitized }));
       },
 
       resetSettings: () => {
@@ -117,7 +121,15 @@ export const useAdminStore = create<AdminState>()(
       },
     }),
     {
-      name: 'hd_admin_settings_v1',
+      name: 'hd_admin_settings_v2',
+      version: 2,
+      migrate: (persisted: any) => {
+        if (!persisted) return defaultSettings;
+        if (!persisted.googleSheetUrl || persisted.googleSheetUrl.includes('1ngfohj3IAImeSulWSi7yNijAj2dX4Ge1bqrMy9sPK18')) {
+          persisted.googleSheetUrl = DEFAULT_GOOGLE_SHEET_URL;
+        }
+        return persisted;
+      },
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         preTestEnabled: state.preTestEnabled,
