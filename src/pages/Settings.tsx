@@ -167,9 +167,9 @@ export default function Settings() {
 
         <p className="text-xs text-gray-500 px-1 pt-3">เกี่ยวกับ</p>
         <div className="card text-sm text-gray-700 space-y-1">
-          <p className="flex justify-between"><span>เวอร์ชัน</span><span className="font-mono">v1.4.0 (Research Edition)</span></p>
-          <p className="flex justify-between"><span>มินิเกม</span><span>หลายแบบ</span></p>
-          <p className="flex justify-between"><span>ด่านทั้งหมด</span><span>{SCENARIO_META.length} ด่าน (หลัก 10 + โบนัส 10)</span></p>
+          <p className="flex justify-between"><span>เวอร์ชัน</span><span className="font-mono font-bold text-detective-700">v2.4.0 (Research Edition)</span></p>
+          <p className="flex justify-between"><span>มินิเกม</span><span>16 รูปแบบ (ปฏิเสธ, โน้มน้าว, วิ่งหลบ, จับคู่ ฯลฯ)</span></p>
+          <p className="flex justify-between"><span>ด่านทั้งหมด</span><span>{SCENARIO_META.length} ด่าน (บทหลัก 8 ด่าน + บทเสริม 12 ด่าน)</span></p>
         </div>
 
         {/* === TMF funding credit === */}

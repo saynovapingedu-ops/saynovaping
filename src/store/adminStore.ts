@@ -24,6 +24,7 @@ export interface StudentRecord {
   preTestAt?: string;
   // การเล่นเกม
   stagesCompletedCount: number;
+  heroStagesCount?: number;
   totalStages: number;
   totalXP: number;
   level: number;
