@@ -7,7 +7,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 
 export const TEACHER_PASSCODE = 'wu2535';
 export const DEFAULT_GOOGLE_SHEET_URL =
-  'https://docs.google.com/spreadsheets/d/1ngfohj3IAImeSulWSi7yNijAj2dX4Ge1bqrMy9sPK18/edit?usp=sharing';
+  'https://docs.google.com/spreadsheets/d/1djYg5itx5xvVubDCdznPaP6M6gE3sJEXAb-W9trs9Uw/edit?usp=sharing';
 
 export interface StudentRecord {
   no: number;

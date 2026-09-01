@@ -163,8 +163,10 @@ const GAME_HEADERS = [
 
 // ---------- Helpers ----------
 function getSheet_(name) {
-  const sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
-  if (!sheetId) throw new Error('SHEET_ID not configured in Script Properties');
+  let sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+  if (!sheetId) {
+    sheetId = '1djYg5itx5xvVubDCdznPaP6M6gE3sJEXAb-W9trs9Uw';
+  }
   const ss = SpreadsheetApp.openById(sheetId);
   const sheet = ss.getSheetByName(name);
   if (!sheet) throw new Error('Sheet "' + name + '" not found');
@@ -712,7 +714,7 @@ function handleGetSettings_() {
     finalExamEnabled: true,
     dailyChallengeEnabled: true,
     randomizeQuestions: false,
-    googleSheetUrl: 'https://docs.google.com/spreadsheets/d/1ngfohj3IAImeSulWSi7yNijAj2dX4Ge1bqrMy9sPK18/edit?usp=sharing',
+    googleSheetUrl: 'https://docs.google.com/spreadsheets/d/1djYg5itx5xvVubDCdznPaP6M6gE3sJEXAb-W9trs9Uw/edit?usp=sharing',
   };
   if (raw) {
     try {
@@ -770,8 +772,10 @@ function doGet(e) {
 // ⚠️ ใช้เมื่อต้องการลบข้อมูลทดสอบเก่าออกทั้งหมดเพื่อเริ่มเก็บข้อมูลนักเรียนจริง
 // ============================================================================
 function resetAllDataToEmpty() {
-  const sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
-  if (!sheetId) throw new Error('กรุณาตั้ง SHEET_ID ใน Script Properties ก่อน');
+  let sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+  if (!sheetId) {
+    sheetId = '1djYg5itx5xvVubDCdznPaP6M6gE3sJEXAb-W9trs9Uw';
+  }
   const ss = SpreadsheetApp.openById(sheetId);
 
   // 1. Reset แท็บ Players (ตารางว่างเปล่า มีเฉพาะหัวตาราง 25 คอลัมน์ที่แยกชื่อชัดเจน)
