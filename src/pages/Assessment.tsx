@@ -1179,155 +1179,46 @@ export default function Assessment() {
     return (
       <div className="min-h-screen bg-slate-50/70 pb-12">
         <Confetti active={kind === 'post'} count={80} duration={2500} />
-        <PageHeader title="📋 ผลการประเมิน" backTo="/" />
+        <PageHeader title="📋 ส่งแบบประเมินเรียบร้อย" backTo="/" />
 
         <main className="max-w-md md:max-w-xl mx-auto px-4 pt-4 space-y-4">
           <ResultHero
-            emoji={kind === 'pre' ? '📝' : '🎉'}
-            tone="info"
+            emoji="✅"
+            tone="success"
             title={
               kind === 'pre'
-                ? 'เสร็จสิ้นแบบประเมินก่อนเรียน (Pre-test)'
+                ? 'ส่งแบบประเมินก่อนเรียน (Pre-test) เรียบร้อยแล้ว'
                 : kind === 'post'
-                ? 'ยินดีด้วย! เสร็จสิ้นแบบประเมินหลังเรียน'
-                : 'ขอบคุณสำหรับการประเมินแชตบอต'
+                ? 'ส่งแบบประเมินหลังเรียน (Post-test) เรียบร้อยแล้ว'
+                : 'บันทึกแบบประเมินความคิดเห็นเรียบร้อยแล้ว'
             }
             subtitle={
-              <p className="text-xs text-slate-600 leading-relaxed">
-                การพัฒนาแชตบอตแบบเกมมิฟิเคชันเพื่อส่งเสริมความรู้และทักษะการปฏิเสธบุหรี่ไฟฟ้า
+              <p className="text-xs text-slate-600 leading-relaxed mt-1">
+                ระบบได้บันทึกคำตอบของคุณเข้าสู่ฐานข้อมูลงานวิจัยเรียบร้อยแล้ว
               </p>
             }
           >
-            {/* Score Circles Grid */}
-            <div className="grid grid-cols-2 gap-3 w-full max-w-sm my-2">
-              <div className="bg-white/80 backdrop-blur rounded-2xl p-3 shadow-sm border border-slate-100 flex flex-col items-center">
-                <ProgressCircle
-                  percent={results.knowledgePercent}
-                  tone="detective"
-                  size={100}
-                  label={`ความรู้ ${results.knowledgePercent}%`}
-                >
-                  <span className="font-display font-extrabold text-xl text-detective-700">
-                    <CountUp to={results.knowledgePercent} formatter={(n) => `${n}%`} duration={1000} />
-                  </span>
-                </ProgressCircle>
-                <p className="text-xs font-bold text-slate-700 mt-1">คะแนนความรู้</p>
-                <p className="text-[11px] text-slate-500">
-                  {results.knowledgeScore}/{results.knowledgeTotal} ข้อ
-                </p>
+            <div className="w-full max-w-sm my-3 p-4 rounded-2xl bg-white/90 border border-slate-100 shadow-sm text-center space-y-2">
+              <div className="w-12 h-12 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl">
+                ☁️
               </div>
-
-              <div className="bg-white/80 backdrop-blur rounded-2xl p-3 shadow-sm border border-slate-100 flex flex-col items-center">
-                <ProgressCircle
-                  percent={results.skillPercent}
-                  tone="success"
-                  size={100}
-                  label={`ทักษะ ${results.skillPercent}%`}
-                >
-                  <span className="font-display font-extrabold text-xl text-emerald-600">
-                    <CountUp to={results.skillPercent} formatter={(n) => `${n}%`} duration={1000} />
-                  </span>
-                </ProgressCircle>
-                <p className="text-xs font-bold text-slate-700 mt-1">ทักษะการปฏิเสธ</p>
-                <p className="text-[11px] text-slate-500">
-                  {results.skillScore}/100 คะแนน
-                </p>
-              </div>
+              <h4 className="font-bold text-slate-800 text-sm">บันทึกข้อมูลเข้าสู่ระบบเรียบร้อย</h4>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                {kind === 'pre'
+                  ? 'นักเรียนสามารถเริ่มสืบคดีและเรียนรู้ในด่านเกมเพื่อสะสม XP และรับเกียรติบัตรได้เลย!'
+                  : 'ขอบคุณที่ร่วมเป็นส่วนหนึ่งในโครงการวิจัย มหาวิทยาลัยวลัยลักษณ์'}
+              </p>
             </div>
 
-            {/* Comparison Gain Delta (if post-test) */}
-            {kind === 'post' && hasBothK && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="w-full max-w-md bg-gradient-to-r from-emerald-50 to-sky-50 border border-emerald-200/80 rounded-2xl p-3.5 text-left"
-              >
-                <p className="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
-                  <span>🚀</span> สรุปพัฒนาการการเรียนรู้ (Gain Delta)
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-white/80 rounded-xl p-2 border border-slate-100">
-                    <p className="text-slate-500 text-[10px]">ความรู้เรื่องบุหรี่ไฟฟ้า</p>
-                    <p className="font-semibold text-slate-700 mt-0.5">
-                      ก่อน <b>{preK}%</b> → หลัง <b>{postK}%</b>
-                    </p>
-                    <p className={`font-bold mt-0.5 ${deltaK >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
-                      {deltaK >= 0 ? `+${deltaK}% พัฒนาขึ้น` : `${deltaK}%`}
-                    </p>
-                  </div>
-
-                  {hasBothS && (
-                    <div className="bg-white/80 rounded-xl p-2 border border-slate-100">
-                      <p className="text-slate-500 text-[10px]">ความมั่นใจในการปฏิเสธ</p>
-                      <p className="font-semibold text-slate-700 mt-0.5">
-                        ก่อน <b>{preS}%</b> → หลัง <b>{postS}%</b>
-                      </p>
-                      <p className={`font-bold mt-0.5 ${deltaS >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
-                        {deltaS >= 0 ? `+${deltaS}% พัฒนาขึ้น` : `${deltaS}%`}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Part 5 Chatbot Rating summary */}
-            {results.part5Avg !== undefined && (
-              <div className="w-full max-w-md bg-amber-50/80 border border-amber-200 rounded-2xl p-3 flex items-center justify-between text-xs">
-                <span className="font-semibold text-amber-900 flex items-center gap-1.5">
-                  <span>⭐</span> ความคิดเห็นต่อแชตบอต (ตอนที่ 5):
-                </span>
-                <span className="font-display font-bold text-base text-amber-700">
-                  {results.part5Avg} / 5.00
-                </span>
-              </div>
-            )}
+            <div className="w-full max-w-sm bg-sky-50 border border-sky-100 rounded-2xl p-3 text-left space-y-1">
+              <p className="text-[11px] font-bold text-sky-900 flex items-center gap-1.5">
+                <span>🔒</span> ข้อมูลการวิจัยถูกจัดเก็บอย่างปลอดภัย
+              </p>
+              <p className="text-[10px] text-slate-600 leading-relaxed">
+                คะแนนและผลการประเมินจะถูกส่งตรงไปยังอาจารย์ผู้สอนเพื่อใช้ในการวิเคราะห์และประเมินผลโครงการวิจัย
+              </p>
+            </div>
           </ResultHero>
-
-          {/* Answer explanations if enabled by teacher */}
-          {admin.showExplanations && (
-            <div className="card p-4 space-y-3">
-              <h3 className="font-bold text-detective-800 text-sm flex items-center gap-2">
-                <span>📖</span> เฉลยและคำอธิบายแบบทดสอบความรู้
-              </h3>
-              <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
-                {knowledgeQuestions.map((q, idx) => {
-                  const userChoice = part3Answers[idx];
-                  const isCorrect = userChoice === q.correctIndex;
-                  return (
-                    <div
-                      key={q.id}
-                      className={`p-2.5 rounded-xl border text-xs leading-relaxed ${
-                        isCorrect
-                          ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
-                          : 'bg-rose-50/70 border-rose-200 text-rose-950'
-                      }`}
-                    >
-                      <p className="font-bold mb-1">
-                        ข้อ {idx + 1}. {q.question}
-                      </p>
-                      <p className="text-[11px] opacity-90">
-                        <b>คำตอบของคุณ:</b> {userChoice !== undefined ? q.choices[userChoice] : 'ไม่ได้ตอบ'}
-                      </p>
-                      <p className="text-[11px] font-semibold text-emerald-700">
-                        <b>คำตอบที่ถูกต้อง:</b> {q.choices[q.correctIndex]}
-                      </p>
-                      <p className="text-[10px] text-slate-500 mt-1 italic">
-                        💡 {q.explain}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {!admin.showExplanations && (
-            <p className="text-xs text-slate-500 text-center bg-sky-50/80 border border-sky-100 rounded-2xl p-3">
-              🔒 เฉลยคำตอบถูกซ่อนไว้ตามระเบียบวิธีวิจัย เพื่อความเที่ยงตรงของข้อมูล
-            </p>
-          )}
 
           <button
             onClick={() => {
@@ -1336,7 +1227,7 @@ export default function Assessment() {
             }}
             className="btn-primary w-full py-3.5 text-sm font-bold shadow-clay active:scale-[0.98]"
           >
-            🏠 กลับหน้าหลัก
+            {kind === 'pre' ? '🎮 เริ่มเล่นเกมเลย' : '🏠 กลับหน้าหลัก'}
           </button>
         </main>
       </div>
@@ -1387,8 +1278,8 @@ export default function Assessment() {
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-slate-800 text-sm">แบบประเมินก่อนเรียน (Pre-test)</h3>
               {player.preTestScore !== undefined && (
-                <span className="text-[10px] bg-sky-100 text-[#0284C7] font-bold px-2 py-0.5 rounded-full">
-                  ทำแล้ว ({player.preTestScore}%)
+                <span className="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">
+                  เสร็จสมบูรณ์ ✓
                 </span>
               )}
             </div>
@@ -1417,13 +1308,13 @@ export default function Assessment() {
               <h3 className="font-bold text-slate-800 text-sm">แบบประเมินหลังเรียน (Post-test)</h3>
               {player.postTestScore !== undefined && (
                 <span className="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">
-                  ทำแล้ว ({player.postTestScore}%)
+                  เสร็จสมบูรณ์ ✓
                 </span>
               )}
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
               {postUnlocked
-                ? 'ทำหลังเล่นจบเนื้อหา เพื่อเปรียบเทียบพัฒนาการ'
+                ? 'ทำหลังเรียนจบเนื้อหา เพื่อบันทึกผลงานวิจัย'
                 : `🔒 ปลดล็อกเมื่อเล่นจบ ${CERT_STAGE_COUNT} ด่านแรก หรือได้รับอนุญาตจากครู`}
             </p>
           </div>
@@ -1445,8 +1336,8 @@ export default function Assessment() {
                   ตอนที่ 5: ประโยชน์ของแชตบอต
                 </h3>
                 {player.evalPart5Avg !== undefined && (
-                  <span className="text-[10px] bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded-full">
-                    {player.evalPart5Avg} / 5.0
+                  <span className="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">
+                    เสร็จสมบูรณ์ ✓
                   </span>
                 )}
               </div>

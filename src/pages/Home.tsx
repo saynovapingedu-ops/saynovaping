@@ -335,28 +335,6 @@ export default function Home() {
           </button>
         )}
 
-        {/* === แบนเนอร์ 3: สรุปพัฒนาการ (Gain Delta) — เมื่อทำครบทั้ง Pre และ Post === */}
-        {bothTestsDone && (
-          <div
-            onClick={() => { sfx.click(); nav('/assessment'); }}
-            className="w-full mb-3.5 p-3.5 rounded-[24px] bg-gradient-to-r from-emerald-50 to-sky-50 border border-emerald-200/90 shadow-clay-sm flex items-center justify-between cursor-pointer hover:border-emerald-300 transition-all"
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="text-2xl">🚀</span>
-              <div>
-                <p className="text-[10px] font-bold text-slate-500">ผลการเรียนรู้ของคุณ (Gain Delta)</p>
-                <p className="text-xs font-semibold text-slate-800">
-                  ก่อน <b>{player.preTestScore}%</b> → หลัง <b>{player.postTestScore}%</b>
-                  <span className={`ml-1.5 font-extrabold ${delta >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
-                    ({delta >= 0 ? `+${delta}%` : `${delta}%`})
-                  </span>
-                </p>
-              </div>
-            </div>
-            <span className="text-xs font-bold text-detective-600">ดูผล →</span>
-          </div>
-        )}
-
         {/* === ปุ่มหลัก: เริ่ม / เล่นต่อ — เด่นบนสุด ตัดปัญหา "งงไม่รู้เริ่มตรงไหน" === */}
         {activeStage ? (
           <button
