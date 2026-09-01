@@ -268,9 +268,19 @@ function buildPlayerResearchRow_(p, existing) {
     return '[]';
   }
 
+  let idCode = pick(p.idCode, COL_PLAYER.ID_CODE, '');
+  let realName = pick(p.realName, COL_PLAYER.REAL_NAME, '');
   let lineName = pick(p.lineName, COL_PLAYER.LINE_NAME, '');
-  if (!lineName && p.demographics && p.demographics.lineName) {
-    lineName = p.demographics.lineName;
+  let nickname = pick(p.nickname, COL_PLAYER.NICKNAME, 'ผู้เล่น');
+  let grade = pick(p.grade, COL_PLAYER.GRADE, '');
+  let school = pick(p.school, COL_PLAYER.SCHOOL, '');
+
+  if (p.demographics) {
+    if (!idCode && p.demographics.idCode) idCode = p.demographics.idCode;
+    if (!realName && p.demographics.realName) realName = p.demographics.realName;
+    if (!lineName && p.demographics.lineName) lineName = p.demographics.lineName;
+    if ((!grade || grade === nickname || grade === 'ผู้เล่น') && p.demographics.grade) grade = p.demographics.grade;
+    if (!school && p.demographics.school) school = p.demographics.school;
   }
 
   // คำนวณ Gain Delta
@@ -294,12 +304,12 @@ function buildPlayerResearchRow_(p, existing) {
   let totalStagesStr = totalStagesCount > 0 ? (totalStagesCount + '/20') : (existing ? (existing[COL_PLAYER.TOTAL_STAGES_COUNT - 1] || '0/20') : '0/20');
 
   const row = new Array(PLAYERS_COLS).fill('');
-  row[COL_PLAYER.ID_CODE - 1]                 = pick(p.idCode, COL_PLAYER.ID_CODE, '');
-  row[COL_PLAYER.REAL_NAME - 1]               = pick(p.realName, COL_PLAYER.REAL_NAME, '');
+  row[COL_PLAYER.ID_CODE - 1]                 = idCode;
+  row[COL_PLAYER.REAL_NAME - 1]               = realName;
   row[COL_PLAYER.LINE_NAME - 1]               = lineName;
-  row[COL_PLAYER.NICKNAME - 1]                = pick(p.nickname, COL_PLAYER.NICKNAME, '');
-  row[COL_PLAYER.GRADE - 1]                   = pick(p.grade, COL_PLAYER.GRADE, '');
-  row[COL_PLAYER.SCHOOL - 1]                  = pick(p.school, COL_PLAYER.SCHOOL, '');
+  row[COL_PLAYER.NICKNAME - 1]                = nickname;
+  row[COL_PLAYER.GRADE - 1]                   = grade;
+  row[COL_PLAYER.SCHOOL - 1]                  = school;
   row[COL_PLAYER.PRE_TEST_SCORE - 1]          = preK !== '' ? Number(preK) : '';
   row[COL_PLAYER.PRE_TEST_SKILL_SCORE - 1]    = pick(p.preTestSkillScore, COL_PLAYER.PRE_TEST_SKILL_SCORE, '');
   row[COL_PLAYER.POST_TEST_SCORE - 1]         = postK !== '' ? Number(postK) : '';
@@ -822,16 +832,16 @@ function setupCleanSheet() {
       const hash = String(findVal(row, ['LINE User ID Hash', 'userIdHash']) || row[24] || row[23] || row[21] || row[0] || '').trim();
       if (!hash) continue;
 
-      const idCode = String(findVal(row, ['รหัสนักศึกษา', 'idCode']) || (row.length >= 41 ? row[40] : '')).trim();
-      const realName = String(findVal(row, ['ชื่อ-นามสกุลจริง', 'realName']) || (row.length >= 42 ? row[41] : '')).trim();
+      let idCode = String(findVal(row, ['รหัสนักศึกษา', 'idCode']) || (row.length >= 41 ? row[40] : '')).trim();
+      let realName = String(findVal(row, ['ชื่อ-นามสกุลจริง', 'realName']) || (row.length >= 42 ? row[41] : '')).trim();
       let lineName = String(findVal(row, ['ชื่อบัญชี LINE', 'lineName']) || '').trim();
-      const nickname = String(findVal(row, ['ชื่อเล่น', 'nickname']) || row[3] || row[2] || row[1] || 'ผู้เล่น').trim();
-      const grade = String(findVal(row, ['ชั้น', 'grade']) || row[4] || row[3] || row[2] || '').trim();
-      const school = String(findVal(row, ['โรงเรียน', 'school']) || '').trim();
-      const preK = findVal(row, ['Pre-test ความรู้', 'preTestScore']);
-      const preSkill = findVal(row, ['ทักษะก่อน', 'preTestSkillScore']);
-      const postK = findVal(row, ['Post-test ความรู้', 'postTestScore']);
-      const postSkill = findVal(row, ['ทักษะหลัง', 'postTestSkillScore']);
+      let nickname = String(findVal(row, ['ชื่อเล่น', 'nickname']) || row[3] || row[2] || row[1] || 'ผู้เล่น').trim();
+      let grade = String(findVal(row, ['ระดับชั้น', 'grade']) || '').trim();
+      let school = String(findVal(row, ['โรงเรียน', 'school']) || '').trim();
+      const preK = findVal(row, ['[ใหม่-ก่อนเรียน] ความรู้', 'ก่อนเรียน] ความรู้', 'Pre-test ความรู้', 'preTestScore']);
+      const preSkill = findVal(row, ['[ใหม่-ก่อนเรียน] ทักษะ', 'ก่อนเรียน] ทักษะ', 'ทักษะก่อน', 'preTestSkillScore']);
+      const postK = findVal(row, ['[ใหม่-หลังเรียน] ความรู้', 'หลังเรียน] ความรู้', 'Post-test ความรู้', 'postTestScore']);
+      const postSkill = findVal(row, ['[ใหม่-หลังเรียน] ทักษะ', 'หลังเรียน] ทักษะ', 'ทักษะหลัง', 'postTestSkillScore']);
       
       const rawStages = findVal(row, ['ด่านทั้งหมด', 'ด่านที่จบ', 'stagesCompletedList', 'stagesCompleted']) || (row.length >= 13 ? row[12] : '') || row[11] || row[9] || row[8] || '';
       let parsedStagesList = [];
@@ -844,18 +854,32 @@ function setupCleanSheet() {
 
       const totalXP = findVal(row, ['คะแนน XP', 'totalXP']) || 0;
       const level = findVal(row, ['เลเวล', 'level']) || 1;
-      const p5Avg = findVal(row, ['ประเมินแอป', 'ประเมินบอท', 'evalPart5Avg']);
-      const certNo = findVal(row, ['เกียรติบัตร', 'certificateNo']);
-      const certDate = findVal(row, ['วันที่ออกเกียรติบัตร', 'certificateIssuedAt']);
+      const p5Avg = findVal(row, ['[ใหม่-ประเมินแอป]', 'ประเมินแอป', 'ประเมินบอท', 'evalPart5Avg']);
+      let certNo = findVal(row, ['เลขที่เกียรติบัตร', 'Cert No', 'certificateNo']);
+      let certDate = findVal(row, ['วันที่ออกเกียรติบัตร', 'certificateIssuedAt']);
       const preAt = findVal(row, ['เวลาส่ง Pre-test', 'เวลาทำ Pre-test', 'preTestAt']);
       const postAt = findVal(row, ['เวลาส่ง Post-test', 'เวลาทำ Post-test', 'postTestAt']);
       const rawDemo = findVal(row, ['แบบสำรวจ', 'Demographics', 'demographics']);
       
-      if (!lineName && rawDemo) {
+      let parsedDemo = null;
+      if (rawDemo) {
         try {
-          const parsed = JSON.parse(String(rawDemo));
-          if (parsed && parsed.lineName) lineName = parsed.lineName;
+          parsedDemo = JSON.parse(String(rawDemo));
         } catch (e) {}
+      }
+
+      if (parsedDemo) {
+        if (parsedDemo.idCode) idCode = parsedDemo.idCode;
+        if (parsedDemo.realName) realName = parsedDemo.realName;
+        if (parsedDemo.lineName) lineName = parsedDemo.lineName;
+        if (parsedDemo.grade) grade = parsedDemo.grade;
+        if (parsedDemo.school) school = parsedDemo.school;
+        if (parsedDemo.nickname) nickname = parsedDemo.nickname;
+      }
+
+      if (certNo && !String(certNo).startsWith('HD-') && String(certNo).includes('/')) {
+        certDate = certNo;
+        certNo = '';
       }
 
       // รวมข้อมูลคนเดียวกันเข้าด้วยกัน (Deduplicate & Merge)
@@ -882,7 +906,7 @@ function setupCleanSheet() {
         certDate: certDate || existing.certDate || '',
         preTestAt: preAt || existing.preTestAt || '',
         postTestAt: postAt || existing.postTestAt || '',
-        demographics: rawDemo ? (function() { try { return JSON.parse(String(rawDemo)); } catch(e) { return existing.demographics; } })() : existing.demographics,
+        demographics: parsedDemo || existing.demographics,
       };
     }
   }
