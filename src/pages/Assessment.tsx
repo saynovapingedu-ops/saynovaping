@@ -13,6 +13,11 @@ import {
   PART5_CHATBOT_EVALUATION,
 } from '../data/questionnaireData';
 import { CERT_STAGE_COUNT } from '../scenarios';
+import {
+  NAKHON_SI_THAMMARAT_SCHOOLS,
+  ALL_PRESET_SCHOOLS,
+  OTHER_SCHOOL_VALUE,
+} from '../lib/schools';
 import PageHeader from '../components/PageHeader';
 import { sfx } from '../lib/sound';
 import ResultHero from '../components/ui/ResultHero';
@@ -78,7 +83,20 @@ export default function Assessment() {
     }).catch(() => {});
   }, []);
   const [grade, setGrade] = useState(player.grade || 'ม.2');
-  const [school, setSchool] = useState(player.school || '');
+  const [selectedSchoolChoice, setSelectedSchoolChoice] = useState<string>(() => {
+    if (!player.school) return ALL_PRESET_SCHOOLS[0]; // 'มหาวิทยาลัยวลัยลักษณ์' หรือโรงเรียนเริ่มต้น
+    if (ALL_PRESET_SCHOOLS.includes(player.school)) return player.school;
+    return OTHER_SCHOOL_VALUE;
+  });
+  const [customSchoolText, setCustomSchoolText] = useState<string>(() => {
+    if (!player.school) return '';
+    if (ALL_PRESET_SCHOOLS.includes(player.school)) return '';
+    return player.school;
+  });
+
+  const currentSchoolValue =
+    selectedSchoolChoice === OTHER_SCHOOL_VALUE ? customSchoolText.trim() : selectedSchoolChoice;
+
   const [sex, setSex] = useState<string>('ชาย');
   const [ageRange, setAgeRange] = useState<string>('13-14 ปี');
   const [allowance, setAllowance] = useState<string>('50 - 100 บาท');
@@ -228,6 +246,10 @@ export default function Assessment() {
       alert('กรุณากรอก "รหัสนักศึกษา / รหัสประจำตัวนักเรียน" เพื่อให้อาจารย์สามารถบันทึกคะแนนได้อย่างถูกต้อง');
       return;
     }
+    if (selectedSchoolChoice === OTHER_SCHOOL_VALUE && !customSchoolText.trim()) {
+      alert('กรุณากรอกระบุชื่อ "โรงเรียน / สถาบันการศึกษา" ของคุณ');
+      return;
+    }
     sfx.click();
 
     if (kind === 'pre' && admin.part2Enabled) {
@@ -357,7 +379,7 @@ export default function Assessment() {
         nickname: nickname.trim(),
         lineName: lineName.trim(),
         grade: grade,
-        school: school.trim(),
+        school: currentSchoolValue,
         sex: sex,
         ageRange: ageRange,
         allowance: allowance,
@@ -379,7 +401,7 @@ export default function Assessment() {
         realName: realName.trim(),
         lineName: lineName.trim(),
         grade: grade,
-        school: school.trim(),
+        school: currentSchoolValue,
         demographics: demographicsData,
       });
     }
@@ -614,17 +636,54 @@ export default function Assessment() {
               </div>
 
               {/* Field 6: School */}
-              <div className="space-y-1">
-                <label className="block font-bold text-slate-800">
-                  🏫 โรงเรียน / สถาบันการศึกษา
+              <div className="space-y-1.5">
+                <label className="block font-bold text-slate-800 flex items-center justify-between">
+                  <span>🏫 โรงเรียน / สถาบันการศึกษา <span className="text-rose-500">*</span></span>
+                  <span className="text-[10px] text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md font-semibold border border-sky-100">
+                    จ.นครศรีธรรมราช & อื่นๆ
+                  </span>
                 </label>
-                <input
-                  type="text"
-                  value={school}
-                  onChange={(e) => setSchool(e.target.value)}
-                  placeholder="เช่น โรงเรียนสาธิต..., โรงเรียนมัธยมวัด..."
+                <select
+                  value={selectedSchoolChoice}
+                  onChange={(e) => setSelectedSchoolChoice(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm font-medium"
-                />
+                >
+                  {NAKHON_SI_THAMMARAT_SCHOOLS.map((cat) => (
+                    <optgroup key={cat.category} label={cat.category}>
+                      {cat.schools.map((sch) => (
+                        <option key={sch} value={sch}>
+                          {sch}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                  <optgroup label="✏️ สถาบันการศึกษาอื่นๆ">
+                    <option value={OTHER_SCHOOL_VALUE}>
+                      ➕ อื่นๆ (พิมพ์ระบุชื่อโรงเรียน / สถาบันเอง)
+                    </option>
+                  </optgroup>
+                </select>
+
+                {/* กล่องข้อความกรอกชื่อโรงเรียนเองเมื่อเลือก "อื่นๆ" */}
+                {selectedSchoolChoice === OTHER_SCHOOL_VALUE && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="pt-1 space-y-1"
+                  >
+                    <input
+                      type="text"
+                      value={customSchoolText}
+                      onChange={(e) => setCustomSchoolText(e.target.value)}
+                      placeholder="พิมพ์ชื่อโรงเรียน หรือสถาบันการศึกษาของคุณที่นี่..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border-2 border-sky-400 text-slate-800 bg-sky-50/40 focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm font-medium"
+                      autoFocus
+                    />
+                    <p className="text-[11px] text-sky-700">
+                      💡 ระบุชื่อโรงเรียน สถาบัน หรือสังกัดของคุณให้ชัดเจน
+                    </p>
+                  </motion.div>
+                )}
               </div>
 
               {/* Field 7: Sex */}
