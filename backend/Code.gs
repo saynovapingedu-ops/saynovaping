@@ -173,13 +173,27 @@ function getSheet_(name) {
   return sheet;
 }
 
-function findRowByUserHashInSheet_(sheet, hashColIdx, userIdHash) {
+function findRowByUserOrId_(sheet, hashColIdx, idCodeColIdx, userIdHash, idCode) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return -1;
-  const data = sheet.getRange(2, hashColIdx, lastRow - 1, 1).getValues();
-  for (let i = 0; i < data.length; i++) {
-    if (data[i][0] === userIdHash) return i + 2;
+  const numCols = sheet.getLastColumn();
+  const data = sheet.getRange(2, 1, lastRow - 1, numCols).getValues();
+  
+  // 1. ค้นหาจาก userIdHash (ตรงคอลัมน์ระบบ hash หรือคอลัมน์แรก)
+  if (userIdHash) {
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][hashColIdx - 1]).trim() === String(userIdHash).trim()) return i + 2;
+      if (String(data[i][0]).trim() === String(userIdHash).trim()) return i + 2;
+    }
   }
+  
+  // 2. ค้นหาจากรหัสนักศึกษา (idCode)
+  if (idCode) {
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][idCodeColIdx - 1]).trim() === String(idCode).trim()) return i + 2;
+    }
+  }
+  
   return -1;
 }
 
@@ -372,7 +386,7 @@ function handleSync_(p) {
 
   // 1. ซิงค์ลงแท็บ Players (งานวิจัย & คะแนน)
   const playerSheet = getSheet_(CONFIG.SHEET_NAMES.PLAYERS);
-  const pRow = findRowByUserHashInSheet_(playerSheet, COL_PLAYER.USER_ID_HASH, p.userIdHash);
+  const pRow = findRowByUserOrId_(playerSheet, COL_PLAYER.USER_ID_HASH, COL_PLAYER.ID_CODE, p.userIdHash, p.idCode);
   if (pRow === -1) {
     const newRow = buildPlayerResearchRow_(p, null);
     playerSheet.appendRow(newRow);
@@ -385,7 +399,7 @@ function handleSync_(p) {
   // 2. ซิงค์ลงแท็บ GameStats (ไอเทม & เกม)
   try {
     const gameSheet = getSheet_(CONFIG.SHEET_NAMES.GAME_STATS);
-    const gRow = findRowByUserHashInSheet_(gameSheet, COL_GAME.USER_ID_HASH, p.userIdHash);
+    const gRow = findRowByUserOrId_(gameSheet, COL_GAME.USER_ID_HASH, COL_GAME.ID_CODE, p.userIdHash, p.idCode);
     if (gRow === -1) {
       const newGRow = buildGameStatsRow_(p, null);
       gameSheet.appendRow(newGRow);
@@ -407,7 +421,7 @@ function handleIssueCert_(p) {
   if (!isValidHash_(p.userIdHash)) return jsonResponse_({ok:false, error:'invalid_hash'});
 
   const playerSheet = getSheet_(CONFIG.SHEET_NAMES.PLAYERS);
-  const pRow = findRowByUserHashInSheet_(playerSheet, COL_PLAYER.USER_ID_HASH, p.userIdHash);
+  const pRow = findRowByUserOrId_(playerSheet, COL_PLAYER.USER_ID_HASH, COL_PLAYER.ID_CODE, p.userIdHash, p.idCode);
   if (pRow === -1) return jsonResponse_({ok:false, error:'player_not_found'});
 
   const nickname = playerSheet.getRange(pRow, COL_PLAYER.NICKNAME).getValue();
@@ -494,7 +508,7 @@ function handleVerify_(params) {
 function handleRestore_(params) {
   if (!isValidHash_(params.hash)) return jsonResponse_({ok:false, error:'invalid_hash'});
   const playerSheet = getSheet_(CONFIG.SHEET_NAMES.PLAYERS);
-  const pRow = findRowByUserHashInSheet_(playerSheet, COL_PLAYER.USER_ID_HASH, params.hash);
+  const pRow = findRowByUserOrId_(playerSheet, COL_PLAYER.USER_ID_HASH, COL_PLAYER.ID_CODE, params.hash, null);
   if (pRow === -1) return jsonResponse_({ok:true, found:false});
 
   const pr = playerSheet.getRange(pRow, 1, 1, PLAYERS_COLS).getValues()[0];
@@ -503,7 +517,7 @@ function handleRestore_(params) {
   let gr = [];
   try {
     const gameSheet = getSheet_(CONFIG.SHEET_NAMES.GAME_STATS);
-    const gRow = findRowByUserHashInSheet_(gameSheet, COL_GAME.USER_ID_HASH, params.hash);
+    const gRow = findRowByUserOrId_(gameSheet, COL_GAME.USER_ID_HASH, COL_GAME.ID_CODE, params.hash, null);
     if (gRow !== -1) gr = gameSheet.getRange(gRow, 1, 1, GAME_COLS).getValues()[0];
   } catch (e) {}
 
