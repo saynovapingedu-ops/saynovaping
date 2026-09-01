@@ -782,6 +782,229 @@ function doGet(e) {
 }
 
 // ============================================================================
+// ฟังก์ชันจัดระเบียบตารางคะแนน Google Sheets (รวมแถวที่ซ้ำและจัดคอลัมน์ให้ตรงเป๊ะ 100%)
+// 💡 ใช้เมื่อมีข้อมูลนักเรียนอยู่แล้ว และต้องการจัดให้เป็นระเบียบโดยไม่ลบข้อมูล
+// ============================================================================
+function setupCleanSheet() {
+  let sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+  if (!sheetId) {
+    sheetId = '1djYg5itx5xvVubDCdznPaP6M6gE3sJEXAb-W9trs9Uw';
+  }
+  const ss = SpreadsheetApp.openById(sheetId);
+
+  // 1. อ่านข้อมูลเดิมเพื่อนำมารวมแถวที่ซ้ำและจัดระเบียบ
+  let oldData = [];
+  const existingPlayerSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.PLAYERS);
+  if (existingPlayerSheet && existingPlayerSheet.getLastRow() > 1) {
+    oldData = existingPlayerSheet.getDataRange().getValues();
+  }
+
+  const studentMap = {};
+
+  if (oldData.length > 1) {
+    const oldHeader = oldData[0].map(function(h) { return String(h || '').trim(); });
+    
+    function findVal(row, candidates) {
+      for (let i = 0; i < candidates.length; i++) {
+        const c = candidates[i];
+        for (let j = 0; j < oldHeader.length; j++) {
+          if (oldHeader[j].indexOf(c) !== -1) {
+            if (row[j] !== undefined && row[j] !== '') return row[j];
+          }
+        }
+      }
+      return '';
+    }
+
+    for (let r = 1; r < oldData.length; r++) {
+      const row = oldData[r];
+
+      const hash = String(findVal(row, ['LINE User ID Hash', 'userIdHash']) || row[24] || row[23] || row[21] || row[0] || '').trim();
+      if (!hash) continue;
+
+      const idCode = String(findVal(row, ['รหัสนักศึกษา', 'idCode']) || (row.length >= 41 ? row[40] : '')).trim();
+      const realName = String(findVal(row, ['ชื่อ-นามสกุลจริง', 'realName']) || (row.length >= 42 ? row[41] : '')).trim();
+      let lineName = String(findVal(row, ['ชื่อบัญชี LINE', 'lineName']) || '').trim();
+      const nickname = String(findVal(row, ['ชื่อเล่น', 'nickname']) || row[3] || row[2] || row[1] || 'ผู้เล่น').trim();
+      const grade = String(findVal(row, ['ชั้น', 'grade']) || row[4] || row[3] || row[2] || '').trim();
+      const school = String(findVal(row, ['โรงเรียน', 'school']) || '').trim();
+      const preK = findVal(row, ['Pre-test ความรู้', 'preTestScore']);
+      const preSkill = findVal(row, ['ทักษะก่อน', 'preTestSkillScore']);
+      const postK = findVal(row, ['Post-test ความรู้', 'postTestScore']);
+      const postSkill = findVal(row, ['ทักษะหลัง', 'postTestSkillScore']);
+      
+      const rawStages = findVal(row, ['ด่านทั้งหมด', 'ด่านที่จบ', 'stagesCompletedList', 'stagesCompleted']) || (row.length >= 13 ? row[12] : '') || row[11] || row[9] || row[8] || '';
+      let parsedStagesList = [];
+      if (typeof rawStages === 'string' && rawStages.includes('/')) {
+        const count = parseInt(rawStages.split('/')[0], 10) || 0;
+        parsedStagesList = Array.from({ length: count }, function(_, i) { return i + 1; });
+      } else if (rawStages) {
+        parsedStagesList = String(rawStages).split(',').filter(Boolean);
+      }
+
+      const totalXP = findVal(row, ['คะแนน XP', 'totalXP']) || 0;
+      const level = findVal(row, ['เลเวล', 'level']) || 1;
+      const p5Avg = findVal(row, ['ประเมินแอป', 'ประเมินบอท', 'evalPart5Avg']);
+      const certNo = findVal(row, ['เกียรติบัตร', 'certificateNo']);
+      const certDate = findVal(row, ['วันที่ออกเกียรติบัตร', 'certificateIssuedAt']);
+      const preAt = findVal(row, ['เวลาส่ง Pre-test', 'เวลาทำ Pre-test', 'preTestAt']);
+      const postAt = findVal(row, ['เวลาส่ง Post-test', 'เวลาทำ Post-test', 'postTestAt']);
+      const rawDemo = findVal(row, ['แบบสำรวจ', 'Demographics', 'demographics']);
+      
+      if (!lineName && rawDemo) {
+        try {
+          const parsed = JSON.parse(String(rawDemo));
+          if (parsed && parsed.lineName) lineName = parsed.lineName;
+        } catch (e) {}
+      }
+
+      // รวมข้อมูลคนเดียวกันเข้าด้วยกัน (Deduplicate & Merge)
+      const key = hash;
+      const existing = studentMap[key] || {};
+
+      studentMap[key] = {
+        userIdHash: hash,
+        idCode: idCode || existing.idCode || '',
+        realName: (realName && realName !== nickname && realName !== 'ผู้เล่น') ? realName : (existing.realName || realName || nickname),
+        lineName: lineName || existing.lineName || '',
+        nickname: nickname || existing.nickname || 'ผู้เล่น',
+        grade: grade || existing.grade || '',
+        school: school || existing.school || '',
+        preTestScore: preK !== '' ? Number(preK) : existing.preTestScore,
+        preTestSkillScore: preSkill !== '' ? Number(preSkill) : existing.preTestSkillScore,
+        postTestScore: postK !== '' ? Number(postK) : existing.postTestScore,
+        postTestSkillScore: postSkill !== '' ? Number(postSkill) : existing.postTestSkillScore,
+        stagesCompleted: parsedStagesList.length >= (existing.stagesCompleted || []).length ? parsedStagesList : existing.stagesCompleted,
+        totalXP: Math.max(Number(totalXP) || 0, existing.totalXP || 0),
+        level: Math.max(Number(level) || 1, existing.level || 1),
+        evalPart5Avg: p5Avg !== '' ? Number(p5Avg) : existing.evalPart5Avg,
+        certNo: certNo || existing.certNo || '',
+        certDate: certDate || existing.certDate || '',
+        preTestAt: preAt || existing.preTestAt || '',
+        postTestAt: postAt || existing.postTestAt || '',
+        demographics: rawDemo ? (function() { try { return JSON.parse(String(rawDemo)); } catch(e) { return existing.demographics; } })() : existing.demographics,
+      };
+    }
+  }
+
+  const migratedResearchRows = [];
+  const migratedGameRows = [];
+
+  for (const k in studentMap) {
+    const pData = studentMap[k];
+    const resRow = buildPlayerResearchRow_(pData, null);
+    if (pData.certNo) resRow[COL_PLAYER.CERTIFICATE_NO - 1] = pData.certNo;
+    if (pData.certDate) resRow[COL_PLAYER.CERTIFICATE_ISSUED_AT - 1] = pData.certDate;
+    migratedResearchRows.push(resRow);
+
+    const gRow = buildGameStatsRow_(pData, null);
+    migratedGameRows.push(gRow);
+  }
+
+  // 1. เขียนแท็บ Players ใหม่ให้สะอาด 1 คนต่อ 1 แถว
+  let pSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.PLAYERS);
+  if (!pSheet) pSheet = ss.insertSheet(CONFIG.SHEET_NAMES.PLAYERS, 0);
+  pSheet.clear();
+
+  const curCols = pSheet.getMaxColumns();
+  if (curCols < PLAYERS_COLS) pSheet.insertColumnsAfter(curCols, PLAYERS_COLS - curCols);
+
+  pSheet.getRange(1, 1, 1, PLAYERS_COLS)
+    .setValues([PLAYERS_HEADERS])
+    .setFontWeight('bold')
+    .setFontSize(10)
+    .setBackground('#0F172A')
+    .setFontColor('#FFFFFF')
+    .setVerticalAlignment('middle')
+    .setWrap(true);
+  pSheet.setRowHeight(1, 52);
+
+  pSheet.getRange(1, 1, 1, 6).setBackground('#0F172A').setFontColor('#38BDF8');
+  pSheet.getRange(1, 7, 1, 2).setBackground('#064E3B').setFontColor('#6EE7B7');
+  pSheet.getRange(1, 9, 1, 2).setBackground('#047857').setFontColor('#A7F3D0');
+  pSheet.getRange(1, 11, 1, 1).setBackground('#0F766E').setFontColor('#5EEAD4');
+  pSheet.getRange(1, 12, 1, 2).setBackground('#1E1B4B').setFontColor('#A5B4FC');
+  pSheet.getRange(1, 14, 1, 2).setBackground('#312E81').setFontColor('#C7D2FE');
+  pSheet.getRange(1, 16, 1, 1).setBackground('#78350F').setFontColor('#FDE68A');
+  pSheet.getRange(1, 17, 1, 2).setBackground('#155E75').setFontColor('#A5F3FC');
+  pSheet.getRange(1, 19, 1, 7).setBackground('#334155').setFontColor('#F8FAFC');
+
+  pSheet.setColumnWidth(COL_PLAYER.ID_CODE, 140);
+  pSheet.setColumnWidth(COL_PLAYER.REAL_NAME, 190);
+  pSheet.setColumnWidth(COL_PLAYER.LINE_NAME, 160);
+  pSheet.setColumnWidth(COL_PLAYER.NICKNAME, 110);
+  pSheet.setColumnWidth(COL_PLAYER.GRADE, 90);
+  pSheet.setColumnWidth(COL_PLAYER.SCHOOL, 130);
+  pSheet.setColumnWidth(COL_PLAYER.PRE_TEST_SCORE, 160);
+  pSheet.setColumnWidth(COL_PLAYER.PRE_TEST_SKILL_SCORE, 160);
+  pSheet.setColumnWidth(COL_PLAYER.POST_TEST_SCORE, 160);
+  pSheet.setColumnWidth(COL_PLAYER.POST_TEST_SKILL_SCORE, 160);
+  pSheet.setColumnWidth(COL_PLAYER.GAIN_DELTA_KNOWLEDGE, 150);
+  pSheet.setColumnWidth(COL_PLAYER.HERO_STAGES_COUNT, 160);
+  pSheet.setColumnWidth(COL_PLAYER.TOTAL_STAGES_COUNT, 140);
+  pSheet.setColumnWidth(COL_PLAYER.TOTAL_XP, 120);
+  pSheet.setColumnWidth(COL_PLAYER.LEVEL, 90);
+  pSheet.setColumnWidth(COL_PLAYER.EVAL_PART5_AVG, 170);
+  pSheet.setColumnWidth(COL_PLAYER.CERTIFICATE_NO, 140);
+  pSheet.setColumnWidth(COL_PLAYER.CERTIFICATE_ISSUED_AT, 170);
+  pSheet.setColumnWidth(COL_PLAYER.PRE_TEST_AT, 170);
+  pSheet.setColumnWidth(COL_PLAYER.POST_TEST_AT, 170);
+  pSheet.setColumnWidth(COL_PLAYER.LAST_ACTIVE_AT, 170);
+  pSheet.setColumnWidth(COL_PLAYER.CREATED_AT, 170);
+  pSheet.setColumnWidth(COL_PLAYER.DEMOGRAPHICS, 220);
+  pSheet.setColumnWidth(COL_PLAYER.EVAL_PART5_DETAILS, 160);
+  pSheet.setColumnWidth(COL_PLAYER.USER_ID_HASH, 160);
+
+  if (migratedResearchRows.length > 0) {
+    pSheet.getRange(2, 1, migratedResearchRows.length, PLAYERS_COLS).setValues(migratedResearchRows);
+    pSheet.getRange(2, 1, migratedResearchRows.length, 1).setHorizontalAlignment('center').setFontWeight('bold');
+    pSheet.getRange(2, 3, migratedResearchRows.length, 1).setHorizontalAlignment('center');
+    pSheet.getRange(2, 5, migratedResearchRows.length, 1).setHorizontalAlignment('center');
+    pSheet.getRange(2, 7, migratedResearchRows.length, 5).setHorizontalAlignment('center');
+    pSheet.getRange(2, 12, migratedResearchRows.length, 5).setHorizontalAlignment('center');
+  }
+  pSheet.setFrozenRows(1);
+  try { pSheet.setFrozenColumns(4); } catch (e) {}
+
+  // 2. เขียนแท็บ GameStats
+  let gSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.GAME_STATS);
+  if (!gSheet) gSheet = ss.insertSheet(CONFIG.SHEET_NAMES.GAME_STATS, 1);
+  gSheet.clear();
+
+  const curGCols = gSheet.getMaxColumns();
+  if (curGCols < GAME_COLS) gSheet.insertColumnsAfter(curGCols, GAME_COLS - curGCols);
+
+  gSheet.getRange(1, 1, 1, GAME_COLS)
+    .setValues([GAME_HEADERS])
+    .setFontWeight('bold')
+    .setFontSize(10)
+    .setBackground('#334155')
+    .setFontColor('#F8FAFC')
+    .setVerticalAlignment('middle')
+    .setWrap(true);
+  gSheet.setRowHeight(1, 52);
+
+  gSheet.setColumnWidth(COL_GAME.ID_CODE, 140);
+  gSheet.setColumnWidth(COL_GAME.REAL_NAME, 190);
+  gSheet.setColumnWidth(COL_GAME.LINE_NAME, 160);
+  gSheet.setColumnWidth(COL_GAME.NICKNAME, 110);
+  gSheet.setColumnWidth(COL_GAME.USER_ID_HASH, 160);
+  gSheet.setColumnWidth(COL_GAME.COINS, 90);
+  gSheet.setColumnWidth(COL_GAME.OWNED_ITEMS, 200);
+
+  if (migratedGameRows.length > 0) {
+    gSheet.getRange(2, 1, migratedGameRows.length, GAME_COLS).setValues(migratedGameRows);
+    gSheet.getRange(2, 1, migratedGameRows.length, 1).setHorizontalAlignment('center').setFontWeight('bold');
+    gSheet.getRange(2, 3, migratedGameRows.length, 1).setHorizontalAlignment('center');
+    gSheet.getRange(2, 5, migratedGameRows.length, 2).setHorizontalAlignment('center');
+  }
+  gSheet.setFrozenRows(1);
+  try { gSheet.setFrozenColumns(4); } catch (e) {}
+
+  console.log('✅ จัดระเบียบและรวมแถวที่ซ้ำเรียบร้อยแล้ว');
+}
+
+// ============================================================================
 // ฟังก์ชันล้างข้อมูลผู้เล่นทั้งหมด 100% (Reset ทุกแท็บให้ว่างเปล่า เหลือเฉพาะหัวตาราง)
 // ⚠️ ใช้เมื่อต้องการลบข้อมูลทดสอบเก่าออกทั้งหมดเพื่อเริ่มเก็บข้อมูลนักเรียนจริง
 // ============================================================================
