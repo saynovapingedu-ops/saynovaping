@@ -78,6 +78,7 @@ export default function Assessment() {
     }).catch(() => {});
   }, []);
   const [grade, setGrade] = useState(player.grade || 'ม.2');
+  const [school, setSchool] = useState(player.school || '');
   const [sex, setSex] = useState<string>('ชาย');
   const [ageRange, setAgeRange] = useState<string>('13-14 ปี');
   const [allowance, setAllowance] = useState<string>('50 - 100 บาท');
@@ -356,6 +357,7 @@ export default function Assessment() {
         nickname: nickname.trim(),
         lineName: lineName.trim(),
         grade: grade,
+        school: school.trim(),
         sex: sex,
         ageRange: ageRange,
         allowance: allowance,
@@ -376,6 +378,8 @@ export default function Assessment() {
         idCode: cleanId,
         realName: realName.trim(),
         lineName: lineName.trim(),
+        grade: grade,
+        school: school.trim(),
         demographics: demographicsData,
       });
     }
@@ -609,7 +613,21 @@ export default function Assessment() {
                 </select>
               </div>
 
-              {/* Field 6: Sex */}
+              {/* Field 6: School */}
+              <div className="space-y-1">
+                <label className="block font-bold text-slate-800">
+                  🏫 โรงเรียน / สถาบันการศึกษา
+                </label>
+                <input
+                  type="text"
+                  value={school}
+                  onChange={(e) => setSchool(e.target.value)}
+                  placeholder="เช่น โรงเรียนสาธิต..., โรงเรียนมัธยมวัด..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm font-medium"
+                />
+              </div>
+
+              {/* Field 7: Sex */}
               <div className="space-y-1">
                 <label className="block font-bold text-slate-800">
                   เพศ <span className="text-rose-500">*</span>

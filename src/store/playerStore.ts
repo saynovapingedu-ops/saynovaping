@@ -51,6 +51,8 @@ interface PlayerState extends PlayerProfile {
     idCode?: string;
     realName?: string;
     lineName?: string;
+    grade?: string;
+    school?: string;
     demographics?: Record<string, any>;
   }) => void;
   /** บันทึกผลแบบประเมินแชตบอต ตอนที่ 5 */
@@ -316,7 +318,7 @@ export const usePlayerStore = create<PlayerState>()(
         get().syncIfReady();
       },
 
-      recordAssessmentFull: ({ kind, knowledgePercent, skillPercent, idCode, realName, lineName, demographics }) => {
+      recordAssessmentFull: ({ kind, knowledgePercent, skillPercent, idCode, realName, lineName, grade, school, demographics }) => {
         const now = new Date().toISOString();
         if (realName) {
           try { useCertNameStore.getState().setRealName(realName); } catch { /* ignore */ }
@@ -325,6 +327,8 @@ export const usePlayerStore = create<PlayerState>()(
           ...(idCode ? { idCode } : {}),
           ...(realName ? { realName } : {}),
           ...(lineName ? { lineName } : {}),
+          ...(grade ? { grade } : {}),
+          ...(school ? { school } : {}),
           ...(demographics ? { demographics } : {}),
         };
         if (kind === 'pre') {
