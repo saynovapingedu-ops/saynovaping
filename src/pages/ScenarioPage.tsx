@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getScenarioById, SCENARIO_META, isStageUnlocked, CERT_STAGE_COUNT, getStageDifficulty } from '../scenarios';
 import { getBadge } from '../lib/badges';
 import { usePlayerStore } from '../store/playerStore';
+import { useAdminStore } from '../store/adminStore';
 import { useCertNameStore } from '../store/certNameStore';
 import { useUIStore } from '../store/uiStore';
 import DialogueBubble from '../components/DialogueBubble';
@@ -148,6 +149,8 @@ export default function ScenarioPage() {
   const [currentNodeId, setCurrentNodeId] = useState<string>(scenario?.startNode || '');
   const [confettiActive, setConfettiActive] = useState(false);
   const [certNameOpen, setCertNameOpen] = useState(false);
+  const admin = useAdminStore();
+  const postTestScore = usePlayerStore(s => s.postTestScore);
   const markCertNamePrompted = usePlayerStore(s => s.markCertNamePrompted);
   // ใช้ Hint — เก็บ id ของ node ที่ผู้เล่นเปิด hint แล้ว (โชว์ best choice)
   const [hintRevealedNode, setHintRevealedNode] = useState<string | null>(null);
@@ -1132,12 +1135,52 @@ export default function ScenarioPage() {
                   </div>
 
                   <div className="space-y-2 relative">
+                    {/* กรณีเล่นจบด่าน 8 (บทหลักครบเกณฑ์รับเกียรติบัตร) */}
+                    {stageId === 8 && (
+                      <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-900 to-slate-900 text-white shadow-clay space-y-2.5 text-left mb-3 border border-indigo-700/50">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-3xl">🎓</span>
+                          <div>
+                            <p className="font-display font-extrabold text-sm text-white">
+                              ยินดีด้วย! คุณเล่นจบ 8 ด่านบทหลักแล้ว
+                            </p>
+                            <p className="text-[11px] text-slate-300">
+                              ผ่านเกณฑ์รับเกียรติบัตรและพร้อมทำแบบประเมินหลังเรียน
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* ถ้าอาจารย์เปิด Post-test ไว้ และยังไม่ได้ทำ */}
+                        {admin.postTestEnabled && postTestScore === undefined ? (
+                          <button
+                            onClick={() => {
+                              sfx.click();
+                              nav('/assessment?kind=post');
+                            }}
+                            className="w-full py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-extrabold text-xs shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                          >
+                            <span>🎯 ทำแบบประเมินหลังเรียน (Post-test) ทันที →</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              sfx.click();
+                              nav('/certificate');
+                            }}
+                            className="w-full py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-900 font-extrabold text-xs shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                          >
+                            <span>🏆 ดูใบประกาศนียบัตรของคุณ →</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+
                     {canPlayNext && nextMeta && (
                       <button
                         onClick={() => goNextStage(nextMeta.id)}
-                        className="btn-primary w-full"
+                        className={stageId === 8 && admin.postTestEnabled && postTestScore === undefined ? 'btn-secondary w-full' : 'btn-primary w-full'}
                       >
-                        ▶ ไปด่าน {nextMeta.id}: {nextMeta.title}
+                        ▶ {stageId === 8 ? `🕹️ เล่นต่อ บทที่ 2 (ด่าน ${nextMeta.id}: ${nextMeta.title})` : `ไปด่าน ${nextMeta.id}: ${nextMeta.title}`}
                       </button>
                     )}
                     <button

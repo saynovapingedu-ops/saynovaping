@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import { motion } from 'framer-motion';
 import { toPng } from 'html-to-image';
 import { usePlayerStore } from '../store/playerStore';
+import { useAdminStore } from '../store/adminStore';
 import { issueCertificate } from '../lib/cloudSync';
 import { sfx } from '../lib/sound';
 import TMFLogo from '../components/TMFLogo';
@@ -23,6 +24,7 @@ const CERT_H = Math.round(CERT_W * 1.414); // 594
 export default function Certificate() {
   const nav = useNavigate();
   const player = usePlayerStore();
+  const admin = useAdminStore();
   const setCertificate = usePlayerStore(s => s.setCertificate);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -380,6 +382,32 @@ export default function Certificate() {
               >
                 {shareMsg}
               </motion.div>
+            )}
+
+            {/* === แบนเนอร์เตือนทำ Post-test ถ้าอาจารย์เปิดไว้และยังไม่ได้ทำ === */}
+            {admin.postTestEnabled && player.postTestScore === undefined && (
+              <div className="mt-4 p-3.5 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-300 shadow-clay-sm text-left print:hidden space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🎯</span>
+                  <div>
+                    <p className="font-bold text-xs text-emerald-950">
+                      แบบประเมินหลังเรียน (Post-test)
+                    </p>
+                    <p className="text-[11px] text-emerald-700 leading-snug">
+                      อาจารย์เปิดให้ทำแบบประเมินหลังเรียน เพื่อประเมินผลโครงการวิจัย
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    sfx.click();
+                    nav('/assessment?kind=post');
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                >
+                  <span>🎯 ไปทำแบบประเมินหลังเรียน (Post-test) →</span>
+                </button>
+              </div>
             )}
 
             <div className="mt-2 grid grid-cols-2 gap-2 print:hidden">

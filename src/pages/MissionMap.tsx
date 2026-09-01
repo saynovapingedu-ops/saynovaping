@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
+import { useAdminStore } from '../store/adminStore';
 import { SCENARIO_META, isStageUnlocked, getStageDifficulty, CERT_STAGE_COUNT } from '../scenarios';
 import PageHeader from '../components/PageHeader';
 import { sfx } from '../lib/sound';
@@ -16,12 +17,13 @@ const DIFFICULTY_INFO: Record<string, { label: string; cls: string }> = {
 
 // ============================================================================
 //  MissionMap — แผนที่ภารกิจ (แยกออกจากหน้าหลักเพื่อไม่ให้ Home รก)
-//  รายชื่อด่านทั้งหมด จัดเป็น 3 อาร์ค ย่อ/ขยายได้ + ปุ่มเข้าเล่นแต่ละด่าน
+//  รายชื่อด่านทั้งหมด จัดเป็น 4 อาร์ค ย่อ/ขยายได้ + ปุ่มเข้าเล่นแต่ละด่าน
 // ============================================================================
 
 export default function MissionMap() {
   const nav = useNavigate();
   const player = usePlayerStore();
+  const admin = useAdminStore();
   const [openArcs, setOpenArcs] = useState<Record<string, boolean>>({});
 
   // ด่านที่ "ควรเล่นต่อ" = ด่านแรกที่เล่นได้แต่ยังไม่จบ — ใช้เปิดบทที่กำลังเล่นไว้
@@ -29,27 +31,76 @@ export default function MissionMap() {
     m => m.available && isStageUnlocked(m.id, player.stagesCompleted) && !player.stagesCompleted.includes(m.id)
   );
 
+  const mainDone = player.stagesCompleted.filter(id => id <= CERT_STAGE_COUNT).length;
+  const postUnlocked = mainDone >= CERT_STAGE_COUNT || admin.allowBypassStages;
+
   return (
     <div className="min-h-screen pb-10 bg-[#FBF3EA]">
       <PageHeader title="🗺️ แผนที่ภารกิจ" subtitle="เลือกด่านที่จะเล่น" backTo="/" />
 
       <main className="max-w-md md:max-w-3xl mx-auto px-4 pt-4">
         {/* === ความคืบหน้ารวม === */}
-        <div className="card-hero mb-4 px-4 py-3">
-          {(() => {
-            const mainDone = player.stagesCompleted.filter(id => id <= CERT_STAGE_COUNT).length;
-            return (
-              <div className="flex items-center gap-2">
-                <div className="progress-track flex-1">
-                  <div className="progress-fill" style={{ width: `${(mainDone / CERT_STAGE_COUNT) * 100}%` }} />
-                </div>
-                <span className="text-xs font-bold text-detective-700 flex-shrink-0">
-                  บทหลัก {mainDone}/{CERT_STAGE_COUNT}
-                </span>
-              </div>
-            );
-          })()}
+        <div className="card-hero mb-3 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <div className="progress-track flex-1">
+              <div className="progress-fill" style={{ width: `${(mainDone / CERT_STAGE_COUNT) * 100}%` }} />
+            </div>
+            <span className="text-xs font-bold text-detective-700 flex-shrink-0">
+              บทหลัก {mainDone}/{CERT_STAGE_COUNT}
+            </span>
+          </div>
         </div>
+
+        {/* === 📝 ทางลัดแบบประเมินก่อนเรียน (Pre-test) === */}
+        {admin.preTestEnabled && (
+          <div
+            onClick={() => {
+              sfx.click();
+              nav('/assessment?kind=pre');
+            }}
+            className={`w-full mb-3 p-3.5 rounded-[22px] border transition-all cursor-pointer flex items-center justify-between shadow-clay-sm active:scale-[0.99] ${
+              player.preTestScore !== undefined
+                ? 'bg-emerald-50/70 border-emerald-200 hover:border-emerald-300'
+                : 'bg-gradient-to-r from-sky-50 to-indigo-50/60 border-sky-300 hover:border-sky-400 animate-pulse-subtle'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-10 h-10 rounded-2xl flex items-center justify-center text-lg font-bold flex-shrink-0 shadow-sm ${
+                  player.preTestScore !== undefined
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-sky-500 text-white'
+                }`}
+              >
+                {player.preTestScore !== undefined ? '✓' : '📝'}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-display font-bold text-slate-800 text-sm">
+                    แบบประเมินก่อนเรียน (Pre-test)
+                  </h4>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      player.preTestScore !== undefined
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-sky-100 text-sky-700'
+                    }`}
+                  >
+                    {player.preTestScore !== undefined ? 'เสร็จสมบูรณ์ ✓' : 'ทางลัดเริ่มทำ'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {player.preTestScore !== undefined
+                    ? 'ทำแบบประเมินก่อนเรียนเรียบร้อยแล้ว'
+                    : 'ทำก่อนเริ่มเล่นด่านที่ 1 เพื่อบันทึกผลงานวิจัย'}
+                </p>
+              </div>
+            </div>
+            <span className="text-sm font-bold text-slate-400">
+              {player.preTestScore !== undefined ? 'ดู →' : 'เริ่มทำ →'}
+            </span>
+          </div>
+        )}
 
         {(() => {
           // จัดกลุ่มตาม "บทเรื่อง" (arc) ให้ตรงกับแฟ้มคดีและข้อมูลจริง:
@@ -236,6 +287,73 @@ export default function MissionMap() {
               </motion.div>
               )}
               </AnimatePresence>
+
+              {/* === 🎯 ทางลัดแบบประเมินหลังเรียน (Post-test) หลังจบด่าน 8 === */}
+              {arc === 'hero' && admin.postTestEnabled && (
+                <div
+                  onClick={() => {
+                    if (postUnlocked) {
+                      sfx.click();
+                      nav('/assessment?kind=post');
+                    }
+                  }}
+                  className={`w-full mt-3 p-3.5 rounded-[22px] border transition-all flex items-center justify-between shadow-clay-sm ${
+                    player.postTestScore !== undefined
+                      ? 'bg-emerald-50/70 border-emerald-200 cursor-pointer hover:border-emerald-300 active:scale-[0.99]'
+                      : postUnlocked
+                      ? 'bg-gradient-to-r from-emerald-100 via-white to-teal-50 border-emerald-400 cursor-pointer hover:border-emerald-500 active:scale-[0.99] animate-pulse-subtle'
+                      : 'bg-slate-100/80 border-slate-200 opacity-75 cursor-not-allowed'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-2xl flex items-center justify-center text-lg font-bold flex-shrink-0 shadow-sm ${
+                        player.postTestScore !== undefined
+                          ? 'bg-emerald-500 text-white'
+                          : postUnlocked
+                          ? 'bg-teal-500 text-white'
+                          : 'bg-slate-300 text-slate-500'
+                      }`}
+                    >
+                      {player.postTestScore !== undefined ? '✓' : postUnlocked ? '🎯' : '🔒'}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-display font-bold text-slate-800 text-sm">
+                          แบบประเมินหลังเรียน (Post-test)
+                        </h4>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            player.postTestScore !== undefined
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : postUnlocked
+                              ? 'bg-teal-100 text-teal-800'
+                              : 'bg-slate-200 text-slate-600'
+                          }`}
+                        >
+                          {player.postTestScore !== undefined
+                            ? 'เสร็จสมบูรณ์ ✓'
+                            : postUnlocked
+                            ? 'ปลดล็อกแล้ว 🎯'
+                            : 'จบ 8 ด่านก่อน'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {player.postTestScore !== undefined
+                          ? 'ทำแบบประเมินหลังเรียนเรียบร้อยแล้ว'
+                          : postUnlocked
+                          ? 'ทำหลังจบ 8 ด่านหลักเพื่อบันทึกผลงานวิจัย'
+                          : `🔒 ปลดล็อกเมื่อจบ ${CERT_STAGE_COUNT} ด่านหลัก หรืออาจารย์เปิดอนุญาต`}
+                      </p>
+                    </div>
+                  </div>
+                  {postUnlocked && (
+                    <span className="text-sm font-bold text-emerald-600">
+                      {player.postTestScore !== undefined ? 'ดู →' : 'ทำข้อสอบ →'}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           );
           });
