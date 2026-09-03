@@ -480,7 +480,7 @@ export default function ScenarioPage() {
   // render บทสนทนา/feedback ที่ผ่านมาแล้ว 1 รายการ (ใช้ทั้งส่วนที่ย่อและไม่ย่อ)
   const renderPastNode = (node: ScenarioNode) =>
     node.type === 'dialogue' ? (
-      <DialogueBubble key={node.id} speaker={node.speaker} text={node.text} />
+      <DialogueBubble key={node.id} speaker={node.speaker} speakerName={node.speakerName} speakerAvatar={node.speakerAvatar} text={node.text} />
     ) : node.type === 'feedback' ? (
       <motion.div key={node.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
         className="card bg-warning-50 border-l-4 border-warning-500 mb-3">
@@ -827,7 +827,7 @@ export default function ScenarioPage() {
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               {currentNode.type === 'dialogue' && (
                 <>
-                  <DialogueBubble speaker={currentNode.speaker} text={currentNode.text} />
+                  <DialogueBubble speaker={currentNode.speaker} speakerName={currentNode.speakerName} speakerAvatar={currentNode.speakerAvatar} text={currentNode.text} />
                   <button onClick={() => goToNext(currentNode.next)}
                     className="btn-primary w-full mt-2">ต่อไป →</button>
                 </>

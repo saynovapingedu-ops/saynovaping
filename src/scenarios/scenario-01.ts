@@ -24,8 +24,8 @@ export const scenario01: Scenario = {
       type: 'choice', id: 'intro3', speaker: 'player',
       prompt: 'คุณตอบพี่หมอเก๋ว่า...',
       choices: [
-        { label: 'พร้อมครับ! ลุยเลย', next: 'mg1', xp: 10 },
-        { label: 'ขอดูก่อนค่อยตอบ', next: 'mg1', xp: 5 },
+        { label: 'พร้อมแล้วครับ/ค่ะ! ลุยเลย', next: 'mg1', xp: 10 },
+        { label: 'ขอดูก่อนค่อยตอบครับ/ค่ะ', next: 'mg1', xp: 5 },
       ],
     },
     {

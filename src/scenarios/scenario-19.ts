@@ -20,7 +20,7 @@ export const scenario19: Scenario = {
     },
     {
       type: 'dialogue', id: 'd2', speaker: 'narrator', next: 'choice1',
-      text: 'EVALI ลามเร็วใน 2-3 วัน — รู้อาการเร็ว = ช่วยได้',
+      text: 'โรคปอดอักเสบ EVALI สามารถลุกลามรวดเร็วภายใน 2-3 วัน — การรู้อาการเตือนล่วงหน้าจะช่วยส่งต่อรักษาชีวิตเพื่อนได้ทันเวลา',
     },
     {
       type: 'choice', id: 'choice1', speaker: 'player',

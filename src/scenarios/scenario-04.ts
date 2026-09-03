@@ -14,28 +14,28 @@ export const scenario04: Scenario = {
   ],
   nodes: [
     {
-      type: 'dialogue', id: 'intro1', speaker: 'shopkeeper', next: 'intro2',
-      text: 'เฮ้น้อง! เรียนเสร็จแล้วเหรอ? วันนี้พี่มีของใหม่นะ ลองดูสิ — ราคาเด็ก ม.ต้นจ่ายไหวแน่',
+      type: 'dialogue', id: 'intro1', speaker: 'shopkeeper', speakerName: 'รุ่นพี่ร้านชา', next: 'intro2',
+      text: 'เฮ้น้อง! เรียนเสร็จแล้วเหรอ? วันนี้พี่มีของใหม่มาลงนะ ลองดูสิ — ราคาเด็ก ม.ต้น จ่ายไหวแน่นอน',
     },
     {
-      type: 'dialogue', id: 'intro2', speaker: 'shopkeeper', next: 'choice1',
-      text: '(หยิบบุหรี่ไฟฟ้าออกมาวางบนเคาน์เตอร์) ลองอันนี้ก่อน รสมิ้นต์ ฮิตที่สุดใน TikTok',
+      type: 'dialogue', id: 'intro2', speaker: 'shopkeeper', speakerName: 'รุ่นพี่ร้านชา', next: 'choice1',
+      text: '(หยิบบุหรี่ไฟฟ้าออกมาวางบนเคาน์เตอร์) ลองตัวนี้ก่อน รสมิ้นต์ ฮิตที่สุดใน TikTok เลย',
     },
     {
       type: 'choice', id: 'choice1', speaker: 'player',
       prompt: 'รุ่นพี่ตื๊อหนัก — คุณจะตอบยังไง?',
       choices: [
         {
-          label: 'ไม่ครับพี่ ผมไม่สูบ',
+          label: 'ไม่ครับ/ค่ะพี่ ผม/หนูไม่สูบ',
           next: 'attempt1', xp: 25,
         },
         {
-          label: 'เอ่อ... ขอลองดูสภาพก่อน',
+          label: 'เอ่อ... ขอลองดูสภาพกล่องก่อนได้ไหม',
           next: 'wrong1', xp: 0,
           reflection: 'การเปิดช่องลังเล มักทำให้ถูกตื๊อต่อเนื่อง',
         },
         {
-          label: 'พี่ไม่กลัวโดนจับเหรอ',
+          label: 'พี่ไม่กลัวตำรวจจับเหรอครับ/ค่ะ',
           next: 'okay1', xp: 10,
           reflection: 'ใช้ได้ แต่เปลี่ยนเรื่องไป — ปฏิเสธตรงๆ ดีกว่า',
         },
@@ -43,8 +43,8 @@ export const scenario04: Scenario = {
     },
     {
       type: 'feedback', id: 'wrong1', next: 'choice1',
-      title: '⚠️ อย่าเปิดช่อง',
-      body: 'การพูดคำว่า "ขอลอง", "ไว้ก่อน", "ขอคิดดู" — ในสายตาคนชวน คือการเปิดประตู เขาจะตื๊อหนักขึ้น',
+      title: '⚠️ ตัดความลังเล',
+      body: 'การลังเล = เปิดช่องให้คนขายโน้มน้าวต่อ ใช้สูตร ยืนยันคำเดิม (Broken Record) — ปฏิเสธคำเดียวซ้ำๆ ไม่เปลี่ยน',
     },
     {
       type: 'feedback', id: 'okay1', next: 'choice1',
@@ -52,24 +52,24 @@ export const scenario04: Scenario = {
       body: 'การถามกลับช่วยเปลี่ยนหัวข้อ แต่ไม่ได้แสดงจุดยืน — ปฏิเสธตรงๆ ก่อน แล้วค่อยเสริม',
     },
     {
-      type: 'dialogue', id: 'attempt1', speaker: 'shopkeeper', next: 'choice2',
-      text: 'อ้าว ทำไมล่ะ? เอาน่า ลองคำเดียว ไม่บอกใครหรอก พี่ลดให้ครึ่งราคา',
+      type: 'dialogue', id: 'attempt1', speaker: 'shopkeeper', speakerName: 'รุ่นพี่ร้านชา', next: 'choice2',
+      text: 'อ้าว ทำไมล่ะน้อง? เอาน่า ลองคำเดียว พี่ไม่บอกใครหรอก เดี๋ยวลดให้ครึ่งราคาเลย',
     },
     {
       type: 'choice', id: 'choice2', speaker: 'player',
       prompt: 'พี่เขาตื๊อต่อ — ยืนยันคำเดิม (Broken Record) คือต้องยืนยัน "คำเดิม" ไม่เปลี่ยน',
       choices: [
         {
-          label: 'ไม่ครับพี่ ผมไม่สูบ',
+          label: 'ไม่ครับ/ค่ะพี่ ผม/หนูไม่สูบ',
           next: 'attempt2', xp: 30,
         },
         {
-          label: 'เอ่อ... ก็ลดเยอะนะ ลองนิดเดียวมั้ง',
+          label: 'เอ่อ... ลดเยอะจัง ขอลองนิดเดียวละกัน',
           next: 'wrong2', xp: 0,
           reflection: 'หลักการ ยืนยันคำเดิม (Broken Record) คือไม่หวั่นไหวกับข้อเสนอที่เพิ่มขึ้น',
         },
         {
-          label: 'งั้นขอเปลี่ยนเป็นเครื่องดื่มดีกว่า',
+          label: 'งั้นขอเปลี่ยนเป็นสั่งชานมแทนดีกว่าครับ/ค่ะ',
           next: 'okay2', xp: 15,
           reflection: 'เปลี่ยนเรื่องได้ แต่ ยืนยันคำเดิม (Broken Record) ต้องการให้ยืนคำเดิมก่อน',
         },
@@ -86,23 +86,23 @@ export const scenario04: Scenario = {
       body: 'เปลี่ยนเรื่องได้ก็จริง แต่ ยืนยันคำเดิม (Broken Record) คือ "พูดประโยคเดิม" ซ้ำจนเขาเลิกตื๊อ — ลองยืนยันอีกครั้ง',
     },
     {
-      type: 'dialogue', id: 'attempt2', speaker: 'shopkeeper', next: 'choice3',
-      text: 'เออ พี่เห็นน้องดูเครียดๆ มา ใช้ตัวนี้ช่วยผ่อนคลายไง ใครๆ ก็ใช้',
+      type: 'dialogue', id: 'attempt2', speaker: 'shopkeeper', speakerName: 'รุ่นพี่ร้านชา', next: 'choice3',
+      text: 'เออ พี่เห็นน้องดูเครียดๆ มา ใช้ตัวนี้ช่วยผ่อนคลายไง ใครๆ ในโรงเรียนก็ใช้กัน',
     },
     {
       type: 'choice', id: 'choice3', speaker: 'player',
       prompt: 'อย่าให้เขาดึงเรื่อง — ยืนยันคำเดิม',
       choices: [
         {
-          label: 'ไม่ครับพี่ ผมไม่สูบ',
+          label: 'ไม่ครับ/ค่ะพี่ ผม/หนูไม่สูบจริงๆ',
           next: 'right1', xp: 35,
         },
         {
-          label: 'ขอบายพี่ ไม่ใช่ไวบ์เราอะ 😆',
+          label: 'ขอบายครับ/ค่ะพี่ ไม่ใช่แนวเราจริงๆ 😅',
           next: 'right1', xp: 33,
         },
         {
-          label: 'พี่อย่ามายุ่งกับผม',
+          label: 'พี่อย่ามายุ่งกับผม/หนูได้ไหม',
           next: 'okay3', xp: 10,
           reflection: 'หงุดหงิดได้ แต่ ยืนยันคำเดิม (Broken Record) คือสงบและคงคำเดิม',
         },
@@ -114,8 +114,8 @@ export const scenario04: Scenario = {
       body: 'ยืนยันคำเดิม (Broken Record) ที่ทรงพลังที่สุด คือพูดประโยคเดิม ด้วยน้ำเสียงปกติ ไม่หงุดหงิด — เดี๋ยวเขาเลิกเอง',
     },
     {
-      type: 'dialogue', id: 'right1', speaker: 'shopkeeper', next: 'mg1',
-      text: '(ถอนหายใจ) ก็ได้... น้องมั่นใจดี งั้นเอาชาไทยแก้วนึงก็ได้',
+      type: 'dialogue', id: 'right1', speaker: 'shopkeeper', speakerName: 'รุ่นพี่ร้านชา', next: 'mg1',
+      text: '(ถอนหายใจ) เออๆ ก็ได้น้อง... มั่นใจดีจริงๆ งั้นเอาชาไทยแก้วนึงละกันเนอะ',
     },
     {
       type: 'minigame', id: 'mg1', game: 'spot-the-lie',

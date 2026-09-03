@@ -14,32 +14,32 @@ export const scenario05: Scenario = {
   ],
   nodes: [
     {
-      type: 'dialogue', id: 'intro1', speaker: 'dm-stranger', next: 'intro2',
-      text: 'เฮ้น้อง! เก่งมากเลย เห็นเล่นในห้องเรา พี่ Vapor นะ พี่ของพี่บอลมาบอกให้รู้จักน้อง',
+      type: 'dialogue', id: 'intro1', speaker: 'dm-stranger', speakerName: 'Vapor (คนแปลกหน้า)', next: 'intro2',
+      text: 'เฮ้น้อง! เล่นเกมเก่งมากเลย พี่ชื่อ Vapor นะ พี่ของพี่บอลบอกให้ทักมารู้จักน้อง',
     },
     {
-      type: 'dialogue', id: 'intro2', speaker: 'dm-stranger', next: 'intro3',
-      text: 'พี่จะให้ของแต่งตัวในเกมฟรี (skin) เอาไหม? แค่บอกที่อยู่ ส่งบุหรี่ไฟฟ้าเครื่องเล็กๆ ให้ลองด้วย ของขวัญ',
+      type: 'dialogue', id: 'intro2', speaker: 'dm-stranger', speakerName: 'Vapor (คนแปลกหน้า)', next: 'intro3',
+      text: 'พี่จะแจกสกินในเกมฟรีให้ เอาไหมน้อง? แค่บอกที่อยู่ เดี๋ยวส่งบุหรี่ไฟฟ้าเครื่องเล็กๆ ให้ลองด้วย เป็นของแถม',
     },
     {
       type: 'dialogue', id: 'intro3', speaker: 'narrator', next: 'choice1',
-      text: 'มีบางอย่างผิดปกติ — คุณไม่เคยได้ยินชื่อ "พี่บอล" และคนแปลกหน้าทักมาเสนอของฟรี',
+      text: 'มีบางอย่างผิดปกติ — คนแปลกหน้าในเกมทักมาขอที่อยู่และเสนอของผิดกฎหมาย',
     },
     {
       type: 'choice', id: 'choice1', speaker: 'player',
-      prompt: 'จะทำยังไง?',
+      prompt: 'คุณจะทำอย่างไร?',
       choices: [
         {
-          label: 'ตอบไปว่าไม่รู้จัก แล้วบล็อก',
+          label: 'ตอบไปว่าไม่รู้จัก แล้วกดบล็อกทันที',
           next: 'right1', xp: 35,
         },
         {
           label: 'ส่งที่อยู่ไป ก็ดีนะได้ของฟรี',
           next: 'wrong1', xp: 0,
-          reflection: 'อันตราย — คนแปลกหน้าออนไลน์ไม่ควรรู้ที่อยู่จริง',
+          reflection: 'อันตรายมาก — คนแปลกหน้าออนไลน์ไม่ควรรู้ที่อยู่จริงเด็ดขาด',
         },
         {
-          label: 'ถามชื่อพี่บอลเต็มๆ ก่อน',
+          label: 'ถามชื่อพี่บอลเต็มๆ ดูก่อน',
           next: 'okay1', xp: 15,
           reflection: 'การพยายามตรวจสอบดี — แต่กรณีนี้ตัดบทแล้วบล็อกปลอดภัยกว่า',
         },
@@ -60,7 +60,7 @@ export const scenario05: Scenario = {
       prompt: 'เลือกอีกครั้ง',
       choices: [
         { label: 'ตอบไปว่าไม่รู้จัก แล้วบล็อก', next: 'right1', xp: 25 },
-        { label: 'พิมพ์ว่า "ไม่รู้จักครับ" แล้วบล็อกทันที', next: 'right1', xp: 25 },
+        { label: 'พิมพ์ว่า "ไม่รู้จักครับ/ค่ะ" แล้วบล็อกทันที', next: 'right1', xp: 25 },
         { label: 'ไม่ตอบเลย บล็อกแล้วรายงานบัญชี', next: 'right1', xp: 28 },
       ],
     },
@@ -69,8 +69,8 @@ export const scenario05: Scenario = {
       text: 'คุณบล็อกบัญชีนั้นแล้ว — แต่ 5 นาทีต่อมา มีบัญชีใหม่ทักมาอีก',
     },
     {
-      type: 'dialogue', id: 'right1b', speaker: 'dm-stranger', next: 'choice2',
-      text: 'น้องๆ ทำไมบล็อกพี่ล่ะ พี่ไม่ใช่คนเลวนะ ขอคุยอีกแป๊บนึง',
+      type: 'dialogue', id: 'right1b', speaker: 'dm-stranger', speakerName: 'Vapor (คนแปลกหน้า)', next: 'choice2',
+      text: 'น้องๆ ทำไมบล็อกพี่ล่ะ พี่ไม่ใช่คนเลวนะ ขอคุยอีกแป๊บนึงสิ',
     },
     {
       type: 'choice', id: 'choice2', speaker: 'player',

@@ -1,4 +1,5 @@
 import type { Scenario } from '../types';
+import { asset } from '../lib/asset';
 
 // ด่าน 12 (Master Final) — นักสืบระดับครู: ส่งต่อความรู้ให้รุ่นน้อง
 export const scenario12: Scenario = {
@@ -9,24 +10,24 @@ export const scenario12: Scenario = {
   startNode: 'd1',
   intro: [
     '🌟 ด่านสุดท้ายของเส้นทางนักสืบสุขภาพ',
-    'ไม่ใช่การปะทะใคร — แต่คือการ "ส่งต่อ"',
-    'น้องป.6 ชื่อเอม จะมาเข้าค่าย Health Detective Junior — คุณคือพี่เลี้ยง',
+    'ไม่ใช่การปะทะใคร — แต่คือการ "ส่งต่อความรู้"',
+    'น้องเอม นักเรียนชั้น ป.6 มาเข้าค่าย Health Detective Junior — คุณคือพี่เลี้ยงคนเก่ง',
   ],
   nodes: [
     {
-      type: 'dialogue', id: 'd1', speaker: 'friend2', next: 'd2',
-      text: '(เด็ก ป.6) สวัสดีพี่! หนูชื่อเอม มาเข้าค่ายนักสืบสุขภาพครั้งแรก — พี่จะสอนอะไรหนูบ้างคะ?',
+      type: 'dialogue', id: 'd1', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/player-g3.png'), next: 'd2',
+      text: 'สวัสดีค่ะพี่นักสืบ! หนูชื่อเอม อยู่ ป.6 เพิ่งมาเข้าค่าย Health Detective Junior ครั้งแรกเลยค่ะ — วันนี้พี่จะสอนอะไรหนูบ้างคะ?',
     },
     {
       type: 'dialogue', id: 'd2', speaker: 'narrator', next: 'choice1',
-      text: 'เอมตื่นเต้นและไว้ใจคุณ — แต่เธอเล่าว่าในห้องเรียนมีเพื่อนเริ่มลองบุหรี่ไฟฟ้าแล้ว',
+      text: 'น้องเอมดูตื่นเต้นและตั้งใจมาก — เธอเล่าให้ฟังว่าที่ห้องเรียนเริ่มมีเพื่อนแอบลองบุหรี่ไฟฟ้ากันแล้ว',
     },
     {
       type: 'choice', id: 'choice1', speaker: 'player',
-      prompt: 'บทเรียนแรกที่จะสอนเอม',
+      prompt: 'บทเรียนแรกที่คุณจะสอนน้องเอม',
       choices: [
         {
-          label: 'เริ่มจากเรื่อง "อย่าเชื่อทุกอย่างในออนไลน์" — ทักษะแยกแยะ',
+          label: 'เริ่มจากทักษะ "อย่าเพิ่งเชื่อทุกอย่างในโลกออนไลน์" — การแยกแยะข้อเท็จจริง',
           next: 'd3', xp: 30,
         },
         {
@@ -42,8 +43,8 @@ export const scenario12: Scenario = {
       body: 'การเรียนรู้ที่ดี = ทีละทักษะ แล้วค่อยต่อยอด — รุ่นน้องจะจำได้ดีกว่าและไม่ท้อ',
     },
     {
-      type: 'dialogue', id: 'd3', speaker: 'friend2', next: 'mg-test',
-      text: 'หนูชอบบทเรียนนี้! ลองทดสอบหนูสิพี่ — หนูจะแสดงให้พี่ดูว่าหนูเข้าใจ',
+      type: 'dialogue', id: 'd3', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/player-g3.png'), next: 'mg-test',
+      text: 'เข้าใจแล้วค่ะพี่! ลองทดสอบหนูดูได้เลย หนูจะตั้งใจตอบให้ถูกทุกข้อเลยค่ะ',
     },
     // === Phase 1: ทดสอบนักสืบรุ่นน้อง ===
     {
@@ -67,20 +68,20 @@ export const scenario12: Scenario = {
       xpOnSuccess: 60,
     },
     {
-      type: 'dialogue', id: 'd4', speaker: 'friend2', next: 'd5',
-      text: 'เย้! หนูตอบถูก — แต่ถ้าเพื่อนหนูยื่นมาตรงๆ ในห้องน้ำ หนูควรทำยังไงคะ?',
+      type: 'dialogue', id: 'd4', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/player-g3.png'), next: 'd5',
+      text: 'เย้! ตอบถูกหมดเลย — แต่ถ้าวันหนึ่งมีเพื่อนยื่นมาให้หนูตรงๆ ในห้องน้ำ หนูควรจะปฏิเสธยังไงดีคะพี่?',
     },
     // === Phase 2: เลือกวิธีสอน ===
     {
       type: 'dialogue', id: 'd5', speaker: 'narrator', next: 'choice2',
-      text: 'เอมยกสถานการณ์ขึ้นมา — คุณต้องอธิบายให้เธอจำได้',
+      text: 'น้องเอมถามด้วยความกังวล — คุณต้องช่วยอธิบายวิธีปฏิเสธที่จำง่ายและนำไปใช้ได้จริง',
     },
     {
       type: 'choice', id: 'choice2', speaker: 'player',
       prompt: 'อธิบายสูตรปฏิเสธให้เอมจำง่าย',
       choices: [
         {
-          label: 'จำคำว่า "ไม่ → เพราะ → ไปทำอย่างอื่น"',
+          label: 'จำง่ายๆ 3 ขั้น: "ปฏิเสธชัด → บอกเหตุผลสั้น → เสนอไปทำอย่างอื่น"',
           next: 'd6', xp: 30,
         },
         {
@@ -96,8 +97,8 @@ export const scenario12: Scenario = {
       body: 'สอนเด็กเป็น "หลักการ" สั้นๆ ที่ปรับใช้ได้ — ดีกว่าให้ท่องประโยคเป๊ะๆ ที่อาจฟังเป็นหุ่นยนต์',
     },
     {
-      type: 'dialogue', id: 'd6', speaker: 'friend2', next: 'mg-roleplay',
-      text: 'โอเค! ลองให้หนูจับคู่สถานการณ์กับสูตรปฏิเสธที่เหมาะสมนะคะพี่',
+      type: 'dialogue', id: 'd6', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/player-g3.png'), next: 'mg-roleplay',
+      text: 'ได้เลยค่ะ! ลองให้หนูจับคู่ดูนะคะพี่ ว่าสถานการณ์แบบไหนต้องใช้ทักษะอะไร',
     },
     // === Phase 3: word-match สูตรกับสถานการณ์ ===
     {
@@ -120,8 +121,8 @@ export const scenario12: Scenario = {
       source: 'รวบรวมจากทักษะที่สอนตลอด Hero Arc + Master Arc',
     },
     {
-      type: 'dialogue', id: 'd7', speaker: 'friend2', next: 'mg-final',
-      text: 'หนูจำได้หมดแล้ว! ลองอีกข้อสุดท้ายสิ — เพราะหนูอยากจบค่ายอย่างมั่นใจ',
+      type: 'dialogue', id: 'd7', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/player-g3.png'), next: 'mg-final',
+      text: 'หนูจำได้ขึ้นใจแล้วค่ะ! ขออีกข้อสุดท้ายนะคะพี่ หนูอยากมั่นใจจริงๆ ก่อนจบค่าย',
     },
     // === Phase 4: fill-blank ปิดท้าย ===
     {
@@ -155,15 +156,15 @@ export const scenario12: Scenario = {
       badge: 'sensei',
     },
     {
-      type: 'dialogue', id: 'd8', speaker: 'friend2', next: 'choice3',
-      text: 'ขอบคุณพี่มากๆ! หนูจะเป็นนักสืบสุขภาพคนต่อไป และส่งต่อให้รุ่นน้องเหมือนที่พี่ทำกับหนู',
+      type: 'dialogue', id: 'd8', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/player-g3.png'), next: 'choice3',
+      text: 'ขอบคุณพี่มากๆ เลยนะคะ! หนูสัญญาว่าจะเป็นนักสืบสุขภาพที่ดี และจะคอยดูแลเพื่อนๆ กับรุ่นน้องเหมือนที่พี่สอนหนูเลยค่ะ',
     },
     {
       type: 'choice', id: 'choice3', speaker: 'player',
-      prompt: 'คำพูดสุดท้ายให้เอม',
+      prompt: 'คำพูดให้กำลังใจส่งท้ายให้น้องเอม',
       choices: [
         {
-          label: 'อย่าลืมว่าเธอไม่ได้สู้คนเดียว — เครือข่ายของเรามีอยู่ทุกที่',
+          label: 'จำไว้นะน้องเอม น้องไม่ได้สู้คนเดียวหรอก มีพวกพี่และเพื่อนๆ นักสืบคอยช่วยเหลือและอยู่ข้างๆ เสมอ',
           next: 'd-final', xp: 50, badge: 'mentor',
         },
         {
@@ -180,7 +181,7 @@ export const scenario12: Scenario = {
     },
     {
       type: 'dialogue', id: 'd-final', speaker: 'narrator', next: 'feedback1',
-      text: 'เอมยิ้มสว่าง — เธอกลายเป็นนักสืบสุขภาพรุ่นใหม่ พร้อมปกป้องเพื่อนป.6 ในห้องของเธอ',
+      text: 'น้องเอมยิ้มกว้างออกมาด้วยความมั่นใจ — เธอพร้อมแล้วที่จะเป็นนักสืบสุขภาพรุ่นเยาว์ คอยปกป้องและดูแลเพื่อนๆ ในชั้น ป.6 ของเธอ',
     },
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',

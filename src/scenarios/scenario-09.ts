@@ -37,12 +37,12 @@ export const scenario09: Scenario = {
       xpOnSuccess: 60,
     },
     {
-      type: 'dialogue', id: 'd1', speaker: 'baitoey', next: 'd2',
-      text: 'พี่... เพื่อนหนูชื่อปาล์ม ลองครั้งเดียวเมื่อเดือนก่อน ตอนนี้ใช้ทุกวัน เขาเริ่มเครียด มือสั่น',
+      type: 'dialogue', id: 'd1', speaker: 'baitoey', speakerName: 'น้องใบเตย (ม.1)', next: 'd2',
+      text: 'พี่คะ... เพื่อนหนูชื่อปาล์ม เขาแอบลองบุหรี่ไฟฟ้าเมื่อเดือนก่อน ตอนนี้เริ่มติดหนักจนมือสั่นแล้วค่ะ',
     },
     {
-      type: 'dialogue', id: 'd2', speaker: 'baitoey', next: 'choice1',
-      text: 'หนูคุยกับเขาแล้ว เขาบอกว่าเลิกไม่ได้ ตอนเลิกใช้รู้สึกแย่มาก',
+      type: 'dialogue', id: 'd2', speaker: 'baitoey', speakerName: 'น้องใบเตย (ม.1)', next: 'choice1',
+      text: 'หนูพยายามคุยกับเขาแล้ว แต่เขาบอกว่าเครียดมาก เลิกเองไม่ได้เลย พอไม่สูบก็กระวนกระวายใจ',
     },
     {
       type: 'choice', id: 'choice1', speaker: 'player',
@@ -138,8 +138,8 @@ export const scenario09: Scenario = {
       source: 'รวมแหล่งช่วยเหลือเลิกบุหรี่/บุหรี่ไฟฟ้าในประเทศไทย',
     },
     {
-      type: 'dialogue', id: 'd-end', speaker: 'baitoey', next: 'edu1',
-      text: 'พี่... ปาล์มยอมโทร 1600 (Quit Line) แล้ว นักจิตวิทยาให้คำปรึกษาแบบไม่ตัดสินดีมาก ขอบคุณนะที่อยู่เคียงข้าง',
+      type: 'dialogue', id: 'd-end', speaker: 'baitoey', speakerName: 'น้องใบเตย (ม.1)', next: 'edu1',
+      text: 'พี่คะ... ตอนนี้ปาล์มยอมโทร 1600 (Quit Line) แล้วค่ะ นักจิตวิทยาให้คำปรึกษาอบอุ่นและไม่ตัดสินเลย ขอบคุณพี่นักสืบมากนะคะที่อยู่เคียงข้างและช่วยหนูวางแผน',
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'end1',

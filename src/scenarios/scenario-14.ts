@@ -1,4 +1,5 @@
 import type { Scenario } from '../types';
+import { asset } from '../lib/asset';
 
 // ด่าน 14 (Pro 2) — TikTok Detective: ปัดจริง/เท็จในคลิป
 export const scenario14: Scenario = {
@@ -9,17 +10,17 @@ export const scenario14: Scenario = {
   startNode: 'd1',
   intro: [
     '📱 Pro 2 — ทักษะรู้เท่าทันสื่อแบบไว',
-    'ปาล์มส่งภาพคลิป TikTok ที่กำลังไวรัล — มีข้อกล่าวอ้างเรื่องบุหรี่ไฟฟ้ามากมาย',
-    'นักสืบต้อง "ปัด" คัดความจริงออกจากความเท็จ ในเวลาอันสั้น',
+    'น้องปาล์มส่งคลิป TikTok ที่กำลังไวรัลมาให้ดู — มีคนอ้างว่าบุหรี่ไฟฟ้าไม่มีอันตรายมากมาย',
+    'นักสืบต้องช่วยน้อง "ปัดคัดกรอง" ข้อเท็จจริงออกจากความเท็จในเวลาอันรวดเร็ว',
   ],
   nodes: [
     {
-      type: 'dialogue', id: 'd1', speaker: 'friend1', next: 'd2',
-      text: 'พี่! TikTok ตอนนี้มีคลิปบอกเรื่องบุหรี่ไฟฟ้าเยอะมาก — บางอันก็เชื่อ บางอันก็ไม่เชื่อ ช่วยสอนหนูแยกหน่อย!',
+      type: 'dialogue', id: 'd1', speaker: 'friend1', speakerName: 'น้องปาล์ม (รุ่นน้อง)', speakerAvatar: asset('characters/player-m4.png'), next: 'd2',
+      text: 'พี่ครับ! ใน TikTok ตอนนี้มีคลิปพูดเรื่องบุหรี่ไฟฟ้าเยอะมากเลย บางคลิปก็บอกว่าปลอดภัย บางคลิปก็บอกอันตราย พี่ช่วยสอนผมแยกแยะหน่อยสิครับ!',
     },
     {
       type: 'dialogue', id: 'd2', speaker: 'narrator', next: 'mg1',
-      text: 'นักสืบเปิดฟีดและเริ่ม — "ปัดขวา = จริง, ปัดซ้าย = เท็จ" ทีละคลิป',
+      text: 'นักสืบเปิดฟีดและเริ่มภารกิจ — "ปัดขวา = จริง, ปัดซ้าย = เท็จ" มาช่วยน้องปาล์มแยกแยะทีละคลิปกันเลย!',
     },
     // มินิเกมหลัก — SwipeDecide
     {
@@ -98,8 +99,8 @@ export const scenario14: Scenario = {
       source: 'TikTok Transparency Report 2023',
     },
     {
-      type: 'dialogue', id: 'd-end', speaker: 'friend1', next: 'end1',
-      text: 'ขอบคุณพี่! ตอนนี้หนูรู้แล้ว — ก่อนกดไลก์ ต้องคิดก่อนเลย ✨',
+      type: 'dialogue', id: 'd-end', speaker: 'friend1', speakerName: 'น้องปาล์ม (รุ่นน้อง)', speakerAvatar: asset('characters/player-m4.png'), next: 'end1',
+      text: 'ขอบคุณพี่มากๆ เลยครับ! ตอนนี้ผมเข้าใจแล้ว — ต่อไปนี้ก่อนจะเชื่อหรือกดแชร์อะไร ผมจะเช็กที่มาให้ชัวร์ก่อนเสมอเลยครับ ✨',
     },
     {
       type: 'end', id: 'end1',

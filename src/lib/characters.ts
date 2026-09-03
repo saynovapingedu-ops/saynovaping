@@ -57,7 +57,7 @@ export function getPlayerCharacter(preset?: number): PlayerCharacter {
   return PLAYER_CHARACTERS.find(c => c.preset === preset) || PLAYER_CHARACTERS[0];
 }
 
-// NPC speakers — มีรูป PNG จริง (หมอ / Vapor / กลุ่มเพื่อน / ใบเตย ฯลฯ)
+// NPC speakers — มีรูป PNG จริง (หมอ / Vapor / กลุ่มเพื่อน / ใบเตย / น้องเอม ฯลฯ)
 export const NPC_CHARACTERS: Record<string, { src: string; label: string }> = {
   doctor:        { src: asset('characters/doctor.png'),       label: 'พี่หมอเก๋' },
   vapor:         { src: asset('characters/vapor.png'),        label: 'Vapor (ตัวร้าย)' },
@@ -65,7 +65,14 @@ export const NPC_CHARACTERS: Record<string, { src: string; label: string }> = {
   narrator:      { src: asset('characters/narrator.png'),     label: 'เล่าเรื่อง' },
   shopkeeper:    { src: asset('characters/shopkeeper.png'),   label: 'เจ้าของร้าน' },
   'dm-stranger': { src: asset('characters/dm-stranger.png'),  label: 'คนใน DM' },
-  // เพื่อนในบทสนทนา — ใช้รูปเพื่อนกลุ่ม (ไม่ใช่ตัวผู้เล่น)
-  friend1: { src: asset('characters/player-f1.png'), label: 'เพื่อน' },
-  friend2: { src: asset('characters/player-m1.png'), label: 'เพื่อน' },
+  // เพื่อนและรุ่นพี่/รุ่นน้องในแต่ละด่าน
+  aim:           { src: asset('characters/player-g3.png'),    label: 'น้องเอม (ป.6)' },
+  palm:          { src: asset('characters/player-m4.png'),    label: 'น้องปาล์ม (รุ่นน้อง)' },
+  boy:           { src: asset('characters/player-m2.png'),    label: 'บอย (เพื่อนสนิท)' },
+  pete:          { src: asset('characters/player-m3.png'),    label: 'พี่พีท (ลูกพี่ลูกน้อง)' },
+  senior:        { src: asset('characters/player-m1.png'),    label: 'รุ่นพี่ ม.ปลาย' },
+  tae:           { src: asset('characters/player-m1.png'),    label: 'เต้ (เพื่อนร่วมชั้น)' },
+  win:           { src: asset('characters/player-m4.png'),    label: 'วิน (เพื่อนที่ลังเล)' },
+  friend1:       { src: asset('characters/player-f1.png'),    label: 'เพื่อน' },
+  friend2:       { src: asset('characters/player-m1.png'),    label: 'เพื่อน' },
 };

@@ -4,12 +4,15 @@
 
 export type SpeakerKey =
   | 'narrator' | 'player' | 'doctor' | 'baitoey' | 'vapor'
-  | 'friend1' | 'friend2' | 'shopkeeper' | 'dm-stranger' | 'system';
+  | 'friend1' | 'friend2' | 'shopkeeper' | 'dm-stranger' | 'system'
+  | 'aim' | 'palm' | 'boy' | 'pete' | 'senior' | 'tae' | 'win';
 
 export interface DialogueNode {
   type: 'dialogue';
   id: string;
   speaker: SpeakerKey;
+  speakerName?: string;
+  speakerAvatar?: string;
   text: string;
   next: string;
 }

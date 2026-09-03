@@ -18,19 +18,30 @@ const SPEAKERS: Record<SpeakerKey, { name: string; emoji: string; align: 'left' 
   shopkeeper:    { name: 'เจ้าของร้าน',   emoji: '🧓', align: 'left',  bg: 'bg-warning-50 text-slate-800 border border-warning-200' },
   'dm-stranger': { name: 'คนใน DM',     emoji: '💬', align: 'left',  bg: 'bg-danger-50 text-slate-800 border border-danger-200' },
   system:        { name: 'ระบบ',        emoji: '⚙️', align: 'left',  bg: 'bg-slate-200 text-slate-700' },
+  aim:           { name: 'น้องเอม (ป.6)', emoji: '👧', align: 'left',  bg: 'bg-warning-50 text-slate-800 border border-warning-200' },
+  palm:          { name: 'น้องปาล์ม',    emoji: '👦', align: 'left',  bg: 'bg-detective-50 text-slate-800 border border-detective-200' },
+  boy:           { name: 'บอย (เพื่อนสนิท)', emoji: '👦', align: 'left',  bg: 'bg-detective-50 text-slate-800 border border-detective-200' },
+  pete:          { name: 'พี่พีท',       emoji: '🧑', align: 'left',  bg: 'bg-detective-50 text-slate-800 border border-detective-200' },
+  senior:        { name: 'รุ่นพี่ ม.ปลาย', emoji: '🧑', align: 'left',  bg: 'bg-detective-50 text-slate-800 border border-detective-200' },
+  tae:           { name: 'เต้ (เพื่อนร่วมชั้น)', emoji: '👦', align: 'left',  bg: 'bg-detective-50 text-slate-800 border border-detective-200' },
+  win:           { name: 'วิน (เพื่อนที่ลังเล)', emoji: '👦', align: 'left',  bg: 'bg-detective-50 text-slate-800 border border-detective-200' },
 };
 
 interface Props {
   speaker: SpeakerKey;
+  speakerName?: string;
+  speakerAvatar?: string;
   text: string;
 }
 
-export default function DialogueBubble({ speaker, text }: Props) {
-  const s = SPEAKERS[speaker];
+export default function DialogueBubble({ speaker, speakerName, speakerAvatar, text }: Props) {
+  const s = SPEAKERS[speaker] || SPEAKERS.narrator;
   const player = usePlayerStore();
   const isPlayer = speaker === 'player';
-  // ตัวละครหลักที่มีรูป PNG จริง (หมอ + Vapor)
+  // ตัวละครหลักที่มีรูป PNG จริง
   const npc = NPC_CHARACTERS[speaker];
+  const avatarSrc = speakerAvatar || npc?.src;
+  const displayName = speakerName || npc?.label || s.name;
   // ปุ่มอ่านออกเสียง — โผล่เฉพาะเมื่อเปิดในตั้งค่า + เครื่องมีเสียงไทย
   const ttsEnabled = useSettingsStore(st => st.ttsEnabled);
   const ttsAvailable = useTtsAvailable();
@@ -46,10 +57,10 @@ export default function DialogueBubble({ speaker, text }: Props) {
       <div className="flex-shrink-0">
         {isPlayer ? (
           <Avatar preset={player.avatar} customId={player.customAvatarId} size={36} />
-        ) : npc ? (
-          // ใช้รูป PNG จริงของหมอ/Vapor
+        ) : avatarSrc ? (
+          // ใช้รูป PNG ของตัวละคร
           <div className="w-9 h-9 rounded-full overflow-hidden bg-[#FFFCF7] shadow-clay-sm">
-            <img src={npc.src} alt={npc.label} className="w-full h-full object-cover" loading="lazy" />
+            <img src={avatarSrc} alt={displayName} className="w-full h-full object-cover" loading="lazy" />
           </div>
         ) : (
           // NPC ที่เหลือใช้ emoji
@@ -61,7 +72,7 @@ export default function DialogueBubble({ speaker, text }: Props) {
       <div className={`flex flex-col ${s.align === 'right' ? 'items-end' : 'items-start'} max-w-[80%]`}>
         {!isPlayer && (
           <span className="text-xs text-slate-500 mb-1 px-1 font-medium">
-            {s.name}
+            {displayName}
           </span>
         )}
         <div className={`px-4 py-3 rounded-[20px] shadow-clay-sm ${s.bg} ${s.align === 'right' ? 'rounded-br-md' : 'rounded-bl-md'}`}>
