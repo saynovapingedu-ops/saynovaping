@@ -126,8 +126,8 @@ export default function Certificate() {
     sfx.click();
     setSaving(true);
     try {
-      const safeName = (displayName || 'certificate').replace(/[^\w฀-๿-]/g, '_');
-      const filename = `Certificate-${safeName}-${certNo || 'cert'}.png`;
+      const cleanCertNo = (certNo || 'cert').replace(/[^A-Za-z0-9_-]/g, '');
+      const filename = `Certificate-${cleanCertNo}.png`;
 
       // 1. เรนเดอร์ Canvas โดยตรง (แก้ปัญหา iOS Safari ทิ้งโลโก้ TMF 100%)
       const canvas = await renderCertificateCanvas({
@@ -151,9 +151,9 @@ export default function Certificate() {
       setPreviewImgUrl(res.dataUrl);
 
       if (res.method === 'download') {
-        setShareMsg('กำลังดาวน์โหลดรูปลงเครื่อง...');
+        setShareMsg('กำลังดาวน์โหลดรูปภาพลงเครื่อง...');
       } else if (res.method === 'share') {
-        setShareMsg('แชร์/บันทึกรูปภาพเรียบร้อย');
+        setShareMsg('พร้อมบันทึกหรือแชร์รูปภาพแล้ว');
       } else {
         setShareMsg('แตะค้างที่รูปภาพเพื่อบันทึก');
       }
@@ -502,50 +502,81 @@ export default function Certificate() {
               <img
                 src={previewImgUrl}
                 alt="เกียรติบัตรของคุณ"
-                className="w-full h-auto rounded-xl shadow-sm block max-h-[50vh] object-contain mx-auto pointer-events-auto select-none"
+                className="w-full h-auto rounded-xl shadow-sm block max-h-[50vh] object-contain mx-auto pointer-events-auto"
+                style={{ WebkitTouchCallout: 'default', userSelect: 'auto' }}
               />
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 mb-3 w-full text-left text-xs text-amber-900 leading-relaxed space-y-1">
-              <p className="font-bold flex items-center gap-1 text-amber-950">
-                <span>📱</span> วิธีบันทึกภาพลงเครื่อง (สำหรับ LINE / Android / iOS):
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 w-full text-left text-xs text-amber-950 leading-relaxed space-y-1.5">
+              <p className="font-bold flex items-center gap-1 text-sm text-amber-950">
+                <span>📱</span> วิธีเซฟรูปลงเครื่อง 100%:
               </p>
-              <p>• <strong>แตะค้างที่รูปเกียรติบัตรด้านบน</strong> แล้วเลือก <strong>"บันทึกรูปภาพ" (Save Image)</strong> หรือ "ดาวน์โหลดรูปภาพ"</p>
-              <p>• หากเปิดผ่านแอป LINE แนะนำให้แตะปุ่มจุดสามจุด (...) มุมขวาบน แล้วเลือก <strong>"เปิดในเบราว์เซอร์อื่น"</strong> (Open in external browser)</p>
+              <p>• <strong>กดปุ่ม "📲 บันทึกเข้า Photos / แชร์ผ่านแอป"</strong> ด้านล่าง แล้วเลือก <em>"Save Image" (บันทึกภาพ)</em></p>
+              <p>• หรือ <strong>แตะค้างที่รูปภาพด้านบน</strong> ค้างไว้ 1 วินาที แล้วเลือก <strong>"บันทึกรูปภาพ" (Save Image / Save to Photos)</strong></p>
+              <p>• หากเปิดผ่านแอป LINE แล้วบันทึกไม่ได้: แตะปุ่มจุดสามจุด (...) มุมขวาบน แล้วเลือก <strong>"เปิดในเบราว์เซอร์อื่น" (Open in external browser)</strong></p>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 w-full">
-              <button
-                onClick={async () => {
-                  try {
-                    const blob = await (await fetch(previewImgUrl)).blob();
-                    const objectUrl = URL.createObjectURL(blob);
-                    const safeName = (displayName || 'certificate').replace(/[^\w฀-๿-]/g, '_');
-                    const a = document.createElement('a');
-                    a.href = objectUrl;
-                    a.download = `Certificate-${safeName}-${certNo || 'cert'}.png`;
-                    a.style.display = 'none';
-                    document.body.appendChild(a);
-                    a.click();
-                    setTimeout(() => {
-                      document.body.removeChild(a);
-                      URL.revokeObjectURL(objectUrl);
-                    }, 3000);
-                    setShareMsg('ดาวน์โหลดอีกครั้งเรียบร้อย');
-                  } catch (e) {
-                    console.warn('redownload failed', e);
-                  }
-                }}
-                className="btn-secondary py-2.5 text-xs flex items-center justify-center gap-1 font-bold"
-              >
-                <span>⬇️</span> ดาวน์โหลดซ้ำ
-              </button>
-              <button
-                onClick={() => setPreviewImgUrl(null)}
-                className="btn-primary py-2.5 text-xs flex items-center justify-center gap-1 font-bold"
-              >
-                <span>✓</span> ปิดหน้าต่าง
-              </button>
+            <div className="flex flex-col gap-2 w-full">
+              {navigator.share && (
+                <button
+                  onClick={async () => {
+                    sfx.click();
+                    try {
+                      const blob = await (await fetch(previewImgUrl)).blob();
+                      const cleanCertNo = (certNo || 'cert').replace(/[^A-Za-z0-9_-]/g, '');
+                      const file = new File([blob], `Certificate-${cleanCertNo}.png`, { type: 'image/png' });
+                      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                          files: [file],
+                          title: 'ประกาศนียบัตร',
+                          text: `${displayName} ผ่านการอบรม "นักสืบสู้บุหรี่ไฟฟ้า"`,
+                        });
+                        setShareMsg('แชร์รูปภาพสำเร็จ');
+                      }
+                    } catch {
+                      // user cancelled
+                    }
+                  }}
+                  className="btn-primary py-3 text-sm flex items-center justify-center gap-2 font-bold w-full shadow-md active:scale-95"
+                >
+                  <span>📲</span> บันทึกเข้า Photos / แชร์ผ่านแอป
+                </button>
+              )}
+
+              <div className="grid grid-cols-2 gap-2 w-full">
+                <button
+                  onClick={async () => {
+                    sfx.click();
+                    try {
+                      const blob = await (await fetch(previewImgUrl)).blob();
+                      const objectUrl = URL.createObjectURL(blob);
+                      const cleanCertNo = (certNo || 'cert').replace(/[^A-Za-z0-9_-]/g, '');
+                      const a = document.createElement('a');
+                      a.href = objectUrl;
+                      a.download = `Certificate-${cleanCertNo}.png`;
+                      a.style.display = 'none';
+                      document.body.appendChild(a);
+                      a.click();
+                      setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(objectUrl);
+                      }, 4000);
+                      setShareMsg('เริ่มดาวน์โหลดไฟล์แล้ว');
+                    } catch (e) {
+                      console.warn('download failed', e);
+                    }
+                  }}
+                  className="btn-secondary py-2.5 text-xs flex items-center justify-center gap-1 font-bold"
+                >
+                  <span>⬇️</span> ดาวน์โหลดไฟล์ PNG
+                </button>
+                <button
+                  onClick={() => setPreviewImgUrl(null)}
+                  className="btn-secondary py-2.5 text-xs flex items-center justify-center gap-1 font-bold"
+                >
+                  <span>✕</span> ปิดหน้าต่าง
+                </button>
+              </div>
             </div>
           </div>
         </div>

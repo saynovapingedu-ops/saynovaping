@@ -11,9 +11,22 @@ export interface CertRenderOptions {
   cornerEmoji?: string;
 }
 
-// ขนาดออกแบบคงที่ระดับ HD 2x (840 x 1188 px)
-const CANVAS_W = 840;
-const CANVAS_H = 1188;
+// ขนาดออกแบบคงที่ระดับ HD 2x (840 x 1188 px มาตรฐาน A4 ratio 1:1.414)
+export const CANVAS_W = 840;
+export const CANVAS_H = 1188;
+
+// ฟังก์ชันช่วยวาดข้อความจัดกึ่งกลางด้วยการคำนวณพิกเซลจริง
+// แก้ปัญหาบั๊ก WebKit/Safari บน iOS ที่ไม่ยอมจัดกึ่งกลางภาษาไทยเมื่อใช้ ctx.textAlign = 'center'
+export function drawCenteredText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  cx: number,
+  cy: number
+) {
+  ctx.textAlign = 'left';
+  const metrics = ctx.measureText(text);
+  ctx.fillText(text, Math.round(cx - metrics.width / 2), cy);
+}
 
 // โหลดรูปภาพจาก Data URL หรือ Path ให้เสร็จสมบูรณ์ 100% ก่อนวาด
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -65,14 +78,14 @@ export async function renderCertificateCanvas(opts: CertRenderOptions): Promise<
   ctx.lineWidth = 2;
   ctx.strokeRect(36, 36, CANVAS_W - 72, CANVAS_H - 72);
 
-  // 4. วาด Watermark โลโก้ TMF ตรงกลางแบบจางๆ (opacity 4.5%)
+  // 4. วาด Watermark โลโก้ TMF ตรงกลางแบบจางๆ (opacity 4%)
   try {
     const tmfLogo = await loadImage(TMF_LOGO_BASE64);
     ctx.save();
-    ctx.globalAlpha = 0.045;
+    ctx.globalAlpha = 0.04;
     const wmW = 640;
     const wmH = Math.round(wmW / (1778 / 1573)); // ~566px
-    ctx.drawImage(tmfLogo, (CANVAS_W - wmW) / 2, (CANVAS_H - wmH) / 2 + 10, wmW, wmH);
+    ctx.drawImage(tmfLogo, Math.round((CANVAS_W - wmW) / 2), Math.round((CANVAS_H - wmH) / 2) + 15, wmW, wmH);
     ctx.restore();
   } catch (e) {
     console.warn('[certRenderer] Failed to render watermark logo:', e);
@@ -81,102 +94,103 @@ export async function renderCertificateCanvas(opts: CertRenderOptions): Promise<
   // 5. ลวดลายเรขาคณิตสี่เหลี่ยมที่มุมล่างทั้งสองข้าง (ฟ้า + ทอง ตาม CI ของ TMF)
   drawCornerPatterns(ctx);
 
-  // 6. โลโก้ TMF + ผู้รับทุน โครงการ SayNo ด้านบนสุด
+  // 6. ส่วนหัว: โลโก้ TMF + เส้นคั่น + ข้อความผู้รับทุนโครงการ SayNo (จัดกึ่งกลางกลุ่มทั้งหมด)
   try {
     const tmfLogo = await loadImage(TMF_LOGO_BASE64);
-    const logoW = 190;
-    const logoH = Math.round(logoW / (1778 / 1573)); // ~168px
-    const startX = (CANVAS_W - (logoW + 28 + 190)) / 2;
-    const topY = 64;
+    const logoW = 160;
+    const logoH = Math.round(logoW / (1778 / 1573)); // ~142px
+    const gap = 20;
+    const textW = 180;
+    const totalHeaderW = logoW + gap + 2 + gap + textW; // ~382px
+    const startX = Math.round((CANVAS_W - totalHeaderW) / 2);
+    const topY = 60;
 
+    // วาดโลโก้ TMF
     ctx.drawImage(tmfLogo, startX, topY, logoW, logoH);
 
     // เส้นคั่นแนวตั้ง
     ctx.strokeStyle = '#CBD5E1';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(startX + logoW + 16, topY + 20);
-    ctx.lineTo(startX + logoW + 16, topY + logoH - 20);
+    ctx.moveTo(startX + logoW + gap, topY + 15);
+    ctx.lineTo(startX + logoW + gap, topY + logoH - 15);
     ctx.stroke();
 
     // ข้อความผู้รับทุน
+    const textX = startX + logoW + gap + gap;
     ctx.textAlign = 'left';
     ctx.fillStyle = '#64748B';
-    ctx.font = '500 18px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
-    ctx.fillText('ผู้รับทุน', startX + logoW + 30, topY + 44);
+    ctx.font = 'bold 18px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
+    ctx.fillText('ผู้รับทุน', textX, topY + 40);
 
     ctx.fillStyle = '#003C73';
     ctx.font = 'bold 24px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
-    ctx.fillText('โครงการ SayNo', startX + logoW + 30, topY + 76);
-    ctx.fillText('สู้บุหรี่ไฟฟ้า', startX + logoW + 30, topY + 106);
+    ctx.fillText('โครงการ SayNo', textX, topY + 74);
+    ctx.fillText('สู้บุหรี่ไฟฟ้า', textX, topY + 104);
   } catch (e) {
     console.warn('[certRenderer] Failed to draw header logo:', e);
   }
 
-  // 7. หัวข้อหลัก: "ประกาศนียบัตร"
-  ctx.textAlign = 'center';
+  // 7. หัวข้อหลัก: "ประกาศนียบัตร" (จัดกึ่งกลางแท้จริง)
   ctx.fillStyle = '#003C73';
-  ctx.font = 'bold 54px "Sukhumvit Set", "Noto Sans Thai", "IBM Plex Sans Thai", sans-serif';
-  ctx.fillText('ประกาศนียบัตร', CANVAS_W / 2, 285);
+  ctx.font = 'bold 50px "Sukhumvit Set", "Noto Sans Thai", "IBM Plex Sans Thai", sans-serif';
+  drawCenteredText(ctx, 'ประกาศนียบัตร', CANVAS_W / 2, 260);
 
   // 8. ริบบิ้นโบว์ทองใต้หัวข้อ
-  drawRibbon(ctx, CANVAS_W / 2, 318, 240, 52);
+  drawRibbon(ctx, CANVAS_W / 2, 296, 230, 44);
 
   // 9. ข้อความนำ: "ฉบับนี้ไว้เพื่อแสดงว่า"
   ctx.fillStyle = '#334155';
   ctx.font = '24px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
-  ctx.fillText('ฉบับนี้ไว้เพื่อแสดงว่า', CANVAS_W / 2, 385);
+  drawCenteredText(ctx, 'ฉบับนี้ไว้เพื่อแสดงว่า', CANVAS_W / 2, 372);
 
   // 10. ชื่อผู้รับเกียรติบัตร (displayName)
   const name = opts.displayName.trim();
-  let nameSize = 46;
-  if (name.length > 30) nameSize = 32;
-  else if (name.length > 22) nameSize = 38;
-  else if (name.length > 15) nameSize = 42;
+  let nameSize = 44;
+  if (name.length > 30) nameSize = 28;
+  else if (name.length > 22) nameSize = 34;
+  else if (name.length > 15) nameSize = 38;
 
   ctx.fillStyle = '#003C73';
   ctx.font = `bold ${nameSize}px "Sukhumvit Set", "Noto Sans Thai", sans-serif`;
-  ctx.fillText(name, CANVAS_W / 2, 450);
+  drawCenteredText(ctx, name, CANVAS_W / 2, 436);
 
   // ถ้ามีชื่อเล่นแสดงเสริมใต้ชื่อจริง
-  let nextY = 490;
+  let nextY = 478;
   if (opts.realName && opts.nickname) {
     ctx.fillStyle = '#64748B';
     ctx.font = '22px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
-    ctx.fillText(`(${opts.nickname})`, CANVAS_W / 2, nextY);
-    nextY += 44;
+    drawCenteredText(ctx, `(${opts.nickname})`, CANVAS_W / 2, nextY);
+    nextY += 40;
   }
 
   // 11. รายละเอียดข้อความหลักสูตร
   ctx.fillStyle = '#334155';
-  ctx.font = '24px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
-  ctx.fillText('เป็นผู้ผ่านการเข้าร่วมกิจกรรม', CANVAS_W / 2, nextY + 10);
+  ctx.font = '23px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
+  drawCenteredText(ctx, 'เป็นผู้ผ่านการเข้าร่วมกิจกรรม', CANVAS_W / 2, nextY + 15);
 
   ctx.fillStyle = '#0284C7';
   ctx.font = 'bold 32px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
-  ctx.fillText('"นักสืบสู้บุหรี่ไฟฟ้า"', CANVAS_W / 2, nextY + 54);
+  drawCenteredText(ctx, '"นักสืบสู้บุหรี่ไฟฟ้า"', CANVAS_W / 2, nextY + 58);
 
   ctx.fillStyle = '#475569';
-  ctx.font = '21px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
-  ctx.fillText('หลักสูตรการเรียนรู้ทักษะปฏิเสธ', CANVAS_W / 2, nextY + 98);
-  ctx.fillText('และรู้เท่าทันภัยจากบุหรี่ไฟฟ้า สำหรับเยาวชน', CANVAS_W / 2, nextY + 130);
+  ctx.font = '20px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
+  drawCenteredText(ctx, 'หลักสูตรการเรียนรู้ทักษะปฏิเสธ', CANVAS_W / 2, nextY + 100);
+  drawCenteredText(ctx, 'และรู้เท่าทันภัยจากบุหรี่ไฟฟ้า สำหรับเยาวชน', CANVAS_W / 2, nextY + 130);
 
   // 12. ตราประทับเกียรติบัตร (Official Seal) วงกลมน้ำเงิน-ทอง พร้อมดาว 5 แฉก
-  drawSeal(ctx, CANVAS_W / 2, nextY + 230, 68);
+  drawSeal(ctx, CANVAS_W / 2, nextY + 230, 64);
 
-  // 13. วันที่มอบเกียรติบัตร
+  // 13. วันที่มอบเกียรติบัตร (บรรทัดเดียวจัดกึ่งกลางสมบูรณ์แบบ ห่างจาก QR Code ไม่ทับซ้อน)
   ctx.fillStyle = '#334155';
-  ctx.font = '24px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
-  ctx.fillText('ให้ไว้ ณ วันที่', CANVAS_W / 2 - 130, CANVAS_H - 150);
-
-  ctx.fillStyle = '#003C73';
-  ctx.font = 'bold 24px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
-  ctx.fillText(formatThaiDate(opts.issueDate), CANVAS_W / 2 + 50, CANVAS_H - 150);
+  ctx.font = '23px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
+  const dateFullText = `ให้ไว้ ณ วันที่ ${formatThaiDate(opts.issueDate)}`;
+  drawCenteredText(ctx, dateFullText, CANVAS_W / 2, CANVAS_H - 165);
 
   // 14. เลขที่เกียรติบัตร
   ctx.fillStyle = '#64748B';
   ctx.font = '19px "Courier New", monospace';
-  ctx.fillText(`เลขที่ ${opts.certNo}`, CANVAS_W / 2, CANVAS_H - 110);
+  drawCenteredText(ctx, `เลขที่ ${opts.certNo}`, CANVAS_W / 2, CANVAS_H - 125);
 
   // 15. วาด QR Code ตรวจสอบมุมขวาล่าง
   if (opts.verifyUrl) {
@@ -187,22 +201,21 @@ export async function renderCertificateCanvas(opts: CertRenderOptions): Promise<
         color: { dark: '#003C73', light: '#FFFFFF' },
       });
       const qrImg = await loadImage(qrDataUrl);
-      const qrBoxSize = 90;
-      const qrX = CANVAS_W - 60 - qrBoxSize;
-      const qrY = CANVAS_H - 60 - qrBoxSize - 16;
+      const qrBoxSize = 84;
+      const qrX = CANVAS_W - 55 - qrBoxSize;
+      const qrY = CANVAS_H - 55 - qrBoxSize - 22;
 
       ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(qrX - 4, qrY - 4, qrBoxSize + 8, qrBoxSize + 28);
+      ctx.fillRect(qrX - 4, qrY - 4, qrBoxSize + 8, qrBoxSize + 26);
       ctx.strokeStyle = '#CBD5E1';
       ctx.lineWidth = 1;
-      ctx.strokeRect(qrX - 4, qrY - 4, qrBoxSize + 8, qrBoxSize + 28);
+      ctx.strokeRect(qrX - 4, qrY - 4, qrBoxSize + 8, qrBoxSize + 26);
 
       ctx.drawImage(qrImg, qrX, qrY, qrBoxSize, qrBoxSize);
 
       ctx.fillStyle = '#64748B';
       ctx.font = '13px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('ตรวจสอบ', qrX + qrBoxSize / 2, qrY + qrBoxSize + 16);
+      drawCenteredText(ctx, 'ตรวจสอบ', qrX + qrBoxSize / 2, qrY + qrBoxSize + 16);
     } catch (e) {
       console.warn('[certRenderer] Failed to draw QR Code:', e);
     }
@@ -305,7 +318,7 @@ function drawSeal(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: numb
   ctx.stroke();
 
   // ดาว 5 แฉกสีทองตรงกลาง
-  drawStar(ctx, cx, cy, 5, 26, 12, '#FBBF24', '#F59E0B');
+  drawStar(ctx, cx, cy, 5, 25, 11, '#FBBF24', '#F59E0B');
 
   // แสงสะท้อนประกายขาว
   ctx.save();
@@ -401,7 +414,7 @@ function drawCornerPatterns(ctx: CanvasRenderingContext2D) {
 
 /**
  * บันทึกรูปภาพเกียรติบัตรลงเครื่องอย่างสมบูรณ์แบบ
- * แก้ไขปัญหา Android ไม่ยอมดาวน์โหลด Data URL และ iOS ห้ามดาวน์โหลดตรง
+ * แก้ไขปัญหา Android ไม่ยอมดาวน์โหลด Data URL และ iOS ห้ามคลิก <a> ดาวน์โหลดตรง
  */
 export async function saveCertificateImage(
   canvas: HTMLCanvasElement,
@@ -419,24 +432,30 @@ export async function saveCertificateImage(
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const isLine = /Line/i.test(navigator.userAgent);
 
-  // 1) บน iOS Safari (ที่ไม่ใช่ LINE): Web Share API สามารถกด Save Image เข้า Photos ได้โดยตรง
-  if (isIOS && !isLine && navigator.share && navigator.canShare) {
-    try {
-      const file = new File([blob], filename, { type: 'image/png' });
-      if (navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title,
-          text: title,
-        });
-        return { success: true, dataUrl, method: 'share' };
+  // 1) บน iOS Safari:
+  // ห้ามเรียก <a download>.click() บน iOS เด็ดขาด เพราะ Safari จะเด้งไปหน้า blob ว่างทำให้แอพพัง
+  if (isIOS) {
+    if (!isLine && navigator.share && navigator.canShare) {
+      try {
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title,
+            text: title,
+          });
+          return { success: true, dataUrl, method: 'share' };
+        }
+      } catch {
+        // User dismissed share sheet
       }
-    } catch {
-      // ผู้ใช้กดปิดหรือไม่สำเร็จ ให้ไปต่อที่ขั้นตอนบันทึก
     }
+    // บน iOS หากแชร์ไม่ได้หรือไม่รองรับ ให้ส่งกลับเพื่อเปิด Preview Modal (แตะค้างบันทึกเข้า Photos)
+    return { success: true, dataUrl, method: 'preview' };
   }
 
-  // 2) บน Android Chrome และ Desktop: ใช้ Blob URL ดาวน์โหลดเข้าเครื่อง (Chrome บล็อก data: URL แต่ยอมรับ blob: URL)
+  // 2) บน Android และ Desktop:
+  // ใช้ Blob Object URL สำหรับแท็ก <a> เพื่อให้ Chrome ดาวน์โหลดไฟล์ลงเครื่องทันที
   try {
     const objectUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -448,7 +467,7 @@ export async function saveCertificateImage(
     setTimeout(() => {
       document.body.removeChild(a);
       URL.revokeObjectURL(objectUrl);
-    }, 3000);
+    }, 4000);
     return { success: true, dataUrl, method: 'download' };
   } catch (e) {
     console.warn('[certRenderer] Native download failed, falling back to preview modal:', e);
