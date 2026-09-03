@@ -76,7 +76,7 @@ export const scenario08: Scenario = {
       pairs: [
         { left: 'รุ่นพี่ตื๊อในห้องน้ำ',     right: 'สูตรปฏิเสธ 3 ขั้น',
           source: 'NIDA — Refusal Skills for Adolescents (2022)' },
-        { left: 'พี่ Vapor ในข้อความส่วนตัว',  right: 'ถอย — บล็อก/รายงาน',
+        { left: 'พี่ Vapor ทักแชตส่วนตัวมาชวน',  right: 'ถอยห่าง — บล็อกและรายงาน',
           source: 'Common Sense Media — Online Safety / รายงาน กสทช. 2566' },
         { left: 'เพื่อนเครียดอยากลอง',        right: 'ฟัง-ยอมรับ-ห่วงใย-นำพา',
           source: 'Mental Health First Aid (MHFA) Youth Module' },
