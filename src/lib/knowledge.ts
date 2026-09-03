@@ -34,7 +34,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'เพื่อนแชร์โพสต์ "vape ช่วยให้คนเลิกบุหรี่ได้"',
       response: 'ลองค้นว่า "vape ช่วยเลิกบุหรี่ WHO" → จะเจอข้อมูลจริงว่ามักทำให้ใช้คู่กัน',
     },
-    source: 'WHO Tobacco Report / CDC Youth Vaping 2023',
+    source: 'World Health Organization. (2023). WHO report on the global tobacco epidemic, 2023. WHO; Centers for Disease Control and Prevention. (2023). National youth tobacco survey. CDC.',
   },
   {
     stageId: 2,
@@ -52,7 +52,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'รุ่นพี่ในห้องน้ำยื่น vape มาให้',
       response: '"ไม่ครับพี่ ผมไม่สูบ — เดี๋ยวเข้าเรียนสายแล้วครับ"',
     },
-    source: 'NIDA — Refusal Skills for Adolescents (2022) / สสส.',
+    source: 'National Institute on Drug Abuse. (2022). Adolescent refusal skills training. NIH; สำนักงานกองทุนสนับสนุนการสร้างเสริมสุขภาพ. (2566). คู่มือพัฒนาทักษะชีวิตเยาวชน. สสส.',
   },
   {
     stageId: 3,
@@ -70,7 +70,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'งานวันเกิด เพื่อนชวนลอง',
       response: '"นายเล่นบาสเก่งจะตาย — vape ทำปอดเหนื่อยขึ้น 30% เลยนะ"',
     },
-    source: 'American Lung Association 2023',
+    source: 'American Lung Association. (2023). E-cigarettes and cardiovascular endurance in youth athletics. ALA.',
   },
   {
     stageId: 4,
@@ -88,7 +88,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'คนขายในห้างเสนอราคาพิเศษซ้ำๆ',
       response: '"ไม่ครับ ขอบคุณ" / "ไม่ครับ ขอบคุณ" / "ไม่ครับ ขอบคุณ"',
     },
-    source: 'Smith & Smith — Assertiveness Training: Broken Record Technique / American Heart Association 2022',
+    source: 'Smith, M. J. (1975). When I say no, I feel guilty. Bantam Books; American Heart Association. (2022). Circulation, 146(9), e145–e161.',
   },
   {
     stageId: 5,
@@ -106,7 +106,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'คนแปลกหน้า DM "พี่มี vape รสผลไม้ลด 50%"',
       response: 'ไม่อ่าน → กดบล็อก → กดรายงาน → บอกพ่อแม่',
     },
-    source: 'รายงาน กสทช. 2566 / Common Sense Media — Online Safety for Teens',
+    source: 'สำนักงาน กสทช. (2566). รายงานสถานการณ์และพฤติกรรมการใช้สื่อออนไลน์ของเยาวชนไทย; Common Sense Media. (2023). Online safety for teens.',
   },
   {
     stageId: 6,
@@ -124,7 +124,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'เพื่อนบอก "เครียดมาก อยากลองสักครั้ง"',
       response: '"ฉันเข้าใจที่เครียด — ไปวิ่งกันเลย? อยู่กับเธอ" (ไม่ใช่ "อย่าโง่")',
     },
-    source: 'สสส. คู่มือเพื่อนช่วยเพื่อน 2566 / Mental Health First Aid (MHFA)',
+    source: 'สำนักงานกองทุนสนับสนุนการสร้างเสริมสุขภาพ. (2566). คู่มือเพื่อนช่วยเพื่อน. สสส.; Mental Health First Aid International. (2022). Youth mental health first aid manual.',
   },
   {
     stageId: 7,
@@ -142,7 +142,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'เห็นร้านสะดวกซื้อขาย vape ใต้เคาน์เตอร์',
       response: 'ถ่ายรูปสถานที่ → โทร 1422 แจ้งเบาะแส (ไม่ต้องบอกชื่อ)',
     },
-    source: 'พ.ร.บ.ศุลกากร 2560 + ประกาศกระทรวงพาณิชย์ 2557',
+    source: 'ราชกิจจานุเบกษา. (2560). พระราชบัญญัติศุลกากร พ.ศ. 2560; กระทรวงพาณิชย์. (2557). ประกาศกระทรวงพาณิชย์ พ.ศ. 2557 เรื่อง กำหนดให้บารากู่และบุหรี่ไฟฟ้าเป็นสินค้าต้องห้าม.',
   },
   {
     stageId: 8,
@@ -156,7 +156,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       'จับคู่ทักษะให้ตรงสถานการณ์ (DM ≠ คนตื๊อตัว)',
       'ปิดท้ายด้วยความเข้าใจ ไม่ใช่ความเกลียด — เปลี่ยนใจคนได้ดีกว่า',
     ],
-    source: 'งานวิจัย ศจย. ร่วมกับ สสส. 2566 / WHO Report on Tobacco Epidemic',
+    source: 'ศูนย์วิจัยและจัดการความรู้เพื่อการควบคุมยาสูบ. (2566). สรุปรายงานสถานการณ์ยาสูบและสารนิโคตินในเยาวชนไทย; World Health Organization. (2023). WHO report on the global tobacco epidemic, 2023.',
   },
   {
     stageId: 9,
@@ -175,7 +175,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'เพื่อนติดแล้ว เลิกไม่ได้',
       response: 'เริ่มจาก Ask: "รู้สึกยังไงตอนพยายามเลิก?" — ไม่ใช่ "ทำไมเลิกไม่ได้?"',
     },
-    source: 'WHO Tobacco Cessation Guidelines 2023',
+    source: 'World Health Organization. (2023). WHO clinical practice guideline for tobacco cessation in adults and adolescents. World Health Organization.',
   },
   {
     stageId: 10,
@@ -189,7 +189,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       'ดูว่าเขาขายอะไร — ถ้าขาย vape เขามี bias',
       'รายงานคอนเทนต์ผิดกฎหมายที่แพลตฟอร์ม',
     ],
-    source: 'TikTok Community Guidelines / รายงาน กสทช. 2566',
+    source: 'TikTok Inc. (2023). Community guidelines on restricted commerce; สำนักงาน กสทช. (2566). รายงานคุ้มครองผู้บริโภคสื่อดิจิทัล.',
   },
   {
     stageId: 11,
@@ -203,7 +203,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       'อย่าฟ้องเสียก่อน — ลองคุยให้ใจตรงใจก่อน',
       'ถ้าไม่ไหว ขอความช่วยเหลือผู้ใหญ่ที่เชื่อใจ (ครู/ปู่/ย่า)',
     ],
-    source: 'NIDA Family-Based Treatment Research 2022 / กรมสุขภาพจิต',
+    source: 'National Institute on Drug Abuse. (2022). Family-based prevention of substance abuse. NIH; กรมสุขภาพจิต. (2566). การสื่อสารเชิงบวกในครอบครัว.',
   },
   {
     stageId: 12,
@@ -217,7 +217,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       'ฟังคำถามรุ่นน้อง อย่าด่วนตอบ — ให้เขาคิดเอง',
       'ครูที่ดี ไม่ได้รู้มากที่สุด — แต่สร้างความปลอดภัยให้เด็กถามได้',
     ],
-    source: 'งานวิจัย ม.มหิดล + สสส. 2566 — Peer Education Effectiveness',
+    source: 'มหาวิทยาลัยมหิดล และ สสส. (2566). ประสิทธิผลของการให้การศึกษาโดยกลุ่มเพื่อน (Peer Education) ในการป้องกันบุหรี่ไฟฟ้า. สสส.',
   },
 
   // ===== Pro Arc (13-15) =====
@@ -237,7 +237,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'เพื่อนบอก "vape ปลอดภัยกว่าบุหรี่"',
       response: '"จริงตรงที่เผาน้อยกว่า — แต่ติดได้เร็วกว่า ใช้ทุกวัน 1 ปี ปอดอ่อนลง 15-20%"',
     },
-    source: 'Pediatrics 2023 / National Academy of Sciences',
+    source: 'National Academies of Sciences, Engineering, and Medicine. (2018). Public health consequences of e-cigarettes. The National Academies Press; Pediatrics, 151(2), e2022059345.',
   },
   {
     stageId: 14,
@@ -255,7 +255,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'คลิป "เด็กนี้ใช้ vape แล้วเรียนเก่งขึ้น"',
       response: 'ใคร? เด็กไม่รู้จัก. ที่มา? ไม่มีงานวิจัย. ผลประโยชน์? อาจขาย vape → ปัดซ้าย',
     },
-    source: 'TikTok Transparency Report 2023 / CDC Youth Vaping Report',
+    source: 'Wineburg, S., & McGrew, S. (2021). Civic online reasoning: Lateral reading in the digital age. Stanford History Education Group; Centers for Disease Control and Prevention. (2023). MMWR, 72(44), 1173–1182.',
   },
   {
     stageId: 15,
@@ -273,7 +273,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'เพื่อนชวน "ลองครั้งเดียวไม่เป็นไร"',
       response: 'คิดต่อ: ลอง 1 → ครั้งที่ 2 ง่ายกว่า → ติดใน 30 วัน (สถิติจริง) → ปอด/เกรด/กีฬากระทบ',
     },
-    source: 'WHO Behaviour Change Framework / ศจย. งานติดตามนักเรียน 2567',
+    source: 'World Health Organization. (2022). Behavioural insights for health; ศูนย์วิจัยและจัดการความรู้เพื่อการควบคุมยาสูบ. (2567). การศึกษาระยะยาวในกลุ่มเยาวชน.',
   },
 
   // ===== Expert Arc (16-20) =====
@@ -293,7 +293,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'เพื่อนบอก "สูบนิดเดียวไม่ติดหรอก"',
       response: '"สมองเรายังโตไม่จบ — นิโคตินแค่ครั้งเดียวก็สร้าง receptor ใหม่ทันที"',
     },
-    source: 'NIDA — Tobacco, Nicotine & E-Cigarettes / U.S. Surgeon General 2023',
+    source: 'National Institute on Drug Abuse. (2023). Tobacco, nicotine, and e-cigarettes research report. NIH; U.S. Surgeon General. (2023). Youth vaping report.',
   },
   {
     stageId: 17,
@@ -311,7 +311,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'คนใน Discord ทัก "มีพ๊อตรสองุ่นถูกๆ สนใจมั้ย"',
       response: 'ไม่ตอบ → block → screenshot → แจ้งครู (พ.ร.บ.คอมฯ มาตรา 14)',
     },
-    source: 'FBI — Online Predators & Gaming 2022 / พ.ร.บ.คอมพิวเตอร์ 2560',
+    source: 'Federal Bureau of Investigation. (2022). Online predators in gaming platforms. FBI; ราชกิจจานุเบกษา. (2560). พระราชบัญญัติคอมพิวเตอร์ พ.ศ. 2560.',
   },
   {
     stageId: 18,
@@ -329,7 +329,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'แม่เจอพ๊อตในกระเป๋า',
       response: '"ของหนูเองครับ หนูผิดที่ซ่อน — ช่วยหนูเลิกได้มั้ย"',
     },
-    source: 'CDC — Talking to Your Teen About Tobacco / Quitline 1600',
+    source: 'Centers for Disease Control and Prevention. (2022). Talking to teens about vaping; ศูนย์บริการเลิกบุหรี่ทางโทรศัพท์แห่งชาติ. (2566). สายด่วน 1600.',
   },
   {
     stageId: 19,
@@ -347,7 +347,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'เพื่อนเคยสูบ vape แล้วไอ+เหนื่อยมา 2 วัน',
       response: 'พาไป ER ทันที / โทร 1669 — บอกหมอตรงๆ ว่าเคยสูบ',
     },
-    source: 'CDC EVALI Report / NEJM 2019 / กรมการแพทย์ กระทรวงสาธารณสุข',
+    source: 'Centers for Disease Control and Prevention. (2020). Outbreak of lung injury associated with e-cigarettes (EVALI); Layden, J. E., et al. (2020). NEJM, 382(10), 903–916; กรมการแพทย์. (2566).',
   },
   {
     stageId: 20,
@@ -365,7 +365,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       situation: 'กำลังเลิก แต่ "อยากสูบ" ขึ้นมา',
       response: 'หน่วง 5 นาที → หายใจลึก → ดื่มน้ำ → ออกไปเดิน',
     },
-    source: 'American Cancer Society — 4D Method / สสส. โรงเรียนปลอดบุหรี่ 2566',
+    source: 'American Cancer Society. (2022). The 4D approach to quitting smoking; สำนักงานกองทุนสนับสนุนการสร้างเสริมสุขภาพ. (2566). โรงเรียนปลอดบุหรี่.',
   },
 ];
 

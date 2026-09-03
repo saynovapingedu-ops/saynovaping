@@ -348,8 +348,8 @@ function CaseModal({
 
               {/* 4) แหล่งอ้างอิง */}
               <div className="bg-slate-50 border-l-4 border-slate-400 rounded-r-xl p-3 mb-3">
-                <p className="text-[11px] font-bold text-slate-700 mb-1.5">📚 แหล่งอ้างอิง</p>
-                <ul className="space-y-0.5">
+                <p className="text-[11px] font-bold text-slate-700 mb-1.5">📚 บรรณานุกรมและเอกสารอ้างอิง (APA 7th Edition)</p>
+                <ul className="space-y-1">
                   {c.references.map((ref, i) => (
                     <li key={i} className="text-[11px] text-slate-600 leading-relaxed flex gap-1.5">
                       <span className="text-slate-400 flex-shrink-0">•</span>

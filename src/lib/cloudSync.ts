@@ -228,10 +228,12 @@ export async function syncProgress(payload: SyncPayload, queueOnFail = true): Pr
 export async function issueCertificate(userIdHash: string): Promise<CertResponse> {
   if (!SYNC_URL) return { ok: false, error: 'no_sync_url' };
   try {
-    const res = await fetchWithRetry(SYNC_URL, {
+    const sep = SYNC_URL.includes('?') ? '&' : '?';
+    const url = `${SYNC_URL}${sep}action=issueCert&userIdHash=${encodeURIComponent(userIdHash)}&hash=${encodeURIComponent(userIdHash)}`;
+    const res = await fetchWithRetry(url, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'issueCert', userIdHash }),
+      body: JSON.stringify({ action: 'issueCert', userIdHash, hash: userIdHash }),
     });
     return await res.json();
   } catch (err) {

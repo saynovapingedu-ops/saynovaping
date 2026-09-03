@@ -57,8 +57,8 @@ interface PlayerState extends PlayerProfile {
   }) => void;
   /** บันทึกผลแบบประเมินแชตบอต ตอนที่ 5 */
   recordEvaluationPart5: (avgScore: number, details: number[]) => void;
-  /** บันทึกคะแนนความสนุก/พึงพอใจ (ดาว 1-5) หลังจบด่าน */
-  rateFun: (stars: number) => void;
+  /** บันทึกคะแนนความสนุก/พึงพอใจ (ดาว 1-5) หลังจบด่าน — รองรับการเปลี่ยนดาว (prevStars) */
+  rateFun: (stars: number, prevStars?: number) => void;
   /** เรียกตอนเล่นเกม — อัพเดท streak ถ้าเล่นต่อเนื่องได้ */
   pingDailyPlay: () => void;
   reset: () => void;
@@ -211,13 +211,19 @@ export const usePlayerStore = create<PlayerState>()(
       equipBackdrop:  (id)    => set({ equippedBackdrop: id }),
       equipCertDeco:  (id)    => set({ equippedCertDeco: id }),
 
-      rateFun: (stars) => {
+      rateFun: (stars, prevStars) => {
         if (stars < 1 || stars > 5) return;
         const cur = get();
+        const isUpdate = typeof prevStars === 'number' && prevStars >= 1 && prevStars <= 5;
+        const newCount = isUpdate ? Math.max(1, cur.funRatingCount || 1) : (cur.funRatingCount || 0) + 1;
+        const newSum = isUpdate
+          ? Math.max(stars, (cur.funRatingSum || prevStars) - prevStars + stars)
+          : (cur.funRatingSum || 0) + stars;
+
         set({
           funRating: stars,
-          funRatingCount: (cur.funRatingCount || 0) + 1,
-          funRatingSum: (cur.funRatingSum || 0) + stars,
+          funRatingCount: newCount,
+          funRatingSum: newSum,
           lastActiveAt: new Date().toISOString(),
         });
         get().syncIfReady();

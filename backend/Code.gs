@@ -428,7 +428,9 @@ function handleSync_(p) {
 
 // ---------- Endpoint: issueCert ----------
 function handleIssueCert_(p) {
-  if (!isValidHash_(p.userIdHash)) return jsonResponse_({ok:false, error:'invalid_hash'});
+  const hash = p.userIdHash || p.hash;
+  if (!isValidHash_(hash)) return jsonResponse_({ok:false, error:'invalid_hash'});
+  p.userIdHash = hash;
 
   const playerSheet = getSheet_(CONFIG.SHEET_NAMES.PLAYERS);
   const pRow = findRowByUserOrId_(playerSheet, COL_PLAYER.USER_ID_HASH, COL_PLAYER.ID_CODE, p.userIdHash, p.idCode);
@@ -777,14 +779,16 @@ function doPost(e) {
 
 function doGet(e) {
   try {
-    const action = e.parameter.action;
-    if (action === 'verify')       return handleVerify_(e.parameter);
-    if (action === 'restore')      return handleRestore_(e.parameter);
-    if (action === 'leaderboard')  return handleLeaderboard_(e.parameter);
-    if (action === 'getAdminData') return handleGetAdminData_(e.parameter);
-    if (action === 'downloadCsv')  return handleDownloadCsv_(e.parameter);
-    if (action === 'getSettings')  return handleGetSettings_();
-    if (action === 'ping')         return jsonResponse_({ok:true, time:nowIso_(), version:'2.4.0'});
+    const action = (e.parameter.action || '').trim();
+    if (action === 'issueCert')     return handleIssueCert_(e.parameter);
+    if (action === 'verify')        return handleVerify_(e.parameter);
+    if (action === 'restore')       return handleRestore_(e.parameter);
+    if (action === 'leaderboard')   return handleLeaderboard_(e.parameter);
+    if (action === 'getAdminData')  return handleGetAdminData_(e.parameter);
+    if (action === 'downloadCsv')   return handleDownloadCsv_(e.parameter);
+    if (action === 'getSettings')   return handleGetSettings_();
+    if (action === 'sync')          return handleSync_(e.parameter);
+    if (action === 'ping')          return jsonResponse_({ok:true, time:nowIso_(), version:'2.4.0'});
     return jsonResponse_({ok:false, error:'unknown_action'});
   } catch (err) {
     return jsonResponse_({ok:false, error:'server_error', message:String(err)});

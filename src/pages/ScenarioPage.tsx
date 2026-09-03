@@ -1115,22 +1115,34 @@ export default function ScenarioPage() {
 
                   {/* === ⭐ ดาวประเมินความสนุก — เก็บค่า + ส่งขึ้น Sheets === */}
                   <div className="relative mb-4 rounded-2xl border-2 border-detective-100 bg-[#FFFCF7] p-3">
-                    <p className="text-sm font-semibold text-detective-700 mb-2">ด่านนี้สนุกแค่ไหน?</p>
-                    <div className="flex justify-center gap-1.5">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-semibold text-detective-700">ด่านนี้สนุกแค่ไหน?</p>
+                      {funStars > 0 && (
+                        <span className="text-[11px] text-slate-400 font-medium">แตะเปลี่ยนดาวได้</span>
+                      )}
+                    </div>
+                    <div className="flex justify-center gap-2">
                       {[1, 2, 3, 4, 5].map(n => (
                         <button
                           key={n}
+                          type="button"
                           aria-label={`${n} ดาว`}
-                          disabled={funStars > 0}
-                          onClick={() => { setFunStars(n); rateFun(n); sfx.pick(); }}
-                          className="text-3xl active:scale-90 transition-transform disabled:cursor-default"
+                          onClick={() => {
+                            const prev = funStars;
+                            setFunStars(n);
+                            rateFun(n, prev > 0 ? prev : undefined);
+                            sfx.pick();
+                          }}
+                          className="text-3xl active:scale-90 hover:scale-110 transition-transform cursor-pointer p-1 select-none"
                         >
                           {n <= funStars ? '⭐' : '☆'}
                         </button>
                       ))}
                     </div>
                     {funStars > 0 && (
-                      <p className="text-xs text-success-600 mt-2 text-center">ขอบคุณสำหรับคะแนน! 🙏</p>
+                      <p className="text-xs text-success-600 mt-2 text-center font-medium animate-in fade-in">
+                        ขอบคุณสำหรับคะแนน {funStars} ดาว! 🙏 (แตะเปลี่ยนคะแนนได้ตลอด)
+                      </p>
                     )}
                   </div>
 

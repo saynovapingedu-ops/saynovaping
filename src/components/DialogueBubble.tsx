@@ -59,9 +59,11 @@ export default function DialogueBubble({ speaker, text }: Props) {
         )}
       </div>
       <div className={`flex flex-col ${s.align === 'right' ? 'items-end' : 'items-start'} max-w-[80%]`}>
-        <span className="text-xs text-slate-500 mb-1 px-1">
-          {isPlayer ? player.nickname || s.name : s.name}
-        </span>
+        {!isPlayer && (
+          <span className="text-xs text-slate-500 mb-1 px-1 font-medium">
+            {s.name}
+          </span>
+        )}
         <div className={`px-4 py-3 rounded-[20px] shadow-clay-sm ${s.bg} ${s.align === 'right' ? 'rounded-br-md' : 'rounded-bl-md'}`}>
           <p className="leading-loose whitespace-pre-line break-words">{text}</p>
         </div>

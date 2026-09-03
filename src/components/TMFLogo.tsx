@@ -11,6 +11,7 @@
 // ============================================================================
 
 import { asset } from '../lib/asset';
+import { TMF_LOGO_BASE64 } from '../lib/tmfLogoBase64';
 
 interface Props {
   /** 'inline' = กล่องขาวเล็กๆ, 'block' = ใหญ่กว่ามี border + caption ใต้, 'bare' = ไม่มีกล่อง (ใช้ใน header ที่ bg ขาวอยู่แล้ว) */
@@ -19,6 +20,8 @@ interface Props {
   width?: number;
   /** caption ใต้โลโก้ */
   caption?: string;
+  /** ใช้ Base64 Data URI ตรงๆ (เลี่ยงปัญหา iOS Safari บล็อกรูป canvas เมื่อ export) */
+  useBase64?: boolean;
 }
 
 // aspect ratio ของไฟล์ต้นฉบับ 1778 x 1573 → 1.13:1
@@ -26,14 +29,15 @@ const LOGO_ASPECT = 1778 / 1573;
 const LOGO_SRC = asset('brand/tmf-logo.png');
 const LOGO_ALT = 'กองทุนพัฒนาสื่อปลอดภัยและสร้างสรรค์ (Thai Media Fund)';
 
-export default function TMFLogo({ variant = 'inline', width = 120, caption }: Props) {
+export default function TMFLogo({ variant = 'inline', width = 120, caption, useBase64 = false }: Props) {
   const height = Math.round(width / LOGO_ASPECT);
+  const src = useBase64 ? TMF_LOGO_BASE64 : LOGO_SRC;
 
   if (variant === 'bare') {
     // ไม่มีกล่อง — ใช้ใน header ที่พื้นเป็นขาวอยู่แล้ว (เลี่ยงกล่องซ้อนกล่อง)
     return (
       <img
-        src={LOGO_SRC}
+        src={src}
         alt={LOGO_ALT}
         width={width}
         height={height}

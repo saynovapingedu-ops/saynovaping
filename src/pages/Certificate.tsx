@@ -92,6 +92,7 @@ export default function Certificate() {
   const verifyUrl = verifyCode ? `${location.origin}/saynovaping/verify?code=${verifyCode}` : '';
 
   const [saving, setSaving] = useState(false);
+  const [previewImgUrl, setPreviewImgUrl] = useState<string | null>(null);
 
   const downloadDataUrl = (dataUrl: string, filename: string) => {
     const a = document.createElement('a');
@@ -110,12 +111,14 @@ export default function Certificate() {
     try {
       const dataUrl = await toPng(node, {
         pixelRatio: 2,
-        cacheBust: true,
+        cacheBust: false,
         backgroundColor: '#ffffff',
       });
       const safeName = (displayName || 'certificate').replace(/[^\w฀-๿-]/g, '_');
       const filename = `Certificate-${safeName}-${certNo || 'cert'}.png`;
 
+      // 1) พยายามแชร์รูปผ่าน Web Share API ก่อน (ถ้าอุปกรณ์รองรับ เช่น Android Chrome หรือ iOS Safari)
+      let shared = false;
       if (navigator.share && navigator.canShare) {
         try {
           const blob = await (await fetch(dataUrl)).blob();
@@ -126,17 +129,27 @@ export default function Certificate() {
               title: 'ประกาศนียบัตร',
               text: `${displayName} ผ่านการอบรม "นักสืบสู้บุหรี่ไฟฟ้า"`,
             });
-            setSaving(false);
-            return;
+            shared = true;
           }
         } catch {
-          /* user cancelled */
+          /* user cancelled or share failed */
         }
       }
 
-      downloadDataUrl(dataUrl, filename);
-      setShareMsg('บันทึกรูปเรียบร้อย');
-      setTimeout(() => setShareMsg(null), 2400);
+      // 2) สั่ง download ทันที (สำหรับ Desktop / เบราว์เซอร์ปกติ)
+      try {
+        downloadDataUrl(dataUrl, filename);
+      } catch (err) {
+        console.warn('downloadDataUrl error', err);
+      }
+
+      // 3) เปิด Preview Modal เสมอ เพื่อให้ผู้ใช้ LINE In-App Browser หรือ Android ที่ดาวน์โหลดไม่เข้าเครื่อง
+      // สามารถแตะค้างที่รูปภาพแล้วเลือก "บันทึกรูปภาพ" ได้ 100%
+      setPreviewImgUrl(dataUrl);
+      if (!shared) {
+        setShareMsg('พร้อมบันทึกรูปภาพแล้ว');
+        setTimeout(() => setShareMsg(null), 2500);
+      }
     } catch (err) {
       console.error('save certificate failed', err);
       setShareMsg('บันทึกไม่สำเร็จ ลองอีกครั้ง');
@@ -252,7 +265,7 @@ export default function Certificate() {
               {/* === Watermark TMF Logo (subtle, behind content) === */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
                    aria-hidden style={{ opacity: 0.04 }}>
-                <TMFLogo variant="bare" width={360} />
+                <TMFLogo variant="bare" width={360} useBase64 />
               </div>
 
               {/* === Decorative corner emoji (จาก cert-deco ที่สวม) === */}
@@ -271,7 +284,7 @@ export default function Certificate() {
               <div className="relative px-8 pt-8 pb-12 h-full flex flex-col items-center text-center z-10">
                 {/* === Logos: TMF + ผู้รับทุน (กึ่งกลางบนสุด) === */}
                 <div className="flex items-center justify-center gap-6 mb-6 w-full">
-                  <TMFLogo variant="bare" width={110} />
+                  <TMFLogo variant="bare" width={110} useBase64 />
                   <div className="w-px h-16 bg-slate-300" />
                   <div className="text-left">
                     <p className="text-[10px] text-slate-500 font-medium tracking-wide">ผู้รับทุน</p>
@@ -445,6 +458,64 @@ export default function Certificate() {
         title="ชื่อบนเกียรติบัตร"
         subtitle="ใส่ชื่อจริงเพื่อพิมพ์บนใบ — เก็บในเครื่องนี้เท่านั้น"
       />
+
+      {/* ===== Preview Modal สำหรับบันทึกรูปภาพ (แตะค้างเพื่อบันทึก) บน LINE / Android ===== */}
+      {previewImgUrl && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-3 md:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-4 md:p-6 max-w-lg w-full shadow-2xl flex flex-col items-center text-center max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between w-full mb-2.5">
+              <div className="flex items-center gap-2 text-left">
+                <span className="text-2xl">🖼️</span>
+                <div>
+                  <h3 className="font-bold text-base text-slate-800">บันทึกเกียรติบัตร</h3>
+                  <p className="text-[11px] text-emerald-600 font-semibold">✨ แตะค้างที่รูปภาพเพื่อบันทึกลงเครื่อง</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setPreviewImgUrl(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center font-bold text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-2 bg-slate-50 rounded-2xl border border-slate-200 mb-3 w-full">
+              <img
+                src={previewImgUrl}
+                alt="เกียรติบัตรของคุณ"
+                className="w-full h-auto rounded-xl shadow-sm block max-h-[50vh] object-contain mx-auto pointer-events-auto select-none"
+              />
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 mb-3 w-full text-left text-xs text-amber-900 leading-relaxed space-y-1">
+              <p className="font-bold flex items-center gap-1 text-amber-950">
+                <span>📱</span> วิธีบันทึกภาพลงเครื่อง (สำหรับ LINE / Android / iOS):
+              </p>
+              <p>• <strong>แตะค้างที่รูปเกียรติบัตรด้านบน</strong> แล้วเลือก <strong>"บันทึกรูปภาพ" (Save Image)</strong> หรือ "ดาวน์โหลดรูปภาพ"</p>
+              <p>• หากเปิดผ่านแอป LINE แนะนำให้แตะปุ่มจุดสามจุด (...) มุมขวาบน แล้วเลือก <strong>"เปิดในเบราว์เซอร์อื่น"</strong> (Open in external browser)</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 w-full">
+              <button
+                onClick={() => {
+                  const safeName = (displayName || 'certificate').replace(/[^\w฀-๿-]/g, '_');
+                  downloadDataUrl(previewImgUrl, `Certificate-${safeName}-${certNo || 'cert'}.png`);
+                  setShareMsg('ดาวน์โหลดอีกครั้งเรียบร้อย');
+                }}
+                className="btn-secondary py-2.5 text-xs flex items-center justify-center gap-1 font-bold"
+              >
+                <span>⬇️</span> ดาวน์โหลดซ้ำ
+              </button>
+              <button
+                onClick={() => setPreviewImgUrl(null)}
+                className="btn-primary py-2.5 text-xs flex items-center justify-center gap-1 font-bold"
+              >
+                <span>✓</span> ปิดหน้าต่าง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
