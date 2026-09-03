@@ -49,11 +49,11 @@ export const scenario11: Scenario = {
       body: 'การฟ้องคือทางเลือกสุดท้าย — ลองคุยส่วนตัวก่อน ถ้าไม่สำเร็จค่อยขอความช่วยเหลือผู้ใหญ่',
     },
     {
-      type: 'dialogue', id: 'd2', speaker: 'friend1', speakerName: 'พี่พีท (ลูกพี่ลูกน้อง)', speakerAvatar: asset('characters/player-m3.png'), next: 'd3',
+      type: 'dialogue', id: 'd2', speaker: 'friend1', speakerName: 'พี่พีท (ลูกพี่ลูกน้อง)', speakerAvatar: asset('characters/pete.jpg'), next: 'd3',
       text: '(พี่พีทสะดุ้งตกใจ) เฮ้ย... น้อง! พี่ไม่ได้ตั้งใจให้เห็นนะ... ช่วงนี้พี่เครียดเรื่องสอบจริงๆ ไม่ได้สูบบ่อยหรอก',
     },
     {
-      type: 'dialogue', id: 'd3', speaker: 'friend1', speakerName: 'พี่พีท (ลูกพี่ลูกน้อง)', speakerAvatar: asset('characters/player-m3.png'), next: 'choice2',
+      type: 'dialogue', id: 'd3', speaker: 'friend1', speakerName: 'พี่พีท (ลูกพี่ลูกน้อง)', speakerAvatar: asset('characters/pete.jpg'), next: 'choice2',
       text: 'อย่าเพิ่งไปบอกน้ากับแม่นะน้อง พี่สัญญาว่าจะค่อยๆ เลิกเอง ขอเวลาพี่หน่อยนะ',
     },
     {
@@ -87,7 +87,7 @@ export const scenario11: Scenario = {
       body: 'การต่อว่าตัดพ้อจะทำให้พี่พีทปิดกั้นตัวเอง — ใช้ข้อมูลความห่วงใยเรื่องสุขภาพจะช่วยให้เขาเปิดใจรับฟังมากกว่า',
     },
     {
-      type: 'dialogue', id: 'd4', speaker: 'friend1', speakerName: 'พี่พีท (ลูกพี่ลูกน้อง)', speakerAvatar: asset('characters/player-m3.png'), next: 'mg-balance',
+      type: 'dialogue', id: 'd4', speaker: 'friend1', speakerName: 'พี่พีท (ลูกพี่ลูกน้อง)', speakerAvatar: asset('characters/pete.jpg'), next: 'mg-balance',
       text: 'จริงเหรอเนี่ย... มีโลหะหนักด้วยเหรอ พี่นึกว่ามีแค่นิโคตินกับกลิ่นผลไม้ พี่ไม่อยากให้น้องเล็กต้องมาเสี่ยงเลย',
     },
     // มินิเกม: หาทางแก้แบบสมดุล
@@ -121,7 +121,7 @@ export const scenario11: Scenario = {
       xpOnSuccess: 100,
     },
     {
-      type: 'dialogue', id: 'd5', speaker: 'friend1', speakerName: 'พี่พีท (ลูกพี่ลูกน้อง)', speakerAvatar: asset('characters/player-m3.png'), next: 'choice3',
+      type: 'dialogue', id: 'd5', speaker: 'friend1', speakerName: 'พี่พีท (ลูกพี่ลูกน้อง)', speakerAvatar: asset('characters/pete.jpg'), next: 'choice3',
       text: 'ขอบใจมากนะน้อง พี่จะลองทำตามแผนนี้ดู ถ้าผ่านไป 30 วันแล้วยังไม่ดีขึ้น เราค่อยไปปรึกษาแม่ด้วยกันนะ',
     },
     {

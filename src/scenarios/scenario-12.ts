@@ -15,7 +15,7 @@ export const scenario12: Scenario = {
   ],
   nodes: [
     {
-      type: 'dialogue', id: 'd1', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/player-g3.png'), next: 'd2',
+      type: 'dialogue', id: 'd1', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/aim.jpg'), next: 'd2',
       text: 'สวัสดีค่ะพี่นักสืบ! หนูชื่อเอม อยู่ ป.6 เพิ่งมาเข้าค่าย Health Detective Junior ครั้งแรกเลยค่ะ — วันนี้พี่จะสอนอะไรหนูบ้างคะ?',
     },
     {
@@ -43,7 +43,7 @@ export const scenario12: Scenario = {
       body: 'การเรียนรู้ที่ดี = ทีละทักษะ แล้วค่อยต่อยอด — รุ่นน้องจะจำได้ดีกว่าและไม่ท้อ',
     },
     {
-      type: 'dialogue', id: 'd3', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/player-g3.png'), next: 'mg-test',
+      type: 'dialogue', id: 'd3', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/aim.jpg'), next: 'mg-test',
       text: 'เข้าใจแล้วค่ะพี่! ลองทดสอบหนูดูได้เลย หนูจะตั้งใจตอบให้ถูกทุกข้อเลยค่ะ',
     },
     // === Phase 1: ทดสอบนักสืบรุ่นน้อง ===
@@ -68,7 +68,7 @@ export const scenario12: Scenario = {
       xpOnSuccess: 60,
     },
     {
-      type: 'dialogue', id: 'd4', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/player-g3.png'), next: 'd5',
+      type: 'dialogue', id: 'd4', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/aim.jpg'), next: 'd5',
       text: 'เย้! ตอบถูกหมดเลย — แต่ถ้าวันหนึ่งมีเพื่อนยื่นมาให้หนูตรงๆ ในห้องน้ำ หนูควรจะปฏิเสธยังไงดีคะพี่?',
     },
     // === Phase 2: เลือกวิธีสอน ===
@@ -97,7 +97,7 @@ export const scenario12: Scenario = {
       body: 'สอนเด็กเป็น "หลักการ" สั้นๆ ที่ปรับใช้ได้ — ดีกว่าให้ท่องประโยคเป๊ะๆ ที่อาจฟังเป็นหุ่นยนต์',
     },
     {
-      type: 'dialogue', id: 'd6', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/player-g3.png'), next: 'mg-roleplay',
+      type: 'dialogue', id: 'd6', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/aim.jpg'), next: 'mg-roleplay',
       text: 'ได้เลยค่ะ! ลองให้หนูจับคู่ดูนะคะพี่ ว่าสถานการณ์แบบไหนต้องใช้ทักษะอะไร',
     },
     // === Phase 3: word-match สูตรกับสถานการณ์ ===
@@ -121,7 +121,7 @@ export const scenario12: Scenario = {
       source: 'รวบรวมจากทักษะที่สอนตลอด Hero Arc + Master Arc',
     },
     {
-      type: 'dialogue', id: 'd7', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/player-g3.png'), next: 'mg-final',
+      type: 'dialogue', id: 'd7', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/aim.jpg'), next: 'mg-final',
       text: 'หนูจำได้ขึ้นใจแล้วค่ะ! ขออีกข้อสุดท้ายนะคะพี่ หนูอยากมั่นใจจริงๆ ก่อนจบค่าย',
     },
     // === Phase 4: fill-blank ปิดท้าย ===
@@ -156,7 +156,7 @@ export const scenario12: Scenario = {
       badge: 'sensei',
     },
     {
-      type: 'dialogue', id: 'd8', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/player-g3.png'), next: 'choice3',
+      type: 'dialogue', id: 'd8', speaker: 'friend2', speakerName: 'น้องเอม (ป.6)', speakerAvatar: asset('characters/aim.jpg'), next: 'choice3',
       text: 'ขอบคุณพี่มากๆ เลยนะคะ! หนูสัญญาว่าจะเป็นนักสืบสุขภาพที่ดี และจะคอยดูแลเพื่อนๆ กับรุ่นน้องเหมือนที่พี่สอนหนูเลยค่ะ',
     },
     {

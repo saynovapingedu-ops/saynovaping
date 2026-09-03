@@ -15,7 +15,7 @@ export const scenario14: Scenario = {
   ],
   nodes: [
     {
-      type: 'dialogue', id: 'd1', speaker: 'friend1', speakerName: 'น้องปาล์ม (รุ่นน้อง)', speakerAvatar: asset('characters/player-m4.png'), next: 'd2',
+      type: 'dialogue', id: 'd1', speaker: 'friend1', speakerName: 'น้องปาล์ม (รุ่นน้อง)', speakerAvatar: asset('characters/palm.jpg'), next: 'd2',
       text: 'พี่ครับ! ใน TikTok ตอนนี้มีคลิปพูดเรื่องบุหรี่ไฟฟ้าเยอะมากเลย บางคลิปก็บอกว่าปลอดภัย บางคลิปก็บอกอันตราย พี่ช่วยสอนผมแยกแยะหน่อยสิครับ!',
     },
     {
@@ -99,7 +99,7 @@ export const scenario14: Scenario = {
       source: 'TikTok Transparency Report 2023',
     },
     {
-      type: 'dialogue', id: 'd-end', speaker: 'friend1', speakerName: 'น้องปาล์ม (รุ่นน้อง)', speakerAvatar: asset('characters/player-m4.png'), next: 'end1',
+      type: 'dialogue', id: 'd-end', speaker: 'friend1', speakerName: 'น้องปาล์ม (รุ่นน้อง)', speakerAvatar: asset('characters/palm.jpg'), next: 'end1',
       text: 'ขอบคุณพี่มากๆ เลยครับ! ตอนนี้ผมเข้าใจแล้ว — ต่อไปนี้ก่อนจะเชื่อหรือกดแชร์อะไร ผมจะเช็กที่มาให้ชัวร์ก่อนเสมอเลยครับ ✨',
     },
     {

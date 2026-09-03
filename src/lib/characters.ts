@@ -66,10 +66,10 @@ export const NPC_CHARACTERS: Record<string, { src: string; label: string }> = {
   shopkeeper:    { src: asset('characters/shopkeeper.png'),   label: 'เจ้าของร้าน' },
   'dm-stranger': { src: asset('characters/dm-stranger.png'),  label: 'คนใน DM' },
   // เพื่อนและรุ่นพี่/รุ่นน้องในแต่ละด่าน
-  aim:           { src: asset('characters/player-g3.png'),    label: 'น้องเอม (ป.6)' },
-  palm:          { src: asset('characters/player-m4.png'),    label: 'น้องปาล์ม (รุ่นน้อง)' },
+  aim:           { src: asset('characters/aim.jpg'),          label: 'น้องเอม (ป.6)' },
+  palm:          { src: asset('characters/palm.jpg'),         label: 'น้องปาล์ม (รุ่นน้อง)' },
   boy:           { src: asset('characters/player-m2.png'),    label: 'บอย (เพื่อนสนิท)' },
-  pete:          { src: asset('characters/player-m3.png'),    label: 'พี่พีท (ลูกพี่ลูกน้อง)' },
+  pete:          { src: asset('characters/pete.jpg'),         label: 'พี่พีท (ลูกพี่ลูกน้อง)' },
   senior:        { src: asset('characters/player-m1.png'),    label: 'รุ่นพี่ ม.ปลาย' },
   tae:           { src: asset('characters/player-m1.png'),    label: 'เต้ (เพื่อนร่วมชั้น)' },
   win:           { src: asset('characters/player-m4.png'),    label: 'วิน (เพื่อนที่ลังเล)' },
