@@ -9,13 +9,13 @@ export const scenario13: Scenario = {
   startNode: 'd1',
   intro: [
     '🎯 บทเชี่ยวชาญ — ทักษะเสริมของนักสืบระดับสูง',
-    'น้องใบเตยมีคำถาม: "พี่ บุหรี่ไฟฟ้ากับบุหรี่ปกติ อันไหนอันตรายกว่ากัน?"',
+    'น้องใบเตยมีคำถาม: "พี่ บุหรี่ไฟฟ้ากับบุหรี่มวน อันไหนอันตรายกว่ากัน?"',
     'นักสืบสุขภาพต้องตอบได้ — และอธิบายให้น้องเข้าใจ "ระดับ" ของความเสี่ยง',
   ],
   nodes: [
     {
       type: 'dialogue', id: 'd1', speaker: 'baitoey', speakerName: 'น้องใบเตย (ม.1)', next: 'd2',
-      text: 'พี่คะ... เพื่อนหนูบอกว่า "บุหรี่ไฟฟ้าปลอดภัยกว่าบุหรี่ปกติตั้งเยอะ" มันจริงไหมคะพี่?',
+      text: 'พี่คะ... เพื่อนหนูบอกว่า "บุหรี่ไฟฟ้าปลอดภัยกว่าบุหรี่มวนตั้งเยอะ" มันจริงไหมคะพี่?',
     },
     {
       type: 'dialogue', id: 'd2', speaker: 'narrator', next: 'choice1',
@@ -76,11 +76,11 @@ export const scenario13: Scenario = {
           source: 'American Lung Association — Secondhand Vapor 2023' },
         { id: 'i-vape-occ',text: 'ลองบุหรี่ไฟฟ้าเป็นครั้งคราว',           bucketId: 'b-high',
           source: 'Pediatrics 2023 — Occasional Use & Addiction Risk' },
-        { id: 'i-cig-occ', text: 'สูบบุหรี่ปกติเป็นครั้งคราว',           bucketId: 'b-high',
+        { id: 'i-cig-occ', text: 'สูบบุหรี่มวนเป็นครั้งคราว',           bucketId: 'b-high',
           source: 'WHO Report on the Global Tobacco Epidemic 2023' },
         { id: 'i-vape-d',  text: 'ใช้บุหรี่ไฟฟ้าทุกวัน',                  bucketId: 'b-ext',
           source: 'Surgeon General Report 2023 — Adolescent Vape Use' },
-        { id: 'i-cig-d',   text: 'สูบบุหรี่ปกติทุกวัน',                bucketId: 'b-ext',
+        { id: 'i-cig-d',   text: 'สูบบุหรี่มวนทุกวัน',                bucketId: 'b-ext',
           source: 'WHO Tobacco Mortality Statistics 2023' },
       ],
       next: 'feedback1',
@@ -91,11 +91,11 @@ export const scenario13: Scenario = {
     {
       type: 'feedback', id: 'feedback1', next: 'edu1',
       title: 'ความเสี่ยง = สเปกตรัม (Harm Reduction)',
-      body: 'การ "ลองบุหรี่ไฟฟ้าเป็นครั้งคราว" มีความเสี่ยงสูง (🟠) เท่ากับ "สูบบุหรี่ปกติเป็นครั้งคราว" เพราะนิโคตินทำให้สมองวัยรุ่นเสพติดได้รวดเร็วตั้งแต่ครั้งแรกๆ ส่วน "ดื่มน้ำอัดลมทุกมื้อ" แม้มีน้ำตาลสูงก็จัดอยู่ในเสี่ยงปานกลาง (🟡) เพราะไม่มีสารเสพติดทำลายระบบประสาท',
+      body: 'การ "ลองบุหรี่ไฟฟ้าเป็นครั้งคราว" มีความเสี่ยงสูง (🟠) เท่ากับ "สูบบุหรี่มวนเป็นครั้งคราว" เพราะนิโคตินทำให้สมองวัยรุ่นเสพติดได้รวดเร็วตั้งแต่ครั้งแรกๆ ส่วน "ดื่มน้ำอัดลมทุกมื้อ" แม้มีน้ำตาลสูงก็จัดอยู่ในเสี่ยงปานกลาง (🟡) เพราะไม่มีสารเสพติดทำลายระบบประสาท',
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'd-end',
-      fact: 'การใช้บุหรี่ไฟฟ้าทุกวันในวัยรุ่น เพิ่มโอกาสติดบุหรี่ปกติในอนาคตถึง 4 เท่า — ไม่ใช่ทางเลือกที่ปลอดภัยกว่า',
+      fact: 'การใช้บุหรี่ไฟฟ้าทุกวันในวัยรุ่น เพิ่มโอกาสติดบุหรี่มวนในอนาคตถึง 4 เท่า — ไม่ใช่ทางเลือกที่ปลอดภัยกว่า',
       source: 'Pediatrics 2023 / National Academy of Sciences',
     },
     {

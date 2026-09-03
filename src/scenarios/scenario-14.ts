@@ -49,7 +49,7 @@ export const scenario14: Scenario = {
           source: 'American Lung Association 2023 / คณะแพทยศาสตร์ ม.มหิดล',
         },
         {
-          text: 'การใช้บุหรี่ไฟฟ้าทุกวันในวัยรุ่น เพิ่มโอกาสติดบุหรี่ปกติ',
+          text: 'การใช้บุหรี่ไฟฟ้าทุกวันในวัยรุ่น เพิ่มโอกาสติดบุหรี่มวน',
           isTrue: true,
           reveal: 'จริง — งานวิจัย Pediatrics 2023: เพิ่มโอกาสถึง 4 เท่า',
           emoji: '🚬',

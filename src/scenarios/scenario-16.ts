@@ -100,7 +100,7 @@ export const scenario16: Scenario = {
     },
     {
       type: 'educationalPopup', id: 'edu1', next: 'd-end',
-      fact: 'นิโคตินใน vape 1 พอตเท่ากับบุหรี่ 1 ซอง (20 มวน) — และเข้าสมองเร็วกว่าบุหรี่ปกติ เพราะไอร้อนทำให้ดูดซึมเร็ว',
+      fact: 'นิโคตินใน vape 1 พอตเท่ากับบุหรี่ 1 ซอง (20 มวน) — และเข้าสมองเร็วกว่าบุหรี่มวน เพราะไอร้อนทำให้ดูดซึมเร็ว',
       source: 'Truth Initiative / FDA Vape Nicotine Content Analysis 2023',
     },
     {
