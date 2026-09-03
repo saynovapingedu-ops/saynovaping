@@ -41,6 +41,9 @@ export default function Certificate() {
   const displayName = realName.trim() || player.nickname;
   const [editNameOpen, setEditNameOpen] = useState(false);
   const inLine = isInLineBrowser();
+  const [certImgUrl, setCertImgUrl] = useState<string | null>(null);
+  const [screenshotMode, setScreenshotMode] = useState(false);
+  const [hideGuide, setHideGuide] = useState(false);
 
   // ย่อใบให้พอดีความกว้างจอ (กันเนื้อหาล้นกรอบบนจอแคบ)
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -124,6 +127,47 @@ export default function Certificate() {
   const [saving, setSaving] = useState(false);
   const [previewImgUrl, setPreviewImgUrl] = useState<string | null>(null);
 
+  // เรนเดอร์ Canvas เพื่อใช้ทั้งในโหมดแคปหน้าจอและดาวน์โหลด
+  const prepareCertCanvasUrl = async (): Promise<string> => {
+    if (certImgUrl) return certImgUrl;
+    const canvas = await renderCertificateCanvas({
+      displayName,
+      nickname: player.nickname,
+      realName,
+      certNo,
+      issueDate,
+      verifyUrl,
+      cornerEmoji: certDeco?.corner,
+    });
+    const url = canvas.toDataURL('image/png');
+    setCertImgUrl(url);
+    return url;
+  };
+
+  const handleOpenScreenshot = async () => {
+    sfx.click();
+    setSaving(true);
+    try {
+      await prepareCertCanvasUrl();
+      setHideGuide(false);
+      setScreenshotMode(true);
+    } catch (err) {
+      console.warn('prepare screenshot image failed', err);
+      try {
+        const node = document.getElementById('cert-card');
+        if (node) {
+          const dataUrl = await toPng(node, { pixelRatio: 2, backgroundColor: '#ffffff' });
+          setCertImgUrl(dataUrl);
+        }
+      } catch (e) {
+        console.warn('dom fallback failed', e);
+      }
+      setScreenshotMode(true);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSave = async () => {
     sfx.click();
     setSaving(true);
@@ -141,6 +185,9 @@ export default function Certificate() {
         verifyUrl,
         cornerEmoji: certDeco?.corner,
       });
+
+      const dataUrl = canvas.toDataURL('image/png');
+      setCertImgUrl(dataUrl);
 
       // 2. บันทึกรูปภาพลงเครื่อง (รองรับทั้ง iOS Safari, Android Chrome และ Desktop)
       const res = await saveCertificateImage(
@@ -168,6 +215,7 @@ export default function Certificate() {
         if (node) {
           const dataUrl = await toPng(node, { pixelRatio: 2, backgroundColor: '#ffffff' });
           setPreviewImgUrl(dataUrl);
+          setCertImgUrl(dataUrl);
           setShareMsg('แตะค้างที่รูปภาพเพื่อบันทึก');
           setTimeout(() => setShareMsg(null), 3000);
         }
@@ -386,41 +434,45 @@ export default function Certificate() {
               </span>
             </button>
 
-            {/* ===== Buttons ===== */}
-            <div className="mt-3 grid grid-cols-2 gap-2 print:hidden">
+            {/* ===== Action Buttons ===== */}
+            <div className="mt-3 flex flex-col gap-2 print:hidden">
+              {/* ปุ่มแคปหน้าจอ เด่นชัดที่สุดสำหรับ Android และ LINE */}
               <button
-                onClick={handleSave}
+                onClick={handleOpenScreenshot}
                 disabled={saving}
-                className="btn-primary flex items-center justify-center gap-1.5 disabled:opacity-60 font-bold"
+                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 active:scale-[0.98] text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
               >
-                {saving ? 'กำลังประมวลผล...' : '💾 บันทึกรูป'}
+                <span className="text-lg">📸</span>
+                <span>โหมดแคปหน้าจอ (แนะนำสำหรับ Android / LINE)</span>
               </button>
-              <button
-                onClick={handleShare}
-                className="btn-secondary flex items-center justify-center gap-1.5 font-bold"
-              >
-                {inLine ? '💬 แชร์เข้า LINE' : '📤 แชร์'}
-              </button>
-            </div>
 
-            {/* แถบแจ้งเตือนพิเศษสำหรับผู้ใช้แอป LINE (LINE WebView บล็อกการเซฟไฟล์) */}
-            {inLine && (
-              <div className="mt-2.5 p-3 bg-emerald-50 border-2 border-emerald-300 rounded-2xl flex items-center justify-between gap-2.5 text-left print:hidden shadow-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">🟢</span>
-                  <div>
-                    <p className="text-xs font-bold text-emerald-950 leading-tight">กำลังเปิดในแอป LINE</p>
-                    <p className="text-[11px] text-emerald-700 leading-snug mt-0.5">LINE ไม่อนุญาตให้เซฟไฟล์ลงเครื่องโดยตรง แนะนำเปิดใน Chrome เพื่อเซฟรูปเข้าเครื่องทันที</p>
-                  </div>
-                </div>
+              <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => openInExternalBrowser()}
-                  className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold shadow whitespace-nowrap flex-shrink-0"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="btn-primary flex items-center justify-center gap-1.5 disabled:opacity-60 font-bold text-xs py-2.5"
                 >
-                  เปิดใน Chrome 🚀
+                  <span>💾</span> {saving ? 'กำลังประมวลผล...' : 'ดาวน์โหลดรูป'}
+                </button>
+                <button
+                  onClick={handleShare}
+                  className="btn-secondary flex items-center justify-center gap-1.5 font-bold text-xs py-2.5"
+                >
+                  <span>💬</span> {inLine ? 'แชร์เข้า LINE' : 'แชร์เกียรติบัตร'}
                 </button>
               </div>
-            )}
+            </div>
+
+            {/* แถบคำแนะนำสำหรับ Android / LINE */}
+            <div className="mt-2.5 p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-2.5 text-left print:hidden">
+              <span className="text-xl flex-shrink-0">💡</span>
+              <div>
+                <p className="text-xs font-bold text-amber-950 leading-tight">คำแนะนำสำหรับมือถือ Android / LINE</p>
+                <p className="text-[11px] text-amber-800 leading-snug mt-0.5">
+                  กดปุ่ม <strong>"โหมดแคปหน้าจอ"</strong> ด้านบน จะแสดงภาพเต็มจอคมชัด ไร้ปุ่มบัง แคปภาพเก็บไว้ได้ทันที 100%
+                </p>
+              </div>
+            </div>
 
             {shareMsg && (
               <motion.div
@@ -528,20 +580,25 @@ export default function Certificate() {
               <p className="font-bold flex items-center gap-1 text-sm text-amber-950">
                 <span>📱</span> วิธีเซฟรูปและแชร์เกียรติบัตร:
               </p>
-              {inLine ? (
-                <>
-                  <p>• <strong>กดปุ่ม "🚀 เปิดใน Chrome เพื่อดาวน์โหลด"</strong> ด้านล่างเพื่อเซฟรูปเข้าแกลเลอรีเครื่องได้ทันที (เนื่องจากแอป LINE บล็อกการเซฟไฟล์)</p>
-                  <p>• <strong>กดปุ่ม "💬 แชร์เข้าแชต LINE"</strong> เพื่อส่งการ์ดเกียรติบัตรให้ครูหรือเพื่อนในห้อง</p>
-                </>
-              ) : (
-                <>
-                  <p>• <strong>กดปุ่ม "📲 บันทึกเข้า Photos / แชร์ผ่านแอป"</strong> ด้านล่าง แล้วเลือก <em>"Save Image" (บันทึกภาพ)</em></p>
-                  <p>• หรือ <strong>แตะค้างที่รูปภาพด้านบน</strong> ค้างไว้ 1 วินาที แล้วเลือก <strong>"บันทึกรูปภาพ" (Save Image / Save to Photos)</strong></p>
-                </>
-              )}
+              <p>• <strong>สำหรับ Android / LINE:</strong> แนะนำกดปุ่ม <strong>"📸 โหมดแคปหน้าจอ"</strong> ด้านล่าง จะได้ภาพคมชัดเต็มจอไม่มีปุ่มบัง</p>
+              <p>• <strong>สำหรับ iPhone:</strong> แตะค้างที่รูปภาพ 1 วินาที แล้วเลือก <strong>"บันทึกไปยังแอปรูปภาพ" (Save to Photos)</strong></p>
+              <p>• หรือกดปุ่ม <strong>"💬 แชร์เข้าแชต LINE"</strong> เพื่อส่งการ์ดเกียรติบัตรให้คุณครูโดยตรง</p>
             </div>
 
             <div className="flex flex-col gap-2 w-full">
+              {/* ปุ่มเปิดโหมดแคปหน้าจอ */}
+              <button
+                onClick={() => {
+                  sfx.click();
+                  setPreviewImgUrl(null);
+                  setHideGuide(false);
+                  setScreenshotMode(true);
+                }}
+                className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow active:scale-95 transition-all"
+              >
+                <span>📸</span> เปิดโหมดแคปหน้าจอเต็มจอ (แนะนำสำหรับ Android)
+              </button>
+
               {/* ปุ่มแชร์เข้าแชต LINE สำหรับผู้ใช้ที่อยู่ใน LINE หรือมี LIFF */}
               <button
                 onClick={async () => {
@@ -554,23 +611,13 @@ export default function Certificate() {
                   }
                   setTimeout(() => setShareMsg(null), 2500);
                 }}
-                className="py-3 px-4 rounded-xl bg-[#06C755] hover:bg-[#05b34c] text-white font-bold text-xs md:text-sm flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
+                className="py-2.5 px-4 rounded-xl bg-[#06C755] hover:bg-[#05b34c] text-white font-bold text-xs flex items-center justify-center gap-2 shadow active:scale-95 transition-all"
               >
                 <span>💬</span> แชร์เกียรติบัตรเข้าแชต LINE (ส่งให้ครู/เพื่อน)
               </button>
 
-              {/* ปุ่มเปิดใน Chrome สำหรับผู้ใช้ LINE Android ที่ดาวน์โหลดไฟล์ไม่ได้ */}
-              {inLine && (
-                <button
-                  onClick={() => openInExternalBrowser()}
-                  className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
-                >
-                  <span>🚀</span> เปิดใน Chrome เพื่อดาวน์โหลดลงเครื่องทันที
-                </button>
-              )}
-
               {/* สำหรับ iOS หรือเบราว์เซอร์ปกติที่มี Web Share */}
-              {!inLine && navigator.share && (
+              {navigator.share && (
                 <button
                   onClick={async () => {
                     sfx.click();
@@ -590,7 +637,7 @@ export default function Certificate() {
                       // user cancelled
                     }
                   }}
-                  className="btn-primary py-2.5 text-xs flex items-center justify-center gap-1.5 font-bold w-full active:scale-95"
+                  className="btn-primary py-2 text-xs flex items-center justify-center gap-1.5 font-bold w-full active:scale-95"
                 >
                   <span>📲</span> บันทึกเข้า Photos / แชร์ผ่านแอป
                 </button>
@@ -631,6 +678,59 @@ export default function Certificate() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== Fullscreen Screenshot Mode (สำหรับ Android / LINE) ===== */}
+      {screenshotMode && (
+        <div className="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-between p-2 sm:p-4 select-none animate-in fade-in duration-200">
+          {/* แถบคำแนะนำด้านบน */}
+          {!hideGuide ? (
+            <div className="w-full max-w-md bg-amber-500 text-amber-950 px-3.5 py-2 rounded-2xl text-xs font-bold flex items-center justify-between shadow-xl mb-1 z-20">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📸</span>
+                <span>กดปุ่ม <strong>ลดเสียง + Power</strong> เพื่อแคปจอได้เลย!</span>
+              </div>
+              <button
+                onClick={() => setHideGuide(true)}
+                className="text-[10px] bg-amber-950/15 hover:bg-amber-950/25 px-2.5 py-1 rounded-lg text-amber-950 font-bold"
+              >
+                ซ่อนป้ายนี้
+              </button>
+            </div>
+          ) : (
+            <div className="h-1" />
+          )}
+
+          {/* การ์ดเกียรติบัตรคมชัดระดับ HD เต็มจอ */}
+          <div
+            className="flex-1 w-full flex items-center justify-center my-auto p-1 cursor-pointer"
+            onClick={() => setHideGuide(prev => !prev)}
+          >
+            {certImgUrl ? (
+              <img
+                src={certImgUrl}
+                alt="ประกาศนียบัตร"
+                className="max-h-[85vh] max-w-full w-auto object-contain rounded shadow-2xl block border border-slate-700/50"
+              />
+            ) : (
+              <div className="text-white text-center py-20 font-bold">กำลังเรนเดอร์ภาพเกียรติบัตร...</div>
+            )}
+          </div>
+
+          {/* ปุ่มปิดด้านล่าง */}
+          <div className="w-full max-w-xs flex flex-col items-center gap-1.5 mt-1 z-20">
+            <p className="text-[10px] text-slate-400">แตะที่รูปเพื่อซ่อนหรือแสดงแถบคำแนะนำ</p>
+            <button
+              onClick={() => {
+                sfx.click();
+                setScreenshotMode(false);
+              }}
+              className="w-full py-2.5 rounded-xl bg-white/20 hover:bg-white/30 active:scale-95 text-white font-bold text-xs backdrop-blur-md shadow"
+            >
+              ✕ ปิดหน้าจอแคปภาพ
+            </button>
           </div>
         </div>
       )}
