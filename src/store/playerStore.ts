@@ -34,7 +34,7 @@ interface PlayerState extends PlayerProfile {
   equipCertDeco: (id: string | undefined) => void;
   awardBadge: (id: string) => boolean;
   completeStage: (stageId: number) => void;
-  setCertificate: (no: string, issuedAt: string) => void;
+  setCertificate: (no: string, issuedAt: string, verifyCode?: string) => void;
   /** บันทึกว่าเคยถามเรื่องชื่อจริงบนเกียรติบัตรแล้ว (กัน popup ซ้ำ) */
   markCertNamePrompted: () => void;
   /** บันทึกผล Daily Challenge ของวันนี้ (กันรับซ้ำในวันเดียว) → true ถ้าบันทึกได้ */
@@ -278,8 +278,12 @@ export const usePlayerStore = create<PlayerState>()(
         get().syncIfReady();
       },
 
-      setCertificate: (no, issuedAt) => {
-        set({ certificateNo: no, certificateIssuedAt: issuedAt });
+      setCertificate: (no, issuedAt, verifyCode) => {
+        set({
+          certificateNo: no,
+          certificateIssuedAt: issuedAt,
+          ...(verifyCode ? { certificateVerifyCode: verifyCode } : {}),
+        });
         get().syncIfReady();
       },
 
@@ -483,6 +487,7 @@ export const usePlayerStore = create<PlayerState>()(
         funRatingSum: s.funRatingSum,
         certificateNo: s.certificateNo,
         certificateIssuedAt: s.certificateIssuedAt,
+        certificateVerifyCode: s.certificateVerifyCode,
         certNamePrompted: s.certNamePrompted,
         createdAt: s.createdAt,
         lastActiveAt: s.lastActiveAt,

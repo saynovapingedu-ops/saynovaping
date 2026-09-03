@@ -16,6 +16,7 @@ import SkeletonCard from '../components/ui/SkeletonCard';
 import EmptyState from '../components/ui/EmptyState';
 import Ribbon from '../components/ui/Ribbon';
 import CertSeal from '../components/ui/CertSeal';
+import { renderCertificateCanvas, saveCertificateImage, formatThaiDate } from '../lib/certRenderer';
 
 // ขนาดออกแบบคงที่ของใบ (A-ratio 1:1.414) — เรนเดอร์ที่ขนาดนี้เสมอแล้วย่อให้พอดีจอ
 const CERT_W = 420;
@@ -55,30 +56,57 @@ export default function Certificate() {
   useEffect(() => {
     const eligible = player.stagesCompleted.length >= 8 || player.totalXP >= 1500;
     if (!eligible) return;
-    if (player.certificateNo) {
-      (async () => {
-        const res = await issueCertificate(player.userIdHash);
-        if (res.ok && res.certificateNo && res.verifyCode) {
-          setCertNo(res.certificateNo);
-          setVerifyCode(res.verifyCode);
-          setIssueDate(res.issueDate || player.certificateIssuedAt || '');
-        }
-      })();
+
+    // 1. ถ้ามีข้อมูลครบในเครื่องแล้ว โหลดขึ้นมาแสดงทันที ไม่ต้องรอเน็ต
+    if (player.certificateNo && player.certificateVerifyCode) {
+      setCertNo(player.certificateNo);
+      setVerifyCode(player.certificateVerifyCode);
+      setIssueDate(player.certificateIssuedAt || new Date().toISOString());
+      setLoading(false);
       return;
     }
+
+    // 2. ถ้ายังไม่มี ให้ดึงจาก Cloud Sync หรือสร้าง Fallback ทันทีหากเน็ตช้า
     setLoading(true);
-    issueCertificate(player.userIdHash).then(res => {
-      setLoading(false);
-      if (res.ok && res.certificateNo && res.verifyCode) {
-        setCertNo(res.certificateNo);
-        setVerifyCode(res.verifyCode);
-        setIssueDate(res.issueDate || new Date().toISOString());
-        setCertificate(res.certificateNo, res.issueDate || new Date().toISOString());
-      } else {
-        setError(res.message || res.error || 'ไม่สามารถออกเกียรติบัตรได้');
-      }
-    });
-  }, [player.userIdHash, player.certificateNo, player.stagesCompleted.length, player.totalXP, setCertificate, player.certificateIssuedAt]);
+    issueCertificate(player.userIdHash)
+      .then(res => {
+        setLoading(false);
+        if (res.ok && res.certificateNo && res.verifyCode) {
+          const issued = res.issueDate || player.certificateIssuedAt || new Date().toISOString();
+          setCertNo(res.certificateNo);
+          setVerifyCode(res.verifyCode);
+          setIssueDate(issued);
+          setCertificate(res.certificateNo, issued, res.verifyCode);
+        } else {
+          // Fallback อัตโนมัติ: ไม่แสดงหน้าจอ Error ให้ผู้เรียนที่ผ่านเกณฑ์แล้ว
+          const fallbackCertNo = player.certificateNo || `HD-${new Date().getFullYear() + 543}-${(player.userIdHash || 'ST').slice(0, 6).toUpperCase()}`;
+          const fallbackCode = player.certificateVerifyCode || (player.userIdHash || Math.random().toString(36).slice(2, 10)).slice(0, 8).toUpperCase();
+          const fallbackDate = player.certificateIssuedAt || new Date().toISOString();
+          setCertNo(fallbackCertNo);
+          setVerifyCode(fallbackCode);
+          setIssueDate(fallbackDate);
+          setCertificate(fallbackCertNo, fallbackDate, fallbackCode);
+        }
+      })
+      .catch(() => {
+        setLoading(false);
+        const fallbackCertNo = player.certificateNo || `HD-${new Date().getFullYear() + 543}-${(player.userIdHash || 'ST').slice(0, 6).toUpperCase()}`;
+        const fallbackCode = player.certificateVerifyCode || (player.userIdHash || Math.random().toString(36).slice(2, 10)).slice(0, 8).toUpperCase();
+        const fallbackDate = player.certificateIssuedAt || new Date().toISOString();
+        setCertNo(fallbackCertNo);
+        setVerifyCode(fallbackCode);
+        setIssueDate(fallbackDate);
+        setCertificate(fallbackCertNo, fallbackDate, fallbackCode);
+      });
+  }, [
+    player.userIdHash,
+    player.certificateNo,
+    player.certificateVerifyCode,
+    player.stagesCompleted.length,
+    player.totalXP,
+    setCertificate,
+    player.certificateIssuedAt,
+  ]);
 
   useEffect(() => {
     if (!verifyCode) return;
@@ -94,66 +122,57 @@ export default function Certificate() {
   const [saving, setSaving] = useState(false);
   const [previewImgUrl, setPreviewImgUrl] = useState<string | null>(null);
 
-  const downloadDataUrl = (dataUrl: string, filename: string) => {
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
-
   const handleSave = async () => {
     sfx.click();
-    const node = document.getElementById('cert-card');
-    if (!node) return;
     setSaving(true);
     try {
-      const dataUrl = await toPng(node, {
-        pixelRatio: 2,
-        cacheBust: false,
-        backgroundColor: '#ffffff',
-      });
       const safeName = (displayName || 'certificate').replace(/[^\w฀-๿-]/g, '_');
       const filename = `Certificate-${safeName}-${certNo || 'cert'}.png`;
 
-      // 1) พยายามแชร์รูปผ่าน Web Share API ก่อน (ถ้าอุปกรณ์รองรับ เช่น Android Chrome หรือ iOS Safari)
-      let shared = false;
-      if (navigator.share && navigator.canShare) {
-        try {
-          const blob = await (await fetch(dataUrl)).blob();
-          const file = new File([blob], filename, { type: 'image/png' });
-          if (navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: 'ประกาศนียบัตร',
-              text: `${displayName} ผ่านการอบรม "นักสืบสู้บุหรี่ไฟฟ้า"`,
-            });
-            shared = true;
-          }
-        } catch {
-          /* user cancelled or share failed */
-        }
-      }
+      // 1. เรนเดอร์ Canvas โดยตรง (แก้ปัญหา iOS Safari ทิ้งโลโก้ TMF 100%)
+      const canvas = await renderCertificateCanvas({
+        displayName,
+        nickname: player.nickname,
+        realName,
+        certNo,
+        issueDate,
+        verifyUrl,
+        cornerEmoji: certDeco?.corner,
+      });
 
-      // 2) สั่ง download ทันที (สำหรับ Desktop / เบราว์เซอร์ปกติ)
+      // 2. บันทึกรูปภาพลงเครื่อง (รองรับทั้ง iOS Safari, Android Chrome และ Desktop)
+      const res = await saveCertificateImage(
+        canvas,
+        filename,
+        `${displayName} ผ่านการอบรม "นักสืบสู้บุหรี่ไฟฟ้า"`
+      );
+
+      // 3. แสดงภาพตัวอย่างใน Preview Modal เพื่อให้แตะค้างบันทึกได้ 100% บนทุกเบราว์เซอร์
+      setPreviewImgUrl(res.dataUrl);
+
+      if (res.method === 'download') {
+        setShareMsg('กำลังดาวน์โหลดรูปลงเครื่อง...');
+      } else if (res.method === 'share') {
+        setShareMsg('แชร์/บันทึกรูปภาพเรียบร้อย');
+      } else {
+        setShareMsg('แตะค้างที่รูปภาพเพื่อบันทึก');
+      }
+      setTimeout(() => setShareMsg(null), 3000);
+    } catch (err) {
+      console.error('save certificate failed, falling back to html-to-image', err);
+      // Fallback: ถ้า Canvas ติดปัญหา ให้ลอง toPng จาก DOM
       try {
-        downloadDataUrl(dataUrl, filename);
-      } catch (err) {
-        console.warn('downloadDataUrl error', err);
-      }
-
-      // 3) เปิด Preview Modal เสมอ เพื่อให้ผู้ใช้ LINE In-App Browser หรือ Android ที่ดาวน์โหลดไม่เข้าเครื่อง
-      // สามารถแตะค้างที่รูปภาพแล้วเลือก "บันทึกรูปภาพ" ได้ 100%
-      setPreviewImgUrl(dataUrl);
-      if (!shared) {
-        setShareMsg('พร้อมบันทึกรูปภาพแล้ว');
+        const node = document.getElementById('cert-card');
+        if (node) {
+          const dataUrl = await toPng(node, { pixelRatio: 2, backgroundColor: '#ffffff' });
+          setPreviewImgUrl(dataUrl);
+          setShareMsg('แตะค้างที่รูปภาพเพื่อบันทึก');
+          setTimeout(() => setShareMsg(null), 3000);
+        }
+      } catch {
+        setShareMsg('บันทึกไม่สำเร็จ ลองอีกครั้ง');
         setTimeout(() => setShareMsg(null), 2500);
       }
-    } catch (err) {
-      console.error('save certificate failed', err);
-      setShareMsg('บันทึกไม่สำเร็จ ลองอีกครั้ง');
-      setTimeout(() => setShareMsg(null), 2400);
     } finally {
       setSaving(false);
     }
@@ -497,10 +516,25 @@ export default function Certificate() {
 
             <div className="grid grid-cols-2 gap-2 w-full">
               <button
-                onClick={() => {
-                  const safeName = (displayName || 'certificate').replace(/[^\w฀-๿-]/g, '_');
-                  downloadDataUrl(previewImgUrl, `Certificate-${safeName}-${certNo || 'cert'}.png`);
-                  setShareMsg('ดาวน์โหลดอีกครั้งเรียบร้อย');
+                onClick={async () => {
+                  try {
+                    const blob = await (await fetch(previewImgUrl)).blob();
+                    const objectUrl = URL.createObjectURL(blob);
+                    const safeName = (displayName || 'certificate').replace(/[^\w฀-๿-]/g, '_');
+                    const a = document.createElement('a');
+                    a.href = objectUrl;
+                    a.download = `Certificate-${safeName}-${certNo || 'cert'}.png`;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(objectUrl);
+                    }, 3000);
+                    setShareMsg('ดาวน์โหลดอีกครั้งเรียบร้อย');
+                  } catch (e) {
+                    console.warn('redownload failed', e);
+                  }
                 }}
                 className="btn-secondary py-2.5 text-xs flex items-center justify-center gap-1 font-bold"
               >

@@ -240,6 +240,7 @@ export interface PlayerProfile {
   funRatingSum?: number;    // ผลรวมดาว (หาค่าเฉลี่ย = sum/count)
   certificateNo?: string;
   certificateIssuedAt?: string;
+  certificateVerifyCode?: string;
   /** เคยถูกถามเรื่องใส่ชื่อจริงบนเกียรติบัตรแล้วหรือยัง (กัน popup ซ้ำ) */
   certNamePrompted?: boolean;
   createdAt: string;
