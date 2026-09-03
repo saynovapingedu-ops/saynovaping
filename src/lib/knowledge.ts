@@ -308,7 +308,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       'รายงานในแอป (Roblox/Discord Report) + บอกพ่อแม่',
     ],
     example: {
-      situation: 'คนใน Discord ทัก "มีพ๊อตรสองุ่นถูกๆ สนใจมั้ย"',
+      situation: 'คนใน Discord ทัก "มีพอตรสองุ่นถูกๆ สนใจมั้ย"',
       response: 'ไม่ตอบ → block → screenshot → แจ้งครู (พ.ร.บ.คอมฯ มาตรา 14)',
     },
     source: 'Federal Bureau of Investigation. (2022). Online predators in gaming platforms. FBI; ราชกิจจานุเบกษา. (2560). พระราชบัญญัติคอมพิวเตอร์ พ.ศ. 2560.',
@@ -326,7 +326,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       'โทร 1600 ด้วยกัน (พ่อแม่+ลูก) — บริการครอบครัวฟรี',
     ],
     example: {
-      situation: 'แม่เจอพ๊อตในกระเป๋า',
+      situation: 'แม่เจอพอตในกระเป๋า',
       response: '"ของหนูเองครับ หนูผิดที่ซ่อน — ช่วยหนูเลิกได้มั้ย"',
     },
     source: 'Centers for Disease Control and Prevention. (2022). Talking to teens about vaping; ศูนย์บริการเลิกบุหรี่ทางโทรศัพท์แห่งชาติ. (2566). สายด่วน 1600.',

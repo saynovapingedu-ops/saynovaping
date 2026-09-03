@@ -149,6 +149,7 @@ export default function RiskRank({ title, buckets, items, onComplete, source }: 
                 <AnimatePresence>
                   {list.map(it => {
                     const correct = isItemCorrect(it.id);
+                    const targetBucket = buckets.find(b => b.id === it.bucketId);
                     return (
                       <motion.button
                         key={it.id}
@@ -170,8 +171,12 @@ export default function RiskRank({ title, buckets, items, onComplete, source }: 
                       >
                         {it.text}
                         {!submitted && <span className="ml-1 opacity-70 text-[10px] font-bold">✕</span>}
-                        {correct === true  && <span className="ml-1">✓</span>}
-                        {correct === false && <span className="ml-1">✗</span>}
+                        {correct === true  && <span className="ml-1 font-bold">✓</span>}
+                        {correct === false && (
+                          <span className="ml-1 text-[10px] text-danger-700 font-medium">
+                            ✗ (ที่ถูก: {targetBucket?.label})
+                          </span>
+                        )}
                       </motion.button>
                     );
                   })}
@@ -203,12 +208,40 @@ export default function RiskRank({ title, buckets, items, onComplete, source }: 
             correctCount === items.length ? 'text-success-600' : 'text-warning-700'
           }`}>
             {correctCount === items.length
-              ? '✓ จัดถูกหมดเลย!'
+              ? '✓ จัดถูกหมดทุกชิ้น สุดยอดมาก!'
               : `จัดถูก ${correctCount}/${items.length} ชิ้น`}
           </p>
           <p className="text-xs text-gray-600 mb-3 leading-relaxed text-center">
-            ดูช่องที่ขึ้น ✓ และ ✗ ก่อน แล้วทบทวนระดับความเสี่ยงที่ถูกในใจ
+            {correctCount === items.length
+              ? 'คุณเข้าใจระดับความเสี่ยงของสารและพฤติกรรมต่างๆ อย่างถ่องแท้'
+              : 'ลองตรวจสอบตำแหน่งที่ถูกต้องด้านล่าง เพื่อทำความเข้าใจระดับความเสี่ยงตามหลัก Harm Reduction'}
           </p>
+
+          {/* แจกแจงข้อที่ต้องปรับปรุง */}
+          {correctCount < items.length && (
+            <div className="mb-3 text-left bg-white rounded-xl border border-warning-300 p-3 shadow-sm space-y-2">
+              <p className="font-bold text-xs text-warning-800">
+                💡 ข้อแนะนำและตำแหน่งที่ถูกต้อง:
+              </p>
+              <ul className="space-y-1.5">
+                {items
+                  .filter(it => !isItemCorrect(it.id))
+                  .map(it => {
+                    const targetBucket = buckets.find(b => b.id === it.bucketId);
+                    return (
+                      <li key={it.id} className="text-[11px] text-slate-700 leading-snug">
+                        • <b>{it.text}</b> → ควรอยู่ในกลุ่ม <span className="font-bold text-detective-700">{targetBucket?.label}</span>
+                        {it.source && <span className="text-[10px] text-slate-400 block ml-2">อ้างอิง: {it.source}</span>}
+                      </li>
+                    );
+                  })}
+              </ul>
+              <div className="text-[11px] text-slate-700 bg-warning-50 p-2.5 rounded-lg border border-warning-200 mt-2 leading-relaxed">
+                📌 <b>ข้อคิดสำคัญ:</b> ทั้ง <i>"ลองบุหรี่ไฟฟ้าเป็นครั้งคราว"</i> และ <i>"สูบบุหรี่ปกติเป็นครั้งคราว"</i> ถูกจัดอยู่ในกลุ่ม <b>🟠 เสี่ยงสูง</b> ร่วมกัน เนื่องจากนิโคตินทำให้สมองวัยรุ่นเสพติดได้รวดเร็วและทำลายปอดไม่ต่างกัน ส่วน <i>"ดื่มน้ำอัดลมทุกมื้อ"</i> อยู่ใน <b>🟡 เสี่ยงปานกลาง</b> จากน้ำตาลสูงแต่ไม่มีสารเสพติดนิโคติน
+              </div>
+            </div>
+          )}
+
           {source && (
             <p className="text-[10px] text-gray-500 mb-2 leading-snug text-center">
               📚 อ้างอิงรวมของมินิเกม: {source}
@@ -230,9 +263,30 @@ export default function RiskRank({ title, buckets, items, onComplete, source }: 
               </ul>
             </details>
           )}
-          <button onClick={() => onComplete(correctCount === items.length)} className="btn-primary w-full">
-            ไปต่อ →
-          </button>
+
+          <div className="flex gap-2">
+            {correctCount < items.length && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSubmitted(false);
+                  setPlaced({});
+                  setPool(shuffle(items));
+                  setPickedItemId(null);
+                }}
+                className="btn-secondary flex-1 py-2 text-xs"
+              >
+                🔄 ลองจัดใหม่อีกครั้ง
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => onComplete(correctCount === items.length)}
+              className="btn-primary flex-1"
+            >
+              {correctCount === items.length ? 'ไปต่อ →' : 'ไปต่อ (บันทึกผล) →'}
+            </button>
+          </div>
         </motion.div>
       )}
     </div>

@@ -83,7 +83,7 @@ export default function MemoryMatch({ title, pairs, onComplete }: Props) {
     <div className="space-y-3">
       <h3 className="font-display font-bold text-lg text-detective-700">🧠 {title}</h3>
       <p className="text-sm text-gray-600">
-        เปิดทีละ 2 ใบ — จับ <b className="text-detective-700">พฤติกรรม (สีม่วง)</b> คู่กับ <b className="text-warning-600">ผลที่ตามมา (สีเหลือง)</b>
+        เปิดทีละ 2 ใบ — จับ <b className="text-detective-600">พฤติกรรม (การ์ดสีฟ้า)</b> คู่กับ <b className="text-amber-600">ผลที่ตามมา (การ์ดสีส้มเหลือง)</b>
       </p>
       <p className="text-[11px] text-gray-500 leading-relaxed -mt-1">
         💡 <b>คำใบ้:</b> ดูอีโมจิบนหลังการ์ดก่อนพลิก — ช่วยจำตำแหน่งง่ายขึ้น

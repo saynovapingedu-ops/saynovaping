@@ -76,7 +76,7 @@ export default function DialogueBubble({ speaker, speakerName, speakerAvatar, te
           </span>
         )}
         <div className={`px-4 py-3 rounded-[20px] shadow-clay-sm ${s.bg} ${s.align === 'right' ? 'rounded-br-md' : 'rounded-bl-md'}`}>
-          <p className="leading-loose whitespace-pre-line break-words">{text}</p>
+          <p className="leading-loose whitespace-pre-line break-words [word-break:break-word]">{text}</p>
         </div>
         {showTts && (
           <button
