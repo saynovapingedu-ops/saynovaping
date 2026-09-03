@@ -17,6 +17,7 @@ import EmptyState from '../components/ui/EmptyState';
 import Ribbon from '../components/ui/Ribbon';
 import CertSeal from '../components/ui/CertSeal';
 import { renderCertificateCanvas, saveCertificateImage, formatThaiDate } from '../lib/certRenderer';
+import { shareCertificateViaLiff, openInExternalBrowser, isInLineBrowser } from '../lib/liff';
 
 // ขนาดออกแบบคงที่ของใบ (A-ratio 1:1.414) — เรนเดอร์ที่ขนาดนี้เสมอแล้วย่อให้พอดีจอ
 const CERT_W = 420;
@@ -39,6 +40,7 @@ export default function Certificate() {
   const realName = useCertNameStore(s => s.realName);
   const displayName = realName.trim() || player.nickname;
   const [editNameOpen, setEditNameOpen] = useState(false);
+  const inLine = isInLineBrowser();
 
   // ย่อใบให้พอดีความกว้างจอ (กันเนื้อหาล้นกรอบบนจอแคบ)
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -180,24 +182,19 @@ export default function Certificate() {
 
   const handleShare = async () => {
     sfx.click();
-    const text = `${displayName} ผ่านการอบรม "นักสืบสู้บุหรี่ไฟฟ้า"`;
-    if (navigator.share && verifyUrl) {
-      try {
-        await navigator.share({
-          title: 'ประกาศนียบัตร',
-          text,
-          url: verifyUrl,
-        });
-        return;
-      } catch {
-        return;
+    const res = await shareCertificateViaLiff(displayName, certNo, verifyUrl);
+    if (res.success) {
+      if (res.method === 'liff') {
+        setShareMsg('แชร์เกียรติบัตรเข้าแชต LINE สำเร็จ');
+      } else if (res.method === 'share') {
+        setShareMsg('แชร์เรียบร้อย');
+      } else {
+        setShareMsg('คัดลอกลิงก์ตรวจสอบแล้ว');
       }
+    } else {
+      setShareMsg('คัดลอกลิงก์ตรวจสอบแล้ว');
     }
-    if (verifyUrl && navigator.clipboard) {
-      await navigator.clipboard.writeText(`${text}\n${verifyUrl}`);
-      setShareMsg('ก๊อปลิงก์แล้ว');
-      setTimeout(() => setShareMsg(null), 2400);
-    }
+    setTimeout(() => setShareMsg(null), 2500);
   };
 
   if (!eligible) {
@@ -394,17 +391,36 @@ export default function Certificate() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="btn-primary flex items-center justify-center gap-1.5 disabled:opacity-60"
+                className="btn-primary flex items-center justify-center gap-1.5 disabled:opacity-60 font-bold"
               >
-                {saving ? 'กำลังบันทึก...' : '💾 บันทึกรูป'}
+                {saving ? 'กำลังประมวลผล...' : '💾 บันทึกรูป'}
               </button>
               <button
                 onClick={handleShare}
-                className="btn-secondary flex items-center justify-center gap-1.5"
+                className="btn-secondary flex items-center justify-center gap-1.5 font-bold"
               >
-                📤 แชร์
+                {inLine ? '💬 แชร์เข้า LINE' : '📤 แชร์'}
               </button>
             </div>
+
+            {/* แถบแจ้งเตือนพิเศษสำหรับผู้ใช้แอป LINE (LINE WebView บล็อกการเซฟไฟล์) */}
+            {inLine && (
+              <div className="mt-2.5 p-3 bg-emerald-50 border-2 border-emerald-300 rounded-2xl flex items-center justify-between gap-2.5 text-left print:hidden shadow-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🟢</span>
+                  <div>
+                    <p className="text-xs font-bold text-emerald-950 leading-tight">กำลังเปิดในแอป LINE</p>
+                    <p className="text-[11px] text-emerald-700 leading-snug mt-0.5">LINE ไม่อนุญาตให้เซฟไฟล์ลงเครื่องโดยตรง แนะนำเปิดใน Chrome เพื่อเซฟรูปเข้าเครื่องทันที</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => openInExternalBrowser()}
+                  className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold shadow whitespace-nowrap flex-shrink-0"
+                >
+                  เปิดใน Chrome 🚀
+                </button>
+              </div>
+            )}
 
             {shareMsg && (
               <motion.div
@@ -507,17 +523,54 @@ export default function Certificate() {
               />
             </div>
 
+            {/* คำแนะนำในการบันทึกรูปภาพ */}
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 w-full text-left text-xs text-amber-950 leading-relaxed space-y-1.5">
               <p className="font-bold flex items-center gap-1 text-sm text-amber-950">
-                <span>📱</span> วิธีเซฟรูปลงเครื่อง 100%:
+                <span>📱</span> วิธีเซฟรูปและแชร์เกียรติบัตร:
               </p>
-              <p>• <strong>กดปุ่ม "📲 บันทึกเข้า Photos / แชร์ผ่านแอป"</strong> ด้านล่าง แล้วเลือก <em>"Save Image" (บันทึกภาพ)</em></p>
-              <p>• หรือ <strong>แตะค้างที่รูปภาพด้านบน</strong> ค้างไว้ 1 วินาที แล้วเลือก <strong>"บันทึกรูปภาพ" (Save Image / Save to Photos)</strong></p>
-              <p>• หากเปิดผ่านแอป LINE แล้วบันทึกไม่ได้: แตะปุ่มจุดสามจุด (...) มุมขวาบน แล้วเลือก <strong>"เปิดในเบราว์เซอร์อื่น" (Open in external browser)</strong></p>
+              {inLine ? (
+                <>
+                  <p>• <strong>กดปุ่ม "🚀 เปิดใน Chrome เพื่อดาวน์โหลด"</strong> ด้านล่างเพื่อเซฟรูปเข้าแกลเลอรีเครื่องได้ทันที (เนื่องจากแอป LINE บล็อกการเซฟไฟล์)</p>
+                  <p>• <strong>กดปุ่ม "💬 แชร์เข้าแชต LINE"</strong> เพื่อส่งการ์ดเกียรติบัตรให้ครูหรือเพื่อนในห้อง</p>
+                </>
+              ) : (
+                <>
+                  <p>• <strong>กดปุ่ม "📲 บันทึกเข้า Photos / แชร์ผ่านแอป"</strong> ด้านล่าง แล้วเลือก <em>"Save Image" (บันทึกภาพ)</em></p>
+                  <p>• หรือ <strong>แตะค้างที่รูปภาพด้านบน</strong> ค้างไว้ 1 วินาที แล้วเลือก <strong>"บันทึกรูปภาพ" (Save Image / Save to Photos)</strong></p>
+                </>
+              )}
             </div>
 
             <div className="flex flex-col gap-2 w-full">
-              {navigator.share && (
+              {/* ปุ่มแชร์เข้าแชต LINE สำหรับผู้ใช้ที่อยู่ใน LINE หรือมี LIFF */}
+              <button
+                onClick={async () => {
+                  sfx.click();
+                  const res = await shareCertificateViaLiff(displayName, certNo, verifyUrl);
+                  if (res.success && res.method === 'liff') {
+                    setShareMsg('แชร์เกียรติบัตรเข้าแชต LINE สำเร็จ');
+                  } else {
+                    setShareMsg('แชร์เรียบร้อย');
+                  }
+                  setTimeout(() => setShareMsg(null), 2500);
+                }}
+                className="py-3 px-4 rounded-xl bg-[#06C755] hover:bg-[#05b34c] text-white font-bold text-xs md:text-sm flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
+              >
+                <span>💬</span> แชร์เกียรติบัตรเข้าแชต LINE (ส่งให้ครู/เพื่อน)
+              </button>
+
+              {/* ปุ่มเปิดใน Chrome สำหรับผู้ใช้ LINE Android ที่ดาวน์โหลดไฟล์ไม่ได้ */}
+              {inLine && (
+                <button
+                  onClick={() => openInExternalBrowser()}
+                  className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                >
+                  <span>🚀</span> เปิดใน Chrome เพื่อดาวน์โหลดลงเครื่องทันที
+                </button>
+              )}
+
+              {/* สำหรับ iOS หรือเบราว์เซอร์ปกติที่มี Web Share */}
+              {!inLine && navigator.share && (
                 <button
                   onClick={async () => {
                     sfx.click();
@@ -537,7 +590,7 @@ export default function Certificate() {
                       // user cancelled
                     }
                   }}
-                  className="btn-primary py-3 text-sm flex items-center justify-center gap-2 font-bold w-full shadow-md active:scale-95"
+                  className="btn-primary py-2.5 text-xs flex items-center justify-center gap-1.5 font-bold w-full active:scale-95"
                 >
                   <span>📲</span> บันทึกเข้า Photos / แชร์ผ่านแอป
                 </button>
