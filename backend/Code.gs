@@ -1192,8 +1192,8 @@ function createItemAnalysisSheet() {
     .setValues([headers])
     .setFontWeight('bold')
     .setBackground('#0F172A')
-    .setFontColor('#FFFFFF')
-    .setFrozenRows(1);
+    .setFontColor('#FFFFFF');
+  itemSheet.setFrozenRows(1);
 
   // Read from Players
   const pSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.PLAYERS);
