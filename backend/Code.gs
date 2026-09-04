@@ -654,6 +654,8 @@ function handleGetAdminData_(params) {
       preTestScore: preK,
       preTestSkillScore: numOr_(r[COL_PLAYER.PRE_TEST_SKILL_SCORE - 1], undefined),
       preTestAt: strOrUndef_(r[COL_PLAYER.PRE_TEST_AT - 1]),
+      preTestKnowledgeAnswers: parseJsonArray_(r[COL_PLAYER.PRE_TEST_KNOWLEDGE_ANSWERS - 1]),
+      preTestSkillAnswers: parseJsonArray_(r[COL_PLAYER.PRE_TEST_SKILL_ANSWERS - 1]),
       stagesCompletedCount: parseInt(totalStagesStr, 10) || 0,
       heroStagesCount: parseInt(heroStr, 10) || 0,
       totalStages: 20,
@@ -662,11 +664,15 @@ function handleGetAdminData_(params) {
       postTestScore: postK,
       postTestSkillScore: numOr_(r[COL_PLAYER.POST_TEST_SKILL_SCORE - 1], undefined),
       postTestAt: strOrUndef_(r[COL_PLAYER.POST_TEST_AT - 1]),
+      postTestKnowledgeAnswers: parseJsonArray_(r[COL_PLAYER.POST_TEST_KNOWLEDGE_ANSWERS - 1]),
+      postTestSkillAnswers: parseJsonArray_(r[COL_PLAYER.POST_TEST_SKILL_ANSWERS - 1]),
       gainDelta: gainDelta,
       evalPart5Avg: numOr_(r[COL_PLAYER.EVAL_PART5_AVG - 1], undefined),
+      evalPart5Details: parseJsonArray_(r[COL_PLAYER.EVAL_PART5_DETAILS - 1]),
       certificateNo: strOrUndef_(r[COL_PLAYER.CERTIFICATE_NO - 1]),
       certificateIssuedAt: strOrUndef_(r[COL_PLAYER.CERTIFICATE_ISSUED_AT - 1]),
       lastActiveAt: String(r[COL_PLAYER.LAST_ACTIVE_AT - 1] || r[COL_PLAYER.CREATED_AT - 1] || ''),
+      createdAt: strOrUndef_(r[COL_PLAYER.CREATED_AT - 1]),
     });
   }
 
@@ -1342,13 +1348,241 @@ function syncItemAnalysisRowFromPlayerRow_(playerRow) {
   } else {
     itemSheet.appendRow(rowData);
   }
+
+  // ซิงค์ลงแท็บ Item_Score_Binary (1=ถูก, 0=ผิด) แบบ Real-time ด้วย
+  try {
+    syncItemScoreBinaryRowFromPlayerRow_(playerRow);
+  } catch (e) {
+    console.warn('Item_Score_Binary sync warning:', e);
+  }
+}
+
+// ============================================================================
+// ฟังก์ชันสร้างแท็บ Item_Score_Binary (1 = ถูก, 0 = ผิด สำหรับ SPSS / Excel วิจัย)
+// ============================================================================
+function createItemScoreBinarySheet() {
+  let sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID') || '1djYg5itx5xvVubDCdznPaP6M6gE3sJEXAb-W9trs9Uw';
+  const ss = SpreadsheetApp.openById(sheetId);
+  let binSheet = ss.getSheetByName('Item_Score_Binary');
+  if (!binSheet) {
+    binSheet = ss.insertSheet('Item_Score_Binary');
+  }
+  binSheet.clear();
+
+  // 100 คอลัมน์ ครบถ้วนทุกตอนของงานวิจัย
+  const headers = [
+    'idCode', 'realName', 'nickname', 'grade', 'school',
+    'Pre_Score%', 'Post_Score%', 'GainDelta%',
+  ];
+  for (let i = 1; i <= 21; i++) headers.push('Pre_K' + i);
+  for (let i = 1; i <= 21; i++) headers.push('Post_K' + i);
+  for (let i = 1; i <= 20; i++) headers.push('Pre_S' + i);
+  for (let i = 1; i <= 20; i++) headers.push('Post_S' + i);
+  for (let i = 1; i <= 7; i++) headers.push('App_Eval' + i);
+  headers.push('App_Eval_Avg');
+  headers.push('Pre_Test_Date');
+  headers.push('Post_Test_Date');
+
+  binSheet.getRange(1, 1, 1, headers.length)
+    .setValues([headers])
+    .setFontWeight('bold')
+    .setVerticalAlignment('middle')
+    .setWrap(false);
+  binSheet.setRowHeight(1, 38);
+  binSheet.setFrozenRows(1);
+  binSheet.setFrozenColumns(5);
+
+  // สีแยกแต่ละส่วนงานวิจัยชัดเจน
+  binSheet.getRange(1, 1, 1, 8).setBackground('#0F172A').setFontColor('#FFFFFF');    // ข้อมูลทั่วไป
+  binSheet.getRange(1, 9, 1, 21).setBackground('#064E3B').setFontColor('#A7F3D0');   // Pre ความรู้ 1/0
+  binSheet.getRange(1, 30, 1, 21).setBackground('#047857').setFontColor('#D1FAE5');  // Post ความรู้ 1/0
+  binSheet.getRange(1, 51, 1, 20).setBackground('#312E81').setFontColor('#C7D2FE');  // Pre ทักษะ 1-5
+  binSheet.getRange(1, 71, 1, 20).setBackground('#4338CA').setFontColor('#E0E7FF');  // Post ทักษะ 1-5
+  binSheet.getRange(1, 91, 1, 7).setBackground('#78350F').setFontColor('#FDE68A');   // รีวิวแอป 1-5
+  binSheet.getRange(1, 98, 1, 3).setBackground('#334155').setFontColor('#F8FAFC');   // ค่าเฉลี่ยและวันที่
+
+  const KNOWLEDGE_KEYS = [2, 3, 2, 3, 2, 1, 2, 1, 0, 2, 1, 2, 2, 1, 2, 1, 0, 2, 1, 2, 1];
+
+  const pSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.PLAYERS);
+  const data = pSheet.getDataRange().getValues();
+  if (data.length < 2) return;
+
+  const rows = [];
+
+  for (let r = 1; r < data.length; r++) {
+    const row = data[r];
+    const idCode = row[COL_PLAYER.ID_CODE - 1] || '';
+    const realName = row[COL_PLAYER.REAL_NAME - 1] || '';
+    if (!idCode && !realName) continue;
+
+    const preKAnswers = parseJsonArray_(row[COL_PLAYER.PRE_TEST_KNOWLEDGE_ANSWERS - 1]);
+    const postKAnswers = parseJsonArray_(row[COL_PLAYER.POST_TEST_KNOWLEDGE_ANSWERS - 1]);
+    const preSAnswers = parseJsonArray_(row[COL_PLAYER.PRE_TEST_SKILL_ANSWERS - 1]);
+    const postSAnswers = parseJsonArray_(row[COL_PLAYER.POST_TEST_SKILL_ANSWERS - 1]);
+    const evalP5Details = parseJsonArray_(row[COL_PLAYER.EVAL_PART5_DETAILS - 1]);
+    const evalAvg = row[COL_PLAYER.EVAL_PART5_AVG - 1] !== undefined ? row[COL_PLAYER.EVAL_PART5_AVG - 1] : '';
+    const preAt = row[COL_PLAYER.PRE_TEST_AT - 1] || '';
+    const postAt = row[COL_PLAYER.POST_TEST_AT - 1] || '';
+
+    const rowData = [
+      idCode,
+      realName,
+      row[COL_PLAYER.NICKNAME - 1] || '',
+      row[COL_PLAYER.GRADE - 1] || '',
+      row[COL_PLAYER.SCHOOL - 1] || '',
+      row[COL_PLAYER.PRE_TEST_SCORE - 1] !== undefined && row[COL_PLAYER.PRE_TEST_SCORE - 1] !== null ? row[COL_PLAYER.PRE_TEST_SCORE - 1] : '',
+      row[COL_PLAYER.POST_TEST_SCORE - 1] !== undefined && row[COL_PLAYER.POST_TEST_SCORE - 1] !== null ? row[COL_PLAYER.POST_TEST_SCORE - 1] : '',
+      row[COL_PLAYER.GAIN_DELTA_KNOWLEDGE - 1] || '',
+    ];
+
+    // Pre_K1..Pre_K21 (1 = ถูก, 0 = ผิด)
+    for (let i = 0; i < 21; i++) {
+      if (preKAnswers.length > i && preKAnswers[i] !== undefined && preKAnswers[i] !== null && preKAnswers[i] >= 0) {
+        rowData.push(preKAnswers[i] === KNOWLEDGE_KEYS[i] ? 1 : 0);
+      } else {
+        rowData.push('');
+      }
+    }
+
+    // Post_K1..Post_K21 (1 = ถูก, 0 = ผิด)
+    for (let i = 0; i < 21; i++) {
+      if (postKAnswers.length > i && postKAnswers[i] !== undefined && postKAnswers[i] !== null && postKAnswers[i] >= 0) {
+        rowData.push(postKAnswers[i] === KNOWLEDGE_KEYS[i] ? 1 : 0);
+      } else {
+        rowData.push('');
+      }
+    }
+
+    // Pre_S1..Pre_S20 (ระดับ 1-5)
+    for (let i = 0; i < 20; i++) {
+      rowData.push(preSAnswers[i] !== undefined && preSAnswers[i] !== null ? preSAnswers[i] : '');
+    }
+
+    // Post_S1..Post_S20 (ระดับ 1-5)
+    for (let i = 0; i < 20; i++) {
+      rowData.push(postSAnswers[i] !== undefined && postSAnswers[i] !== null ? postSAnswers[i] : '');
+    }
+
+    // App_Eval1..App_Eval7 (ระดับ 1-5)
+    for (let i = 0; i < 7; i++) {
+      rowData.push(evalP5Details[i] !== undefined && evalP5Details[i] !== null ? evalP5Details[i] : '');
+    }
+
+    rowData.push(evalAvg);
+    rowData.push(preAt);
+    rowData.push(postAt);
+
+    rows.push(rowData);
+  }
+
+  if (rows.length > 0) {
+    binSheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+  }
+  console.log('✅ สร้างแท็บ Item_Score_Binary เรียบร้อยแล้ว จำนวนนักเรียน: ' + rows.length);
+}
+
+// ============================================================================
+// ฟังก์ชันอัปเดตข้อมูล 1/0 ลงแท็บ Item_Score_Binary แบบ Real-time
+// ============================================================================
+function syncItemScoreBinaryRowFromPlayerRow_(playerRow) {
+  if (!playerRow || playerRow.length < COL_PLAYER.POST_TEST_SKILL_ANSWERS) return;
+
+  const preKRaw = playerRow[COL_PLAYER.PRE_TEST_KNOWLEDGE_ANSWERS - 1];
+  const postKRaw = playerRow[COL_PLAYER.POST_TEST_KNOWLEDGE_ANSWERS - 1];
+  const preSRaw = playerRow[COL_PLAYER.PRE_TEST_SKILL_ANSWERS - 1];
+  const postSRaw = playerRow[COL_PLAYER.POST_TEST_SKILL_ANSWERS - 1];
+  if (!preKRaw && !postKRaw && !preSRaw && !postSRaw) return;
+
+  let sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID') || '1djYg5itx5xvVubDCdznPaP6M6gE3sJEXAb-W9trs9Uw';
+  const ss = SpreadsheetApp.openById(sheetId);
+  let binSheet = ss.getSheetByName('Item_Score_Binary');
+  if (!binSheet) {
+    createItemScoreBinarySheet();
+    return;
+  }
+
+  const KNOWLEDGE_KEYS = [2, 3, 2, 3, 2, 1, 2, 1, 0, 2, 1, 2, 2, 1, 2, 1, 0, 2, 1, 2, 1];
+  const preKAnswers = parseJsonArray_(preKRaw);
+  const postKAnswers = parseJsonArray_(postKRaw);
+  const preSAnswers = parseJsonArray_(preSRaw);
+  const postSAnswers = parseJsonArray_(postSRaw);
+  const evalP5Details = parseJsonArray_(playerRow[COL_PLAYER.EVAL_PART5_DETAILS - 1]);
+
+  const idCode = String(playerRow[COL_PLAYER.ID_CODE - 1] || '').trim();
+  const realName = String(playerRow[COL_PLAYER.REAL_NAME - 1] || '').trim();
+  if (!idCode && !realName) return;
+
+  const rowData = [
+    idCode,
+    realName,
+    playerRow[COL_PLAYER.NICKNAME - 1] || '',
+    playerRow[COL_PLAYER.GRADE - 1] || '',
+    playerRow[COL_PLAYER.SCHOOL - 1] || '',
+    playerRow[COL_PLAYER.PRE_TEST_SCORE - 1] !== undefined && playerRow[COL_PLAYER.PRE_TEST_SCORE - 1] !== null ? playerRow[COL_PLAYER.PRE_TEST_SCORE - 1] : '',
+    playerRow[COL_PLAYER.POST_TEST_SCORE - 1] !== undefined && playerRow[COL_PLAYER.POST_TEST_SCORE - 1] !== null ? playerRow[COL_PLAYER.POST_TEST_SCORE - 1] : '',
+    playerRow[COL_PLAYER.GAIN_DELTA_KNOWLEDGE - 1] || '',
+  ];
+
+  for (let i = 0; i < 21; i++) {
+    if (preKAnswers.length > i && preKAnswers[i] !== undefined && preKAnswers[i] !== null && preKAnswers[i] >= 0) {
+      rowData.push(preKAnswers[i] === KNOWLEDGE_KEYS[i] ? 1 : 0);
+    } else {
+      rowData.push('');
+    }
+  }
+
+  for (let i = 0; i < 21; i++) {
+    if (postKAnswers.length > i && postKAnswers[i] !== undefined && postKAnswers[i] !== null && postKAnswers[i] >= 0) {
+      rowData.push(postKAnswers[i] === KNOWLEDGE_KEYS[i] ? 1 : 0);
+    } else {
+      rowData.push('');
+    }
+  }
+
+  for (let i = 0; i < 20; i++) {
+    rowData.push(preSAnswers[i] !== undefined && preSAnswers[i] !== null ? preSAnswers[i] : '');
+  }
+  for (let i = 0; i < 20; i++) {
+    rowData.push(postSAnswers[i] !== undefined && postSAnswers[i] !== null ? postSAnswers[i] : '');
+  }
+  for (let i = 0; i < 7; i++) {
+    rowData.push(evalP5Details[i] !== undefined && evalP5Details[i] !== null ? evalP5Details[i] : '');
+  }
+
+  rowData.push(playerRow[COL_PLAYER.EVAL_PART5_AVG - 1] || '');
+  rowData.push(playerRow[COL_PLAYER.PRE_TEST_AT - 1] || '');
+  rowData.push(playerRow[COL_PLAYER.POST_TEST_AT - 1] || '');
+
+  const data = binSheet.getDataRange().getValues();
+  let targetRow = -1;
+  for (let r = 1; r < data.length; r++) {
+    const rId = String(data[r][0] || '').trim();
+    const rName = String(data[r][1] || '').trim();
+    if ((idCode && rId && rId === idCode) || (realName && rName && rName === realName)) {
+      targetRow = r + 1;
+      break;
+    }
+  }
+
+  if (targetRow !== -1) {
+    const existing = data[targetRow - 1];
+    for (let c = 0; c < rowData.length; c++) {
+      if ((rowData[c] === '' || rowData[c] === undefined) && existing[c] !== '' && existing[c] !== undefined) {
+        rowData[c] = existing[c];
+      }
+    }
+    binSheet.getRange(targetRow, 1, 1, rowData.length).setValues([rowData]);
+  } else {
+    binSheet.appendRow(rowData);
+  }
 }
 
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('🎮 เมนูนักสืบสุขภาพ')
     .addItem('⚡ เติมคำตอบรายข้อย้อนหลังจากคะแนนเดิม (Backfill)', 'backfillItemAnswersFromScores')
-    .addItem('📊 สร้างตารางวิเคราะห์รายข้อ (Item Analysis)', 'createItemAnalysisSheet')
+    .addItem('📊 สร้างตารางวิเคราะห์รายข้อ ก-ง (Item Analysis)', 'createItemAnalysisSheet')
+    .addItem('🎯 สร้างตารางคะแนน 1/0 สำหรับ SPSS (Item Score Binary)', 'createItemScoreBinarySheet')
     .addToUi();
 }
 
@@ -1471,10 +1705,11 @@ function backfillItemAnswersFromScores() {
     }
   }
 
-  // สร้างแท็บ Item_Analysis ทันที
+  // สร้างแท็บ Item_Analysis (ก-ง) และ Item_Score_Binary (1/0) ทันที
   createItemAnalysisSheet();
+  createItemScoreBinarySheet();
   try {
-    SpreadsheetApp.getUi().alert('สำเร็จ! เติมข้อมูลคำตอบรายข้อให้นักเรียนเดิม ' + updatedCount + ' คน และสร้างแท็บ Item_Analysis เรียบร้อยแล้ว');
+    SpreadsheetApp.getUi().alert('สำเร็จ! เติมข้อมูลคำตอบรายข้อให้นักเรียนเดิม ' + updatedCount + ' คน และสร้างแท็บ Item_Analysis (ก-ง) กับ Item_Score_Binary (1/0) เรียบร้อยแล้ว');
   } catch (e) {
     console.log('Done backfill: ' + updatedCount);
   }

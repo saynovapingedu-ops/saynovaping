@@ -22,6 +22,8 @@ export interface StudentRecord {
   preTestScore?: number;        // ความรู้ %
   preTestSkillScore?: number;   // ทักษะ เต็ม 100
   preTestAt?: string;
+  preTestKnowledgeAnswers?: number[]; // ช้อยส์ 0-3 (ก-ง) 21 ข้อ
+  preTestSkillAnswers?: number[];     // ระดับ 1-5 20 ข้อ
   // การเล่นเกม
   stagesCompletedCount: number;
   heroStagesCount?: number;
@@ -32,14 +34,18 @@ export interface StudentRecord {
   postTestScore?: number;       // ความรู้ %
   postTestSkillScore?: number;  // ทักษะ เต็ม 100
   postTestAt?: string;
+  postTestKnowledgeAnswers?: number[]; // ช้อยส์ 0-3 (ก-ง) 21 ข้อ
+  postTestSkillAnswers?: number[];     // ระดับ 1-5 20 ข้อ
   gainDelta?: number;           // postTestScore - preTestScore
   skillGainDelta?: number;      // postTestSkillScore - preTestSkillScore
   // การประเมินแชตบอต
   evalPart5Avg?: number;        // เฉลี่ยตอนที่ 5 (1.0 - 5.0)
+  evalPart5Details?: number[];  // ตอนที่ 5 ทั้ง 7 ข้อ (ระดับ 1-5)
   // เกียรติบัตร
   certificateNo?: string;
   certificateIssuedAt?: string;
   lastActiveAt: string;
+  createdAt?: string;
 }
 
 export interface AdminSettings {
