@@ -437,13 +437,22 @@ function handleSync_(p) {
     console.warn('GameStats sync warning:', e);
   }
 
-  // 3. ซิงค์ลงแท็บ Item_Analysis ทันทีแบบ Real-time (Auto Sync รายข้อ)
+  // 3. ซิงค์ลงแท็บ Item_Analysis ทันทีแบบ Real-time (Auto Sync รายข้อ ก-ง)
   try {
     if (savedPlayerRow) {
       syncItemAnalysisRowFromPlayerRow_(savedPlayerRow);
     }
   } catch (e) {
     console.warn('Item_Analysis real-time sync warning:', e);
+  }
+
+  // 4. ซิงค์ลงแท็บ Item_Score_Binary ทันทีแบบ Real-time (Auto Sync คะแนน 1/0 สำหรับ SPSS)
+  try {
+    if (savedPlayerRow) {
+      syncItemScoreBinaryRowFromPlayerRow_(savedPlayerRow);
+    }
+  } catch (e) {
+    console.warn('Item_Score_Binary real-time sync warning:', e);
   }
 
   logEvent_(p.userIdHash, 'sync', '', p.totalXP || 0);
