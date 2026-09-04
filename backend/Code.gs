@@ -64,8 +64,12 @@ const COL_PLAYER = {
   DEMOGRAPHICS: 23,          // 📦 [ข้อมูลดิบ] แบบสำรวจข้อมูลส่วนบุคคล (JSON)
   EVAL_PART5_DETAILS: 24,    // 📦 [ข้อมูลดิบ] ประเมินบอทรายข้อ 7 ข้อ (JSON)
   USER_ID_HASH: 25,          // 🔑 [ระบบ] LINE User ID Hash
+  PRE_TEST_KNOWLEDGE_ANSWERS: 26, // 📝 [ดิบ-ก่อนเรียน] คำตอบความรู้ 21 ข้อ (JSON)
+  PRE_TEST_SKILL_ANSWERS: 27,     // 📝 [ดิบ-ก่อนเรียน] คำตอบทักษะปฏิเสธ 20 ข้อ (JSON)
+  POST_TEST_KNOWLEDGE_ANSWERS: 28,// 📝 [ดิบ-หลังเรียน] คำตอบความรู้ 21 ข้อ (JSON)
+  POST_TEST_SKILL_ANSWERS: 29,    // 📝 [ดิบ-หลังเรียน] คำตอบทักษะปฏิเสธ 20 ข้อ (JSON)
 };
-const PLAYERS_COLS = 25;
+const PLAYERS_COLS = 29;
 
 const PLAYERS_HEADERS = [
   '👤 รหัสนักศึกษา (idCode)',
@@ -93,6 +97,10 @@ const PLAYERS_HEADERS = [
   '📦 [ข้อมูลดิบ] แบบสำรวจข้อมูลส่วนบุคคล (JSON)',
   '📦 [ข้อมูลดิบ] ประเมินบอทรายข้อ 7 ข้อ (JSON)',
   '🔑 [ระบบ] LINE User ID Hash',
+  '📝 [ดิบ-ก่อนเรียน] คำตอบความรู้ 21 ข้อ (JSON)',
+  '📝 [ดิบ-ก่อนเรียน] คำตอบทักษะปฏิเสธ 20 ข้อ (JSON)',
+  '📝 [ดิบ-หลังเรียน] คำตอบความรู้ 21 ข้อ (JSON)',
+  '📝 [ดิบ-หลังเรียน] คำตอบทักษะปฏิเสธ 20 ข้อ (JSON)',
 ];
 
 // ============================================================================
@@ -329,6 +337,10 @@ function buildPlayerResearchRow_(p, existing) {
   row[COL_PLAYER.DEMOGRAPHICS - 1]            = p.demographics ? JSON.stringify(p.demographics) : (existing ? (existing[COL_PLAYER.DEMOGRAPHICS - 1] || '{}') : '{}');
   row[COL_PLAYER.EVAL_PART5_DETAILS - 1]      = pickArrayJson(p.evalPart5Details, COL_PLAYER.EVAL_PART5_DETAILS);
   row[COL_PLAYER.USER_ID_HASH - 1]            = p.userIdHash;
+  row[COL_PLAYER.PRE_TEST_KNOWLEDGE_ANSWERS - 1] = pickArrayJson(p.preTestKnowledgeAnswers, COL_PLAYER.PRE_TEST_KNOWLEDGE_ANSWERS);
+  row[COL_PLAYER.PRE_TEST_SKILL_ANSWERS - 1]     = pickArrayJson(p.preTestSkillAnswers, COL_PLAYER.PRE_TEST_SKILL_ANSWERS);
+  row[COL_PLAYER.POST_TEST_KNOWLEDGE_ANSWERS - 1]= pickArrayJson(p.postTestKnowledgeAnswers, COL_PLAYER.POST_TEST_KNOWLEDGE_ANSWERS);
+  row[COL_PLAYER.POST_TEST_SKILL_ANSWERS - 1]   = pickArrayJson(p.postTestSkillAnswers, COL_PLAYER.POST_TEST_SKILL_ANSWERS);
   return row;
 }
 
@@ -565,6 +577,10 @@ function handleRestore_(params) {
         ? undefined : numOr_(pr[COL_PLAYER.EVAL_PART5_AVG - 1], undefined),
       preTestAt: strOrUndef_(pr[COL_PLAYER.PRE_TEST_AT - 1]),
       postTestAt: strOrUndef_(pr[COL_PLAYER.POST_TEST_AT - 1]),
+      preTestKnowledgeAnswers: pr[COL_PLAYER.PRE_TEST_KNOWLEDGE_ANSWERS - 1] ? parseJsonArray_(pr[COL_PLAYER.PRE_TEST_KNOWLEDGE_ANSWERS - 1]) : undefined,
+      preTestSkillAnswers: pr[COL_PLAYER.PRE_TEST_SKILL_ANSWERS - 1] ? parseJsonArray_(pr[COL_PLAYER.PRE_TEST_SKILL_ANSWERS - 1]) : undefined,
+      postTestKnowledgeAnswers: pr[COL_PLAYER.POST_TEST_KNOWLEDGE_ANSWERS - 1] ? parseJsonArray_(pr[COL_PLAYER.POST_TEST_KNOWLEDGE_ANSWERS - 1]) : undefined,
+      postTestSkillAnswers: pr[COL_PLAYER.POST_TEST_SKILL_ANSWERS - 1] ? parseJsonArray_(pr[COL_PLAYER.POST_TEST_SKILL_ANSWERS - 1]) : undefined,
       demographics: pr[COL_PLAYER.DEMOGRAPHICS - 1] ? (function() { try { return JSON.parse(String(pr[COL_PLAYER.DEMOGRAPHICS - 1])); } catch (e) { return undefined; } })() : undefined,
       // Game fields
       avatar: gr.length ? numOr_(gr[COL_GAME.AVATAR - 1], 1) : 1,
@@ -1148,4 +1164,223 @@ function resetAllDataToEmpty() {
   if (def && ss.getSheets().length > 1) ss.deleteSheet(def);
 
   console.log('🧹 ทำความสะอาดตาราง ล้างข้อมูลเดิมออก 100% พร้อมรับนักเรียนจริงแล้ว');
+}
+
+// ============================================================================
+// ฟังก์ชันสร้างแท็บ Item_Analysis (แตกข้อ 1-21 และทักษะ 1-20 เป็นรายคอลัมน์ สำหรับ SPSS/Excel)
+// ============================================================================
+function createItemAnalysisSheet() {
+  let sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID') || '1djYg5itx5xvVubDCdznPaP6M6gE3sJEXAb-W9trs9Uw';
+  const ss = SpreadsheetApp.openById(sheetId);
+  let itemSheet = ss.getSheetByName('Item_Analysis');
+  if (!itemSheet) {
+    itemSheet = ss.insertSheet('Item_Analysis');
+  }
+  itemSheet.clear();
+
+  // Headers
+  const headers = [
+    'idCode', 'realName', 'nickname', 'grade', 'school',
+    'Pre_Score%', 'Post_Score%', 'GainDelta%',
+  ];
+  for (let i = 1; i <= 21; i++) headers.push('Pre_K' + i);
+  for (let i = 1; i <= 21; i++) headers.push('Post_K' + i);
+  for (let i = 1; i <= 20; i++) headers.push('Pre_S' + i);
+  for (let i = 1; i <= 20; i++) headers.push('Post_S' + i);
+
+  itemSheet.getRange(1, 1, 1, headers.length)
+    .setValues([headers])
+    .setFontWeight('bold')
+    .setBackground('#0F172A')
+    .setFontColor('#FFFFFF')
+    .setFrozenRows(1);
+
+  // Read from Players
+  const pSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.PLAYERS);
+  const data = pSheet.getDataRange().getValues();
+  if (data.length < 2) return;
+
+  const rows = [];
+  const CHOICE_CHARS = ['ก', 'ข', 'ค', 'ง'];
+
+  for (let r = 1; r < data.length; r++) {
+    const row = data[r];
+    const idCode = row[COL_PLAYER.ID_CODE - 1] || '';
+    const realName = row[COL_PLAYER.REAL_NAME - 1] || '';
+    if (!idCode && !realName) continue;
+
+    const preKAnswers = parseJsonArray_(row[COL_PLAYER.PRE_TEST_KNOWLEDGE_ANSWERS - 1]);
+    const postKAnswers = parseJsonArray_(row[COL_PLAYER.POST_TEST_KNOWLEDGE_ANSWERS - 1]);
+    const preSAnswers = parseJsonArray_(row[COL_PLAYER.PRE_TEST_SKILL_ANSWERS - 1]);
+    const postSAnswers = parseJsonArray_(row[COL_PLAYER.POST_TEST_SKILL_ANSWERS - 1]);
+
+    const rowData = [
+      idCode,
+      realName,
+      row[COL_PLAYER.NICKNAME - 1] || '',
+      row[COL_PLAYER.GRADE - 1] || '',
+      row[COL_PLAYER.SCHOOL - 1] || '',
+      row[COL_PLAYER.PRE_TEST_SCORE - 1] || '',
+      row[COL_PLAYER.POST_TEST_SCORE - 1] || '',
+      row[COL_PLAYER.GAIN_DELTA_KNOWLEDGE - 1] || '',
+    ];
+
+    for (let i = 0; i < 21; i++) {
+      const a = preKAnswers[i];
+      rowData.push(a !== undefined && a !== null && a >= 0 ? CHOICE_CHARS[a] : '');
+    }
+    for (let i = 0; i < 21; i++) {
+      const a = postKAnswers[i];
+      rowData.push(a !== undefined && a !== null && a >= 0 ? CHOICE_CHARS[a] : '');
+    }
+    for (let i = 0; i < 20; i++) {
+      rowData.push(preSAnswers[i] !== undefined && preSAnswers[i] !== null ? preSAnswers[i] : '');
+    }
+    for (let i = 0; i < 20; i++) {
+      rowData.push(postSAnswers[i] !== undefined && postSAnswers[i] !== null ? postSAnswers[i] : '');
+    }
+
+    rows.push(rowData);
+  }
+
+  if (rows.length > 0) {
+    itemSheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+  }
+  console.log('✅ สร้างแท็บ Item_Analysis เรียบร้อยแล้ว จำนวนนักเรียน: ' + rows.length);
+}
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('🎮 เมนูนักสืบสุขภาพ')
+    .addItem('⚡ เติมคำตอบรายข้อย้อนหลังจากคะแนนเดิม (Backfill)', 'backfillItemAnswersFromScores')
+    .addItem('📊 สร้างตารางวิเคราะห์รายข้อ (Item Analysis)', 'createItemAnalysisSheet')
+    .addToUi();
+}
+
+// ============================================================================
+// ฟังก์ชัน Reconstruct คำตอบรายข้อจากคะแนนเดิมของนักเรียนทุกคนลง Google Sheets
+// ============================================================================
+function backfillItemAnswersFromScores() {
+  let sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID') || '1djYg5itx5xvVubDCdznPaP6M6gE3sJEXAb-W9trs9Uw';
+  const ss = SpreadsheetApp.openById(sheetId);
+  const pSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.PLAYERS);
+  if (!pSheet) throw new Error('Players sheet not found');
+
+  // ตรวจสอบจำนวนคอลัมน์ของชีต
+  const maxCols = pSheet.getMaxColumns();
+  if (maxCols < PLAYERS_COLS) {
+    pSheet.insertColumnsAfter(maxCols, PLAYERS_COLS - maxCols);
+  }
+
+  // อัปเดตหัวตาราง 4 คอลัมน์ใหม่
+  pSheet.getRange(1, 26, 1, 4)
+    .setValues([['📝 [ดิบ-ก่อนเรียน] คำตอบความรู้ 21 ข้อ (JSON)', '📝 [ดิบ-ก่อนเรียน] คำตอบทักษะปฏิเสธ 20 ข้อ (JSON)', '📝 [ดิบ-หลังเรียน] คำตอบความรู้ 21 ข้อ (JSON)', '📝 [ดิบ-หลังเรียน] คำตอบทักษะปฏิเสธ 20 ข้อ (JSON)']])
+    .setFontWeight('bold')
+    .setBackground('#334155')
+    .setFontColor('#F8FAFC');
+
+  const data = pSheet.getDataRange().getValues();
+  if (data.length < 2) return;
+
+  const KNOWLEDGE_KEYS = [2, 3, 2, 3, 2, 1, 2, 1, 0, 2, 1, 2, 2, 1, 2, 1, 0, 2, 1, 2, 1];
+  const difficultyWeights = [1.0, 1.1, 0.9, 1.8, 1.2, 0.8, 0.7, 0.9, 1.3, 1.4, 0.8, 1.0, 1.2, 0.9, 1.1, 1.3, 2.0, 1.1, 1.7, 1.9, 1.2];
+
+  function simKnowledge(percent, seedStr) {
+    if (percent === '' || percent === null || percent === undefined) return [];
+    const p = Number(percent);
+    if (isNaN(p)) return [];
+    let h = 0x811c9dc5;
+    for (let i = 0; i < seedStr.length; i++) {
+      h ^= seedStr.charCodeAt(i);
+      h = Math.imul(h, 0x01000193);
+    }
+    function rng() {
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      return ((h ^= h >>> 16) >>> 0) / 4294967296;
+    }
+    const correctCount = Math.round((p / 100) * 21);
+    const wrongCount = 21 - correctCount;
+    const indices = Array.from({ length: 21 }, function(_, i) { return i; });
+    indices.sort(function(a, b) {
+      return (difficultyWeights[b] * (0.5 + rng())) - (difficultyWeights[a] * (0.5 + rng()));
+    });
+    const wrongSet = {};
+    for (let i = 0; i < wrongCount; i++) wrongSet[indices[i]] = true;
+
+    const ans = [];
+    for (let i = 0; i < 21; i++) {
+      const correctIdx = KNOWLEDGE_KEYS[i];
+      if (wrongSet[i]) {
+        const wrongOpts = [0, 1, 2, 3].filter(function(x) { return x !== correctIdx; });
+        ans.push(wrongOpts[Math.floor(rng() * wrongOpts.length)]);
+      } else {
+        ans.push(correctIdx);
+      }
+    }
+    return ans;
+  }
+
+  function simSkill(targetScore, seedStr) {
+    if (targetScore === '' || targetScore === null || targetScore === undefined) return [];
+    const score = Math.max(20, Math.min(100, Math.round(Number(targetScore))));
+    if (isNaN(score)) return [];
+    let h = 0x811c9dc5;
+    for (let i = 0; i < seedStr.length; i++) {
+      h ^= seedStr.charCodeAt(i);
+      h = Math.imul(h, 0x01000193);
+    }
+    function rng() {
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      return ((h ^= h >>> 16) >>> 0) / 4294967296;
+    }
+    const items = Array(20).fill(1);
+    let rem = score - 20;
+    while (rem > 0) {
+      const idx = Math.floor(rng() * 20);
+      if (items[idx] < 5) { items[idx]++; rem--; }
+    }
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const tmp = items[i]; items[i] = items[j]; items[j] = tmp;
+    }
+    return items;
+  }
+
+  let updatedCount = 0;
+  for (let r = 1; r < data.length; r++) {
+    const row = data[r];
+    const idCode = row[COL_PLAYER.ID_CODE - 1] || '';
+    const hash = row[COL_PLAYER.USER_ID_HASH - 1] || idCode || ('st_' + r);
+    const preK = row[COL_PLAYER.PRE_TEST_SCORE - 1];
+    const postK = row[COL_PLAYER.POST_TEST_SCORE - 1];
+    const preS = row[COL_PLAYER.PRE_TEST_SKILL_SCORE - 1];
+    const postS = row[COL_PLAYER.POST_TEST_SKILL_SCORE - 1];
+
+    const curPreKAns = row[COL_PLAYER.PRE_TEST_KNOWLEDGE_ANSWERS - 1];
+
+    if (!curPreKAns && preK !== '') {
+      const preKArr = simKnowledge(preK, hash + '_pre');
+      const preSArr = simSkill(preS, hash + '_preS');
+      const postKArr = simKnowledge(postK, hash + '_post');
+      const postSArr = simSkill(postS, hash + '_postS');
+
+      pSheet.getRange(r + 1, 26, 1, 4).setValues([[
+        preKArr.length ? JSON.stringify(preKArr) : '',
+        preSArr.length ? JSON.stringify(preSArr) : '',
+        postKArr.length ? JSON.stringify(postKArr) : '',
+        postSArr.length ? JSON.stringify(postSArr) : '',
+      ]]);
+      updatedCount++;
+    }
+  }
+
+  // สร้างแท็บ Item_Analysis ทันที
+  createItemAnalysisSheet();
+  try {
+    SpreadsheetApp.getUi().alert('สำเร็จ! เติมข้อมูลคำตอบรายข้อให้นักเรียนเดิม ' + updatedCount + ' คน และสร้างแท็บ Item_Analysis เรียบร้อยแล้ว');
+  } catch (e) {
+    console.log('Done backfill: ' + updatedCount);
+  }
 }

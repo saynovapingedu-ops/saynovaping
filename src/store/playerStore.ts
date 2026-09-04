@@ -43,11 +43,13 @@ interface PlayerState extends PlayerProfile {
   recordExam: (percent: number, passed: boolean, bonusCoins: number) => boolean;
   /** บันทึกผลแบบประเมิน pre/post */
   recordAssessment: (kind: 'pre' | 'post', percent: number) => void;
-  /** บันทึกผลแบบประเมินวิจัยเต็มรูปแบบ (ความรู้ + ทักษะ + ข้อมูลส่วนบุคคล) */
+  /** บันทึกผลแบบประเมินวิจัยเต็มรูปแบบ (ความรู้ + ทักษะ + คำตอบรายข้อ + ข้อมูลส่วนบุคคล) */
   recordAssessmentFull: (data: {
     kind: 'pre' | 'post';
     knowledgePercent: number;
     skillPercent: number;
+    knowledgeAnswers?: number[];
+    skillAnswers?: number[];
     idCode?: string;
     realName?: string;
     lineName?: string;
@@ -328,7 +330,19 @@ export const usePlayerStore = create<PlayerState>()(
         get().syncIfReady();
       },
 
-      recordAssessmentFull: ({ kind, knowledgePercent, skillPercent, idCode, realName, lineName, grade, school, demographics }) => {
+      recordAssessmentFull: ({
+        kind,
+        knowledgePercent,
+        skillPercent,
+        knowledgeAnswers,
+        skillAnswers,
+        idCode,
+        realName,
+        lineName,
+        grade,
+        school,
+        demographics,
+      }) => {
         const now = new Date().toISOString();
         if (realName) {
           try { useCertNameStore.getState().setRealName(realName); } catch { /* ignore */ }
@@ -345,6 +359,8 @@ export const usePlayerStore = create<PlayerState>()(
           set({
             preTestScore: knowledgePercent,
             preTestSkillScore: skillPercent,
+            preTestKnowledgeAnswers: knowledgeAnswers,
+            preTestSkillAnswers: skillAnswers,
             preTestAt: now,
             ...identityPatch,
             lastActiveAt: now,
@@ -353,6 +369,8 @@ export const usePlayerStore = create<PlayerState>()(
           set({
             postTestScore: knowledgePercent,
             postTestSkillScore: skillPercent,
+            postTestKnowledgeAnswers: knowledgeAnswers,
+            postTestSkillAnswers: skillAnswers,
             postTestAt: now,
             ...identityPatch,
             lastActiveAt: now,
@@ -418,6 +436,10 @@ export const usePlayerStore = create<PlayerState>()(
               postTestScore: s.postTestScore,
               preTestSkillScore: s.preTestSkillScore,
               postTestSkillScore: s.postTestSkillScore,
+              preTestKnowledgeAnswers: s.preTestKnowledgeAnswers,
+              postTestKnowledgeAnswers: s.postTestKnowledgeAnswers,
+              preTestSkillAnswers: s.preTestSkillAnswers,
+              postTestSkillAnswers: s.postTestSkillAnswers,
               preTestAt: s.preTestAt,
               postTestAt: s.postTestAt,
               idCode: s.idCode,
@@ -474,6 +496,10 @@ export const usePlayerStore = create<PlayerState>()(
         postTestScore: s.postTestScore,
         preTestSkillScore: s.preTestSkillScore,
         postTestSkillScore: s.postTestSkillScore,
+        preTestKnowledgeAnswers: s.preTestKnowledgeAnswers,
+        postTestKnowledgeAnswers: s.postTestKnowledgeAnswers,
+        preTestSkillAnswers: s.preTestSkillAnswers,
+        postTestSkillAnswers: s.postTestSkillAnswers,
         preTestAt: s.preTestAt,
         postTestAt: s.postTestAt,
         idCode: s.idCode,

@@ -371,6 +371,14 @@ export default function Assessment() {
       recordEvaluationPart5(p5Avg, p5Details);
     }
 
+    // Array คำตอบความรู้รายข้อ (21 ข้อ: 0=ก, 1=ข, 2=ค, 3=ง)
+    const kAnswers = knowledgeQuestions.map((_, idx) => part3Answers[idx] ?? -1);
+
+    // Array คำตอบทักษะปฏิเสธรายข้อ (20 ข้อ: คะแนน 1-5)
+    const sAnswers = admin.part4Enabled
+      ? PART4_REFUSAL_SKILLS.map((_, idx) => part4Answers[idx] || 3)
+      : [];
+
     if (kind === 'pre' || kind === 'post') {
       const cleanId = idCode.trim();
       const demographicsData = {
@@ -397,6 +405,8 @@ export default function Assessment() {
         kind,
         knowledgePercent: kPercent,
         skillPercent: sPercent,
+        knowledgeAnswers: kAnswers,
+        skillAnswers: sAnswers,
         idCode: cleanId,
         realName: realName.trim(),
         lineName: lineName.trim(),

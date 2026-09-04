@@ -224,6 +224,10 @@ export interface PlayerProfile {
   postTestScore?: number;   // % แบบประเมินความรู้หลังเรียน (0-100)
   preTestSkillScore?: number;  // % ทักษะปฏิเสธก่อนเรียน (0-100)
   postTestSkillScore?: number; // % ทักษะปฏิเสธหลังเรียน (0-100)
+  preTestKnowledgeAnswers?: number[]; // ช้อยส์คำตอบความรู้ก่อนเรียนรายข้อ [0, 2, 1, ...] (21 ข้อ)
+  postTestKnowledgeAnswers?: number[]; // ช้อยส์คำตอบความรู้หลังเรียนรายข้อ (21 ข้อ)
+  preTestSkillAnswers?: number[];     // คะแนนประเมินทักษะปฏิเสธก่อนเรียนรายข้อ 1-5 (20 ข้อ)
+  postTestSkillAnswers?: number[];    // คะแนนประเมินทักษะปฏิเสธหลังเรียนรายข้อ 1-5 (20 ข้อ)
   preTestAt?: string;
   postTestAt?: string;
   // รหัสประจำตัววิจัย (ID Code), ชื่อจริง และชื่อ LINE

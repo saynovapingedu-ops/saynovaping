@@ -49,6 +49,10 @@ export interface SyncPayload {
   postTestScore?: number;
   preTestSkillScore?: number;
   postTestSkillScore?: number;
+  preTestKnowledgeAnswers?: number[];
+  postTestKnowledgeAnswers?: number[];
+  preTestSkillAnswers?: number[];
+  postTestSkillAnswers?: number[];
   preTestAt?: string;
   postTestAt?: string;
   idCode?: string;
@@ -124,6 +128,12 @@ export interface RestoreResponse {
     examBonusClaimed?: boolean;
     preTestScore?: number;
     postTestScore?: number;
+    preTestSkillScore?: number;
+    postTestSkillScore?: number;
+    preTestKnowledgeAnswers?: number[];
+    postTestKnowledgeAnswers?: number[];
+    preTestSkillAnswers?: number[];
+    postTestSkillAnswers?: number[];
     preTestAt?: string;
     postTestAt?: string;
     funRating?: number;
