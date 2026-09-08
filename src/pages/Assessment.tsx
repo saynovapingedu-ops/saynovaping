@@ -14,10 +14,10 @@ import {
 } from '../data/questionnaireData';
 import { CERT_STAGE_COUNT } from '../scenarios';
 import {
-  NAKHON_SI_THAMMARAT_SCHOOLS,
   ALL_PRESET_SCHOOLS,
   OTHER_SCHOOL_VALUE,
 } from '../lib/schools';
+import SchoolSelectorModal from '../components/SchoolSelectorModal';
 import PageHeader from '../components/PageHeader';
 import { sfx } from '../lib/sound';
 import ResultHero from '../components/ui/ResultHero';
@@ -84,7 +84,7 @@ export default function Assessment() {
   }, []);
   const [grade, setGrade] = useState(player.grade || 'ม.2');
   const [selectedSchoolChoice, setSelectedSchoolChoice] = useState<string>(() => {
-    if (!player.school) return ALL_PRESET_SCHOOLS[0]; // 'มหาวิทยาลัยวลัยลักษณ์' หรือโรงเรียนเริ่มต้น
+    if (!player.school) return '';
     if (ALL_PRESET_SCHOOLS.includes(player.school)) return player.school;
     return OTHER_SCHOOL_VALUE;
   });
@@ -134,6 +134,117 @@ export default function Assessment() {
   // FORM STATES (ตอนที่ 5: ประเมินแชตบอต 7 ข้อ)
   // =========================================================================
   const [part5Answers, setPart5Answers] = useState<Record<number, number>>({});
+
+  // Unanswered Question Tracking for Part 4 & 5 (for auto-scroll & visual highlight)
+  const [unansweredPart4Indices, setUnansweredPart4Indices] = useState<number[]>([]);
+  const [unansweredPart5Indices, setUnansweredPart5Indices] = useState<number[]>([]);
+
+  // Draft Key for auto-save & recovery
+  const draftKey = kind ? `hd_assessment_draft_${kind}` : null;
+
+  // 1. Restore draft if available
+  useEffect(() => {
+    if (!draftKey) return;
+    try {
+      const savedStr = localStorage.getItem(draftKey);
+      if (savedStr) {
+        const d = JSON.parse(savedStr);
+        if (d && typeof d === 'object') {
+          if (d.realName) setRealName(d.realName);
+          if (d.idCode) setIdCode(d.idCode);
+          if (d.nickname) setNickname(d.nickname);
+          if (d.lineName) setLineName(d.lineName);
+          if (d.grade) setGrade(d.grade);
+          if (d.selectedSchoolChoice !== undefined) setSelectedSchoolChoice(d.selectedSchoolChoice);
+          if (d.customSchoolText !== undefined) setCustomSchoolText(d.customSchoolText);
+          if (d.sex) setSex(d.sex);
+          if (d.ageRange) setAgeRange(d.ageRange);
+          if (d.allowance) setAllowance(d.allowance);
+          if (d.livingWith) setLivingWith(d.livingWith);
+          if (d.familySmoking) setFamilySmoking(d.familySmoking);
+          if (d.friendsSmoking) setFriendsSmoking(d.friendsSmoking);
+          if (d.part2EverTried) setPart2EverTried(d.part2EverTried);
+          if (d.part2FirstAge) setPart2FirstAge(d.part2FirstAge);
+          if (d.part2LastMonth) setPart2LastMonth(d.part2LastMonth);
+          if (d.part3Answers) setPart3Answers(d.part3Answers);
+          if (d.part4Answers) setPart4Answers(d.part4Answers);
+          if (d.part5Answers) setPart5Answers(d.part5Answers);
+          if (d.currentStep && d.currentStep !== 'finished' && d.currentStep !== 'intro') {
+            setCurrentStep(d.currentStep);
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [draftKey]);
+
+  // 2. Auto-save draft on answers/demographics update
+  useEffect(() => {
+    if (!draftKey || currentStep === 'finished' || currentStep === 'intro') return;
+    try {
+      const draft = {
+        realName,
+        idCode,
+        nickname,
+        lineName,
+        grade,
+        selectedSchoolChoice,
+        customSchoolText,
+        sex,
+        ageRange,
+        allowance,
+        livingWith,
+        familySmoking,
+        friendsSmoking,
+        part2EverTried,
+        part2FirstAge,
+        part2LastMonth,
+        part3Answers,
+        part4Answers,
+        part5Answers,
+        currentStep,
+        updatedAt: Date.now(),
+      };
+      localStorage.setItem(draftKey, JSON.stringify(draft));
+    } catch {
+      // ignore
+    }
+  }, [
+    draftKey,
+    currentStep,
+    realName,
+    idCode,
+    nickname,
+    lineName,
+    grade,
+    selectedSchoolChoice,
+    customSchoolText,
+    sex,
+    ageRange,
+    allowance,
+    livingWith,
+    familySmoking,
+    friendsSmoking,
+    part2EverTried,
+    part2FirstAge,
+    part2LastMonth,
+    part3Answers,
+    part4Answers,
+    part5Answers,
+  ]);
+
+  // 3. Prevent accidental tab close during active assessment
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (currentStep !== 'intro' && currentStep !== 'finished') {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [currentStep]);
 
   // Calculation Results
   const [results, setResults] = useState<{
@@ -199,11 +310,9 @@ export default function Assessment() {
   const totalActiveParts = activeSections.length;
   const currentPartNumber = activeSections.find((s) => s.id === currentStep)?.partNumber || 1;
 
-  // Post-test eligibility: Finished stages OR Admin bypass
-  const postUnlocked =
-    player.stagesCompleted.length >= CERT_STAGE_COUNT ||
-    !!player.certificateNo ||
-    admin.allowBypassStages;
+  // Post-test eligibility: Must complete all 8 Hero Arc stages (stages 1-8) OR Admin bypass
+  const heroStagesCompleted = [1, 2, 3, 4, 5, 6, 7, 8].every((id) => player.stagesCompleted.includes(id));
+  const postUnlocked = heroStagesCompleted || admin.allowBypassStages;
 
   // Handler when starting a test kind from menu
   const startMode = (selectedKind: AssessKind) => {
@@ -246,8 +355,8 @@ export default function Assessment() {
       alert('กรุณากรอก "รหัสนักศึกษา / รหัสประจำตัวนักเรียน" เพื่อให้อาจารย์สามารถบันทึกคะแนนได้อย่างถูกต้อง');
       return;
     }
-    if (selectedSchoolChoice === OTHER_SCHOOL_VALUE && !customSchoolText.trim()) {
-      alert('กรุณากรอกระบุชื่อ "โรงเรียน / สถาบันการศึกษา" ของคุณ');
+    if (!selectedSchoolChoice || (selectedSchoolChoice === OTHER_SCHOOL_VALUE && !customSchoolText.trim())) {
+      alert('กรุณาเลือกหรือระบุชื่อ "โรงเรียน / สถาบันการศึกษา" ของคุณ');
       return;
     }
     sfx.click();
@@ -308,13 +417,25 @@ export default function Assessment() {
     }
   };
 
-  // Submit Part 4
+  // Submit Part 4 (Validate all 20 questions, scroll & highlight if missing)
   const handleFinishPart4 = () => {
-    const answeredCount = Object.keys(part4Answers).length;
-    if (answeredCount < PART4_REFUSAL_SKILLS.length) {
-      alert(`กรุณาประเมินระดับความมั่นใจให้ครบทั้ง ${PART4_REFUSAL_SKILLS.length} ข้อ (ตอบแล้ว ${answeredCount} ข้อ)`);
+    const missing: number[] = [];
+    PART4_REFUSAL_SKILLS.forEach((_, idx) => {
+      if (part4Answers[idx] === undefined) {
+        missing.push(idx);
+      }
+    });
+
+    if (missing.length > 0) {
+      setUnansweredPart4Indices(missing);
+      const firstMissing = missing[0];
+      const el = document.getElementById(`part4-q-${firstMissing}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
+    setUnansweredPart4Indices([]);
     sfx.click();
 
     if (kind === 'post' && admin.part5Enabled) {
@@ -324,13 +445,25 @@ export default function Assessment() {
     }
   };
 
-  // Submit Part 5
+  // Submit Part 5 (Validate all 7 questions, scroll & highlight if missing)
   const handleFinishPart5 = () => {
-    const answeredCount = Object.keys(part5Answers).length;
-    if (answeredCount < PART5_CHATBOT_EVALUATION.length) {
-      alert(`กรุณาประเมินความคิดเห็นให้ครบทั้ง ${PART5_CHATBOT_EVALUATION.length} ข้อ (ตอบแล้ว ${answeredCount} ข้อ)`);
+    const missing: number[] = [];
+    PART5_CHATBOT_EVALUATION.forEach((_, idx) => {
+      if (part5Answers[idx] === undefined) {
+        missing.push(idx);
+      }
+    });
+
+    if (missing.length > 0) {
+      setUnansweredPart5Indices(missing);
+      const firstMissing = missing[0];
+      const el = document.getElementById(`part5-q-${firstMissing}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
+    setUnansweredPart5Indices([]);
     sfx.click();
     finalizeAssessment();
   };
@@ -424,6 +557,15 @@ export default function Assessment() {
       skillPercent: sPercent,
       part5Avg: p5Avg,
     });
+
+    if (draftKey) {
+      try {
+        localStorage.removeItem(draftKey);
+      } catch {
+        // ignore
+      }
+    }
+
     setCurrentStep('finished');
     sfx.victory();
   };
@@ -637,63 +779,43 @@ export default function Assessment() {
                 <select
                   value={grade}
                   onChange={(e) => setGrade(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm font-medium"
                 >
-                  <option value="ม.1">มัธยมศึกษาปีที่ 1 (ม.1)</option>
-                  <option value="ม.2">มัธยมศึกษาปีที่ 2 (ม.2)</option>
-                  <option value="ม.3">มัธยมศึกษาปีที่ 3 (ม.3)</option>
+                  <optgroup label="🌱 ระดับประถมศึกษา (ประถม)">
+                    <option value="ป.4">ประถมศึกษาปีที่ 4 (ป.4)</option>
+                    <option value="ป.5">ประถมศึกษาปีที่ 5 (ป.5)</option>
+                    <option value="ป.6">ประถมศึกษาปีที่ 6 (ป.6)</option>
+                    <option value="ประถมศึกษาอื่นๆ">ประถมศึกษาอื่นๆ (ป.1 - ป.3)</option>
+                  </optgroup>
+                  <optgroup label="🌿 ระดับมัธยมศึกษาตอนต้น">
+                    <option value="ม.1">มัธยมศึกษาปีที่ 1 (ม.1)</option>
+                    <option value="ม.2">มัธยมศึกษาปีที่ 2 (ม.2)</option>
+                    <option value="ม.3">มัธยมศึกษาปีที่ 3 (ม.3)</option>
+                  </optgroup>
+                  <optgroup label="🌳 ระดับมัธยมศึกษาตอนปลาย & อาชีวะ">
+                    <option value="ม.4">มัธยมศึกษาปีที่ 4 (ม.4)</option>
+                    <option value="ม.5">มัธยมศึกษาปีที่ 5 (ม.5)</option>
+                    <option value="ม.6">มัธยมศึกษาปีที่ 6 (ม.6)</option>
+                    <option value="ปวช.">ประกาศนียบัตรวิชาชีพ (ปวช. / อาชีวะ)</option>
+                    <option value="อื่นๆ">อื่นๆ</option>
+                  </optgroup>
                 </select>
               </div>
 
-              {/* Field 6: School */}
+              {/* Field 6: School (Mobile-friendly Searchable Selector) */}
               <div className="space-y-1.5">
                 <label className="block font-bold text-slate-800 flex items-center justify-between">
                   <span>🏫 โรงเรียน / สถาบันการศึกษา <span className="text-rose-500">*</span></span>
                   <span className="text-[10px] text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md font-semibold border border-sky-100">
-                    จ.นครศรีธรรมราช & อื่นๆ
+                    ค้นหาได้ & แตะเลือกด่วน
                   </span>
                 </label>
-                <select
-                  value={selectedSchoolChoice}
-                  onChange={(e) => setSelectedSchoolChoice(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm font-medium"
-                >
-                  {NAKHON_SI_THAMMARAT_SCHOOLS.map((cat) => (
-                    <optgroup key={cat.category} label={cat.category}>
-                      {cat.schools.map((sch) => (
-                        <option key={sch} value={sch}>
-                          {sch}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                  <optgroup label="✏️ สถาบันการศึกษาอื่นๆ">
-                    <option value={OTHER_SCHOOL_VALUE}>
-                      ➕ อื่นๆ (พิมพ์ระบุชื่อโรงเรียน / สถาบันเอง)
-                    </option>
-                  </optgroup>
-                </select>
-
-                {/* กล่องข้อความกรอกชื่อโรงเรียนเองเมื่อเลือก "อื่นๆ" */}
-                {selectedSchoolChoice === OTHER_SCHOOL_VALUE && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="pt-1 space-y-1"
-                  >
-                    <input
-                      type="text"
-                      value={customSchoolText}
-                      onChange={(e) => setCustomSchoolText(e.target.value)}
-                      placeholder="พิมพ์ชื่อโรงเรียน หรือสถาบันการศึกษาของคุณที่นี่..."
-                      className="w-full px-3.5 py-2.5 rounded-xl border-2 border-sky-400 text-slate-800 bg-sky-50/40 focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm font-medium"
-                      autoFocus
-                    />
-                    <p className="text-[11px] text-sky-700">
-                      💡 ระบุชื่อโรงเรียน สถาบัน หรือสังกัดของคุณให้ชัดเจน
-                    </p>
-                  </motion.div>
-                )}
+                <SchoolSelectorModal
+                  selectedSchool={selectedSchoolChoice}
+                  customSchoolText={customSchoolText}
+                  onSelectSchool={(sch) => setSelectedSchoolChoice(sch)}
+                  onChangeCustomText={(txt) => setCustomSchoolText(txt)}
+                />
               </div>
 
               {/* Field 7: Sex */}
@@ -1092,15 +1214,30 @@ export default function Assessment() {
             <div className="space-y-3">
               {PART4_REFUSAL_SKILLS.map((item, idx) => {
                 const currentScore = part4Answers[idx];
+                const isMissing = unansweredPart4Indices.includes(idx);
                 return (
                   <div
                     key={item.id}
-                    className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/60 space-y-2.5"
+                    id={`part4-q-${idx}`}
+                    className={`p-3.5 rounded-2xl border transition-all space-y-2.5 ${
+                      isMissing
+                        ? 'border-rose-400 bg-rose-50/80 ring-2 ring-rose-300 shadow-md'
+                        : currentScore !== undefined
+                        ? 'border-emerald-200 bg-emerald-50/20'
+                        : 'border-slate-100 bg-slate-50/60'
+                    }`}
                   >
-                    <p className="text-xs sm:text-sm font-semibold text-slate-800 leading-snug">
-                      <span className="font-bold text-emerald-600 mr-1.5">{item.no}.</span>
-                      {item.text}
-                    </p>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs sm:text-sm font-semibold text-slate-800 leading-snug">
+                        <span className="font-bold text-emerald-600 mr-1.5">{item.no}.</span>
+                        {item.text}
+                      </p>
+                      {isMissing && (
+                        <span className="flex-shrink-0 text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-md border border-rose-200 animate-pulse">
+                          ⚠️ กรุณาตอบข้อนี้
+                        </span>
+                      )}
+                    </div>
                     <div className="grid grid-cols-5 gap-1.5">
                       {[1, 2, 3, 4, 5].map((level) => {
                         const isSelected = currentScore === level;
@@ -1111,6 +1248,7 @@ export default function Assessment() {
                             onClick={() => {
                               sfx.click();
                               setPart4Answers((prev) => ({ ...prev, [idx]: level }));
+                              setUnansweredPart4Indices((prev) => prev.filter((i) => i !== idx));
                             }}
                             className={`py-2 rounded-xl text-xs font-bold border transition-all ${
                               isSelected
@@ -1128,7 +1266,7 @@ export default function Assessment() {
               })}
             </div>
 
-            <div className="pt-3 border-t border-slate-100">
+            <div className="pt-3 border-t border-slate-100 pb-16">
               <button
                 onClick={handleFinishPart4}
                 className="btn-primary w-full py-3.5 text-sm font-bold shadow-clay"
@@ -1140,6 +1278,43 @@ export default function Assessment() {
             </div>
           </div>
         </main>
+
+        {/* Sticky bottom progress & jump bar for Part 4 */}
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2.5 px-4 shadow-lg">
+          <div className="max-w-md md:max-w-xl mx-auto flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold text-slate-800">
+                ความคืบหน้า: {answeredCount}/{totalSkills} ข้อ
+              </p>
+              <p className="text-[10px] text-slate-500 font-medium">
+                {answeredCount === totalSkills ? '✓ ตอบครบถ้วนทุกข้อแล้ว' : `เหลืออีก ${totalSkills - answeredCount} ข้อ`}
+              </p>
+            </div>
+            {answeredCount < totalSkills ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const firstUnanswered = PART4_REFUSAL_SKILLS.findIndex((_, i) => part4Answers[i] === undefined);
+                  if (firstUnanswered !== -1) {
+                    setUnansweredPart4Indices([firstUnanswered]);
+                    document.getElementById(`part4-q-${firstUnanswered}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }}
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 active:scale-95 transition-all"
+              >
+                <span>⏩ ไปข้อที่ยังไม่ตอบ</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleFinishPart4}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 active:scale-95 transition-all"
+              >
+                <span>{kind === 'post' && admin.part5Enabled ? 'ไปตอนที่ 5 →' : 'ส่งคำตอบ ✓'}</span>
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -1181,15 +1356,30 @@ export default function Assessment() {
             <div className="space-y-3">
               {PART5_CHATBOT_EVALUATION.map((item, idx) => {
                 const currentScore = part5Answers[idx];
+                const isMissing = unansweredPart5Indices.includes(idx);
                 return (
                   <div
                     key={item.id}
-                    className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/60 space-y-2.5"
+                    id={`part5-q-${idx}`}
+                    className={`p-3.5 rounded-2xl border transition-all space-y-2.5 ${
+                      isMissing
+                        ? 'border-rose-400 bg-rose-50/80 ring-2 ring-rose-300 shadow-md'
+                        : currentScore !== undefined
+                        ? 'border-amber-200 bg-amber-50/20'
+                        : 'border-slate-100 bg-slate-50/60'
+                    }`}
                   >
-                    <p className="text-xs sm:text-sm font-semibold text-slate-800 leading-snug">
-                      <span className="font-bold text-amber-600 mr-1.5">{item.no}.</span>
-                      {item.text}
-                    </p>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs sm:text-sm font-semibold text-slate-800 leading-snug">
+                        <span className="font-bold text-amber-600 mr-1.5">{item.no}.</span>
+                        {item.text}
+                      </p>
+                      {isMissing && (
+                        <span className="flex-shrink-0 text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-md border border-rose-200 animate-pulse">
+                          ⚠️ กรุณาตอบข้อนี้
+                        </span>
+                      )}
+                    </div>
                     <div className="grid grid-cols-5 gap-1.5">
                       {[1, 2, 3, 4, 5].map((level) => {
                         const isSelected = currentScore === level;
@@ -1200,6 +1390,7 @@ export default function Assessment() {
                             onClick={() => {
                               sfx.click();
                               setPart5Answers((prev) => ({ ...prev, [idx]: level }));
+                              setUnansweredPart5Indices((prev) => prev.filter((i) => i !== idx));
                             }}
                             className={`py-2 rounded-xl text-xs font-bold border transition-all ${
                               isSelected
@@ -1217,7 +1408,7 @@ export default function Assessment() {
               })}
             </div>
 
-            <div className="pt-3 border-t border-slate-100">
+            <div className="pt-3 border-t border-slate-100 pb-16">
               <button
                 onClick={handleFinishPart5}
                 className="btn-primary w-full py-3.5 text-sm font-bold shadow-clay"
@@ -1227,6 +1418,43 @@ export default function Assessment() {
             </div>
           </div>
         </main>
+
+        {/* Sticky bottom progress & jump bar for Part 5 */}
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2.5 px-4 shadow-lg">
+          <div className="max-w-md md:max-w-xl mx-auto flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold text-slate-800">
+                ความคืบหน้า: {answeredCount}/{totalPart5} ข้อ
+              </p>
+              <p className="text-[10px] text-slate-500 font-medium">
+                {answeredCount === totalPart5 ? '✓ ประเมินครบถ้วนทุกข้อแล้ว' : `เหลืออีก ${totalPart5 - answeredCount} ข้อ`}
+              </p>
+            </div>
+            {answeredCount < totalPart5 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const firstUnanswered = PART5_CHATBOT_EVALUATION.findIndex((_, i) => part5Answers[i] === undefined);
+                  if (firstUnanswered !== -1) {
+                    setUnansweredPart5Indices([firstUnanswered]);
+                    document.getElementById(`part5-q-${firstUnanswered}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }}
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 active:scale-95 transition-all"
+              >
+                <span>⏩ ไปข้อที่ยังไม่ตอบ</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleFinishPart5}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 active:scale-95 transition-all"
+              >
+                <span>บันทึกผลประเมิน ✓</span>
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     );
   }

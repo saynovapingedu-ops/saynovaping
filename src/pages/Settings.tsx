@@ -94,13 +94,6 @@ export default function Settings() {
           value={s.vibrationEnabled}
           onToggle={s.toggleVibration}
         />
-        <Toggle
-          emoji="🔊"
-          label="อ่านบทสนทนาออกเสียง"
-          description="โชว์ปุ่ม 'ฟังเสียง' ใต้บทสนทนา (ต้องมีเสียงไทยในเครื่อง)"
-          value={s.ttsEnabled}
-          onToggle={s.toggleTts}
-        />
 
         <p className="text-xs text-gray-500 px-1 pt-3">การแสดงผล</p>
         <div className="card">

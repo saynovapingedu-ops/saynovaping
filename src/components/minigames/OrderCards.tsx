@@ -126,8 +126,8 @@ export default function OrderCards({ title, cards, correctOrder, onComplete, sou
               📚 อ้างอิง: {source}
             </p>
           )}
-          <button onClick={() => onComplete(allCorrect)} className="btn-primary w-full">
-            ไปต่อ →
+          <button onClick={() => onComplete(allCorrect)} className="btn-primary w-full font-bold">
+            ✨ เรียงลำดับสำเร็จ! ลุยต่อเลย →
           </button>
         </div>
       )}

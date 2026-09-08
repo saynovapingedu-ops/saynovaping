@@ -63,8 +63,8 @@ export default function Home() {
   const equippedFrameClass = player.equippedFrame
     ? SHOP_ITEMS.find(i => i.id === player.equippedFrame)?.frameClass
     : undefined;
-  const heroDone = player.stagesCompleted.filter(id => id <= CERT_STAGE_COUNT).length;
-  const certEligible = heroDone >= CERT_STAGE_COUNT || player.totalXP >= 1500;
+  const heroDone = [1, 2, 3, 4, 5, 6, 7, 8].filter(id => player.stagesCompleted.includes(id)).length;
+  const certEligible = heroDone >= CERT_STAGE_COUNT;
 
   // === Admin Exam Controls Flags ===
   const admin = useAdminStore();

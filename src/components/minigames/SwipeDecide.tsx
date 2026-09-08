@@ -175,8 +175,8 @@ export default function SwipeDecide({ title, cards, onComplete }: Props) {
               ? 'ปัดเก่งทุกใบ — เป็นนักสืบจับโกหกใน TikTok ตัวจริงแล้ว'
               : 'ลองทบทวนใบที่ปัดผิดในใจ ก่อนไปต่อ'}
           </p>
-          <button onClick={() => onComplete(correctCount === cards.length)} className="btn-primary w-full">
-            ไปต่อ →
+          <button onClick={() => onComplete(correctCount === cards.length)} className="btn-primary w-full font-bold">
+            ✨ แยกแยะสำเร็จ! ลุยต่อเลย →
           </button>
         </motion.div>
       )}

@@ -239,8 +239,8 @@ export default function WordMatch({ title, pairs, onComplete, source }: Props) {
               </ul>
             </details>
           )}
-          <button onClick={() => onComplete(correctCount === pairs.length)} className="btn-primary w-full">
-            ไปต่อ →
+          <button onClick={() => onComplete(correctCount === pairs.length)} className="btn-primary w-full font-bold">
+            ✨ จับคู่คำสำเร็จ! ลุยต่อเลย →
           </button>
         </motion.div>
       )}

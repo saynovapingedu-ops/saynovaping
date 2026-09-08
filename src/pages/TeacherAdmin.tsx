@@ -775,21 +775,33 @@ export default function TeacherAdmin() {
 
               {/* Grade & Period & Actions */}
               <div className="flex flex-wrap items-center gap-2 justify-between lg:justify-end">
-                {/* Grade buttons */}
-                <div className="flex gap-1">
-                  {['all', 'ม.1', 'ม.2', 'ม.3'].map((g) => (
-                    <button
-                      key={g}
-                      onClick={() => setSelectedGrade(g)}
-                      className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                        selectedGrade === g
-                          ? 'bg-detective-600 text-white border-detective-600'
-                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {g === 'all' ? 'ทุกชั้น' : g}
-                    </button>
-                  ))}
+                {/* Grade Dropdown */}
+                <div className="w-32 sm:w-36">
+                  <select
+                    value={selectedGrade}
+                    onChange={(e) => setSelectedGrade(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-detective-400 cursor-pointer"
+                  >
+                    <option value="all">🎓 ทุกระดับชั้น</option>
+                    <optgroup label="🌱 ประถมศึกษา">
+                      <option value="ป.4">ป.4</option>
+                      <option value="ป.5">ป.5</option>
+                      <option value="ป.6">ป.6</option>
+                      <option value="ประถมศึกษาอื่นๆ">ประถมอื่นๆ</option>
+                    </optgroup>
+                    <optgroup label="🌿 มัธยมศึกษาตอนต้น">
+                      <option value="ม.1">ม.1</option>
+                      <option value="ม.2">ม.2</option>
+                      <option value="ม.3">ม.3</option>
+                    </optgroup>
+                    <optgroup label="🌳 มัธยมศึกษาตอนปลาย & อาชีวะ">
+                      <option value="ม.4">ม.4</option>
+                      <option value="ม.5">ม.5</option>
+                      <option value="ม.6">ม.6</option>
+                      <option value="ปวช.">ปวช.</option>
+                      <option value="อื่นๆ">อื่นๆ</option>
+                    </optgroup>
+                  </select>
                 </div>
 
                 {/* Period Dropdown */}

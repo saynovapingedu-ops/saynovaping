@@ -29,7 +29,7 @@ export const useSettingsStore = create<SettingsState>()(
       soundEnabled: true,
       musicEnabled: false,         // ปิดเริ่มต้น (ไม่ทุกคนชอบ BGM)
       vibrationEnabled: true,
-      ttsEnabled: true,            // เปิดเริ่มต้น (ถ้าเครื่องมีเสียงไทย ปุ่มจะโผล่)
+      ttsEnabled: false,           // ปิดการอ่านออกเสียง (ไม่ใช้งาน)
       fontSize: 'md',
       reducedMotion: false,
 

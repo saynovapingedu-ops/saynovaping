@@ -59,7 +59,8 @@ export default function Certificate() {
   }, [certNo, loading, error]);
 
   useEffect(() => {
-    const eligible = player.stagesCompleted.length >= 8 || player.totalXP >= 1500;
+    const heroCompletedCount = [1, 2, 3, 4, 5, 6, 7, 8].filter((id) => player.stagesCompleted.includes(id)).length;
+    const eligible = heroCompletedCount >= 8;
     if (!eligible) return;
 
     // 1. ถ้ามีข้อมูลครบในเครื่องแล้ว โหลดขึ้นมาแสดงทันที ไม่ต้องรอเน็ต
@@ -121,7 +122,8 @@ export default function Certificate() {
       .catch(() => { /* ignore */ });
   }, [verifyCode]);
 
-  const eligible = player.stagesCompleted.length >= 8 || player.totalXP >= 1500;
+  const heroCompletedCount = [1, 2, 3, 4, 5, 6, 7, 8].filter((id) => player.stagesCompleted.includes(id)).length;
+  const eligible = heroCompletedCount >= 8;
   const verifyUrl = verifyCode ? `${location.origin}/saynovaping/verify?code=${verifyCode}` : '';
 
   const [saving, setSaving] = useState(false);
@@ -257,9 +259,9 @@ export default function Certificate() {
             title="ยังไม่ถึงเกณฑ์"
             description={
               <>
-                ต้องจบครบ 8 ด่าน หรือเก็บแต้มครบ 1,500
+                ต้องพิชิตภารกิจหลักครบทั้ง 8 ด่าน (Hero Arc: ด่าน 1-8)
                 <br />
-                (ตอนนี้ {player.stagesCompleted.length}/8 ด่าน, {player.totalXP.toLocaleString()} แต้ม)
+                (ตอนนี้ผ่านแล้ว {heroCompletedCount}/8 ด่าน)
               </>
             }
             action={

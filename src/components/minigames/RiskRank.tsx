@@ -282,9 +282,9 @@ export default function RiskRank({ title, buckets, items, onComplete, source }: 
             <button
               type="button"
               onClick={() => onComplete(correctCount === items.length)}
-              className="btn-primary flex-1"
+              className="btn-primary flex-1 font-bold"
             >
-              {correctCount === items.length ? 'ไปต่อ →' : 'ไปต่อ (บันทึกผล) →'}
+              {correctCount === items.length ? '🎯 วิเคราะห์ยอดเยี่ยม! ลุยต่อเลย →' : '🎯 บันทึกผล & ไปต่อ →'}
             </button>
           </div>
         </motion.div>

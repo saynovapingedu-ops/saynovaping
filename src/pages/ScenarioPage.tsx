@@ -133,6 +133,32 @@ function buildMinigameRows(node: Extract<ScenarioNode, { type: 'minigame' }>): R
   }
 }
 
+function getStartMissionLabel(stageId: number): string {
+  switch (stageId) {
+    case 1: return '🔍 ออกสืบหาความจริง →';
+    case 2: return '🚪 เข้าห้องน้ำไปคุยกับเพื่อน →';
+    case 3: return '🎉 เข้าสู่งานปาร์ตี้ →';
+    case 4: return '🏬 ไปตามนัดที่ห้างสรรพสินค้า →';
+    case 5: return '🎮 เปิดห้องแชตในเกมออนไลน์ →';
+    case 6: return '🏃 รีบไปเตือนน้องใบเตย →';
+    case 7: return '🏪 เข้าไปช่วยคุณลุงที่ร้านค้า →';
+    case 8: return '🚨 ลุย! บุกรังใหญ่ Vapor Corp →';
+    case 9: return '🤝 เข้าไปช่วยเหลือเพื่อน →';
+    case 10: return '📱 เปิดดูคลิปรหัสลับใน TikTok →';
+    case 11: return '🏡 เข้าไปคุยกับคนในครอบครัว →';
+    case 12: return '🎓 ถ่ายทอดวิชาให้นักสืบรุ่นน้อง →';
+    case 13: return '⚖️ เริ่มจัดอันดับความเสี่ยง →';
+    case 14: return '🕵️‍♂️ เปิดฟีดขุดความจริง →';
+    case 15: return '📖 เปิดอ่านสมุดบันทึกลับ →';
+    case 16: return '🧠 ส่องกลไกสมองวัยรุ่น →';
+    case 17: return '💬 เข้าตรวจสอบแชตปริศนา →';
+    case 18: return '👨‍👩‍👦 เริ่มต้นเปิดใจคุยกับพ่อแม่ →';
+    case 19: return '🚑 เข้าช่วยเหลือวิกฤตปอดอักเสบ →';
+    case 20: return '🛡️ รวมพลังเครือข่ายนักสืบ →';
+    default: return '🔍 เปิดแฟ้มคดี & เริ่มสืบสวน →';
+  }
+}
+
 export default function ScenarioPage() {
   const { id } = useParams();
   const nav = useNavigate();
@@ -278,7 +304,7 @@ export default function ScenarioPage() {
       const completedAfter = p.stagesCompleted.includes(stageId)
         ? p.stagesCompleted
         : [...p.stagesCompleted, stageId];
-      const eligible = completedAfter.length >= CERT_STAGE_COUNT || p.totalXP >= 1500;
+      const eligible = [1, 2, 3, 4, 5, 6, 7, 8].every(id => completedAfter.includes(id));
       const hasRealName = useCertNameStore.getState().realName.trim().length > 0;
       let t2: ReturnType<typeof setTimeout> | undefined;
       if (eligible && !p.certNamePrompted && !hasRealName) {
@@ -735,7 +761,7 @@ export default function ScenarioPage() {
               onClick={() => { sfx.click(); setShowIntro(false); }}
               className="btn-primary w-full text-base"
             >
-              เริ่มภารกิจ →
+              {getStartMissionLabel(scenario?.id || stageId)}
             </button>
           )}
         </div>
@@ -829,7 +855,9 @@ export default function ScenarioPage() {
                 <>
                   <DialogueBubble speaker={currentNode.speaker} speakerName={currentNode.speakerName} speakerAvatar={currentNode.speakerAvatar} text={currentNode.text} />
                   <button onClick={() => goToNext(currentNode.next)}
-                    className="btn-primary w-full mt-2">ต่อไป →</button>
+                    className="btn-primary w-full mt-2 font-bold">
+                    🔎 สืบเบาะแสต่อ →
+                  </button>
                 </>
               )}
 
@@ -842,7 +870,9 @@ export default function ScenarioPage() {
                     <div className="surface-soft border-l-4 border-l-detective-400
                                     px-3 py-2.5 mb-3 flex items-start gap-2">
                       <div className="flex-1 min-w-0">
-                        <p className="text-[11px] text-detective-500 font-semibold mb-0.5">เลือกคำตอบ</p>
+                        <p className="text-[11px] text-detective-600 font-bold mb-0.5 flex items-center gap-1">
+                          <span>🕵️ การตัดสินใจของนักสืบสุขภาพ</span>
+                        </p>
                         <p className="text-sm text-detective-700 font-semibold leading-snug">
                           {currentNode.prompt}
                         </p>
@@ -949,8 +979,8 @@ export default function ScenarioPage() {
                       </p>
                     )}
                   </div>
-                  <button onClick={() => goToNext(currentNode.next)} className="btn-primary w-full">
-                    ต่อไป →
+                  <button onClick={() => goToNext(currentNode.next)} className="btn-primary w-full font-bold">
+                    💡 เข้าใจแล้ว! สืบต่อเลย →
                   </button>
                 </>
               )}
@@ -964,8 +994,8 @@ export default function ScenarioPage() {
                       📚 อ้างอิง: {currentNode.source}
                     </p>
                   </div>
-                  <button onClick={() => goToNext(currentNode.next)} className="btn-primary w-full">
-                    ต่อไป →
+                  <button onClick={() => goToNext(currentNode.next)} className="btn-primary w-full font-bold">
+                    💡 รู้ทันความจริงแล้ว! ลุยต่อ →
                   </button>
                 </>
               )}
@@ -1192,7 +1222,7 @@ export default function ScenarioPage() {
                         onClick={() => goNextStage(nextMeta.id)}
                         className={stageId === 8 && admin.postTestEnabled && postTestScore === undefined ? 'btn-secondary w-full' : 'btn-primary w-full'}
                       >
-                        ▶ {stageId === 8 ? `🕹️ เล่นต่อ บทที่ 2 (ด่าน ${nextMeta.id}: ${nextMeta.title})` : `ไปด่าน ${nextMeta.id}: ${nextMeta.title}`}
+                        ▶ {stageId === 8 ? `🕹️ เข้าสู่บทที่ 2: [ด่าน ${nextMeta.id}] ${nextMeta.title} →` : `🔍 เปิดแฟ้มคดีถัดไป: [ด่าน ${nextMeta.id}] ${nextMeta.title} →`}
                       </button>
                     )}
                     <button

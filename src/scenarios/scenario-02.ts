@@ -23,7 +23,7 @@ export const scenario02: Scenario = {
     },
     {
       type: 'choice', id: 'choice1', speaker: 'player',
-      prompt: 'คุณจะตอบว่า...',
+      prompt: '🗣️ เมื่อเพื่อนยื่นบุหรี่ไฟฟ้าให้ตรงหน้า คุณจะใช้ทักษะปฏิเสธอย่างไร?',
       choices: [
         {
           label: 'ลองสักคำก่อนแล้วค่อยว่ากัน',

@@ -184,8 +184,8 @@ export default function MemoryMatch({ title, pairs, onComplete }: Props) {
           <p className="text-xs text-gray-600 mb-3 leading-relaxed">
             ทุกพฤติกรรมมีผลตามมา — นักสืบที่ดีเห็นทั้งสิ่งที่ทำและสิ่งที่ตามมา
           </p>
-          <button onClick={() => onComplete(true)} className="btn-primary w-full">
-            ไปต่อ →
+          <button onClick={() => onComplete(true)} className="btn-primary w-full font-bold">
+            ✨ จับคู่สำเร็จ! ลุยต่อเลย →
           </button>
         </motion.div>
       )}
