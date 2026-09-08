@@ -3,7 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdminStore, type StudentRecord } from '../store/adminStore';
 import { usePlayerStore } from '../store/playerStore';
-import { fetchAdminStudents, fetchAppSettings, saveAppSettingsToCloud } from '../lib/cloudSync';
+import {
+  fetchAdminStudents,
+  fetchAppSettings,
+  saveAppSettingsToCloud,
+  updateStudentProfileCloud,
+  deleteStudentCloud,
+} from '../lib/cloudSync';
+import { ALL_PRESET_SCHOOLS, OTHER_SCHOOL_VALUE } from '../lib/schools';
+import SchoolSelectorModal from '../components/SchoolSelectorModal';
 import { sfx } from '../lib/sound';
 import {
   PART3_KNOWLEDGE_QUESTIONS,
@@ -79,6 +87,21 @@ export default function TeacherAdmin() {
   const [studentModalTab, setStudentModalTab] = useState<'summary' | 'knowledge' | 'skills' | 'app_eval'>('summary');
 
   const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
+
+  // Status Filter for Research & Completion: 'all' | 'both' | 'pre_only' | 'post_only' | 'hero_done' | 'certified'
+  const [statusFilter, setStatusFilter] = useState<'all' | 'both' | 'pre_only' | 'post_only' | 'hero_done' | 'certified'>('all');
+
+  // Edit Student Modal States
+  const [editingStudent, setEditingStudent] = useState<StudentRecord | null>(null);
+  const [editRealName, setEditRealName] = useState('');
+  const [editNickname, setEditNickname] = useState('');
+  const [editIdCode, setEditIdCode] = useState('');
+  const [editGrade, setEditGrade] = useState('ม.1');
+  const [editSchool, setEditSchool] = useState('');
+  const [editCustomSchool, setEditCustomSchool] = useState('');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editSuccessToast, setEditSuccessToast] = useState<string | null>(null);
+  const [copyResearchSuccess, setCopyResearchSuccess] = useState(false);
 
   // Auto fetch real students and cloud settings on mount or authentication
   useEffect(() => {
@@ -219,11 +242,24 @@ export default function TeacherAdmin() {
         }
       }
 
-      return matchSearch && matchGrade && matchSchool && matchPeriod;
-    });
-  }, [students, searchQuery, selectedGrade, selectedSchool, selectedPeriod, customStartDate, customEndDate]);
+      let matchStatus = true;
+      if (statusFilter === 'both') {
+        matchStatus = s.preTestScore !== undefined && s.postTestScore !== undefined;
+      } else if (statusFilter === 'pre_only') {
+        matchStatus = s.preTestScore !== undefined && s.postTestScore === undefined;
+      } else if (statusFilter === 'post_only') {
+        matchStatus = s.postTestScore !== undefined && s.preTestScore === undefined;
+      } else if (statusFilter === 'hero_done') {
+        matchStatus = (s.heroStagesCount !== undefined ? s.heroStagesCount >= 8 : s.stagesCompletedCount >= 8);
+      } else if (statusFilter === 'certified') {
+        matchStatus = !!s.certificateNo;
+      }
 
-  // Analytics Highlights calculated strictly from REAL filtered data
+      return matchSearch && matchGrade && matchSchool && matchPeriod && matchStatus;
+    });
+  }, [students, searchQuery, selectedGrade, selectedSchool, selectedPeriod, customStartDate, customEndDate, statusFilter]);
+
+  // Analytics & Educational Research Statistics calculated strictly from REAL filtered data
   const analytics = useMemo(() => {
     const total = filteredStudents.length;
     const preScores = filteredStudents
@@ -232,11 +268,23 @@ export default function TeacherAdmin() {
     const postScores = filteredStudents
       .filter((s) => s.postTestScore !== undefined && s.postTestScore !== null && !isNaN(s.postTestScore))
       .map((s) => s.postTestScore!);
-    const deltas = filteredStudents
-      .filter((s) => s.gainDelta !== undefined && s.gainDelta !== null && !isNaN(s.gainDelta))
-      .map((s) => s.gainDelta!);
     const certCount = filteredStudents.filter((s) => !!s.certificateNo).length;
 
+    // Helper function for Mean & Standard Deviation (SD)
+    const calcStats = (vals: number[]) => {
+      if (vals.length === 0) return { mean: 0, sd: 0, str: '-' };
+      const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+      if (vals.length === 1) return { mean: Number(mean.toFixed(2)), sd: 0, str: `${mean.toFixed(1)} ± 0.00` };
+      const variance = vals.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / (vals.length - 1);
+      const sd = Math.sqrt(variance);
+      return {
+        mean: Number(mean.toFixed(2)),
+        sd: Number(sd.toFixed(2)),
+        str: `${mean.toFixed(2)} ± ${sd.toFixed(2)}`,
+      };
+    };
+
+    // Overall Averages
     const avgPre =
       preScores.length > 0
         ? Math.round(preScores.reduce((a, b) => a + b, 0) / preScores.length)
@@ -245,21 +293,268 @@ export default function TeacherAdmin() {
       postScores.length > 0
         ? Math.round(postScores.reduce((a, b) => a + b, 0) / postScores.length)
         : null;
-    const avgDelta =
-      deltas.length > 0
-        ? Math.round(deltas.reduce((a, b) => a + b, 0) / deltas.length)
-        : null;
+
+    // Paired Students (Students who took BOTH Pre and Post test) - Core research sample
+    const paired = filteredStudents.filter(
+      (s) =>
+        s.preTestScore !== undefined &&
+        s.preTestScore !== null &&
+        !isNaN(s.preTestScore) &&
+        s.postTestScore !== undefined &&
+        s.postTestScore !== null &&
+        !isNaN(s.postTestScore)
+    );
+
+    const pairedCount = paired.length;
+    const pairedPreScores = paired.map((s) => s.preTestScore!);
+    const pairedPostScores = paired.map((s) => s.postTestScore!);
+    const pairedPreStats = calcStats(pairedPreScores);
+    const pairedPostStats = calcStats(pairedPostScores);
+
+    // Paired Gain Deltas (Post - Pre)
+    const pairedDeltas = paired.map((s) => s.postTestScore! - s.preTestScore!);
+    const pairedDeltaStats = calcStats(pairedDeltas);
+
+    // 1. Hake's Normalized Gain <g> = (Post% - Pre%) / (100 - Pre%)
+    let hakeGainAvg: number | null = null;
+    let hakeGainCategory = '-';
+    if (paired.length > 0) {
+      const individualGains = paired
+        .map((s) => {
+          const pre = s.preTestScore!;
+          const post = s.postTestScore!;
+          if (pre >= 100) return 1.0;
+          return (post - pre) / (100 - pre);
+        })
+        .filter((g) => !isNaN(g));
+
+      if (individualGains.length > 0) {
+        hakeGainAvg = Number((individualGains.reduce((a, b) => a + b, 0) / individualGains.length).toFixed(2));
+        if (hakeGainAvg >= 0.70) {
+          hakeGainCategory = 'ระดับสูง (High Gain: g ≥ 0.70)';
+        } else if (hakeGainAvg >= 0.30) {
+          hakeGainCategory = 'ระดับปานกลาง (Medium Gain: 0.30 ≤ g < 0.70)';
+        } else {
+          hakeGainCategory = 'ระดับต่ำ (Low Gain: g < 0.30)';
+        }
+      }
+    }
+
+    // 2. Cohen's d Effect Size (for paired comparisons)
+    let cohensD: number | null = null;
+    let cohensCategory = '-';
+    if (pairedCount > 1) {
+      const meanDiff = pairedDeltaStats.mean;
+      const sdDiff = pairedDeltaStats.sd;
+      if (sdDiff > 0) {
+        cohensD = Number((meanDiff / sdDiff).toFixed(2));
+        if (Math.abs(cohensD) >= 0.8) {
+          cohensCategory = 'ระดับสูงมาก (Large Effect: d ≥ 0.8)';
+        } else if (Math.abs(cohensD) >= 0.5) {
+          cohensCategory = 'ระดับปานกลาง (Medium Effect: 0.5 ≤ d < 0.8)';
+        } else {
+          cohensCategory = 'ระดับเล็กน้อย (Small Effect: d < 0.5)';
+        }
+      }
+    }
+
+    // 3. Refusal Skills Stats (Part 4)
+    const pairedSkills = filteredStudents.filter(
+      (s) =>
+        s.preTestSkillScore !== undefined &&
+        !isNaN(s.preTestSkillScore) &&
+        s.postTestSkillScore !== undefined &&
+        !isNaN(s.postTestSkillScore)
+    );
+    const preSkillStats = calcStats(pairedSkills.map((s) => s.preTestSkillScore!));
+    const postSkillStats = calcStats(pairedSkills.map((s) => s.postTestSkillScore!));
+    const skillDeltaStats = calcStats(pairedSkills.map((s) => s.postTestSkillScore! - s.preTestSkillScore!));
+
+    // 4. Chatbot Evaluation (Part 5 - 7 Items Likert 1-5)
+    const evalScores = filteredStudents
+      .filter((s) => s.evalPart5Avg !== undefined && !isNaN(s.evalPart5Avg))
+      .map((s) => s.evalPart5Avg!);
+    const evalStats = calcStats(evalScores);
 
     return {
       total,
       avgPre,
       avgPost,
-      avgDelta,
+      avgDelta: pairedDeltaStats.mean,
       certCount,
       preDoneCount: preScores.length,
       postDoneCount: postScores.length,
+      pairedCount,
+      pairedPreStats,
+      pairedPostStats,
+      pairedDeltaStats,
+      hakeGainAvg,
+      hakeGainCategory,
+      cohensD,
+      cohensCategory,
+      pairedSkillsCount: pairedSkills.length,
+      preSkillStats,
+      postSkillStats,
+      skillDeltaStats,
+      evalStats,
+      evalCount: evalScores.length,
     };
   }, [filteredStudents]);
+
+  // Open Edit Student Modal
+  const handleOpenEdit = (student: StudentRecord, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    sfx.click();
+    setEditingStudent(student);
+    setEditRealName(student.realName || '');
+    setEditNickname(student.nickname || '');
+    setEditIdCode(student.idCode || '');
+    setEditGrade(student.grade || 'ม.1');
+
+    const curSchool = student.school ? student.school.trim() : '';
+    if (ALL_PRESET_SCHOOLS.includes(curSchool)) {
+      setEditSchool(curSchool);
+      setEditCustomSchool('');
+    } else if (curSchool) {
+      setEditSchool(OTHER_SCHOOL_VALUE);
+      setEditCustomSchool(curSchool);
+    } else {
+      setEditSchool('');
+      setEditCustomSchool('');
+    }
+  };
+
+  // Save Student Updates to local state and Google Sheets cloud
+  const handleSaveEdit = async () => {
+    if (!editingStudent) return;
+    sfx.click();
+    setIsSavingEdit(true);
+
+    const finalSchool =
+      editSchool === OTHER_SCHOOL_VALUE ? editCustomSchool.trim() : (editSchool || editCustomSchool.trim());
+
+    const updates = {
+      realName: editRealName.trim() || editingStudent.realName,
+      nickname: editNickname.trim() || editingStudent.nickname,
+      idCode: editIdCode.trim() || editingStudent.idCode,
+      grade: editGrade.trim() || editingStudent.grade,
+      school: finalSchool || editingStudent.school,
+    };
+
+    // 1. Update local state immediately
+    setStudents((prev) =>
+      prev.map((s) => {
+        if (
+          (s.userIdHash && s.userIdHash === editingStudent.userIdHash) ||
+          (s.idCode && s.idCode === editingStudent.idCode)
+        ) {
+          return {
+            ...s,
+            ...updates,
+          };
+        }
+        return s;
+      })
+    );
+
+    if (
+      selectedStudent &&
+      ((selectedStudent.userIdHash && selectedStudent.userIdHash === editingStudent.userIdHash) ||
+        (selectedStudent.idCode && selectedStudent.idCode === editingStudent.idCode))
+    ) {
+      setSelectedStudent((prev) => (prev ? { ...prev, ...updates } : null));
+    }
+
+    // 2. Dispatch to cloud
+    try {
+      await updateStudentProfileCloud(
+        editingStudent.userIdHash,
+        editingStudent.idCode,
+        updates,
+        editingStudent.realName,
+        'wu2535'
+      );
+      setEditSuccessToast('✅ บันทึกข้อมูลนักเรียนสำเร็จแล้ว!');
+      setTimeout(() => setEditSuccessToast(null), 3000);
+    } catch (err) {
+      console.warn('[TeacherAdmin] cloud save error:', err);
+    } finally {
+      setIsSavingEdit(false);
+      setEditingStudent(null);
+    }
+  };
+
+  // Delete Mock / Test Data
+  const handleDeleteStudent = async (student: StudentRecord, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    sfx.click();
+    const confirmDelete = window.confirm(
+      `⚠️ ยืนยันการลบข้อมูลของ "${student.realName}" (ID: ${student.idCode || '-'}) ออกจากระบบงานวิจัยหรือไม่?\n\n(ระบบจะลบข้อมูลออกจาก Google Sheets เพื่อให้ข้อมูลสถิติงวดนี้สะอาดถูกต้อง)`
+    );
+    if (!confirmDelete) return;
+
+    // Optimistically remove from state
+    setStudents((prev) =>
+      prev.filter(
+        (s) =>
+          !(
+            (s.userIdHash && s.userIdHash === student.userIdHash) ||
+            (s.idCode && s.idCode === student.idCode && s.realName === student.realName)
+          )
+      )
+    );
+
+    if (
+      selectedStudent &&
+      ((selectedStudent.userIdHash && selectedStudent.userIdHash === student.userIdHash) ||
+        (selectedStudent.idCode && selectedStudent.idCode === student.idCode))
+    ) {
+      setSelectedStudent(null);
+    }
+
+    // Dispatch delete to cloud
+    try {
+      await deleteStudentCloud(student.userIdHash, student.idCode, 'wu2535');
+      setEditSuccessToast('🗑️ ลบข้อมูลทดสอบเรียบร้อยแล้ว');
+      setTimeout(() => setEditSuccessToast(null), 3000);
+    } catch (err) {
+      console.warn('[TeacherAdmin] delete error:', err);
+    }
+  };
+
+  // Copy Complete Academic Research Summary to Clipboard
+  const handleCopyResearchSummary = () => {
+    sfx.click();
+    const text = [
+      `📊 ผลการวิเคราะห์สถิติวิจัย: โครงการแชตบอตเกมมิฟิเคชัน ม.วลัยลักษณ์`,
+      `กลุ่มตัวอย่าง: ${selectedSchool !== 'all' ? selectedSchool : 'ทุกโรงเรียน'} | ระดับชั้น: ${selectedGrade !== 'all' ? selectedGrade : 'ทุกระดับชั้น'}`,
+      `จำนวนผู้เรียนทั้งหมดในระบบ: ${analytics.total} คน`,
+      `----------------------------------------------------------------`,
+      `1. ผลการทดสอบความรู้บุหรี่ไฟฟ้า (Part 3: 21 ข้อ)`,
+      `- กลุ่มตัวอย่างคู่สมบูรณ์ (N_paired): ${analytics.pairedCount} คน`,
+      `- คะแนนก่อนเรียน (Pre-test Mean ± SD): ${analytics.pairedPreStats.str}%`,
+      `- คะแนนหลังเรียน (Post-test Mean ± SD): ${analytics.pairedPostStats.str}%`,
+      `- ค่าเฉลี่ยพัฒนาการ (Mean Gain Delta): ${analytics.pairedDeltaStats.mean >= 0 ? '+' : ''}${analytics.pairedDeltaStats.mean}% (SD = ${analytics.pairedDeltaStats.sd})`,
+      `- ดัชนีประสิทธิผลของเฮค (Hake's <g>): ${analytics.hakeGainAvg !== null ? analytics.hakeGainAvg : '-'} (${analytics.hakeGainCategory})`,
+      `- ขนาดอิทธิพล (Cohen's d): ${analytics.cohensD !== null ? analytics.cohensD : '-'} (${analytics.cohensCategory})`,
+      `----------------------------------------------------------------`,
+      `2. ทักษะการปฏิเสธบุหรี่ไฟฟ้า (Part 4: 20 ข้อ, เต็ม 100)`,
+      `- กลุ่มตัวอย่างที่ทำครบ (N): ${analytics.pairedSkillsCount} คน`,
+      `- ทักษะก่อนเรียน (Mean ± SD): ${analytics.preSkillStats.str}`,
+      `- ทักษะหลังเรียน (Mean ± SD): ${analytics.postSkillStats.str}`,
+      `- พัฒนาการทักษะ (Mean Gain): ${analytics.skillDeltaStats.mean >= 0 ? '+' : ''}${analytics.skillDeltaStats.mean} คะแนน`,
+      `----------------------------------------------------------------`,
+      `3. การประเมินความพึงพอใจต่อแชตบอต (Part 5: 7 ข้อ, เต็ม 5.00)`,
+      `- จำนวนผู้ประเมิน (N): ${analytics.evalCount} คน`,
+      `- คะแนนความพึงพอใจเฉลี่ย (Mean ± SD): ${analytics.evalStats.str} / 5.00`,
+      `- เกียรติบัตรที่ออกแล้ว: ${analytics.certCount} คน`,
+    ].join('\n');
+
+    navigator.clipboard.writeText(text).then(() => {
+      setCopyResearchSuccess(true);
+      setTimeout(() => setCopyResearchSuccess(false), 3000);
+    });
+  };
 
   // คำนวณการกระจายตัวของคำตอบ ก, ข, ค, ง และอัตราความถูกต้อง 21 ข้อ สำหรับกลุ่มนักเรียนที่กรอง
   const itemAnalysisData = useMemo(() => {
@@ -804,6 +1099,24 @@ export default function TeacherAdmin() {
                   </select>
                 </div>
 
+                {/* Status Filter Dropdown */}
+                <div className="w-36 sm:w-44">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                    className="w-full px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-detective-400 cursor-pointer"
+                  >
+                    <option value="all">🎯 สถานะ: ทั้งหมด</option>
+                    <option value="both">
+                      ✨ ทำครบ Pre & Post ({students.filter((s) => s.preTestScore !== undefined && s.postTestScore !== undefined).length} คน)
+                    </option>
+                    <option value="pre_only">📝 ทำเฉพาะ Pre-test</option>
+                    <option value="post_only">📝 ทำเฉพาะ Post-test</option>
+                    <option value="hero_done">🕹️ จบด่าน 1-8 แล้ว</option>
+                    <option value="certified">🏆 ได้เกียรติบัตรแล้ว</option>
+                  </select>
+                </div>
+
                 {/* Period Dropdown */}
                 <div className="w-36 sm:w-40">
                   <select
@@ -988,6 +1301,126 @@ export default function TeacherAdmin() {
               </div>
             </div>
 
+            {/* Academic Research Statistics Card (สรุปสถิติสำหรับรายงานวิจัย/วิทยานิพนธ์) */}
+            <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 shadow-clay border border-slate-800 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xl">📊</span>
+                    <h3 className="font-display font-extrabold text-base text-white">
+                      สถิติวิเคราะห์งานวิจัย (Research Statistical Analysis)
+                    </h3>
+                    <span className="text-[11px] bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 px-2.5 py-0.5 rounded-full font-bold">
+                      N = {analytics.pairedCount} คน (กลุ่มตัวอย่างคู่สมบูรณ์)
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                    วิเคราะห์เปรียบเทียบผลสัมฤทธิ์ก่อน-หลังเรียน, ดัชนีประสิทธิผลการเรียนรู้แบบปรับฐานของเฮค (Hake's Gain), และขนาดอิทธิพล (Cohen's d)
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCopyResearchSummary}
+                  className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md transition-all active:scale-95 flex-shrink-0"
+                  title="คัดลอกข้อความสรุปสถิติทั้งหมดพร้อมนำไปวางในเล่มรายงานวิจัยหรือโปรแกรม Word"
+                >
+                  <span>📋</span>
+                  <span>{copyResearchSuccess ? 'คัดลอกสรุปสถิติสำเร็จ!' : 'คัดลอกสรุปสำหรับรายงานวิจัย/Word'}</span>
+                </button>
+              </div>
+
+              {/* 3 Academic Metrics Columns */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                {/* Column 1: Knowledge Test (Pre vs Post) */}
+                <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3.5 space-y-2.5 flex flex-col justify-between">
+                  <div>
+                    <p className="text-[11px] font-extrabold text-sky-400 flex items-center gap-1.5">
+                      <span>🎯</span> 1. ผลสัมฤทธิ์ความรู้ (21 ข้อ)
+                    </p>
+                    <div className="space-y-1.5 mt-2">
+                      <div className="flex justify-between items-center text-slate-200">
+                        <span className="text-slate-300">ก่อนเรียน (Pre Mean ± SD):</span>
+                        <b className="text-sky-300 font-mono text-sm">{analytics.pairedPreStats.str}%</b>
+                      </div>
+                      <div className="flex justify-between items-center text-slate-200">
+                        <span className="text-slate-300">หลังเรียน (Post Mean ± SD):</span>
+                        <b className="text-emerald-300 font-mono text-sm">{analytics.pairedPostStats.str}%</b>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-700/80 flex justify-between items-center text-slate-200">
+                    <span className="text-slate-300 font-semibold">พัฒนาการ (Mean Gain):</span>
+                    <b className="text-indigo-300 font-mono text-sm">
+                      {analytics.pairedDeltaStats.mean >= 0 ? `+${analytics.pairedDeltaStats.mean}%` : `${analytics.pairedDeltaStats.mean}%`}
+                      <span className="text-[10px] text-slate-400 font-normal ml-1">(SD {analytics.pairedDeltaStats.sd})</span>
+                    </b>
+                  </div>
+                </div>
+
+                {/* Column 2: Hake's Gain & Cohen's d */}
+                <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3.5 space-y-2.5 flex flex-col justify-between">
+                  <div>
+                    <p className="text-[11px] font-extrabold text-amber-400 flex items-center gap-1.5">
+                      <span>📈</span> 2. ประสิทธิผล & ขนาดอิทธิพล
+                    </p>
+                    <div className="space-y-2 mt-2">
+                      <div>
+                        <div className="flex justify-between items-center text-slate-200">
+                          <span className="text-slate-300">Hake's Gain ⟨g⟩:</span>
+                          <b className="text-amber-300 font-mono text-sm">
+                            {analytics.hakeGainAvg !== null ? analytics.hakeGainAvg : '-'}
+                          </b>
+                        </div>
+                        <p className="text-[10px] text-amber-200/80 mt-0.5">
+                          {analytics.hakeGainCategory}
+                        </p>
+                      </div>
+
+                      <div className="pt-1.5 border-t border-slate-700/80">
+                        <div className="flex justify-between items-center text-slate-200">
+                          <span className="text-slate-300">Cohen's d:</span>
+                          <b className="text-purple-300 font-mono text-sm">
+                            {analytics.cohensD !== null ? analytics.cohensD : '-'}
+                          </b>
+                        </div>
+                        <p className="text-[10px] text-purple-200/80 mt-0.5">
+                          {analytics.cohensCategory}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 3: Refusal Skills & Chatbot Usability */}
+                <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3.5 space-y-2.5 flex flex-col justify-between">
+                  <div>
+                    <p className="text-[11px] font-extrabold text-emerald-400 flex items-center gap-1.5">
+                      <span>🛡️</span> 3. ทักษะปฏิเสธ & ความพึงพอใจ
+                    </p>
+                    <div className="space-y-1.5 mt-2">
+                      <div className="flex justify-between items-center text-slate-200">
+                        <span className="text-slate-300">ทักษะก่อน (Pre Mean ± SD):</span>
+                        <b className="text-slate-100 font-mono text-sm">{analytics.preSkillStats.str}</b>
+                      </div>
+                      <div className="flex justify-between items-center text-slate-200">
+                        <span className="text-slate-300">ทักษะหลัง (Post Mean ± SD):</span>
+                        <b className="text-slate-100 font-mono text-sm">{analytics.postSkillStats.str}</b>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-700/80 flex justify-between items-center text-slate-200">
+                    <span className="text-slate-300 font-semibold">ความพึงพอใจบอท (ตอน 5):</span>
+                    <b className="text-yellow-300 font-mono text-sm">
+                      ⭐ {analytics.evalStats.str} <span className="text-[10px] text-slate-400 font-normal">/ 5.0</span>
+                    </b>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Error banner if any */}
             {fetchError && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 flex items-center justify-between">
@@ -1102,6 +1535,26 @@ export default function TeacherAdmin() {
                       <span>XP: <b className="text-detective-700">{s.totalXP.toLocaleString()}</b></span>
                       <span>ประเมินแชตบอต: <b className="text-amber-700">{s.evalPart5Avg ? `⭐ ${s.evalPart5Avg}` : '-'}</b></span>
                     </div>
+
+                    {/* Row 4: Action Buttons (Edit & Delete) */}
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={(e) => handleOpenEdit(s, e)}
+                        className="px-2.5 py-1 rounded-xl bg-detective-50 text-detective-700 hover:bg-detective-100 text-xs font-bold border border-detective-200 flex items-center gap-1 transition-colors"
+                        title="แก้ไขข้อมูล (โรงเรียน, ชั้น, ชื่อ, รหัส)"
+                      >
+                        <span>✏️</span> แก้ไขข้อมูล
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteStudent(s, e)}
+                        className="px-2 py-1 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold border border-rose-200 flex items-center gap-1 transition-colors"
+                        title="ลบข้อมูลทดสอบ"
+                      >
+                        <span>🗑️</span>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1130,6 +1583,7 @@ export default function TeacherAdmin() {
                         <th className="py-3 px-3 text-right">คะแนน XP</th>
                         <th className="py-3 px-3 text-center">ประเมินบอท</th>
                         <th className="py-3 px-3 text-center">เกียรติบัตร</th>
+                        <th className="py-3 px-3 text-center">จัดการ</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -1207,6 +1661,26 @@ export default function TeacherAdmin() {
                               <span className="text-slate-300">-</span>
                             )}
                           </td>
+                          <td className="py-3 px-2 text-center" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-center gap-1">
+                              <button
+                                type="button"
+                                onClick={(e) => handleOpenEdit(s, e)}
+                                className="px-2 py-1 rounded-lg bg-detective-50 text-detective-700 hover:bg-detective-100 border border-detective-200 text-xs font-bold transition-colors shadow-sm"
+                                title="แก้ไขข้อมูล (โรงเรียน, ชั้น, ชื่อ, รหัส)"
+                              >
+                                ✏️ แก้ไข
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => handleDeleteStudent(s, e)}
+                                className="p-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition-colors"
+                                title="ลบข้อมูลทดสอบ"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1272,21 +1746,21 @@ export default function TeacherAdmin() {
             {itemAnalysisSubTab === 'knowledge' && (
               <div className="space-y-4">
                 {/* Information Header Card */}
-                <div className="bg-gradient-to-r from-detective-900 to-indigo-900 text-white rounded-3xl p-5 shadow-clay space-y-2">
+                <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 shadow-clay space-y-2 border border-slate-800">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <h2 className="text-base sm:text-lg font-display font-extrabold flex items-center gap-2">
+                      <h2 className="text-base sm:text-lg font-display font-extrabold text-white flex items-center gap-2">
                         <span>🎯</span> การวิเคราะห์ข้อสอบรายข้อและความถี่ตัวเลือก (ก, ข, ค, ง)
                       </h2>
-                      <p className="text-xs text-slate-200 mt-0.5">
+                      <p className="text-xs text-slate-300 mt-0.5">
                         คำนวณจากผู้เรียนกลุ่มนี้ {filteredStudents.length} คน (ทำ Pre-test {itemAnalysisData[0]?.preTotal || 0} คน / ทำ Post-test {itemAnalysisData[0]?.postTotal || 0} คน)
                       </p>
                     </div>
                     <div className="flex items-center gap-2 text-xs font-bold">
-                      <span className="flex items-center gap-1.5 bg-sky-500/30 border border-sky-400/40 px-2.5 py-1 rounded-xl">
+                      <span className="flex items-center gap-1.5 bg-sky-500/25 border border-sky-400/50 text-sky-200 px-2.5 py-1 rounded-xl">
                         <span className="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block" /> ก่อนเรียน (Pre)
                       </span>
-                      <span className="flex items-center gap-1.5 bg-emerald-500/30 border border-emerald-400/40 px-2.5 py-1 rounded-xl">
+                      <span className="flex items-center gap-1.5 bg-emerald-500/25 border border-emerald-400/50 text-emerald-200 px-2.5 py-1 rounded-xl">
                         <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" /> หลังเรียน (Post)
                       </span>
                     </div>
@@ -2202,12 +2676,30 @@ export default function TeacherAdmin() {
                     ระดับชั้น {selectedStudent.grade || '-'} · {selectedStudent.school || '-'}
                   </p>
                 </div>
-                <button
-                  onClick={() => setSelectedStudent(null)}
-                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center text-sm font-bold transition-colors"
-                >
-                  ✕
-                </button>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEdit(selectedStudent)}
+                    className="px-3 py-1.5 rounded-xl bg-detective-50 text-detective-700 hover:bg-detective-100 border border-detective-200 text-xs font-bold flex items-center gap-1 transition-colors shadow-sm"
+                    title="แก้ไขข้อมูลนักเรียนคนนี้"
+                  >
+                    <span>✏️</span> แก้ไขข้อมูล
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteStudent(selectedStudent)}
+                    className="p-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition-colors"
+                    title="ลบข้อมูลทดสอบ"
+                  >
+                    <span>🗑️</span>
+                  </button>
+                  <button
+                    onClick={() => setSelectedStudent(null)}
+                    className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center text-sm font-bold transition-colors ml-1"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
 
               {/* Modal Sub-Tabs */}
@@ -2487,6 +2979,170 @@ export default function TeacherAdmin() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* =================================================================== */}
+      {/* Edit Student Profile Modal                                          */}
+      {/* =================================================================== */}
+      <AnimatePresence>
+        {editingStudent && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-5 sm:p-6 max-w-lg w-full shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between border-b border-slate-100 pb-3 flex-shrink-0">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">✏️</span>
+                    <h3 className="text-base font-display font-extrabold text-slate-900">
+                      แก้ไขข้อมูลผู้เรียน
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    แก้ไขชื่อ, รหัส, ระดับชั้น, หรือโรงเรียน (ซิงค์ขึ้น Google Sheets ทันที)
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingStudent(null)}
+                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center text-sm font-bold transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Form Body */}
+              <div className="flex-1 overflow-y-auto pr-1 space-y-3.5 text-xs">
+                {/* Field 1: Real Name */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">ชื่อ-นามสกุลจริง</label>
+                  <input
+                    type="text"
+                    value={editRealName}
+                    onChange={(e) => setEditRealName(e.target.value)}
+                    placeholder="เช่น ด.ช.รักเรียน ดีเลิศ"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-detective-400"
+                  />
+                </div>
+
+                {/* Field 2: Nickname */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">ชื่อเล่นในเกม</label>
+                  <input
+                    type="text"
+                    value={editNickname}
+                    onChange={(e) => setEditNickname(e.target.value)}
+                    placeholder="เช่น น้องอาร์ท"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-detective-400"
+                  />
+                </div>
+
+                {/* Field 3: ID Code */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">รหัสประจำตัว / รหัสนักศึกษา (idCode)</label>
+                  <input
+                    type="text"
+                    value={editIdCode}
+                    onChange={(e) => setEditIdCode(e.target.value)}
+                    placeholder="เช่น 65123456"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-detective-400"
+                  />
+                </div>
+
+                {/* Field 4: Grade Level */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">ระดับชั้นเรียน</label>
+                  <select
+                    value={editGrade}
+                    onChange={(e) => setEditGrade(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-detective-400 cursor-pointer"
+                  >
+                    <optgroup label="🌱 ประถมศึกษา">
+                      <option value="ป.4">ป.4</option>
+                      <option value="ป.5">ป.5</option>
+                      <option value="ป.6">ป.6</option>
+                    </optgroup>
+                    <optgroup label="🌿 มัธยมศึกษาตอนต้น">
+                      <option value="ม.1">ม.1</option>
+                      <option value="ม.2">ม.2</option>
+                      <option value="ม.3">ม.3</option>
+                    </optgroup>
+                    <optgroup label="🌳 มัธยมศึกษาตอนปลาย & อาชีวะ">
+                      <option value="ม.4">ม.4</option>
+                      <option value="ม.5">ม.5</option>
+                      <option value="ม.6">ม.6</option>
+                      <option value="ปวช.1">ปวช.1</option>
+                      <option value="ปวช.2">ปวช.2</option>
+                      <option value="ปวช.3">ปวช.3</option>
+                      <option value="อื่นๆ">อื่นๆ</option>
+                    </optgroup>
+                  </select>
+                </div>
+
+                {/* Field 5: School */}
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>โรงเรียน / สถาบันการศึกษา</span>
+                    <span className="text-[10px] text-detective-600 font-semibold">แตะเพื่อค้นหา</span>
+                  </label>
+                  <SchoolSelectorModal
+                    selectedSchool={editSchool}
+                    customSchoolText={editCustomSchool}
+                    onSelectSchool={(sch) => setEditSchool(sch)}
+                    onChangeCustomText={(txt) => setEditCustomSchool(txt)}
+                  />
+                </div>
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-3 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setEditingStudent(null)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 text-xs"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  disabled={isSavingEdit}
+                  className="px-5 py-2 rounded-xl bg-detective-600 hover:bg-detective-700 text-white font-bold text-xs shadow-clay flex items-center gap-1.5 transition-all"
+                >
+                  {isSavingEdit ? (
+                    <>
+                      <span className="animate-spin">🔄</span>
+                      <span>กำลังบันทึก...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>💾</span>
+                      <span>บันทึกการเปลี่ยนแปลง</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {editSuccessToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 text-xs font-bold flex items-center gap-2"
+          >
+            <span>{editSuccessToast}</span>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

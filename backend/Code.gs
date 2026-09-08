@@ -807,6 +807,155 @@ function handleUpdateSettings_(payload) {
   return jsonResponse_({ ok: true, settings: payload.settings });
 }
 
+// ---------- Endpoint: updateStudent (อาจารย์แก้ไขข้อมูลนักเรียน: โรงเรียน, ชั้น, ชื่อ, รหัส) ----------
+function handleUpdateStudent_(payload) {
+  if (payload.passcode !== CONFIG.TEACHER_PASSCODE) {
+    return jsonResponse_({ ok: false, error: 'unauthorized' });
+  }
+
+  const userIdHash = String(payload.userIdHash || '').trim();
+  const idCode = String(payload.idCode || '').trim();
+  const updates = payload.updates || {};
+
+  if (!userIdHash && !idCode) {
+    return jsonResponse_({ ok: false, error: 'missing_identifier' });
+  }
+
+  const playerSheet = getSheet_(CONFIG.SHEET_NAMES.PLAYERS);
+  const data = playerSheet.getDataRange().getValues();
+  let updatedRow = -1;
+
+  for (let i = 1; i < data.length; i++) {
+    const rowHash = String(data[i][COL_PLAYER.USER_ID_HASH - 1] || '').trim();
+    const rowIdCode = String(data[i][COL_PLAYER.ID_CODE - 1] || '').trim();
+
+    if ((userIdHash && rowHash === userIdHash) || (idCode && rowIdCode === idCode)) {
+      updatedRow = i + 1;
+
+      if (updates.realName !== undefined) {
+        playerSheet.getRange(updatedRow, COL_PLAYER.REAL_NAME).setValue(String(updates.realName).trim());
+      }
+      if (updates.nickname !== undefined) {
+        playerSheet.getRange(updatedRow, COL_PLAYER.NICKNAME).setValue(String(updates.nickname).trim());
+      }
+      if (updates.idCode !== undefined) {
+        playerSheet.getRange(updatedRow, COL_PLAYER.ID_CODE).setValue(String(updates.idCode).trim());
+      }
+      if (updates.grade !== undefined) {
+        playerSheet.getRange(updatedRow, COL_PLAYER.GRADE).setValue(String(updates.grade).trim());
+      }
+      if (updates.school !== undefined) {
+        playerSheet.getRange(updatedRow, COL_PLAYER.SCHOOL).setValue(String(updates.school).trim());
+      }
+
+      // Update DEMOGRAPHICS JSON if present
+      try {
+        let demoJson = {};
+        const rawDemo = data[i][COL_PLAYER.DEMOGRAPHICS - 1];
+        if (rawDemo) demoJson = JSON.parse(String(rawDemo));
+        if (updates.realName !== undefined) demoJson.realName = String(updates.realName).trim();
+        if (updates.nickname !== undefined) demoJson.nickname = String(updates.nickname).trim();
+        if (updates.idCode !== undefined) demoJson.idCode = String(updates.idCode).trim();
+        if (updates.grade !== undefined) demoJson.grade = String(updates.grade).trim();
+        if (updates.school !== undefined) demoJson.school = String(updates.school).trim();
+        playerSheet.getRange(updatedRow, COL_PLAYER.DEMOGRAPHICS).setValue(JSON.stringify(demoJson));
+      } catch (e) {}
+
+      break;
+    }
+  }
+
+  // Also update GameStats sheet if it exists
+  try {
+    const gameSheet = getSheet_(CONFIG.SHEET_NAMES.GAME_STATS);
+    if (gameSheet) {
+      const gameData = gameSheet.getDataRange().getValues();
+      for (let g = 1; g < gameData.length; g++) {
+        const gHash = String(gameData[g][COL_GAME.USER_ID_HASH - 1] || '').trim();
+        const gId = String(gameData[g][COL_GAME.ID_CODE - 1] || '').trim();
+        if ((userIdHash && gHash === userIdHash) || (idCode && gId === idCode)) {
+          const gRow = g + 1;
+          if (updates.realName !== undefined) gameSheet.getRange(gRow, COL_GAME.REAL_NAME).setValue(String(updates.realName).trim());
+          if (updates.nickname !== undefined) gameSheet.getRange(gRow, COL_GAME.NICKNAME).setValue(String(updates.nickname).trim());
+          if (updates.idCode !== undefined) gameSheet.getRange(gRow, COL_GAME.ID_CODE).setValue(String(updates.idCode).trim());
+          break;
+        }
+      }
+    }
+  } catch (e) {}
+
+  // Also update Item_Score_Binary sheet if it exists
+  try {
+    const ss = playerSheet.getParent();
+    const binarySheet = ss.getSheetByName('Item_Score_Binary');
+    if (binarySheet) {
+      const bData = binarySheet.getDataRange().getValues();
+      for (let b = 1; b < bData.length; b++) {
+        const bId = String(bData[b][0] || '').trim();
+        const bReal = String(bData[b][1] || '').trim();
+        if ((idCode && bId === idCode) || (payload.oldRealName && bReal === payload.oldRealName)) {
+          const bRow = b + 1;
+          if (updates.idCode !== undefined) binarySheet.getRange(bRow, 1).setValue(String(updates.idCode).trim());
+          if (updates.realName !== undefined) binarySheet.getRange(bRow, 2).setValue(String(updates.realName).trim());
+          if (updates.nickname !== undefined) binarySheet.getRange(bRow, 3).setValue(String(updates.nickname).trim());
+          if (updates.grade !== undefined) binarySheet.getRange(bRow, 4).setValue(String(updates.grade).trim());
+          if (updates.school !== undefined) binarySheet.getRange(bRow, 5).setValue(String(updates.school).trim());
+          break;
+        }
+      }
+    }
+  } catch (e) {}
+
+  return jsonResponse_({ ok: true, updated: updatedRow !== -1 });
+}
+
+// ---------- Endpoint: deleteStudent (อาจารย์ลบข้อมูลทดสอบระบบ) ----------
+function handleDeleteStudent_(payload) {
+  if (payload.passcode !== CONFIG.TEACHER_PASSCODE) {
+    return jsonResponse_({ ok: false, error: 'unauthorized' });
+  }
+
+  const userIdHash = String(payload.userIdHash || '').trim();
+  const idCode = String(payload.idCode || '').trim();
+
+  if (!userIdHash && !idCode) {
+    return jsonResponse_({ ok: false, error: 'missing_identifier' });
+  }
+
+  let deleted = false;
+  const playerSheet = getSheet_(CONFIG.SHEET_NAMES.PLAYERS);
+  const data = playerSheet.getDataRange().getValues();
+
+  for (let i = 1; i < data.length; i++) {
+    const rowHash = String(data[i][COL_PLAYER.USER_ID_HASH - 1] || '').trim();
+    const rowIdCode = String(data[i][COL_PLAYER.ID_CODE - 1] || '').trim();
+
+    if ((userIdHash && rowHash === userIdHash) || (idCode && rowIdCode === idCode)) {
+      playerSheet.deleteRow(i + 1);
+      deleted = true;
+      break;
+    }
+  }
+
+  // Also delete from GameStats
+  try {
+    const gameSheet = getSheet_(CONFIG.SHEET_NAMES.GAME_STATS);
+    if (gameSheet) {
+      const gameData = gameSheet.getDataRange().getValues();
+      for (let g = 1; g < gameData.length; g++) {
+        const gHash = String(gameData[g][COL_GAME.USER_ID_HASH - 1] || '').trim();
+        const gId = String(gameData[g][COL_GAME.ID_CODE - 1] || '').trim();
+        if ((userIdHash && gHash === userIdHash) || (idCode && gId === idCode)) {
+          gameSheet.deleteRow(g + 1);
+          break;
+        }
+      }
+    }
+  } catch (e) {}
+
+  return jsonResponse_({ ok: true, deleted: deleted });
+}
+
 // ---------- Routers ----------
 function doPost(e) {
   try {
@@ -814,6 +963,8 @@ function doPost(e) {
     if (payload.action === 'sync')           return handleSync_(payload);
     if (payload.action === 'issueCert')      return handleIssueCert_(payload);
     if (payload.action === 'updateSettings') return handleUpdateSettings_(payload);
+    if (payload.action === 'updateStudent')  return handleUpdateStudent_(payload);
+    if (payload.action === 'deleteStudent')  return handleDeleteStudent_(payload);
     return jsonResponse_({ok:false, error:'unknown_action'});
   } catch (err) {
     return jsonResponse_({ok:false, error:'server_error', message:String(err)});
@@ -830,8 +981,10 @@ function doGet(e) {
     if (action === 'getAdminData')  return handleGetAdminData_(e.parameter);
     if (action === 'downloadCsv')   return handleDownloadCsv_(e.parameter);
     if (action === 'getSettings')   return handleGetSettings_();
+    if (action === 'updateStudent') return handleUpdateStudent_(e.parameter);
+    if (action === 'deleteStudent') return handleDeleteStudent_(e.parameter);
     if (action === 'sync')          return handleSync_(e.parameter);
-    if (action === 'ping')          return jsonResponse_({ok:true, time:nowIso_(), version:'2.4.0'});
+    if (action === 'ping')          return jsonResponse_({ok:true, time:nowIso_(), version:'2.4.1'});
     return jsonResponse_({ok:false, error:'unknown_action'});
   } catch (err) {
     return jsonResponse_({ok:false, error:'server_error', message:String(err)});

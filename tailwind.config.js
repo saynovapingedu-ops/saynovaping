@@ -23,6 +23,7 @@ export default {
           600: '#0072CC',
           700: '#005599',
           800: '#003C73',
+          900: '#00254D',
         },
         // 'warning' = เหลืองทองอุ่น (ใช้แค่ achievement — Certificate / badges)
         warning: {

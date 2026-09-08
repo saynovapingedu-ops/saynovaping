@@ -396,4 +396,70 @@ export async function saveAppSettingsToCloud(
   }
 }
 
+export interface StudentProfileUpdates {
+  realName?: string;
+  nickname?: string;
+  idCode?: string;
+  grade?: string;
+  school?: string;
+}
 
+/**
+ * อาจารย์แก้ไขข้อมูลส่วนตัวของนักเรียน (ชื่อ, ชื่อเล่น, รหัส, ชั้น, โรงเรียน) บนคลาวด์
+ */
+export async function updateStudentProfileCloud(
+  userIdHash: string,
+  idCode: string,
+  updates: StudentProfileUpdates,
+  oldRealName?: string,
+  passcode = 'wu2535'
+): Promise<boolean> {
+  if (!SYNC_URL) return false;
+  try {
+    const res = await fetchWithRetry(SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'updateStudent',
+        passcode: passcode,
+        userIdHash: userIdHash,
+        idCode: idCode,
+        updates: updates,
+        oldRealName: oldRealName,
+      }),
+    });
+    const data = await res.json();
+    return data && data.ok === true;
+  } catch (err) {
+    console.warn('[cloudSync] updateStudentProfileCloud failed:', err);
+    return false;
+  }
+}
+
+/**
+ * อาจารย์ลบข้อมูลทดสอบ (Mock / Test Data) ออกจากฐานข้อมูล
+ */
+export async function deleteStudentCloud(
+  userIdHash: string,
+  idCode: string,
+  passcode = 'wu2535'
+): Promise<boolean> {
+  if (!SYNC_URL) return false;
+  try {
+    const res = await fetchWithRetry(SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'deleteStudent',
+        passcode: passcode,
+        userIdHash: userIdHash,
+        idCode: idCode,
+      }),
+    });
+    const data = await res.json();
+    return data && data.ok === true;
+  } catch (err) {
+    console.warn('[cloudSync] deleteStudentCloud failed:', err);
+    return false;
+  }
+}
