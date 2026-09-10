@@ -64,10 +64,10 @@ const COL_PLAYER = {
   DEMOGRAPHICS: 23,          // 📦 [ข้อมูลดิบ] แบบสำรวจข้อมูลส่วนบุคคล (JSON)
   EVAL_PART5_DETAILS: 24,    // 📦 [ข้อมูลดิบ] ประเมินบอทรายข้อ 7 ข้อ (JSON)
   USER_ID_HASH: 25,          // 🔑 [ระบบ] LINE User ID Hash
-  PRE_TEST_KNOWLEDGE_ANSWERS: 26, // 📝 [ดิบ-ก่อนเรียน] คำตอบความรู้ 21 ข้อ (JSON)
-  PRE_TEST_SKILL_ANSWERS: 27,     // 📝 [ดิบ-ก่อนเรียน] คำตอบทักษะปฏิเสธ 20 ข้อ (JSON)
-  POST_TEST_KNOWLEDGE_ANSWERS: 28,// 📝 [ดิบ-หลังเรียน] คำตอบความรู้ 21 ข้อ (JSON)
-  POST_TEST_SKILL_ANSWERS: 29,    // 📝 [ดิบ-หลังเรียน] คำตอบทักษะปฏิเสธ 20 ข้อ (JSON)
+  PRE_TEST_KNOWLEDGE_ANSWERS: 26, // 📝 [ดิบ-ก่อนเรียน] คำตอบความรู้ 8 ข้อ (JSON)
+  PRE_TEST_SKILL_ANSWERS: 27,     // 📝 [ดิบ-ก่อนเรียน] คำตอบทักษะปฏิเสธ 15 ข้อ (JSON)
+  POST_TEST_KNOWLEDGE_ANSWERS: 28,// 📝 [ดิบ-หลังเรียน] คำตอบความรู้ 8 ข้อ (JSON)
+  POST_TEST_SKILL_ANSWERS: 29,    // 📝 [ดิบ-หลังเรียน] คำตอบทักษะปฏิเสธ 15 ข้อ (JSON)
 };
 const PLAYERS_COLS = 29;
 
@@ -97,10 +97,10 @@ const PLAYERS_HEADERS = [
   '📦 [ข้อมูลดิบ] แบบสำรวจข้อมูลส่วนบุคคล (JSON)',
   '📦 [ข้อมูลดิบ] ประเมินบอทรายข้อ 7 ข้อ (JSON)',
   '🔑 [ระบบ] LINE User ID Hash',
-  '📝 [ดิบ-ก่อนเรียน] คำตอบความรู้ 21 ข้อ (JSON)',
-  '📝 [ดิบ-ก่อนเรียน] คำตอบทักษะปฏิเสธ 20 ข้อ (JSON)',
-  '📝 [ดิบ-หลังเรียน] คำตอบความรู้ 21 ข้อ (JSON)',
-  '📝 [ดิบ-หลังเรียน] คำตอบทักษะปฏิเสธ 20 ข้อ (JSON)',
+  '📝 [ดิบ-ก่อนเรียน] คำตอบความรู้ 8 ข้อ (JSON)',
+  '📝 [ดิบ-ก่อนเรียน] คำตอบทักษะปฏิเสธ 15 ข้อ (JSON)',
+  '📝 [ดิบ-หลังเรียน] คำตอบความรู้ 8 ข้อ (JSON)',
+  '📝 [ดิบ-หลังเรียน] คำตอบทักษะปฏิเสธ 15 ข้อ (JSON)',
 ];
 
 // ============================================================================
@@ -773,11 +773,12 @@ function handleGetSettings_() {
   let settings = {
     preTestEnabled: true,
     postTestEnabled: true,
+    requirePreTestBeforePlaying: true,
     allowBypassStages: false,
     showExplanations: false,
     part2Enabled: true,
     part3Enabled: true,
-    knowledgeQuestionCount: 21,
+    knowledgeQuestionCount: 8,
     part4Enabled: true,
     part5Enabled: true,
     finalExamEnabled: true,
@@ -884,26 +885,28 @@ function handleUpdateStudent_(payload) {
     }
   } catch (e) {}
 
-  // Also update Item_Score_Binary sheet if it exists
+  // Also update Item_Analysis and Item_Score_Binary sheets if they exist
   try {
     const ss = playerSheet.getParent();
-    const binarySheet = ss.getSheetByName('Item_Score_Binary');
-    if (binarySheet) {
-      const bData = binarySheet.getDataRange().getValues();
-      for (let b = 1; b < bData.length; b++) {
-        const bId = String(bData[b][0] || '').trim();
-        const bReal = String(bData[b][1] || '').trim();
-        if ((idCode && bId === idCode) || (payload.oldRealName && bReal === payload.oldRealName)) {
-          const bRow = b + 1;
-          if (updates.idCode !== undefined) binarySheet.getRange(bRow, 1).setValue(String(updates.idCode).trim());
-          if (updates.realName !== undefined) binarySheet.getRange(bRow, 2).setValue(String(updates.realName).trim());
-          if (updates.nickname !== undefined) binarySheet.getRange(bRow, 3).setValue(String(updates.nickname).trim());
-          if (updates.grade !== undefined) binarySheet.getRange(bRow, 4).setValue(String(updates.grade).trim());
-          if (updates.school !== undefined) binarySheet.getRange(bRow, 5).setValue(String(updates.school).trim());
-          break;
+    ['Item_Analysis', 'Item_Score_Binary'].forEach(function(sName) {
+      const targetSheet = ss.getSheetByName(sName);
+      if (targetSheet) {
+        const bData = targetSheet.getDataRange().getValues();
+        for (let b = 1; b < bData.length; b++) {
+          const bId = String(bData[b][0] || '').trim();
+          const bReal = String(bData[b][1] || '').trim();
+          if ((idCode && bId === idCode) || (payload.oldRealName && bReal === payload.oldRealName)) {
+            const bRow = b + 1;
+            if (updates.idCode !== undefined) targetSheet.getRange(bRow, 1).setValue(String(updates.idCode).trim());
+            if (updates.realName !== undefined) targetSheet.getRange(bRow, 2).setValue(String(updates.realName).trim());
+            if (updates.nickname !== undefined) targetSheet.getRange(bRow, 3).setValue(String(updates.nickname).trim());
+            if (updates.grade !== undefined) targetSheet.getRange(bRow, 4).setValue(String(updates.grade).trim());
+            if (updates.school !== undefined) targetSheet.getRange(bRow, 5).setValue(String(updates.school).trim());
+            break;
+          }
         }
       }
-    }
+    });
   } catch (e) {}
 
   return jsonResponse_({ ok: true, updated: updatedRow !== -1 });
@@ -951,6 +954,24 @@ function handleDeleteStudent_(payload) {
         }
       }
     }
+  } catch (e) {}
+
+  // Also delete from Item_Analysis and Item_Score_Binary
+  try {
+    const ss = playerSheet.getParent();
+    ['Item_Analysis', 'Item_Score_Binary'].forEach(function(sName) {
+      const s = ss.getSheetByName(sName);
+      if (s) {
+        const sData = s.getDataRange().getValues();
+        for (let r = 1; r < sData.length; r++) {
+          const sId = String(sData[r][0] || '').trim();
+          if (idCode && sId === idCode) {
+            s.deleteRow(r + 1);
+            break;
+          }
+        }
+      }
+    });
   } catch (e) {}
 
   return jsonResponse_({ ok: true, deleted: deleted });
@@ -1060,6 +1081,11 @@ function setupCleanSheet() {
       const preAt = findVal(row, ['เวลาส่ง Pre-test', 'เวลาทำ Pre-test', 'preTestAt']);
       const postAt = findVal(row, ['เวลาส่ง Post-test', 'เวลาทำ Post-test', 'postTestAt']);
       const rawDemo = findVal(row, ['แบบสำรวจ', 'Demographics', 'demographics']);
+      const rawPreKAns = findVal(row, ['[ดิบ-ก่อนเรียน] คำตอบความรู้', 'คำตอบความรู้ 8 ข้อ', 'preTestKnowledgeAnswers']) || (row.length >= 26 ? row[25] : '');
+      const rawPreSAns = findVal(row, ['[ดิบ-ก่อนเรียน] คำตอบทักษะ', 'คำตอบทักษะปฏิเสธ 15 ข้อ', 'preTestSkillAnswers']) || (row.length >= 27 ? row[26] : '');
+      const rawPostKAns = findVal(row, ['[ดิบ-หลังเรียน] คำตอบความรู้', 'คำตอบความรู้ 8 ข้อ', 'postTestKnowledgeAnswers']) || (row.length >= 28 ? row[27] : '');
+      const rawPostSAns = findVal(row, ['[ดิบ-หลังเรียน] คำตอบทักษะ', 'คำตอบทักษะปฏิเสธ 15 ข้อ', 'postTestSkillAnswers']) || (row.length >= 29 ? row[28] : '');
+      const rawP5Details = findVal(row, ['ประเมินบอทรายข้อ', 'evalPart5Details']) || (row.length >= 24 ? row[23] : '');
       
       let parsedDemo = null;
       if (rawDemo) {
@@ -1107,6 +1133,11 @@ function setupCleanSheet() {
         preTestAt: preAt || existing.preTestAt || '',
         postTestAt: postAt || existing.postTestAt || '',
         demographics: parsedDemo || existing.demographics,
+        preTestKnowledgeAnswers: rawPreKAns ? parseJsonArray_(rawPreKAns) : (existing.preTestKnowledgeAnswers || []),
+        preTestSkillAnswers: rawPreSAns ? parseJsonArray_(rawPreSAns) : (existing.preTestSkillAnswers || []),
+        postTestKnowledgeAnswers: rawPostKAns ? parseJsonArray_(rawPostKAns) : (existing.postTestKnowledgeAnswers || []),
+        postTestSkillAnswers: rawPostSAns ? parseJsonArray_(rawPostSAns) : (existing.postTestSkillAnswers || []),
+        evalPart5Details: rawP5Details ? parseJsonArray_(rawP5Details) : (existing.evalPart5Details || []),
       };
     }
   }
@@ -1151,7 +1182,10 @@ function setupCleanSheet() {
   pSheet.getRange(1, 14, 1, 2).setBackground('#312E81').setFontColor('#C7D2FE');
   pSheet.getRange(1, 16, 1, 1).setBackground('#78350F').setFontColor('#FDE68A');
   pSheet.getRange(1, 17, 1, 2).setBackground('#155E75').setFontColor('#A5F3FC');
-  pSheet.getRange(1, 19, 1, 7).setBackground('#334155').setFontColor('#F8FAFC');
+  pSheet.getRange(1, 19, 1, 6).setBackground('#334155').setFontColor('#F8FAFC');
+  pSheet.getRange(1, 25, 1, 1).setBackground('#475569').setFontColor('#F8FAFC');
+  pSheet.getRange(1, 26, 1, 2).setBackground('#064E3B').setFontColor('#A7F3D0');
+  pSheet.getRange(1, 28, 1, 2).setBackground('#047857').setFontColor('#D1FAE5');
 
   pSheet.setColumnWidth(COL_PLAYER.ID_CODE, 140);
   pSheet.setColumnWidth(COL_PLAYER.REAL_NAME, 190);
@@ -1178,6 +1212,10 @@ function setupCleanSheet() {
   pSheet.setColumnWidth(COL_PLAYER.DEMOGRAPHICS, 220);
   pSheet.setColumnWidth(COL_PLAYER.EVAL_PART5_DETAILS, 160);
   pSheet.setColumnWidth(COL_PLAYER.USER_ID_HASH, 160);
+  pSheet.setColumnWidth(COL_PLAYER.PRE_TEST_KNOWLEDGE_ANSWERS, 180);
+  pSheet.setColumnWidth(COL_PLAYER.PRE_TEST_SKILL_ANSWERS, 180);
+  pSheet.setColumnWidth(COL_PLAYER.POST_TEST_KNOWLEDGE_ANSWERS, 180);
+  pSheet.setColumnWidth(COL_PLAYER.POST_TEST_SKILL_ANSWERS, 180);
 
   if (migratedResearchRows.length > 0) {
     pSheet.getRange(2, 1, migratedResearchRows.length, PLAYERS_COLS).setValues(migratedResearchRows);
@@ -1239,7 +1277,7 @@ function resetAllDataToEmpty() {
   }
   const ss = SpreadsheetApp.openById(sheetId);
 
-  // 1. Reset แท็บ Players (ตารางว่างเปล่า มีเฉพาะหัวตาราง 25 คอลัมน์ที่แยกชื่อชัดเจน)
+  // 1. Reset แท็บ Players (ตารางว่างเปล่า มีเฉพาะหัวตาราง 29 คอลัมน์ที่แยกชื่อชัดเจน)
   let pSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.PLAYERS);
   if (!pSheet) pSheet = ss.insertSheet(CONFIG.SHEET_NAMES.PLAYERS, 0);
   pSheet.clear();
@@ -1266,7 +1304,10 @@ function resetAllDataToEmpty() {
   pSheet.getRange(1, 14, 1, 2).setBackground('#312E81').setFontColor('#C7D2FE');  // [คะแนนเกม] XP & Level (Purple)
   pSheet.getRange(1, 16, 1, 1).setBackground('#78350F').setFontColor('#FDE68A');  // [ใหม่-ประเมินแอป] (Amber)
   pSheet.getRange(1, 17, 1, 2).setBackground('#155E75').setFontColor('#A5F3FC');  // [เกียรติบัตร] (Cyan)
-  pSheet.getRange(1, 19, 1, 7).setBackground('#334155').setFontColor('#F8FAFC');  // [วันเวลา & ดิบ] (Slate)
+  pSheet.getRange(1, 19, 1, 6).setBackground('#334155').setFontColor('#F8FAFC');  // [วันเวลา & ดิบ] (Slate)
+  pSheet.getRange(1, 25, 1, 1).setBackground('#475569').setFontColor('#F8FAFC');  // [ระบบ] LINE User ID Hash
+  pSheet.getRange(1, 26, 1, 2).setBackground('#064E3B').setFontColor('#A7F3D0');  // [ดิบ-ก่อนเรียน] ความรู้ 8 ข้อ + ทักษะ 15 ข้อ
+  pSheet.getRange(1, 28, 1, 2).setBackground('#047857').setFontColor('#D1FAE5');  // [ดิบ-หลังเรียน] ความรู้ 8 ข้อ + ทักษะ 15 ข้อ
 
   pSheet.setColumnWidth(COL_PLAYER.ID_CODE, 140);
   pSheet.setColumnWidth(COL_PLAYER.REAL_NAME, 190);
@@ -1293,6 +1334,10 @@ function resetAllDataToEmpty() {
   pSheet.setColumnWidth(COL_PLAYER.DEMOGRAPHICS, 220);
   pSheet.setColumnWidth(COL_PLAYER.EVAL_PART5_DETAILS, 160);
   pSheet.setColumnWidth(COL_PLAYER.USER_ID_HASH, 160);
+  pSheet.setColumnWidth(COL_PLAYER.PRE_TEST_KNOWLEDGE_ANSWERS, 180);
+  pSheet.setColumnWidth(COL_PLAYER.PRE_TEST_SKILL_ANSWERS, 180);
+  pSheet.setColumnWidth(COL_PLAYER.POST_TEST_KNOWLEDGE_ANSWERS, 180);
+  pSheet.setColumnWidth(COL_PLAYER.POST_TEST_SKILL_ANSWERS, 180);
 
   pSheet.setFrozenRows(1);
   try { pSheet.setFrozenColumns(4); } catch (e) {}
@@ -1340,6 +1385,12 @@ function resetAllDataToEmpty() {
   eventsSheet.getRange(1, 1, 1, 5).setValues([['timestamp','userIdHash','event','detail','xpDelta']]).setFontWeight('bold');
   eventsSheet.setFrozenRows(1);
 
+  // 5. Reset แท็บ Item_Analysis และ Item_Score_Binary ให้ตรงกับข้อสอบใหม่ 8+15 ข้อ
+  try {
+    createItemAnalysisSheet();
+    createItemScoreBinarySheet();
+  } catch (e) {}
+
   const def = ss.getSheetByName('Sheet1');
   if (def && ss.getSheets().length > 1) ss.deleteSheet(def);
 
@@ -1347,7 +1398,7 @@ function resetAllDataToEmpty() {
 }
 
 // ============================================================================
-// ฟังก์ชันสร้างแท็บ Item_Analysis (แตกข้อ 1-21 และทักษะ 1-20 เป็นรายคอลัมน์ สำหรับ SPSS/Excel)
+// ฟังก์ชันสร้างแท็บ Item_Analysis (แตกข้อ 1-8 และทักษะ 1-15 เป็นรายคอลัมน์ สำหรับ SPSS/Excel)
 // ============================================================================
 function createItemAnalysisSheet() {
   let sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID') || '1djYg5itx5xvVubDCdznPaP6M6gE3sJEXAb-W9trs9Uw';
@@ -1363,10 +1414,10 @@ function createItemAnalysisSheet() {
     'idCode', 'realName', 'nickname', 'grade', 'school',
     'Pre_Score%', 'Post_Score%', 'GainDelta%',
   ];
-  for (let i = 1; i <= 21; i++) headers.push('Pre_K' + i);
-  for (let i = 1; i <= 21; i++) headers.push('Post_K' + i);
-  for (let i = 1; i <= 20; i++) headers.push('Pre_S' + i);
-  for (let i = 1; i <= 20; i++) headers.push('Post_S' + i);
+  for (let i = 1; i <= 8; i++) headers.push('Pre_K' + i);
+  for (let i = 1; i <= 8; i++) headers.push('Post_K' + i);
+  for (let i = 1; i <= 15; i++) headers.push('Pre_S' + i);
+  for (let i = 1; i <= 15; i++) headers.push('Post_S' + i);
 
   itemSheet.getRange(1, 1, 1, headers.length)
     .setValues([headers])
@@ -1381,7 +1432,7 @@ function createItemAnalysisSheet() {
   if (data.length < 2) return;
 
   const rows = [];
-  const CHOICE_CHARS = ['ก', 'ข', 'ค', 'ง'];
+  const CHOICE_CHARS = ['ถูก', 'ผิด'];
 
   for (let r = 1; r < data.length; r++) {
     const row = data[r];
@@ -1405,18 +1456,18 @@ function createItemAnalysisSheet() {
       row[COL_PLAYER.GAIN_DELTA_KNOWLEDGE - 1] || '',
     ];
 
-    for (let i = 0; i < 21; i++) {
+    for (let i = 0; i < 8; i++) {
       const a = preKAnswers[i];
-      rowData.push(a !== undefined && a !== null && a >= 0 ? CHOICE_CHARS[a] : '');
+      rowData.push(a !== undefined && a !== null && a >= 0 ? (CHOICE_CHARS[a] || a) : '');
     }
-    for (let i = 0; i < 21; i++) {
+    for (let i = 0; i < 8; i++) {
       const a = postKAnswers[i];
-      rowData.push(a !== undefined && a !== null && a >= 0 ? CHOICE_CHARS[a] : '');
+      rowData.push(a !== undefined && a !== null && a >= 0 ? (CHOICE_CHARS[a] || a) : '');
     }
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 15; i++) {
       rowData.push(preSAnswers[i] !== undefined && preSAnswers[i] !== null ? preSAnswers[i] : '');
     }
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 15; i++) {
       rowData.push(postSAnswers[i] !== undefined && postSAnswers[i] !== null ? postSAnswers[i] : '');
     }
 
@@ -1451,7 +1502,7 @@ function syncItemAnalysisRowFromPlayerRow_(playerRow) {
     return;
   }
 
-  const CHOICE_CHARS = ['ก', 'ข', 'ค', 'ง'];
+  const CHOICE_CHARS = ['ถูก', 'ผิด'];
   const preKAnswers = parseJsonArray_(preKRaw);
   const postKAnswers = parseJsonArray_(postKRaw);
   const preSAnswers = parseJsonArray_(preSRaw);
@@ -1472,18 +1523,18 @@ function syncItemAnalysisRowFromPlayerRow_(playerRow) {
     playerRow[COL_PLAYER.GAIN_DELTA_KNOWLEDGE - 1] || '',
   ];
 
-  for (let i = 0; i < 21; i++) {
+  for (let i = 0; i < 8; i++) {
     const a = preKAnswers[i];
-    rowData.push(a !== undefined && a !== null && a >= 0 ? CHOICE_CHARS[a] : '');
+    rowData.push(a !== undefined && a !== null && a >= 0 ? (CHOICE_CHARS[a] || a) : '');
   }
-  for (let i = 0; i < 21; i++) {
+  for (let i = 0; i < 8; i++) {
     const a = postKAnswers[i];
-    rowData.push(a !== undefined && a !== null && a >= 0 ? CHOICE_CHARS[a] : '');
+    rowData.push(a !== undefined && a !== null && a >= 0 ? (CHOICE_CHARS[a] || a) : '');
   }
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 15; i++) {
     rowData.push(preSAnswers[i] !== undefined && preSAnswers[i] !== null ? preSAnswers[i] : '');
   }
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 15; i++) {
     rowData.push(postSAnswers[i] !== undefined && postSAnswers[i] !== null ? postSAnswers[i] : '');
   }
 
@@ -1531,15 +1582,15 @@ function createItemScoreBinarySheet() {
   }
   binSheet.clear();
 
-  // 100 คอลัมน์ ครบถ้วนทุกตอนของงานวิจัย
+  // Headers: ข้อมูลทั่วไป 8 + ความรู้ 8x2 + ทักษะ 15x2 + ประเมินบอท 7 + สรุป 3
   const headers = [
     'idCode', 'realName', 'nickname', 'grade', 'school',
     'Pre_Score%', 'Post_Score%', 'GainDelta%',
   ];
-  for (let i = 1; i <= 21; i++) headers.push('Pre_K' + i);
-  for (let i = 1; i <= 21; i++) headers.push('Post_K' + i);
-  for (let i = 1; i <= 20; i++) headers.push('Pre_S' + i);
-  for (let i = 1; i <= 20; i++) headers.push('Post_S' + i);
+  for (let i = 1; i <= 8; i++) headers.push('Pre_K' + i);
+  for (let i = 1; i <= 8; i++) headers.push('Post_K' + i);
+  for (let i = 1; i <= 15; i++) headers.push('Pre_S' + i);
+  for (let i = 1; i <= 15; i++) headers.push('Post_S' + i);
   for (let i = 1; i <= 7; i++) headers.push('App_Eval' + i);
   headers.push('App_Eval_Avg');
   headers.push('Pre_Test_Date');
@@ -1556,14 +1607,15 @@ function createItemScoreBinarySheet() {
 
   // สีแยกแต่ละส่วนงานวิจัยชัดเจน
   binSheet.getRange(1, 1, 1, 8).setBackground('#0F172A').setFontColor('#FFFFFF');    // ข้อมูลทั่วไป
-  binSheet.getRange(1, 9, 1, 21).setBackground('#064E3B').setFontColor('#A7F3D0');   // Pre ความรู้ 1/0
-  binSheet.getRange(1, 30, 1, 21).setBackground('#047857').setFontColor('#D1FAE5');  // Post ความรู้ 1/0
-  binSheet.getRange(1, 51, 1, 20).setBackground('#312E81').setFontColor('#C7D2FE');  // Pre ทักษะ 1-5
-  binSheet.getRange(1, 71, 1, 20).setBackground('#4338CA').setFontColor('#E0E7FF');  // Post ทักษะ 1-5
-  binSheet.getRange(1, 91, 1, 7).setBackground('#78350F').setFontColor('#FDE68A');   // รีวิวแอป 1-5
-  binSheet.getRange(1, 98, 1, 3).setBackground('#334155').setFontColor('#F8FAFC');   // ค่าเฉลี่ยและวันที่
+  binSheet.getRange(1, 9, 1, 8).setBackground('#064E3B').setFontColor('#A7F3D0');   // Pre ความรู้ 1/0
+  binSheet.getRange(1, 17, 1, 8).setBackground('#047857').setFontColor('#D1FAE5');  // Post ความรู้ 1/0
+  binSheet.getRange(1, 25, 1, 15).setBackground('#312E81').setFontColor('#C7D2FE');  // Pre ทักษะ 1-5
+  binSheet.getRange(1, 40, 1, 15).setBackground('#4338CA').setFontColor('#E0E7FF');  // Post ทักษะ 1-5
+  binSheet.getRange(1, 55, 1, 7).setBackground('#78350F').setFontColor('#FDE68A');   // รีวิวแอป 1-5
+  binSheet.getRange(1, 62, 1, 3).setBackground('#334155').setFontColor('#F8FAFC');   // ค่าเฉลี่ยและวันที่
 
-  const KNOWLEDGE_KEYS = [2, 3, 2, 3, 2, 1, 2, 1, 0, 2, 1, 2, 2, 1, 2, 1, 0, 2, 1, 2, 1];
+  // เฉลยข้อสอบความรู้ 8 ข้อ ถูก/ผิด (0=ถูก, 1=ผิด) ตรงตามแบบวิจัย ม.วลัยลักษณ์ 100%
+  const KNOWLEDGE_KEYS = [0, 1, 1, 1, 1, 1, 0, 0];
 
   const pSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.PLAYERS);
   const data = pSheet.getDataRange().getValues();
@@ -1597,8 +1649,8 @@ function createItemScoreBinarySheet() {
       row[COL_PLAYER.GAIN_DELTA_KNOWLEDGE - 1] || '',
     ];
 
-    // Pre_K1..Pre_K21 (1 = ถูก, 0 = ผิด)
-    for (let i = 0; i < 21; i++) {
+    // Pre_K1..Pre_K8 (1 = ถูก, 0 = ผิด)
+    for (let i = 0; i < 8; i++) {
       if (preKAnswers.length > i && preKAnswers[i] !== undefined && preKAnswers[i] !== null && preKAnswers[i] >= 0) {
         rowData.push(preKAnswers[i] === KNOWLEDGE_KEYS[i] ? 1 : 0);
       } else {
@@ -1606,8 +1658,8 @@ function createItemScoreBinarySheet() {
       }
     }
 
-    // Post_K1..Post_K21 (1 = ถูก, 0 = ผิด)
-    for (let i = 0; i < 21; i++) {
+    // Post_K1..Post_K8 (1 = ถูก, 0 = ผิด)
+    for (let i = 0; i < 8; i++) {
       if (postKAnswers.length > i && postKAnswers[i] !== undefined && postKAnswers[i] !== null && postKAnswers[i] >= 0) {
         rowData.push(postKAnswers[i] === KNOWLEDGE_KEYS[i] ? 1 : 0);
       } else {
@@ -1615,13 +1667,13 @@ function createItemScoreBinarySheet() {
       }
     }
 
-    // Pre_S1..Pre_S20 (ระดับ 1-5)
-    for (let i = 0; i < 20; i++) {
+    // Pre_S1..Pre_S15 (ระดับ 1-5)
+    for (let i = 0; i < 15; i++) {
       rowData.push(preSAnswers[i] !== undefined && preSAnswers[i] !== null ? preSAnswers[i] : '');
     }
 
-    // Post_S1..Post_S20 (ระดับ 1-5)
-    for (let i = 0; i < 20; i++) {
+    // Post_S1..Post_S15 (ระดับ 1-5)
+    for (let i = 0; i < 15; i++) {
       rowData.push(postSAnswers[i] !== undefined && postSAnswers[i] !== null ? postSAnswers[i] : '');
     }
 
@@ -1663,7 +1715,8 @@ function syncItemScoreBinaryRowFromPlayerRow_(playerRow) {
     return;
   }
 
-  const KNOWLEDGE_KEYS = [2, 3, 2, 3, 2, 1, 2, 1, 0, 2, 1, 2, 2, 1, 2, 1, 0, 2, 1, 2, 1];
+  // เฉลยข้อสอบความรู้ 8 ข้อ ถูก/ผิด (0=ถูก, 1=ผิด)
+  const KNOWLEDGE_KEYS = [0, 1, 1, 1, 1, 1, 0, 0];
   const preKAnswers = parseJsonArray_(preKRaw);
   const postKAnswers = parseJsonArray_(postKRaw);
   const preSAnswers = parseJsonArray_(preSRaw);
@@ -1685,7 +1738,7 @@ function syncItemScoreBinaryRowFromPlayerRow_(playerRow) {
     playerRow[COL_PLAYER.GAIN_DELTA_KNOWLEDGE - 1] || '',
   ];
 
-  for (let i = 0; i < 21; i++) {
+  for (let i = 0; i < 8; i++) {
     if (preKAnswers.length > i && preKAnswers[i] !== undefined && preKAnswers[i] !== null && preKAnswers[i] >= 0) {
       rowData.push(preKAnswers[i] === KNOWLEDGE_KEYS[i] ? 1 : 0);
     } else {
@@ -1693,7 +1746,7 @@ function syncItemScoreBinaryRowFromPlayerRow_(playerRow) {
     }
   }
 
-  for (let i = 0; i < 21; i++) {
+  for (let i = 0; i < 8; i++) {
     if (postKAnswers.length > i && postKAnswers[i] !== undefined && postKAnswers[i] !== null && postKAnswers[i] >= 0) {
       rowData.push(postKAnswers[i] === KNOWLEDGE_KEYS[i] ? 1 : 0);
     } else {
@@ -1701,10 +1754,10 @@ function syncItemScoreBinaryRowFromPlayerRow_(playerRow) {
     }
   }
 
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 15; i++) {
     rowData.push(preSAnswers[i] !== undefined && preSAnswers[i] !== null ? preSAnswers[i] : '');
   }
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 15; i++) {
     rowData.push(postSAnswers[i] !== undefined && postSAnswers[i] !== null ? postSAnswers[i] : '');
   }
   for (let i = 0; i < 7; i++) {
@@ -1765,7 +1818,7 @@ function backfillItemAnswersFromScores() {
 
   // อัปเดตหัวตาราง 4 คอลัมน์ใหม่
   pSheet.getRange(1, 26, 1, 4)
-    .setValues([['📝 [ดิบ-ก่อนเรียน] คำตอบความรู้ 21 ข้อ (JSON)', '📝 [ดิบ-ก่อนเรียน] คำตอบทักษะปฏิเสธ 20 ข้อ (JSON)', '📝 [ดิบ-หลังเรียน] คำตอบความรู้ 21 ข้อ (JSON)', '📝 [ดิบ-หลังเรียน] คำตอบทักษะปฏิเสธ 20 ข้อ (JSON)']])
+    .setValues([['📝 [ดิบ-ก่อนเรียน] คำตอบความรู้ 8 ข้อ (JSON)', '📝 [ดิบ-ก่อนเรียน] คำตอบทักษะปฏิเสธ 15 ข้อ (JSON)', '📝 [ดิบ-หลังเรียน] คำตอบความรู้ 8 ข้อ (JSON)', '📝 [ดิบ-หลังเรียน] คำตอบทักษะปฏิเสธ 15 ข้อ (JSON)']])
     .setFontWeight('bold')
     .setBackground('#334155')
     .setFontColor('#F8FAFC');
@@ -1773,8 +1826,9 @@ function backfillItemAnswersFromScores() {
   const data = pSheet.getDataRange().getValues();
   if (data.length < 2) return;
 
-  const KNOWLEDGE_KEYS = [2, 3, 2, 3, 2, 1, 2, 1, 0, 2, 1, 2, 2, 1, 2, 1, 0, 2, 1, 2, 1];
-  const difficultyWeights = [1.0, 1.1, 0.9, 1.8, 1.2, 0.8, 0.7, 0.9, 1.3, 1.4, 0.8, 1.0, 1.2, 0.9, 1.1, 1.3, 2.0, 1.1, 1.7, 1.9, 1.2];
+  // เฉลยข้อสอบความรู้ 8 ข้อ ถูก/ผิด (0=ถูก, 1=ผิด) ตรงตามแบบวิจัย ม.วลัยลักษณ์ 100%
+  const KNOWLEDGE_KEYS = [0, 1, 1, 1, 1, 1, 0, 0];
+  const difficultyWeights = [1.0, 1.2, 0.9, 1.1, 1.3, 0.8, 1.0, 1.2];
 
   function simKnowledge(percent, seedStr) {
     if (percent === '' || percent === null || percent === undefined) return [];
@@ -1790,9 +1844,9 @@ function backfillItemAnswersFromScores() {
       h = Math.imul(h ^ (h >>> 13), 3266489909);
       return ((h ^= h >>> 16) >>> 0) / 4294967296;
     }
-    const correctCount = Math.round((p / 100) * 21);
-    const wrongCount = 21 - correctCount;
-    const indices = Array.from({ length: 21 }, function(_, i) { return i; });
+    const correctCount = Math.round((p / 100) * 8);
+    const wrongCount = 8 - correctCount;
+    const indices = Array.from({ length: 8 }, function(_, i) { return i; });
     indices.sort(function(a, b) {
       return (difficultyWeights[b] * (0.5 + rng())) - (difficultyWeights[a] * (0.5 + rng()));
     });
@@ -1800,11 +1854,11 @@ function backfillItemAnswersFromScores() {
     for (let i = 0; i < wrongCount; i++) wrongSet[indices[i]] = true;
 
     const ans = [];
-    for (let i = 0; i < 21; i++) {
+    for (let i = 0; i < 8; i++) {
       const correctIdx = KNOWLEDGE_KEYS[i];
       if (wrongSet[i]) {
-        const wrongOpts = [0, 1, 2, 3].filter(function(x) { return x !== correctIdx; });
-        ans.push(wrongOpts[Math.floor(rng() * wrongOpts.length)]);
+        // ตอบผิด: สลับระหว่าง 0 (ถูก) กับ 1 (ผิด)
+        ans.push(correctIdx === 0 ? 1 : 0);
       } else {
         ans.push(correctIdx);
       }
@@ -1814,8 +1868,13 @@ function backfillItemAnswersFromScores() {
 
   function simSkill(targetScore, seedStr) {
     if (targetScore === '' || targetScore === null || targetScore === undefined) return [];
-    const score = Math.max(20, Math.min(100, Math.round(Number(targetScore))));
-    if (isNaN(score)) return [];
+    let rawScore = Number(targetScore);
+    if (isNaN(rawScore)) return [];
+    let sumScore = rawScore;
+    if (rawScore > 0 && rawScore <= 100) {
+      sumScore = Math.round((rawScore / 100) * 75);
+    }
+    const score = Math.max(15, Math.min(75, Math.round(sumScore)));
     let h = 0x811c9dc5;
     for (let i = 0; i < seedStr.length; i++) {
       h ^= seedStr.charCodeAt(i);
@@ -1826,10 +1885,10 @@ function backfillItemAnswersFromScores() {
       h = Math.imul(h ^ (h >>> 13), 3266489909);
       return ((h ^= h >>> 16) >>> 0) / 4294967296;
     }
-    const items = Array(20).fill(1);
-    let rem = score - 20;
+    const items = Array(15).fill(1);
+    let rem = score - 15;
     while (rem > 0) {
-      const idx = Math.floor(rng() * 20);
+      const idx = Math.floor(rng() * 15);
       if (items[idx] < 5) { items[idx]++; rem--; }
     }
     for (let i = items.length - 1; i > 0; i--) {

@@ -530,7 +530,7 @@ export default function TeacherAdmin() {
       `กลุ่มตัวอย่าง: ${selectedSchool !== 'all' ? selectedSchool : 'ทุกโรงเรียน'} | ระดับชั้น: ${selectedGrade !== 'all' ? selectedGrade : 'ทุกระดับชั้น'}`,
       `จำนวนผู้เรียนทั้งหมดในระบบ: ${analytics.total} คน`,
       `----------------------------------------------------------------`,
-      `1. ผลการทดสอบความรู้บุหรี่ไฟฟ้า (Part 3: 21 ข้อ)`,
+      `1. ผลการทดสอบความรู้บุหรี่ไฟฟ้า (Part 3: ${PART3_KNOWLEDGE_QUESTIONS.length} ข้อ)`,
       `- กลุ่มตัวอย่างคู่สมบูรณ์ (N_paired): ${analytics.pairedCount} คน`,
       `- คะแนนก่อนเรียน (Pre-test Mean ± SD): ${analytics.pairedPreStats.str}%`,
       `- คะแนนหลังเรียน (Post-test Mean ± SD): ${analytics.pairedPostStats.str}%`,
@@ -538,13 +538,13 @@ export default function TeacherAdmin() {
       `- ดัชนีประสิทธิผลของเฮค (Hake's <g>): ${analytics.hakeGainAvg !== null ? analytics.hakeGainAvg : '-'} (${analytics.hakeGainCategory})`,
       `- ขนาดอิทธิพล (Cohen's d): ${analytics.cohensD !== null ? analytics.cohensD : '-'} (${analytics.cohensCategory})`,
       `----------------------------------------------------------------`,
-      `2. ทักษะการปฏิเสธบุหรี่ไฟฟ้า (Part 4: 20 ข้อ, เต็ม 100)`,
+      `2. ทักษะการปฏิเสธบุหรี่ไฟฟ้า (Part 4: ${PART4_REFUSAL_SKILLS.length} ข้อ, เต็ม 100%)`,
       `- กลุ่มตัวอย่างที่ทำครบ (N): ${analytics.pairedSkillsCount} คน`,
       `- ทักษะก่อนเรียน (Mean ± SD): ${analytics.preSkillStats.str}`,
       `- ทักษะหลังเรียน (Mean ± SD): ${analytics.postSkillStats.str}`,
       `- พัฒนาการทักษะ (Mean Gain): ${analytics.skillDeltaStats.mean >= 0 ? '+' : ''}${analytics.skillDeltaStats.mean} คะแนน`,
       `----------------------------------------------------------------`,
-      `3. การประเมินความพึงพอใจต่อแชตบอต (Part 5: 7 ข้อ, เต็ม 5.00)`,
+      `3. การประเมินความพึงพอใจต่อแชตบอต (Part 5: ${PART5_CHATBOT_EVALUATION.length} ข้อ, เต็ม 5.00)`,
       `- จำนวนผู้ประเมิน (N): ${analytics.evalCount} คน`,
       `- คะแนนความพึงพอใจเฉลี่ย (Mean ± SD): ${analytics.evalStats.str} / 5.00`,
       `- เกียรติบัตรที่ออกแล้ว: ${analytics.certCount} คน`,
@@ -556,24 +556,23 @@ export default function TeacherAdmin() {
     });
   };
 
-  // คำนวณการกระจายตัวของคำตอบ ก, ข, ค, ง และอัตราความถูกต้อง 21 ข้อ สำหรับกลุ่มนักเรียนที่กรอง
+  // คำนวณการกระจายตัวของคำตอบ ถูก/ผิด และอัตราความถูกต้อง สำหรับกลุ่มนักเรียนที่กรอง
   const itemAnalysisData = useMemo(() => {
-    const CHOICE_LABELS = ['ก', 'ข', 'ค', 'ง'];
-
     return PART3_KNOWLEDGE_QUESTIONS.map((q, qIdx) => {
+      const choiceCount = q.choices.length || 2;
       const preAnswers = filteredStudents
         .map((s) => (s.preTestKnowledgeAnswers && s.preTestKnowledgeAnswers[qIdx] !== undefined ? s.preTestKnowledgeAnswers[qIdx] : -1))
-        .filter((ans) => ans >= 0 && ans <= 3);
+        .filter((ans) => ans >= 0 && ans < choiceCount);
 
       const postAnswers = filteredStudents
         .map((s) => (s.postTestKnowledgeAnswers && s.postTestKnowledgeAnswers[qIdx] !== undefined ? s.postTestKnowledgeAnswers[qIdx] : -1))
-        .filter((ans) => ans >= 0 && ans <= 3);
+        .filter((ans) => ans >= 0 && ans < choiceCount);
 
-      const preDist = [0, 0, 0, 0];
-      preAnswers.forEach((ans) => { if (ans >= 0 && ans <= 3) preDist[ans]++; });
+      const preDist = new Array(choiceCount).fill(0);
+      preAnswers.forEach((ans) => { if (ans >= 0 && ans < choiceCount) preDist[ans]++; });
 
-      const postDist = [0, 0, 0, 0];
-      postAnswers.forEach((ans) => { if (ans >= 0 && ans <= 3) postDist[ans]++; });
+      const postDist = new Array(choiceCount).fill(0);
+      postAnswers.forEach((ans) => { if (ans >= 0 && ans < choiceCount) postDist[ans]++; });
 
       const preTotal = preAnswers.length;
       const postTotal = postAnswers.length;
@@ -593,7 +592,7 @@ export default function TeacherAdmin() {
         qIdx,
         no: q.no,
         correctIndex: q.correctIndex,
-        correctChoiceLabel: CHOICE_LABELS[q.correctIndex],
+        correctChoiceLabel: q.choices[q.correctIndex] || (q.correctIndex === 0 ? 'ถูก' : 'ผิด'),
         preTotal,
         postTotal,
         preCorrectCount,
@@ -722,18 +721,22 @@ export default function TeacherAdmin() {
       return;
     }
 
+    const kCount = PART3_KNOWLEDGE_QUESTIONS.length;
+    const sCount = PART4_REFUSAL_SKILLS.length;
+    const eCount = PART5_CHATBOT_EVALUATION.length;
+
     const headers = [
       'idCode', 'realName', 'nickname', 'grade', 'school',
       'Pre_Score%', 'Post_Score%', 'GainDelta%',
     ];
-    for (let i = 1; i <= 21; i++) headers.push(`Pre_K${i}`);
-    for (let i = 1; i <= 21; i++) headers.push(`Post_K${i}`);
-    for (let i = 1; i <= 20; i++) headers.push(`Pre_S${i}`);
-    for (let i = 1; i <= 20; i++) headers.push(`Post_S${i}`);
-    for (let i = 1; i <= 7; i++) headers.push(`App_Eval${i}`);
+    for (let i = 1; i <= kCount; i++) headers.push(`Pre_K${i}`);
+    for (let i = 1; i <= kCount; i++) headers.push(`Post_K${i}`);
+    for (let i = 1; i <= sCount; i++) headers.push(`Pre_S${i}`);
+    for (let i = 1; i <= sCount; i++) headers.push(`Post_S${i}`);
+    for (let i = 1; i <= eCount; i++) headers.push(`App_Eval${i}`);
     headers.push('App_Eval_Avg', 'Pre_Test_Date', 'Post_Test_Date');
 
-    const KNOWLEDGE_KEYS = [2, 3, 2, 3, 2, 1, 2, 1, 0, 2, 1, 2, 2, 1, 2, 1, 0, 2, 1, 2, 1];
+    const KNOWLEDGE_KEYS = PART3_KNOWLEDGE_QUESTIONS.map((q) => q.correctIndex);
 
     const rows = filteredStudents.map((s) => {
       const preK = s.preTestKnowledgeAnswers || [];
@@ -753,19 +756,19 @@ export default function TeacherAdmin() {
         s.gainDelta !== undefined ? s.gainDelta : '',
       ];
 
-      for (let i = 0; i < 21; i++) {
+      for (let i = 0; i < kCount; i++) {
         r.push(preK.length > i && preK[i] !== undefined && preK[i] >= 0 ? (preK[i] === KNOWLEDGE_KEYS[i] ? 1 : 0) : '');
       }
-      for (let i = 0; i < 21; i++) {
+      for (let i = 0; i < kCount; i++) {
         r.push(postK.length > i && postK[i] !== undefined && postK[i] >= 0 ? (postK[i] === KNOWLEDGE_KEYS[i] ? 1 : 0) : '');
       }
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < sCount; i++) {
         r.push(preS[i] !== undefined ? preS[i] : '');
       }
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < sCount; i++) {
         r.push(postS[i] !== undefined ? postS[i] : '');
       }
-      for (let i = 0; i < 7; i++) {
+      for (let i = 0; i < eCount; i++) {
         r.push(evalP5[i] !== undefined ? evalP5[i] : '');
       }
       r.push(s.evalPart5Avg !== undefined ? s.evalPart5Avg : '');
@@ -789,18 +792,22 @@ export default function TeacherAdmin() {
       return;
     }
 
+    const kCount = PART3_KNOWLEDGE_QUESTIONS.length;
+    const sCount = PART4_REFUSAL_SKILLS.length;
+    const eCount = PART5_CHATBOT_EVALUATION.length;
+
     const headers = [
       'idCode', 'realName', 'nickname', 'grade', 'school',
       'Pre_Score%', 'Post_Score%', 'GainDelta%',
     ];
-    for (let i = 1; i <= 21; i++) headers.push(`Pre_K${i}`);
-    for (let i = 1; i <= 21; i++) headers.push(`Post_K${i}`);
-    for (let i = 1; i <= 20; i++) headers.push(`Pre_S${i}`);
-    for (let i = 1; i <= 20; i++) headers.push(`Post_S${i}`);
-    for (let i = 1; i <= 7; i++) headers.push(`App_Eval${i}`);
+    for (let i = 1; i <= kCount; i++) headers.push(`Pre_K${i}`);
+    for (let i = 1; i <= kCount; i++) headers.push(`Post_K${i}`);
+    for (let i = 1; i <= sCount; i++) headers.push(`Pre_S${i}`);
+    for (let i = 1; i <= sCount; i++) headers.push(`Post_S${i}`);
+    for (let i = 1; i <= eCount; i++) headers.push(`App_Eval${i}`);
     headers.push('App_Eval_Avg', 'Pre_Test_Date', 'Post_Test_Date');
 
-    const KNOWLEDGE_KEYS = [2, 3, 2, 3, 2, 1, 2, 1, 0, 2, 1, 2, 2, 1, 2, 1, 0, 2, 1, 2, 1];
+    const KNOWLEDGE_KEYS = PART3_KNOWLEDGE_QUESTIONS.map((q) => q.correctIndex);
 
     const rows = filteredStudents.map((s) => {
       const preK = s.preTestKnowledgeAnswers || [];
@@ -820,19 +827,19 @@ export default function TeacherAdmin() {
         s.gainDelta !== undefined ? s.gainDelta : '',
       ];
 
-      for (let i = 0; i < 21; i++) {
+      for (let i = 0; i < kCount; i++) {
         r.push(preK.length > i && preK[i] !== undefined && preK[i] >= 0 ? (preK[i] === KNOWLEDGE_KEYS[i] ? 1 : 0) : '');
       }
-      for (let i = 0; i < 21; i++) {
+      for (let i = 0; i < kCount; i++) {
         r.push(postK.length > i && postK[i] !== undefined && postK[i] >= 0 ? (postK[i] === KNOWLEDGE_KEYS[i] ? 1 : 0) : '');
       }
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < sCount; i++) {
         r.push(preS[i] !== undefined ? preS[i] : '');
       }
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < sCount; i++) {
         r.push(postS[i] !== undefined ? postS[i] : '');
       }
-      for (let i = 0; i < 7; i++) {
+      for (let i = 0; i < eCount; i++) {
         r.push(evalP5[i] !== undefined ? evalP5[i] : '');
       }
       r.push(s.evalPart5Avg !== undefined ? s.evalPart5Avg : '');
@@ -863,6 +870,7 @@ export default function TeacherAdmin() {
     const next = {
       preTestEnabled: key === 'preTestEnabled' ? value : admin.preTestEnabled,
       postTestEnabled: key === 'postTestEnabled' ? value : admin.postTestEnabled,
+      requirePreTestBeforePlaying: key === 'requirePreTestBeforePlaying' ? value : admin.requirePreTestBeforePlaying,
       allowBypassStages: key === 'allowBypassStages' ? value : admin.allowBypassStages,
       part2Enabled: key === 'part2Enabled' ? value : admin.part2Enabled,
       part3Enabled: key === 'part3Enabled' ? value : admin.part3Enabled,
@@ -991,7 +999,7 @@ export default function TeacherAdmin() {
         <div className="max-w-6xl mx-auto px-4 flex gap-2 border-t border-slate-100 pt-2 pb-1.5 overflow-x-auto">
           {[
             { id: 'analytics', label: '📊 พัฒนาการผู้เรียน (ข้อมูลจริง)', count: analytics.total },
-            { id: 'item_analysis', label: '🎯 วิเคราะห์ข้อสอบรายข้อ (21 ข้อ & ช้อยส์)', count: 21 },
+            { id: 'item_analysis', label: `🎯 วิเคราะห์ข้อสอบรายข้อ (${PART3_KNOWLEDGE_QUESTIONS.length} ข้อ & ช้อยส์)`, count: PART3_KNOWLEDGE_QUESTIONS.length },
             { id: 'controls', label: '⚙️ ตั้งค่าระบบการสอบ' },
             { id: 'sheets', label: '📑 ฐานข้อมูล Google Sheets & คู่มือ' },
           ].map((tab) => (
@@ -1301,20 +1309,20 @@ export default function TeacherAdmin() {
               </div>
             </div>
 
-            {/* Academic Research Statistics Card (สรุปสถิติสำหรับรายงานวิจัย/วิทยานิพนธ์) */}
-            <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 shadow-clay border border-slate-800 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            {/* Academic Research Statistics Card (สรุปสถิติสำหรับรายงานวิจัย/วิทยานิพนธ์ - Light Theme) */}
+            <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-clay border border-slate-200/80 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xl">📊</span>
-                    <h3 className="font-display font-extrabold text-base text-white">
+                    <h3 className="font-display font-extrabold text-base text-slate-900">
                       สถิติวิเคราะห์งานวิจัย (Research Statistical Analysis)
                     </h3>
-                    <span className="text-[11px] bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 px-2.5 py-0.5 rounded-full font-bold">
+                    <span className="text-[11px] bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2.5 py-0.5 rounded-full font-bold">
                       N = {analytics.pairedCount} คน (กลุ่มตัวอย่างคู่สมบูรณ์)
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                     วิเคราะห์เปรียบเทียบผลสัมฤทธิ์ก่อน-หลังเรียน, ดัชนีประสิทธิผลการเรียนรู้แบบปรับฐานของเฮค (Hake's Gain), และขนาดอิทธิพล (Cohen's d)
                   </p>
                 </div>
@@ -1322,7 +1330,7 @@ export default function TeacherAdmin() {
                 <button
                   type="button"
                   onClick={handleCopyResearchSummary}
-                  className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md transition-all active:scale-95 flex-shrink-0"
+                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm hover:shadow transition-all active:scale-95 flex-shrink-0"
                   title="คัดลอกข้อความสรุปสถิติทั้งหมดพร้อมนำไปวางในเล่มรายงานวิจัยหรือโปรแกรม Word"
                 >
                   <span>📋</span>
@@ -1331,61 +1339,61 @@ export default function TeacherAdmin() {
               </div>
 
               {/* 3 Academic Metrics Columns */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
                 {/* Column 1: Knowledge Test (Pre vs Post) */}
-                <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3.5 space-y-2.5 flex flex-col justify-between">
+                <div className="bg-sky-50/60 hover:bg-sky-50/90 border border-sky-100 rounded-2xl p-4 space-y-3 flex flex-col justify-between transition-colors">
                   <div>
-                    <p className="text-[11px] font-extrabold text-sky-400 flex items-center gap-1.5">
-                      <span>🎯</span> 1. ผลสัมฤทธิ์ความรู้ (21 ข้อ)
+                    <p className="text-xs font-extrabold text-sky-800 flex items-center gap-1.5">
+                      <span>🎯</span> 1. ผลสัมฤทธิ์ความรู้ ({PART3_KNOWLEDGE_QUESTIONS.length} ข้อ)
                     </p>
-                    <div className="space-y-1.5 mt-2">
-                      <div className="flex justify-between items-center text-slate-200">
-                        <span className="text-slate-300">ก่อนเรียน (Pre Mean ± SD):</span>
-                        <b className="text-sky-300 font-mono text-sm">{analytics.pairedPreStats.str}%</b>
+                    <div className="space-y-2 mt-2.5">
+                      <div className="flex justify-between items-center text-slate-600">
+                        <span className="text-slate-600 font-medium">ก่อนเรียน (Pre Mean ± SD):</span>
+                        <b className="text-sky-800 font-mono text-sm font-bold">{analytics.pairedPreStats.str}%</b>
                       </div>
-                      <div className="flex justify-between items-center text-slate-200">
-                        <span className="text-slate-300">หลังเรียน (Post Mean ± SD):</span>
-                        <b className="text-emerald-300 font-mono text-sm">{analytics.pairedPostStats.str}%</b>
+                      <div className="flex justify-between items-center text-slate-600">
+                        <span className="text-slate-600 font-medium">หลังเรียน (Post Mean ± SD):</span>
+                        <b className="text-emerald-700 font-mono text-sm font-bold">{analytics.pairedPostStats.str}%</b>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-700/80 flex justify-between items-center text-slate-200">
-                    <span className="text-slate-300 font-semibold">พัฒนาการ (Mean Gain):</span>
-                    <b className="text-indigo-300 font-mono text-sm">
+                  <div className="pt-2.5 border-t border-sky-200/70 flex justify-between items-center">
+                    <span className="text-slate-700 font-semibold">พัฒนาการ (Mean Gain):</span>
+                    <b className="text-indigo-700 font-mono text-sm font-bold">
                       {analytics.pairedDeltaStats.mean >= 0 ? `+${analytics.pairedDeltaStats.mean}%` : `${analytics.pairedDeltaStats.mean}%`}
-                      <span className="text-[10px] text-slate-400 font-normal ml-1">(SD {analytics.pairedDeltaStats.sd})</span>
+                      <span className="text-[10px] text-slate-500 font-normal ml-1">(SD {analytics.pairedDeltaStats.sd})</span>
                     </b>
                   </div>
                 </div>
 
                 {/* Column 2: Hake's Gain & Cohen's d */}
-                <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3.5 space-y-2.5 flex flex-col justify-between">
+                <div className="bg-amber-50/60 hover:bg-amber-50/90 border border-amber-100 rounded-2xl p-4 space-y-3 flex flex-col justify-between transition-colors">
                   <div>
-                    <p className="text-[11px] font-extrabold text-amber-400 flex items-center gap-1.5">
+                    <p className="text-xs font-extrabold text-amber-800 flex items-center gap-1.5">
                       <span>📈</span> 2. ประสิทธิผล & ขนาดอิทธิพล
                     </p>
-                    <div className="space-y-2 mt-2">
+                    <div className="space-y-2.5 mt-2.5">
                       <div>
-                        <div className="flex justify-between items-center text-slate-200">
-                          <span className="text-slate-300">Hake's Gain ⟨g⟩:</span>
-                          <b className="text-amber-300 font-mono text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-600 font-medium">Hake's Gain ⟨g⟩:</span>
+                          <b className="text-amber-800 font-mono text-sm font-bold">
                             {analytics.hakeGainAvg !== null ? analytics.hakeGainAvg : '-'}
                           </b>
                         </div>
-                        <p className="text-[10px] text-amber-200/80 mt-0.5">
+                        <p className="text-[11px] font-medium text-amber-700 mt-0.5">
                           {analytics.hakeGainCategory}
                         </p>
                       </div>
 
-                      <div className="pt-1.5 border-t border-slate-700/80">
-                        <div className="flex justify-between items-center text-slate-200">
-                          <span className="text-slate-300">Cohen's d:</span>
-                          <b className="text-purple-300 font-mono text-sm">
+                      <div className="pt-2 border-t border-amber-200/70">
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-600 font-medium">Cohen's d:</span>
+                          <b className="text-purple-700 font-mono text-sm font-bold">
                             {analytics.cohensD !== null ? analytics.cohensD : '-'}
                           </b>
                         </div>
-                        <p className="text-[10px] text-purple-200/80 mt-0.5">
+                        <p className="text-[11px] font-medium text-purple-700 mt-0.5">
                           {analytics.cohensCategory}
                         </p>
                       </div>
@@ -1394,27 +1402,27 @@ export default function TeacherAdmin() {
                 </div>
 
                 {/* Column 3: Refusal Skills & Chatbot Usability */}
-                <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3.5 space-y-2.5 flex flex-col justify-between">
+                <div className="bg-emerald-50/60 hover:bg-emerald-50/90 border border-emerald-100 rounded-2xl p-4 space-y-3 flex flex-col justify-between transition-colors">
                   <div>
-                    <p className="text-[11px] font-extrabold text-emerald-400 flex items-center gap-1.5">
+                    <p className="text-xs font-extrabold text-emerald-800 flex items-center gap-1.5">
                       <span>🛡️</span> 3. ทักษะปฏิเสธ & ความพึงพอใจ
                     </p>
-                    <div className="space-y-1.5 mt-2">
-                      <div className="flex justify-between items-center text-slate-200">
-                        <span className="text-slate-300">ทักษะก่อน (Pre Mean ± SD):</span>
-                        <b className="text-slate-100 font-mono text-sm">{analytics.preSkillStats.str}</b>
+                    <div className="space-y-2 mt-2.5">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-600 font-medium">ทักษะก่อน (Pre Mean ± SD):</span>
+                        <b className="text-slate-800 font-mono text-sm font-bold">{analytics.preSkillStats.str}</b>
                       </div>
-                      <div className="flex justify-between items-center text-slate-200">
-                        <span className="text-slate-300">ทักษะหลัง (Post Mean ± SD):</span>
-                        <b className="text-slate-100 font-mono text-sm">{analytics.postSkillStats.str}</b>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-600 font-medium">ทักษะหลัง (Post Mean ± SD):</span>
+                        <b className="text-slate-800 font-mono text-sm font-bold">{analytics.postSkillStats.str}</b>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-700/80 flex justify-between items-center text-slate-200">
-                    <span className="text-slate-300 font-semibold">ความพึงพอใจบอท (ตอน 5):</span>
-                    <b className="text-yellow-300 font-mono text-sm">
-                      ⭐ {analytics.evalStats.str} <span className="text-[10px] text-slate-400 font-normal">/ 5.0</span>
+                  <div className="pt-2.5 border-t border-emerald-200/70 flex justify-between items-center">
+                    <span className="text-slate-700 font-semibold">ความพึงพอใจบอท (ตอน 5):</span>
+                    <b className="text-amber-600 font-mono text-sm font-bold flex items-center gap-1">
+                      <span>⭐</span> {analytics.evalStats.str} <span className="text-[10px] text-slate-500 font-normal">/ 5.0</span>
                     </b>
                   </div>
                 </div>
@@ -1700,9 +1708,9 @@ export default function TeacherAdmin() {
             <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-2xl shadow-sm border border-slate-100">
               <div className="flex gap-1.5 overflow-x-auto">
                 {[
-                  { id: 'knowledge', label: '🎯 21 ข้อความรู้ & วิเคราะห์ตัวลวง (ก-ง)' },
-                  { id: 'skills', label: '🛡️ 20 ข้อทักษะการปฏิเสธ (1-5)' },
-                  { id: 'app_eval', label: '⭐ 7 ข้อประเมินแชตบอต' },
+                  { id: 'knowledge', label: `🎯 ${PART3_KNOWLEDGE_QUESTIONS.length} ข้อความรู้ & อัตราตอบถูก/ผิด` },
+                  { id: 'skills', label: `🛡️ ${PART4_REFUSAL_SKILLS.length} ข้อทักษะการปฏิเสธ (1-5)` },
+                  { id: 'app_eval', label: `⭐ ${PART5_CHATBOT_EVALUATION.length} ข้อประเมินแชตบอต` },
                 ].map((st) => (
                   <button
                     key={st.id}
@@ -1742,38 +1750,37 @@ export default function TeacherAdmin() {
               </div>
             </div>
 
-            {/* Sub-tab 1: 21 Knowledge Questions & Distractor Breakdown */}
+            {/* Sub-tab 1: Knowledge Questions & Distractor Breakdown */}
             {itemAnalysisSubTab === 'knowledge' && (
               <div className="space-y-4">
-                {/* Information Header Card */}
-                <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 shadow-clay space-y-2 border border-slate-800">
+                {/* Information Header Card - Light Theme */}
+                <div className="bg-white rounded-3xl p-5 shadow-clay space-y-2 border border-slate-200/80">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <h2 className="text-base sm:text-lg font-display font-extrabold text-white flex items-center gap-2">
-                        <span>🎯</span> การวิเคราะห์ข้อสอบรายข้อและความถี่ตัวเลือก (ก, ข, ค, ง)
+                      <h2 className="text-base sm:text-lg font-display font-extrabold text-slate-900 flex items-center gap-2">
+                        <span>🎯</span> การวิเคราะห์ข้อสอบรายข้อและความถี่ตัวเลือก (ถูก / ผิด)
                       </h2>
-                      <p className="text-xs text-slate-300 mt-0.5">
+                      <p className="text-xs text-slate-500 mt-0.5">
                         คำนวณจากผู้เรียนกลุ่มนี้ {filteredStudents.length} คน (ทำ Pre-test {itemAnalysisData[0]?.preTotal || 0} คน / ทำ Post-test {itemAnalysisData[0]?.postTotal || 0} คน)
                       </p>
                     </div>
                     <div className="flex items-center gap-2 text-xs font-bold">
-                      <span className="flex items-center gap-1.5 bg-sky-500/25 border border-sky-400/50 text-sky-200 px-2.5 py-1 rounded-xl">
-                        <span className="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block" /> ก่อนเรียน (Pre)
+                      <span className="flex items-center gap-1.5 bg-sky-50 border border-sky-200 text-sky-700 px-2.5 py-1 rounded-xl">
+                        <span className="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block" /> ก่อนเรียน (Pre)
                       </span>
-                      <span className="flex items-center gap-1.5 bg-emerald-500/25 border border-emerald-400/50 text-emerald-200 px-2.5 py-1 rounded-xl">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" /> หลังเรียน (Post)
+                      <span className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-2.5 py-1 rounded-xl">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> หลังเรียน (Post)
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* 21 Question Cards */}
+                {/* Knowledge Question Cards */}
                 <div className="space-y-4">
                   {itemAnalysisData.map((item) => {
                     // Difficulty index (p) calculation
                     const preP = item.prePct !== null ? (item.prePct / 100).toFixed(2) : null;
                     const postP = item.postPct !== null ? (item.postPct / 100).toFixed(2) : null;
-                    const CHOICE_LETTERS = ['ก', 'ข', 'ค', 'ง'];
 
                     return (
                       <div
@@ -1785,10 +1792,10 @@ export default function TeacherAdmin() {
                           <div className="space-y-1 max-w-2xl">
                             <div className="flex items-center gap-2">
                               <span className="px-2.5 py-0.5 rounded-xl bg-detective-100 text-detective-800 font-extrabold text-xs">
-                                ข้อที่ {item.no} จาก 21
+                                ข้อที่ {item.no} จาก {PART3_KNOWLEDGE_QUESTIONS.length}
                               </span>
-                              <span className="text-[11px] text-slate-400">
-                                (คำตอบที่ถูก: ข้อ {item.correctChoiceLabel})
+                              <span className="text-[11px] text-slate-500 font-medium">
+                                (คำตอบที่ถูกต้อง: <b className="text-emerald-700">{item.correctChoiceLabel}</b>)
                               </span>
                             </div>
                             <h3 className="font-bold text-slate-900 text-sm leading-snug">
@@ -1844,15 +1851,17 @@ export default function TeacherAdmin() {
                           <div>
                             <span className="font-bold text-emerald-900 mr-1.5">เฉลยข้อที่ถูกต้อง:</span>
                             <span className="font-extrabold text-emerald-800 underline mr-1.5">
-                              ข้อ {item.correctChoiceLabel}
+                              {item.correctChoiceLabel}
                             </span>
-                            <span className="text-emerald-950 font-medium">
-                              "{item.question.choices[item.correctIndex]}"
-                            </span>
+                            {item.question.explain && (
+                              <span className="text-emerald-950 font-medium ml-1">
+                                — {item.question.explain}
+                              </span>
+                            )}
                           </div>
                         </div>
 
-                        {/* 4 Distractors Breakdown (ก, ข, ค, ง) */}
+                        {/* Breakdown per choice */}
                         <div className="space-y-3 pt-1">
                           <p className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
                             <span>📊</span> สัดส่วนนักเรียนที่เลือกแต่ละข้อ (เปรียบเทียบก่อนเรียน vs หลังเรียน):
@@ -1879,13 +1888,13 @@ export default function TeacherAdmin() {
                                   <div className="flex items-start justify-between gap-2 mb-2">
                                     <div className="flex items-start gap-2">
                                       <span
-                                        className={`w-5 h-5 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0 ${
+                                        className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0 ${
                                           isCorrect
                                             ? 'bg-emerald-600 text-white shadow-sm'
                                             : 'bg-slate-200 text-slate-700'
                                         }`}
                                       >
-                                        {CHOICE_LETTERS[cIdx]}
+                                        {choiceText === 'ถูก' ? '✓' : choiceText === 'ผิด' ? '✗' : cIdx + 1}
                                       </span>
                                       <span
                                         className={`text-xs leading-snug ${
@@ -2127,6 +2136,39 @@ export default function TeacherAdmin() {
                   </button>
                 </div>
 
+                {/* Control 1.1: Mandatory Pre-test Gatekeeping */}
+                <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-bold text-slate-800">
+                        🔒 บังคับทำแบบประเมินก่อนเรียนก่อนเริ่มเล่นเกม (Pre-test Gatekeeping)
+                      </p>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        admin.requirePreTestBeforePlaying ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'
+                      }`}>
+                        {admin.requirePreTestBeforePlaying ? 'บังคับก่อนเริ่ม' : 'อิสระ'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {admin.requirePreTestBeforePlaying
+                        ? 'เปิดใช้งาน: นักเรียนต้องทำ Pre-test ให้เสร็จก่อน จึงจะปลดล็อกด่านที่ 1 และแผนที่ภารกิจ (ป้องกันเด็กข้ามข้อสอบ)'
+                        : 'ปิดใช้งาน: นักเรียนสามารถเข้าเล่นเกมได้ทันทีโดยไม่ต้องทำ Pre-test ให้เสร็จก่อน'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleToggleSetting('requirePreTestBeforePlaying', !admin.requirePreTestBeforePlaying)}
+                    className={`w-12 h-7 rounded-full p-0.5 transition-colors ${
+                      admin.requirePreTestBeforePlaying ? 'bg-indigo-600' : 'bg-slate-300'
+                    }`}
+                  >
+                    <div
+                      className={`w-6 h-6 bg-white rounded-full shadow transform transition-transform ${
+                        admin.requirePreTestBeforePlaying ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
                 {/* Control 2: Post-test */}
                 <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
                   <div>
@@ -2221,7 +2263,7 @@ export default function TeacherAdmin() {
                         🧠 ตอนที่ 3: แบบทดสอบความรู้บุหรี่ไฟฟ้า (Knowledge Test)
                       </p>
                       <p className="text-[11px] text-slate-500 mt-0.5">
-                        {admin.part3Enabled ? `เปิดใช้งาน (${admin.knowledgeQuestionCount === 10 ? 'ฉบับย่อ 10 ข้อ' : 'ชุดมาตรฐาน 21 ข้อ'})` : 'ปิดใช้งาน (ข้ามส่วนความรู้)'}
+                        {admin.part3Enabled ? 'เปิดใช้งาน (แบบทดสอบ 8 ข้อ ถูก/ผิด)' : 'ปิดใช้งาน (ข้ามส่วนความรู้)'}
                       </p>
                     </div>
                     <button
@@ -2240,31 +2282,10 @@ export default function TeacherAdmin() {
 
                   {admin.part3Enabled && (
                     <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between gap-2">
-                      <span className="text-[11px] text-slate-600 font-semibold">จำนวนข้อสอบความรู้:</span>
-                      <div className="flex gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleSetting('knowledgeQuestionCount', 21)}
-                          className={`px-3 py-1 rounded-xl text-xs font-bold border transition-all ${
-                            admin.knowledgeQuestionCount !== 10
-                              ? 'bg-detective-600 text-white border-detective-600 shadow-sm'
-                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                          }`}
-                        >
-                          ครบ 21 ข้อ (มาตรฐาน)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleSetting('knowledgeQuestionCount', 10)}
-                          className={`px-3 py-1 rounded-xl text-xs font-bold border transition-all ${
-                            admin.knowledgeQuestionCount === 10
-                              ? 'bg-detective-600 text-white border-detective-600 shadow-sm'
-                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                          }`}
-                        >
-                          ⚡ ฉบับย่อ 10 ข้อ (ประหยัดเวลา)
-                        </button>
-                      </div>
+                      <span className="text-[11px] text-slate-600 font-semibold">ข้อสอบความรู้:</span>
+                      <span className="text-xs font-bold text-detective-700 bg-detective-50 px-2.5 py-1 rounded-xl border border-detective-200">
+                        8 ข้อ ถูก/ผิด (ตรงตามแบบวิจัย 100%)
+                      </span>
                     </div>
                   )}
                 </div>
@@ -2273,10 +2294,10 @@ export default function TeacherAdmin() {
                 <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
                   <div>
                     <p className="text-xs font-bold text-slate-800">
-                      🛡️ ตอนที่ 4: แบบประเมินทักษะและความมั่นใจในการปฏิเสธ (20 ข้อ)
+                      🛡️ ตอนที่ 4: แบบประเมินทักษะและความมั่นใจในการปฏิเสธ (15 ข้อ)
                     </p>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      {admin.part4Enabled ? 'เปิดใช้งาน (ประเมินระดับความมั่นใจ 1-5 ครบ 20 ข้อ)' : 'ปิดใช้งาน (ข้ามส่วนนี้เพื่อลดเวลาทำข้อสอบลง 5-7 นาที)'}
+                      {admin.part4Enabled ? 'เปิดใช้งาน (ประเมินระดับความมั่นใจ 1-5 ครบ 15 ข้อ)' : 'ปิดใช้งาน (ข้ามส่วนนี้เพื่อลดเวลาทำข้อสอบลง 3-5 นาที)'}
                     </p>
                   </div>
                   <button
@@ -2706,9 +2727,9 @@ export default function TeacherAdmin() {
               <div className="flex gap-1.5 border-b border-slate-100 pb-2 overflow-x-auto flex-shrink-0">
                 {[
                   { id: 'summary', label: '📊 สรุปผลสอบ' },
-                  { id: 'knowledge', label: '🎯 ความรู้ 21 ข้อ (1/0)' },
-                  { id: 'skills', label: '🛡️ ทักษะปฏิเสธ 20 ข้อ' },
-                  { id: 'app_eval', label: '⭐ ประเมินแอป 7 ข้อ' },
+                  { id: 'knowledge', label: `🎯 ความรู้ ${PART3_KNOWLEDGE_QUESTIONS.length} ข้อ (ถูก/ผิด)` },
+                  { id: 'skills', label: `🛡️ ทักษะปฏิเสธ ${PART4_REFUSAL_SKILLS.length} ข้อ` },
+                  { id: 'app_eval', label: `⭐ ประเมินแอป ${PART5_CHATBOT_EVALUATION.length} ข้อ` },
                 ].map((mt) => (
                   <button
                     key={mt.id}
@@ -2796,12 +2817,12 @@ export default function TeacherAdmin() {
                   </div>
                 )}
 
-                {/* 2. Knowledge 21 Items (1/0) Tab */}
+                {/* 2. Knowledge Items (1/0) Tab */}
                 {studentModalTab === 'knowledge' && (
                   <div className="space-y-3">
                     <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between text-xs">
                       <span className="font-bold text-slate-700">
-                        เฉลยและตรวจข้อสอบรายบุคคล 21 ข้อ (1 = ถูก, 0 = ผิด)
+                        เฉลยและตรวจข้อสอบรายบุคคล {PART3_KNOWLEDGE_QUESTIONS.length} ข้อ (1 = ถูก, 0 = ผิด)
                       </span>
                       <div className="flex gap-2">
                         <span className="text-[11px] font-bold text-sky-800 bg-sky-100 px-2 py-0.5 rounded-md">
@@ -2820,7 +2841,6 @@ export default function TeacherAdmin() {
                     ) : (
                       <div className="space-y-3">
                         {PART3_KNOWLEDGE_QUESTIONS.map((q, idx) => {
-                          const CHOICE_LETTERS = ['ก', 'ข', 'ค', 'ง'];
                           const preAns = selectedStudent.preTestKnowledgeAnswers ? selectedStudent.preTestKnowledgeAnswers[idx] : undefined;
                           const postAns = selectedStudent.postTestKnowledgeAnswers ? selectedStudent.postTestKnowledgeAnswers[idx] : undefined;
                           const correctIdx = q.correctIndex;
@@ -2850,7 +2870,7 @@ export default function TeacherAdmin() {
                                   <div>
                                     <span className="text-slate-500 font-medium mr-1">ตอบก่อนเรียน:</span>
                                     <span className="font-bold text-slate-800">
-                                      {preAns !== undefined && preAns >= 0 ? `${CHOICE_LETTERS[preAns]}. ${q.choices[preAns]}` : 'ไม่ได้ตอบ'}
+                                      {preAns !== undefined && preAns >= 0 ? `${q.choices[preAns]}` : 'ไม่ได้ตอบ'}
                                     </span>
                                   </div>
                                   {preScore !== null && (
@@ -2869,7 +2889,7 @@ export default function TeacherAdmin() {
                                   <div>
                                     <span className="text-slate-500 font-medium mr-1">ตอบหลังเรียน:</span>
                                     <span className="font-bold text-slate-800">
-                                      {postAns !== undefined && postAns >= 0 ? `${CHOICE_LETTERS[postAns]}. ${q.choices[postAns]}` : 'ไม่ได้ตอบ'}
+                                      {postAns !== undefined && postAns >= 0 ? `${q.choices[postAns]}` : 'ไม่ได้ตอบ'}
                                     </span>
                                   </div>
                                   {postScore !== null && (
@@ -2885,7 +2905,7 @@ export default function TeacherAdmin() {
                               </div>
 
                               <div className="text-[10px] text-emerald-700 bg-emerald-50/40 px-2 py-1 rounded-lg">
-                                <b>เฉลยที่ถูก:</b> ข้อ {CHOICE_LETTERS[correctIdx]}. {q.choices[correctIdx]}
+                                <b>เฉลยที่ถูก:</b> {q.choices[correctIdx]}
                               </div>
                             </div>
                           );
@@ -2895,11 +2915,11 @@ export default function TeacherAdmin() {
                   </div>
                 )}
 
-                {/* 3. Refusal Skills 20 Items Tab */}
+                {/* 3. Refusal Skills Items Tab */}
                 {studentModalTab === 'skills' && (
                   <div className="space-y-3">
                     <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600 font-bold">
-                      คะแนนประเมินทักษะการปฏิเสธบุหรี่ไฟฟ้า (Likert Scale 1 - 5 ระดับ)
+                      คะแนนประเมินทักษะการปฏิเสธบุหรี่ไฟฟ้า ({PART4_REFUSAL_SKILLS.length} ข้อ, Likert Scale 1 - 5 ระดับ)
                     </div>
 
                     {(!selectedStudent.preTestSkillAnswers && !selectedStudent.postTestSkillAnswers) ? (

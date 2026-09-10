@@ -58,6 +58,7 @@ export default function Assessment() {
   const [nickname, setNickname] = useState(player.nickname || 'ผู้เล่น');
   const [lineName, setLineName] = useState('');
   const [isLineLoading, setIsLineLoading] = useState(false);
+  const [consentAgreed, setConsentAgreed] = useState(true);
 
   // Auto-fetch LINE profile and latest teacher exam controls on mount
   useEffect(() => {
@@ -98,18 +99,38 @@ export default function Assessment() {
     selectedSchoolChoice === OTHER_SCHOOL_VALUE ? customSchoolText.trim() : selectedSchoolChoice;
 
   const [sex, setSex] = useState<string>('ชาย');
-  const [ageRange, setAgeRange] = useState<string>('13-14 ปี');
+  const [age, setAge] = useState<string>('13 ปี');
+  const [customAge, setCustomAge] = useState<string>('');
+  const [birthDay, setBirthDay] = useState<string>('');
   const [allowance, setAllowance] = useState<string>('50 - 100 บาท');
-  const [livingWith, setLivingWith] = useState<string>('บิดาและมารดา');
-  const [familySmoking, setFamilySmoking] = useState<string>('ไม่มีใครสูบเลย');
-  const [friendsSmoking, setFriendsSmoking] = useState<string>('ไม่มีเพื่อนสูบเลย');
+  const [livingWith, setLivingWith] = useState<string>('พ่อ-แม่');
+  const [customLivingWith, setCustomLivingWith] = useState<string>('');
+  const [fatherSmoke, setFatherSmoke] = useState<string>('ไม่สูบ');
+  const [motherSmoke, setMotherSmoke] = useState<string>('ไม่สูบ');
+  const [siblingSmoke, setSiblingSmoke] = useState<string>('ไม่สูบ');
+  const [friendSmoke, setFriendSmoke] = useState<string>('ไม่สูบ');
 
   // =========================================================================
   // FORM STATES (ตอนที่ 2: พฤติกรรมการใช้)
   // =========================================================================
   const [part2EverTried, setPart2EverTried] = useState<string>('ไม่เคยลองเลย');
-  const [part2FirstAge, setPart2FirstAge] = useState<string>('มัธยมศึกษาตอนต้น (ม.1 - ม.3)');
+  const [part2FirstAge, setPart2FirstAge] = useState<string>('ตอน ม.1');
   const [part2LastMonth, setPart2LastMonth] = useState<string>('ไม่เคยสูบเลย');
+
+  // Helper to generate Research ID Code: first 2 letters of nickname + 2-digit birth day (e.g. แพร 15 -> พร15)
+  const handleAutoGenerateIdCode = () => {
+    const rawNick = nickname.trim();
+    if (!rawNick) {
+      alert('กรุณากรอกชื่อเล่นก่อนสร้างรหัส');
+      return;
+    }
+    const thaiConsonants = rawNick.replace(/[^ก-๙a-zA-Z]/g, '');
+    const prefix = (thaiConsonants.length >= 2 ? thaiConsonants.slice(0, 2) : rawNick.slice(0, 2)).toUpperCase();
+    const dayDigits = birthDay ? String(parseInt(birthDay, 10) || '').padStart(2, '0') : '15';
+    const gen = `${prefix}${dayDigits}`;
+    setIdCode(gen);
+    sfx.click();
+  };
 
   // =========================================================================
   // FORM STATES (ตอนที่ 3: แบบทดสอบความรู้)
@@ -126,7 +147,7 @@ export default function Assessment() {
   const [part3CurrentIndex, setPart3CurrentIndex] = useState(0);
 
   // =========================================================================
-  // FORM STATES (ตอนที่ 4: ทักษะการปฏิเสธ 20 ข้อ)
+  // FORM STATES (ตอนที่ 4: ทักษะการปฏิเสธ 15 ข้อ)
   // =========================================================================
   const [part4Answers, setPart4Answers] = useState<Record<number, number>>({});
 
@@ -153,16 +174,21 @@ export default function Assessment() {
           if (d.realName) setRealName(d.realName);
           if (d.idCode) setIdCode(d.idCode);
           if (d.nickname) setNickname(d.nickname);
+          if (d.birthDay) setBirthDay(d.birthDay);
           if (d.lineName) setLineName(d.lineName);
           if (d.grade) setGrade(d.grade);
           if (d.selectedSchoolChoice !== undefined) setSelectedSchoolChoice(d.selectedSchoolChoice);
           if (d.customSchoolText !== undefined) setCustomSchoolText(d.customSchoolText);
           if (d.sex) setSex(d.sex);
-          if (d.ageRange) setAgeRange(d.ageRange);
+          if (d.age) setAge(d.age);
+          if (d.customAge) setCustomAge(d.customAge);
           if (d.allowance) setAllowance(d.allowance);
           if (d.livingWith) setLivingWith(d.livingWith);
-          if (d.familySmoking) setFamilySmoking(d.familySmoking);
-          if (d.friendsSmoking) setFriendsSmoking(d.friendsSmoking);
+          if (d.customLivingWith) setCustomLivingWith(d.customLivingWith);
+          if (d.fatherSmoke) setFatherSmoke(d.fatherSmoke);
+          if (d.motherSmoke) setMotherSmoke(d.motherSmoke);
+          if (d.siblingSmoke) setSiblingSmoke(d.siblingSmoke);
+          if (d.friendSmoke) setFriendSmoke(d.friendSmoke);
           if (d.part2EverTried) setPart2EverTried(d.part2EverTried);
           if (d.part2FirstAge) setPart2FirstAge(d.part2FirstAge);
           if (d.part2LastMonth) setPart2LastMonth(d.part2LastMonth);
@@ -187,16 +213,21 @@ export default function Assessment() {
         realName,
         idCode,
         nickname,
+        birthDay,
         lineName,
         grade,
         selectedSchoolChoice,
         customSchoolText,
         sex,
-        ageRange,
+        age,
+        customAge,
         allowance,
         livingWith,
-        familySmoking,
-        friendsSmoking,
+        customLivingWith,
+        fatherSmoke,
+        motherSmoke,
+        siblingSmoke,
+        friendSmoke,
         part2EverTried,
         part2FirstAge,
         part2LastMonth,
@@ -216,16 +247,21 @@ export default function Assessment() {
     realName,
     idCode,
     nickname,
+    birthDay,
     lineName,
     grade,
     selectedSchoolChoice,
     customSchoolText,
     sex,
-    ageRange,
+    age,
+    customAge,
     allowance,
     livingWith,
-    familySmoking,
-    friendsSmoking,
+    customLivingWith,
+    fatherSmoke,
+    motherSmoke,
+    siblingSmoke,
+    friendSmoke,
     part2EverTried,
     part2FirstAge,
     part2LastMonth,
@@ -261,27 +297,38 @@ export default function Assessment() {
     const sections: { id: string; name: string; desc: string; partNumber: number }[] = [];
     let counter = 1;
 
-    sections.push({
-      id: 'part1',
-      name: `ตอนที่ ${counter}: ข้อมูลส่วนบุคคลและการระบุตัวตน`,
-      desc: '8 ข้อ',
-      partNumber: counter++,
-    });
-
-    if (kind === 'pre' && admin.part2Enabled) {
+    if (kind === 'pre') {
       sections.push({
-        id: 'part2',
-        name: `ตอนที่ ${counter}: พฤติกรรมการใช้และประสบการณ์`,
-        desc: '3 ข้อ',
+        id: 'part1',
+        name: `ตอนที่ ${counter}: ข้อมูลส่วนบุคคล (8 ข้อ)`,
+        desc: '8 ข้อ',
         partNumber: counter++,
       });
+
+      if (admin.part2Enabled) {
+        sections.push({
+          id: 'part2',
+          name: `ตอนที่ ${counter}: พฤติกรรมการใช้บุหรี่ไฟฟ้า`,
+          desc: '3 ข้อ',
+          partNumber: counter++,
+        });
+      }
+    } else if (kind === 'post') {
+      if (!player.realName || !player.idCode) {
+        sections.push({
+          id: 'part1',
+          name: `ระบุตัวตน: รหัสประจำตัววิจัย (ID Code)`,
+          desc: 'รหัสเดิม',
+          partNumber: counter++,
+        });
+      }
     }
 
     if (admin.part3Enabled) {
       sections.push({
         id: 'part3',
-        name: `ตอนที่ ${counter}: แบบทดสอบความรู้`,
-        desc: `${admin.knowledgeQuestionCount === 10 ? '10' : '21'} ข้อ 4 ตัวเลือก`,
+        name: `ตอนที่ ${counter}: แบบทดสอบความรู้เกี่ยวกับบุหรี่ไฟฟ้า`,
+        desc: '8 ข้อ (ถูก / ผิด)',
         partNumber: counter++,
       });
     }
@@ -289,8 +336,8 @@ export default function Assessment() {
     if (admin.part4Enabled) {
       sections.push({
         id: 'part4',
-        name: `ตอนที่ ${counter}: แบบประเมินทักษะและความมั่นใจ`,
-        desc: '20 ข้อ',
+        name: `ตอนที่ ${counter}: แบบประเมินทักษะการปฏิเสธบุหรี่ไฟฟ้า`,
+        desc: '15 ข้อ',
         partNumber: counter++,
       });
     }
@@ -298,14 +345,14 @@ export default function Assessment() {
     if (kind === 'post' && admin.part5Enabled) {
       sections.push({
         id: 'part5',
-        name: `ตอนที่ ${counter}: แบบประเมินแชตบอต`,
+        name: `ตอนที่ ${counter}: แบบประเมินประโยชน์ของแชตบอต`,
         desc: '7 ข้อ',
         partNumber: counter++,
       });
     }
 
     return sections;
-  }, [kind, admin.part2Enabled, admin.part3Enabled, admin.knowledgeQuestionCount, admin.part4Enabled, admin.part5Enabled]);
+  }, [kind, admin.part2Enabled, admin.part3Enabled, admin.part4Enabled, admin.part5Enabled, player.realName, player.idCode]);
 
   const totalActiveParts = activeSections.length;
   const currentPartNumber = activeSections.find((s) => s.id === currentStep)?.partNumber || 1;
@@ -328,6 +375,10 @@ export default function Assessment() {
   // Start from Intro to next enabled step
   const handleIntroStart = () => {
     sfx.click();
+    if (!consentAgreed) {
+      alert('โปรดยืนยันการยินดีตอบแบบสอบถามก่อนเริ่มต้น');
+      return;
+    }
     if (kind === 'post' && player.realName && player.idCode) {
       // In post-test, if identity was already collected, route directly to first enabled test part
       if (admin.part3Enabled) {
@@ -504,35 +555,63 @@ export default function Assessment() {
       recordEvaluationPart5(p5Avg, p5Details);
     }
 
-    // Array คำตอบความรู้รายข้อ (21 ข้อ: 0=ก, 1=ข, 2=ค, 3=ง)
+    // Array คำตอบความรู้รายข้อ (8 ข้อ: 0=ถูก, 1=ผิด)
     const kAnswers = knowledgeQuestions.map((_, idx) => part3Answers[idx] ?? -1);
 
-    // Array คำตอบทักษะปฏิเสธรายข้อ (20 ข้อ: คะแนน 1-5)
+    // Array คำตอบทักษะปฏิเสธรายข้อ (15 ข้อ: คะแนน 1-5)
     const sAnswers = admin.part4Enabled
       ? PART4_REFUSAL_SKILLS.map((_, idx) => part4Answers[idx] || 3)
       : [];
 
     if (kind === 'pre' || kind === 'post') {
-      const cleanId = idCode.trim();
-      const demographicsData = {
-        realName: realName.trim(),
-        idCode: cleanId,
-        nickname: nickname.trim(),
-        lineName: lineName.trim(),
-        grade: grade,
-        school: currentSchoolValue,
-        sex: sex,
-        ageRange: ageRange,
-        allowance: allowance,
-        livingWith: livingWith,
-        familySmoking: familySmoking,
-        friendsSmoking: friendsSmoking,
-        behavior: {
-          everTried: part2EverTried,
-          firstAge: part2FirstAge,
-          lastMonth: part2LastMonth,
-        },
-      };
+      const existingDemo = player.demographics || {};
+      const cleanId = (idCode || player.idCode || '').trim();
+      const finalRealName = (realName || player.realName || '').trim();
+      const finalNickname = (nickname || player.nickname || '').trim();
+      const finalLineName = (lineName || player.lineName || '').trim();
+      const finalGrade = grade || player.grade || 'ม.2';
+      const finalSchool = currentSchoolValue || player.school || '';
+
+      const finalAge = age === 'อื่นๆ' && customAge.trim() ? `${customAge.trim()} ปี` : age;
+      const finalLivingWith = livingWith === 'อื่นๆ' && customLivingWith.trim() ? customLivingWith.trim() : livingWith;
+
+      // ป้องกัน Post-test ลบทับข้อมูลสำรวจจริงด้วยค่าเริ่มต้น (Default)
+      const demographicsData =
+        kind === 'post' && existingDemo && Object.keys(existingDemo).length > 0
+          ? {
+              ...existingDemo,
+              realName: finalRealName || existingDemo.realName,
+              idCode: cleanId || existingDemo.idCode,
+              nickname: finalNickname || existingDemo.nickname,
+              lineName: finalLineName || existingDemo.lineName,
+              grade: finalGrade || existingDemo.grade,
+              school: finalSchool || existingDemo.school,
+            }
+          : {
+              realName: finalRealName,
+              idCode: cleanId,
+              nickname: finalNickname,
+              birthDay: birthDay.trim(),
+              lineName: finalLineName,
+              grade: finalGrade,
+              school: finalSchool,
+              sex: sex,
+              age: finalAge,
+              ageRange: finalAge,
+              allowance: allowance,
+              livingWith: finalLivingWith,
+              fatherSmoke: fatherSmoke,
+              motherSmoke: motherSmoke,
+              siblingSmoke: siblingSmoke,
+              friendSmoke: friendSmoke,
+              familySmoking: `พ่อ:${fatherSmoke}, แม่:${motherSmoke}, พี่น้อง:${siblingSmoke}`,
+              friendsSmoking: friendSmoke,
+              behavior: {
+                everTried: part2EverTried,
+                firstAge: part2EverTried === 'ไม่เคยลองเลย' ? 'ไม่เคยลอง' : part2FirstAge,
+                lastMonth: part2EverTried === 'ไม่เคยลองเลย' ? 'ไม่เคยสูบเลย' : part2LastMonth,
+              },
+            };
 
       recordAssessmentFull({
         kind,
@@ -541,10 +620,10 @@ export default function Assessment() {
         knowledgeAnswers: kAnswers,
         skillAnswers: sAnswers,
         idCode: cleanId,
-        realName: realName.trim(),
-        lineName: lineName.trim(),
-        grade: grade,
-        school: currentSchoolValue,
+        realName: finalRealName,
+        lineName: finalLineName,
+        grade: finalGrade,
+        school: finalSchool,
         demographics: demographicsData,
       });
     }
@@ -585,48 +664,80 @@ export default function Assessment() {
         />
 
         <main className="max-w-md md:max-w-xl mx-auto px-4 pt-3 space-y-3.5">
-          {/* Top Hero Card with Walailak Emblem */}
-          <div className="bg-white rounded-[26px] p-6 text-center shadow-sm border border-slate-100 space-y-3.5">
-            {/* Walailak Crest Graphic (Logo Only) */}
-            <div className="flex justify-center pt-1">
+          {/* Top Cover Art Hero Card with Walailak Emblem */}
+          <div className="rounded-[28px] overflow-hidden shadow-clay border border-slate-100 bg-white">
+            <div className="relative w-full aspect-[16/9] overflow-hidden bg-[#E7F0F9]">
               <img
-                src={asset('brand/wu-logo.png')}
-                alt="มหาวิทยาลัยวลัยลักษณ์"
-                className="h-16 w-auto object-contain drop-shadow-sm"
+                src={asset('assessment/cover_wide.jpg')}
+                alt="หน้าปกแบบสอบถามวิจัย"
+                className="w-full h-full object-cover object-center"
               />
             </div>
+            <div className="p-4 sm:p-5 space-y-3">
+              {/* Walailak University Branding Badge + Step Pill */}
+              <div className="flex items-center justify-between gap-2 p-2.5 rounded-2xl bg-amber-50/80 border border-amber-200/70 shadow-xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-11 h-11 rounded-xl bg-white p-1 shadow-xs border border-amber-200/80 flex items-center justify-center flex-shrink-0">
+                    <img
+                      src={asset('brand/wu-logo.png')}
+                      alt="ตราสัญลักษณ์ มหาวิทยาลัยวลัยลักษณ์"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-extrabold text-slate-900 leading-tight">
+                      มหาวิทยาลัยวลัยลักษณ์
+                    </p>
+                    <p className="text-[11px] text-amber-800 font-semibold mt-0.5">
+                      Walailak University
+                    </p>
+                  </div>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-black shadow-xs flex-shrink-0">
+                  {isPre ? '🅰️ Pre-test' : '🅱️ Post-test'}
+                </span>
+              </div>
 
-            {/* University Tag Badge */}
-            <div className="inline-block px-3.5 py-1 rounded-full bg-[#FEF3C7] text-[#92400E] text-xs font-bold shadow-sm">
-              มหาวิทยาลัยวลัยลักษณ์ (Walailak University)
-            </div>
+              {/* Research Title */}
+              <div>
+                <span className="inline-block px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 text-[10px] font-extrabold mb-1.5 border border-sky-200/80">
+                  {isPre ? 'แบบสอบถามก่อนเรียน' : 'แบบสอบถามหลังเรียน'}
+                </span>
+                <h1 className="font-display font-extrabold text-slate-900 text-sm sm:text-base leading-snug">
+                  แบบสอบถาม: การพัฒนาแชตบอตแบบเกมมิฟิเคชันเพื่อส่งเสริมความรู้และทักษะการปฏิเสธบุหรี่ไฟฟ้าในนักเรียนมัธยมศึกษาตอนต้น
+                </h1>
+              </div>
 
-            <div className="space-y-2">
-              <h1 className="text-base sm:text-lg font-display font-extrabold text-slate-900 leading-snug">
-                แบบสอบถาม: การพัฒนาแชตบอตแบบเกมมิฟิเคชันเพื่อส่งเสริมความรู้และทักษะการปฏิเสธบุหรี่ไฟฟ้าในนักเรียนมัธยมศึกษาตอนต้น
-              </h1>
-              <p className="text-xs text-slate-600 font-medium">
-                {isPre
-                  ? '📌 แบบประเมินก่อนเรียน (Pre-test) — ทำเพื่อวัดระดับความรู้เบื้องต้น (ไม่แสดงเฉลย)'
-                  : '📌 แบบประเมินหลังเรียน (Post-test) — ทำเพื่อวัดความรู้และประเมินผลการเรียนรู้'}
-              </p>
+              {/* Research Team */}
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
+                <span className="text-base">👩‍🏫</span>
+                <p>
+                  <span className="font-bold text-slate-800">คณะผู้วิจัย:</span> รองศาสตราจารย์ ดร. นิรชร ชูติพัฒนะ และคณะ
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Card 2: คำชี้แจงสำหรับนักเรียน/นักศึกษา */}
-          <div className="bg-sky-50/70 rounded-[24px] p-5 border border-sky-100/90 shadow-sm space-y-2.5">
+          {/* Card 2: คำชี้แจงทางการวิจัย */}
+          <div className="bg-sky-50/70 rounded-[24px] p-5 border border-sky-100 shadow-sm space-y-2.5">
             <h2 className="text-sm font-display font-extrabold text-slate-900">
-              คำชี้แจงสำหรับนักเรียน / นักศึกษา:
+              คำชี้แจง:
             </h2>
             <ol className="list-decimal list-outside pl-4 space-y-1.5 text-xs text-slate-700 leading-relaxed font-normal">
+              <li>ผู้ตอบแบบสอบถามนี้คือ นักเรียนชั้นมัธยมศึกษาปีที่ 1–3</li>
               <li>
-                แบบสอบถามชุดนี้มีวัตถุประสงค์เพื่อประเมินความรู้และทักษะ ก่อนและหลังการใช้แชตบอตและเกมการเรียนรู้
+                แบบสอบถามชุดนี้มีวัตถุประสงค์เพื่อพัฒนาแชตบอตและเปรียบเทียบความรู้กับทักษะการปฏิเสธบุหรี่ไฟฟ้าก่อนและหลังใช้แชตบอต
               </li>
               <li>
-                การตอบแบบสอบถามไม่มีผลกระทบต่อคะแนนวิชาการใดๆ โปรดตอบตามความเป็นจริงของตนเอง
+                คำตอบของนักเรียนจะช่วยพัฒนาแชตบอตให้เหมาะกับวัย และช่วยให้นักเรียนรู้เท่าทันอันตรายของบุหรี่ไฟฟ้า รวมทั้งปฏิเสธและหลีกเลี่ยงการใช้บุหรี่ไฟฟ้าได้อย่างมั่นใจ
               </li>
               <li>
-                แบบสอบถามประกอบด้วย {totalActiveParts} ตอน ใช้เวลาทำประมาณ {totalActiveParts <= 3 ? '5-8' : '10-15'} นาที
+                {isPre
+                  ? `แบบสอบถามชุดก่อนเรียนแบ่งออกเป็น 4 ตอน จำนวน 34 ข้อ (ข้อมูลส่วนตัว 8 ข้อ, พฤติกรรม 3 ข้อ, ความรู้ 8 ข้อ, ทักษะ 15 ข้อ) ใช้เวลาตอบประมาณ 10-15 นาที`
+                  : `แบบสอบถามชุดหลังเรียนแบ่งออกเป็น 3 ตอน (ความรู้ 8 ข้อ, ทักษะ 15 ข้อ, ประเมินแชตบอต 7 ข้อ) ใช้เวลาตอบประมาณ 10 นาที`}
+              </li>
+              <li>
+                การเข้าร่วมครั้งนี้เป็นไปโดยสมัครใจ นักเรียนมีสิทธิ์ปฏิเสธหรือถอนตัวได้ทุกเมื่อ โดยไม่มีผลกระทบต่อการเรียน ข้อมูลที่ได้รับจะถูกเก็บเป็นความลับและนำเสนอในภาพรวมเท่านั้น
               </li>
             </ol>
           </div>
@@ -639,7 +750,7 @@ export default function Assessment() {
             <ul className="space-y-1.5 text-xs text-slate-700 font-medium">
               {activeSections.map((sec) => (
                 <li key={sec.id} className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7]" />
                   <span>
                     <b>{sec.name}</b> ({sec.desc})
                   </span>
@@ -647,6 +758,22 @@ export default function Assessment() {
               ))}
             </ul>
           </div>
+
+          {/* Card 4: Consent Checkbox */}
+          <label className="flex items-start gap-3 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors">
+            <input
+              type="checkbox"
+              checked={consentAgreed}
+              onChange={(e) => setConsentAgreed(e.target.checked)}
+              className="w-5 h-5 rounded-md text-[#0284C7] focus:ring-[#0284C7] border-slate-300 mt-0.5"
+            />
+            <div className="text-xs text-slate-800">
+              <span className="font-bold text-slate-900">ยินดีตอบแบบสอบถาม</span>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                ข้าพเจ้าเข้าใจวัตถุประสงค์และยินดีเข้าร่วมการตอบแบบสอบถามนี้ด้วยความสมัครใจ
+              </p>
+            </div>
+          </label>
 
           {/* Primary Action Button */}
           <button
@@ -661,7 +788,7 @@ export default function Assessment() {
   }
 
   // =========================================================================
-  // VIEW: 2. STEP 1 IDENTITY & DEMOGRAPHICS (ตรงตามแบบภาพอ้างอิง 2)
+  // VIEW: 2. STEP 1 IDENTITY & DEMOGRAPHICS (ตรงตามแบบวิจัย 100%)
   // =========================================================================
   if (currentStep === 'part1') {
     return (
@@ -673,18 +800,73 @@ export default function Assessment() {
         />
 
         <main className="max-w-md md:max-w-xl mx-auto px-4 pt-3 space-y-4">
+          {/* Top 3D Cover Banner Card for Part 1 */}
+          <div className="rounded-[28px] overflow-hidden shadow-clay border border-slate-100 bg-white">
+            <div className="relative h-44 sm:h-52 w-full overflow-hidden bg-slate-950">
+              <img
+                src={asset('assessment/part1_cover.jpg')}
+                alt="หน้าปกตอนที่ 1 ข้อมูลส่วนบุคคล"
+                className="w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-transparent flex flex-col justify-end p-4 sm:p-5 text-white">
+                <span className="inline-block self-start px-2.5 py-0.5 rounded-full bg-sky-400 text-slate-950 text-[10px] font-black mb-1 shadow-sm">
+                  ตอนที่ 1 จาก {totalActiveParts}
+                </span>
+                <h1 className="font-display font-black text-base sm:text-lg leading-snug text-white drop-shadow">
+                  ตอนที่ 1: ข้อมูลส่วนบุคคล (8 ข้อ)
+                </h1>
+                <p className="text-[11px] text-sky-200 mt-0.5 font-medium">
+                  {kind === 'pre'
+                    ? 'ขอให้นักเรียนให้ข้อมูลที่ตรงกับความเป็นจริง เพื่อใช้ในการศึกษาเปรียบเทียบผล'
+                    : 'ระบุรหัสประจำตัวเดิมเพื่อใช้ในการเปรียบเทียบพัฒนาการก่อนและหลังเรียน'}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white rounded-[28px] p-5 sm:p-6 shadow-clay border border-slate-100 space-y-4">
-            {/* Header tag */}
-            <div className="border-b border-slate-100 pb-3">
-              <span className="text-xs font-bold text-[#0284C7]">
-                ตอนที่ 1 จาก {totalActiveParts}
-              </span>
-              <h2 className="text-base sm:text-lg font-display font-extrabold text-slate-900 mt-1">
-                ข้อมูลส่วนบุคคลและการระบุตัวตน
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                กรอกข้อมูลให้ตรงกับตัวนักเรียน เพื่อให้อาจารย์สามารถติดตามผลได้อย่างถูกต้อง
+            {/* Student ID & Verification Header */}
+            <div className="p-3.5 bg-gradient-to-r from-sky-50 to-indigo-50/50 rounded-2xl border border-sky-100 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🆔</span>
+                <h3 className="text-xs font-bold text-slate-900">
+                  การสร้างรหัสประจำตัว (ID Code) เพื่อความเป็นส่วนตัว
+                </h3>
+              </div>
+              <p className="text-[11px] text-slate-600 leading-relaxed">
+                สร้างรหัสโดยใช้ <b>อักษร 2 ตัวแรกของชื่อเล่น + วันที่เกิด 2 หลัก</b> เช่น ชื่อเล่น “แพร” เกิดวันที่ 15 รหัสคือ <b>พร15</b>
               </p>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 mb-0.5">ชื่อเล่น</label>
+                  <input
+                    type="text"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    placeholder="เช่น แพร, กอล์ฟ"
+                    className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 mb-0.5">วันที่เกิด (1-31)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={birthDay}
+                    onChange={(e) => setBirthDay(e.target.value)}
+                    placeholder="เช่น 15"
+                    className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleAutoGenerateIdCode}
+                className="w-full py-2 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
+              >
+                <span>⚡ สร้างรหัสประจำตัวอัตโนมัติ</span>
+              </button>
             </div>
 
             {/* Form Fields */}
@@ -693,48 +875,79 @@ export default function Assessment() {
               <div className="space-y-1">
                 <label className="block font-bold text-slate-800">
                   ชื่อ-นามสกุลจริง <span className="text-rose-500">*</span>
+                  <span className="text-[11px] font-normal text-slate-500 ml-1.5">(สำหรับคุณครูใช้ตรวจคะแนนและออกเกียรติบัตร)</span>
                 </label>
                 <input
                   type="text"
                   value={realName}
                   onChange={(e) => setRealName(e.target.value)}
-                  placeholder="เช่น นายสมชาย รักเรียน"
+                  placeholder="เช่น เด็กชายสมชาย รักเรียน"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0284C7] bg-white shadow-sm"
                 />
               </div>
 
-              {/* Field 2: Student ID */}
+              {/* Field 2: Student ID / ID Code */}
               <div className="space-y-1">
                 <label className="block font-bold text-slate-800">
-                  รหัสนักศึกษา / รหัสประจำตัวนักเรียน <span className="text-rose-500">*</span>
+                  รหัสประจำตัววิจัย (ID Code) <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={idCode}
-                  onChange={(e) => setIdCode(e.target.value.trim())}
-                  placeholder="เช่น 66123456, 12345 หรือเลขประจำตัวนักเรียน"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0284C7] bg-white shadow-sm font-semibold"
+                  onChange={(e) => setIdCode(e.target.value.trim().toUpperCase())}
+                  placeholder="เช่น พร15 หรือ 66123456"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0284C7] bg-white shadow-sm font-bold tracking-wider"
                 />
-                <p className="text-[11px] text-slate-500">
-                  💡 กรอกรหัสนักเรียนหรือรหัสนักศึกษาตามจริง เพื่อให้อาจารย์บันทึกและตรวจผลคะแนนได้ถูกต้อง
-                </p>
               </div>
 
-              {/* Field 3: App Nickname */}
+              {/* Field 3: Grade */}
               <div className="space-y-1">
                 <label className="block font-bold text-slate-800">
-                  ชื่อเล่นในแอป (นามสมมุติ)
+                  ระดับชั้นเรียน <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
-                  placeholder="เช่น ลุงเอ หรือ ไข่เจียว"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#0284C7]"
+                <select
+                  value={grade}
+                  onChange={(e) => setGrade(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm font-medium"
+                >
+                  <optgroup label="🌿 ระดับมัธยมศึกษาตอนต้น (กลุ่มวิจัย)">
+                    <option value="ม.1">มัธยมศึกษาปีที่ 1 (ม.1)</option>
+                    <option value="ม.2">มัธยมศึกษาปีที่ 2 (ม.2)</option>
+                    <option value="ม.3">มัธยมศึกษาปีที่ 3 (ม.3)</option>
+                  </optgroup>
+                  <optgroup label="🌱 ระดับประถมศึกษา">
+                    <option value="ป.4">ประถมศึกษาปีที่ 4 (ป.4)</option>
+                    <option value="ป.5">ประถมศึกษาปีที่ 5 (ป.5)</option>
+                    <option value="ป.6">ประถมศึกษาปีที่ 6 (ป.6)</option>
+                    <option value="ประถมศึกษาอื่นๆ">ประถมศึกษาอื่นๆ</option>
+                  </optgroup>
+                  <optgroup label="🌳 ระดับมัธยมศึกษาตอนปลาย & อาชีวะ">
+                    <option value="ม.4">มัธยมศึกษาปีที่ 4 (ม.4)</option>
+                    <option value="ม.5">มัธยมศึกษาปีที่ 5 (ม.5)</option>
+                    <option value="ม.6">มัธยมศึกษาปีที่ 6 (ม.6)</option>
+                    <option value="ปวช.">ประกาศนียบัตรวิชาชีพ (ปวช.)</option>
+                    <option value="อื่นๆ">อื่นๆ</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              {/* Field 4: School */}
+              <div className="space-y-1.5">
+                <label className="block font-bold text-slate-800 flex items-center justify-between">
+                  <span>🏫 โรงเรียน / สถาบันการศึกษา <span className="text-rose-500">*</span></span>
+                  <span className="text-[10px] text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md font-semibold border border-sky-100">
+                    ค้นหาได้ & แตะเลือกด่วน
+                  </span>
+                </label>
+                <SchoolSelectorModal
+                  selectedSchool={selectedSchoolChoice}
+                  customSchoolText={customSchoolText}
+                  onSelectSchool={(sch) => setSelectedSchoolChoice(sch)}
+                  onChangeCustomText={(txt) => setCustomSchoolText(txt)}
                 />
               </div>
 
-              {/* Field 4: LINE Profile Name */}
+              {/* Field 5: LINE Profile Name */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <label className="block font-bold text-slate-800 flex items-center gap-1.5">
@@ -761,163 +974,191 @@ export default function Assessment() {
                   type="text"
                   value={lineName}
                   onChange={(e) => setLineName(e.target.value)}
-                  placeholder="เช่น Somchai_K, น้องแพรวา, หรือชื่อที่ตั้งไว้ในแอป LINE"
+                  placeholder="เช่น Somchai_K หรือชื่อในแอป LINE"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm font-medium"
                 />
-                <p className="text-[11px] text-slate-500">
-                  {lineName
-                    ? '✓ ดึงชื่อจาก LINE มาให้เรียบร้อยแล้ว (สามารถแก้ไขได้ตามต้องการ)'
-                    : '💡 ระบบจะดึงชื่อโปรไฟล์จาก LINE ให้อัตโนมัติเมื่อเปิดผ่านแอป LINE (หรือพิมพ์เองได้)'}
-                </p>
               </div>
 
-              {/* Field 5: Grade */}
-              <div className="space-y-1">
-                <label className="block font-bold text-slate-800">
-                  ระดับชั้นเรียน <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={grade}
-                  onChange={(e) => setGrade(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm font-medium"
-                >
-                  <optgroup label="🌱 ระดับประถมศึกษา (ประถม)">
-                    <option value="ป.4">ประถมศึกษาปีที่ 4 (ป.4)</option>
-                    <option value="ป.5">ประถมศึกษาปีที่ 5 (ป.5)</option>
-                    <option value="ป.6">ประถมศึกษาปีที่ 6 (ป.6)</option>
-                    <option value="ประถมศึกษาอื่นๆ">ประถมศึกษาอื่นๆ (ป.1 - ป.3)</option>
-                  </optgroup>
-                  <optgroup label="🌿 ระดับมัธยมศึกษาตอนต้น">
-                    <option value="ม.1">มัธยมศึกษาปีที่ 1 (ม.1)</option>
-                    <option value="ม.2">มัธยมศึกษาปีที่ 2 (ม.2)</option>
-                    <option value="ม.3">มัธยมศึกษาปีที่ 3 (ม.3)</option>
-                  </optgroup>
-                  <optgroup label="🌳 ระดับมัธยมศึกษาตอนปลาย & อาชีวะ">
-                    <option value="ม.4">มัธยมศึกษาปีที่ 4 (ม.4)</option>
-                    <option value="ม.5">มัธยมศึกษาปีที่ 5 (ม.5)</option>
-                    <option value="ม.6">มัธยมศึกษาปีที่ 6 (ม.6)</option>
-                    <option value="ปวช.">ประกาศนียบัตรวิชาชีพ (ปวช. / อาชีวะ)</option>
-                    <option value="อื่นๆ">อื่นๆ</option>
-                  </optgroup>
-                </select>
-              </div>
+              {/* Research Demographics 8 Items (แสดงเฉพาะเมื่อทำแบบสอบถามชุดก่อนเรียน Pre-test) */}
+              {kind === 'pre' && (
+                <div className="pt-3 border-t border-slate-100 space-y-3.5">
+                  <div className="flex items-center gap-2 pb-1">
+                    <span className="text-xs font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md">
+                      แบบสอบถามข้อมูลส่วนบุคคล 8 ข้อ
+                    </span>
+                  </div>
 
-              {/* Field 6: School (Mobile-friendly Searchable Selector) */}
-              <div className="space-y-1.5">
-                <label className="block font-bold text-slate-800 flex items-center justify-between">
-                  <span>🏫 โรงเรียน / สถาบันการศึกษา <span className="text-rose-500">*</span></span>
-                  <span className="text-[10px] text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md font-semibold border border-sky-100">
-                    ค้นหาได้ & แตะเลือกด่วน
-                  </span>
-                </label>
-                <SchoolSelectorModal
-                  selectedSchool={selectedSchoolChoice}
-                  customSchoolText={customSchoolText}
-                  onSelectSchool={(sch) => setSelectedSchoolChoice(sch)}
-                  onChangeCustomText={(txt) => setCustomSchoolText(txt)}
-                />
-              </div>
+                  {/* Q1: Sex */}
+                  <div className="space-y-1">
+                    <label className="block font-bold text-slate-800">
+                      1. เพศ <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={sex}
+                      onChange={(e) => setSex(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
+                    >
+                      <option value="ชาย">(1) ชาย</option>
+                      <option value="หญิง">(2) หญิง</option>
+                      <option value="เพศทางเลือก">(3) เพศทางเลือก</option>
+                    </select>
+                  </div>
 
-              {/* Field 7: Sex */}
-              <div className="space-y-1">
-                <label className="block font-bold text-slate-800">
-                  เพศ <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={sex}
-                  onChange={(e) => setSex(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
-                >
-                  <option value="ชาย">ชาย</option>
-                  <option value="หญิง">หญิง</option>
-                  <option value="ทางเลือก / ไม่ระบุ">ทางเลือก / ไม่ระบุ</option>
-                </select>
-              </div>
+                  {/* Q2: Age */}
+                  <div className="space-y-1">
+                    <label className="block font-bold text-slate-800">
+                      2. นักเรียนอายุกี่ปี <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={age}
+                      onChange={(e) => setAge(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
+                    >
+                      <option value="12 ปี">(1) 12 ปี</option>
+                      <option value="13 ปี">(2) 13 ปี</option>
+                      <option value="14 ปี">(3) 14 ปี</option>
+                      <option value="15 ปี">(4) 15 ปี</option>
+                      <option value="16 ปี">(5) 16 ปี</option>
+                      <option value="17 ปี">(6) 17 ปี</option>
+                      <option value="อื่นๆ">(7) อื่นๆ (โปรดระบุ)</option>
+                    </select>
+                    {age === 'อื่นๆ' && (
+                      <input
+                        type="text"
+                        value={customAge}
+                        onChange={(e) => setCustomAge(e.target.value)}
+                        placeholder="ระบุอายุของท่าน (ปี)"
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-slate-800 mt-1 bg-white"
+                      />
+                    )}
+                  </div>
 
-              {/* Field 7: Age Range */}
-              <div className="space-y-1">
-                <label className="block font-bold text-slate-800">
-                  ช่วงอายุ <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={ageRange}
-                  onChange={(e) => setAgeRange(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
-                >
-                  <option value="12 - 13 ปี">12 - 13 ปี</option>
-                  <option value="14 - 15 ปี">14 - 15 ปี</option>
-                  <option value="16 - 18 ปี">16 - 18 ปี</option>
-                </select>
-              </div>
+                  {/* Q3: Allowance */}
+                  <div className="space-y-1">
+                    <label className="block font-bold text-slate-800">
+                      3. นักเรียนได้เงินมาโรงเรียนวันละกี่บาท <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={allowance}
+                      onChange={(e) => setAllowance(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
+                    >
+                      <option value="ไม่ได้เงินมาโรงเรียน">(1) ไม่ได้เงินมาโรงเรียน</option>
+                      <option value="น้อยกว่า 50 บาท">(2) น้อยกว่า 50 บาท</option>
+                      <option value="50 - 100 บาท">(3) 50 - 100 บาท</option>
+                      <option value="101 - 200 บาท">(4) 101 - 200 บาท</option>
+                      <option value="มากกว่า 200 บาทขึ้นไป">(5) มากกว่า 200 บาทขึ้นไป</option>
+                    </select>
+                  </div>
 
-              {/* Field 8: Daily Allowance */}
-              <div className="space-y-1">
-                <label className="block font-bold text-slate-800">
-                  เงินค่าใช้จ่ายที่ได้รับมาโรงเรียนต่อวัน
-                </label>
-                <select
-                  value={allowance}
-                  onChange={(e) => setAllowance(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
-                >
-                  <option value="ต่ำกว่า 50 บาท">ต่ำกว่า 50 บาท</option>
-                  <option value="50 - 100 บาท">50 - 100 บาท</option>
-                  <option value="101 - 150 บาท">101 - 150 บาท</option>
-                  <option value="มากกว่า 150 บาท">มากกว่า 150 บาท</option>
-                </select>
-              </div>
+                  {/* Q4: Living with */}
+                  <div className="space-y-1">
+                    <label className="block font-bold text-slate-800">
+                      4. ปัจจุบันนักเรียนอาศัยอยู่กับใคร <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={livingWith}
+                      onChange={(e) => setLivingWith(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
+                    >
+                      <option value="พ่อ">(1) พ่อ</option>
+                      <option value="แม่">(2) แม่</option>
+                      <option value="พ่อ-แม่">(3) พ่อ-แม่</option>
+                      <option value="ปู่ย่า-ตายาย">(4) ปู่ย่า-ตายาย</option>
+                      <option value="ญาติ">(5) ญาติ</option>
+                      <option value="อื่นๆ">(6) อื่นๆ (โปรดระบุ)</option>
+                    </select>
+                    {livingWith === 'อื่นๆ' && (
+                      <input
+                        type="text"
+                        value={customLivingWith}
+                        onChange={(e) => setCustomLivingWith(e.target.value)}
+                        placeholder="ระบุบุคคลที่พักอาศัยอยู่ด้วย เช่น หอพัก"
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-slate-800 mt-1 bg-white"
+                      />
+                    )}
+                  </div>
 
-              {/* Field 9: Living With */}
-              <div className="space-y-1">
-                <label className="block font-bold text-slate-800">
-                  ปัจจุบันท่านพักอาศัยอยู่กับใคร
-                </label>
-                <select
-                  value={livingWith}
-                  onChange={(e) => setLivingWith(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
-                >
-                  <option value="บิดาและมารดา">บิดาและมารดา</option>
-                  <option value="บิดาหรือมารดาคนใดคนหนึ่ง">บิดาหรือมารดาคนใดคนหนึ่ง</option>
-                  <option value="ญาติ (ปู่ ย่า ตา ยาย ลุง ป้า น้า อา)">ญาติ (ปู่ ย่า ตา ยาย ลุง ป้า น้า อา)</option>
-                  <option value="หอพัก / อยู่กับเพื่อน">หอพัก / อยู่กับเพื่อน</option>
-                  <option value="อื่นๆ">อื่นๆ</option>
-                </select>
-              </div>
+                  {/* Q5: Father Smoking */}
+                  <div className="space-y-1">
+                    <label className="block font-bold text-slate-800 leading-snug">
+                      5. พ่อของนักเรียน สูบบุหรี่หรือไม่
+                      <span className="block text-[10px] text-slate-500 font-normal">
+                        (เช่น บุหรี่ทุกชนิด ทั้งมวนเอง ยาเส้น ใบจาก บุหรี่ซอง บุหรี่ไฟฟ้า)
+                      </span>
+                    </label>
+                    <select
+                      value={fatherSmoke}
+                      onChange={(e) => setFatherSmoke(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
+                    >
+                      <option value="สูบ">(1) สูบ</option>
+                      <option value="ไม่สูบ">(2) ไม่สูบ</option>
+                      <option value="ไม่ทราบ / ไม่แน่ใจ">(3) ไม่ทราบ / ไม่แน่ใจ</option>
+                      <option value="พ่อเสียชีวิตแล้ว">(4) พ่อเสียชีวิตแล้ว</option>
+                    </select>
+                  </div>
 
-              {/* Field 10: Family Smoking */}
-              <div className="space-y-1">
-                <label className="block font-bold text-slate-800">
-                  บุคคลในครอบครัวของท่านสูบบุหรี่หรือบุหรี่ไฟฟ้าหรือไม่
-                </label>
-                <select
-                  value={familySmoking}
-                  onChange={(e) => setFamilySmoking(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
-                >
-                  <option value="ไม่มีใครสูบเลย">ไม่มีใครสูบเลย</option>
-                  <option value="มีคนสูบบุหรี่ธรรมดา">มีคนสูบบุหรี่ธรรมดา</option>
-                  <option value="มีคนสูบบุหรี่ไฟฟ้า">มีคนสูบบุหรี่ไฟฟ้า</option>
-                  <option value="มีคนสูบทั้งสองแบบ">มีคนสูบทั้งสองแบบ</option>
-                </select>
-              </div>
+                  {/* Q6: Mother Smoking */}
+                  <div className="space-y-1">
+                    <label className="block font-bold text-slate-800 leading-snug">
+                      6. แม่ของนักเรียน สูบบุหรี่หรือไม่
+                      <span className="block text-[10px] text-slate-500 font-normal">
+                        (เช่น บุหรี่ทุกชนิด ทั้งมวนเอง ยาเส้น ใบจาก บุหรี่ซอง บุหรี่ไฟฟ้า)
+                      </span>
+                    </label>
+                    <select
+                      value={motherSmoke}
+                      onChange={(e) => setMotherSmoke(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
+                    >
+                      <option value="สูบ">(1) สูบ</option>
+                      <option value="ไม่สูบ">(2) ไม่สูบ</option>
+                      <option value="ไม่ทราบ / ไม่แน่ใจ">(3) ไม่ทราบ / ไม่แน่ใจ</option>
+                      <option value="แม่เสียชีวิตแล้ว">(4) แม่เสียชีวิตแล้ว</option>
+                    </select>
+                  </div>
 
-              {/* Field 11: Friends Smoking */}
-              <div className="space-y-1">
-                <label className="block font-bold text-slate-800">
-                  เพื่อนสนิทของท่านสูบบุหรี่หรือบุหรี่ไฟฟ้าหรือไม่
-                </label>
-                <select
-                  value={friendsSmoking}
-                  onChange={(e) => setFriendsSmoking(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
-                >
-                  <option value="ไม่มีเพื่อนสูบเลย">ไม่มีเพื่อนสูบเลย</option>
-                  <option value="มีเพื่อนสูบบุหรี่ธรรมดา">มีเพื่อนสูบบุหรี่ธรรมดา</option>
-                  <option value="มีเพื่อนสูบบุหรี่ไฟฟ้า">มีเพื่อนสูบบุหรี่ไฟฟ้า</option>
-                  <option value="มีเพื่อนสูบทั้งสองแบบ">มีเพื่อนสูบทั้งสองแบบ</option>
-                </select>
-              </div>
+                  {/* Q7: Sibling Smoking */}
+                  <div className="space-y-1">
+                    <label className="block font-bold text-slate-800 leading-snug">
+                      7. พี่น้องของนักเรียน สูบบุหรี่หรือไม่
+                      <span className="block text-[10px] text-slate-500 font-normal">
+                        (เช่น บุหรี่ทุกชนิด ทั้งมวนเอง ยาเส้น ใบจาก บุหรี่ซอง บุหรี่ไฟฟ้า)
+                      </span>
+                    </label>
+                    <select
+                      value={siblingSmoke}
+                      onChange={(e) => setSiblingSmoke(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
+                    >
+                      <option value="สูบ">(1) สูบ</option>
+                      <option value="ไม่สูบ">(2) ไม่สูบ</option>
+                      <option value="ไม่ทราบ / ไม่แน่ใจ">(3) ไม่ทราบ / ไม่แน่ใจ</option>
+                      <option value="ไม่มีพี่น้อง">(4) ไม่มีพี่น้อง</option>
+                    </select>
+                  </div>
+
+                  {/* Q8: Friend Smoking */}
+                  <div className="space-y-1">
+                    <label className="block font-bold text-slate-800 leading-snug">
+                      8. เพื่อนของนักเรียน สูบบุหรี่หรือไม่
+                      <span className="block text-[10px] text-slate-500 font-normal">
+                        (เช่น บุหรี่ทุกชนิด ทั้งมวนเอง ยาเส้น ใบจาก บุหรี่ซอง บุหรี่ไฟฟ้า)
+                      </span>
+                    </label>
+                    <select
+                      value={friendSmoke}
+                      onChange={(e) => setFriendSmoke(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0284C7] shadow-sm"
+                    >
+                      <option value="สูบ">(1) สูบ</option>
+                      <option value="ไม่สูบ">(2) ไม่สูบ</option>
+                      <option value="ไม่ทราบ / ไม่แน่ใจ">(3) ไม่ทราบ / ไม่แน่ใจ</option>
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Bottom Actions */}
@@ -951,28 +1192,50 @@ export default function Assessment() {
       <div className="min-h-screen bg-slate-50/70 pb-14">
         <PageHeader
           title="📝 แบบสอบถามก่อนเรียน (Pre-test)"
-          subtitle={`ตอนที่ ${currentPartNumber}: พฤติกรรมการใช้และประสบการณ์`}
+          subtitle={`ตอนที่ ${currentPartNumber}: พฤติกรรมการใช้บุหรี่ไฟฟ้า`}
           backTo="/"
         />
 
         <main className="max-w-md md:max-w-xl mx-auto px-4 pt-3 space-y-4">
+          {/* Top 3D Cover Banner Card for Part 2 */}
+          <div className="rounded-[28px] overflow-hidden shadow-clay border border-slate-100 bg-white">
+            <div className="relative h-44 sm:h-52 w-full overflow-hidden bg-slate-950">
+              <img
+                src={asset('assessment/part1_cover.jpg')}
+                alt="หน้าปกตอนที่ 2 พฤติกรรมการใช้บุหรี่ไฟฟ้า"
+                className="w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-transparent flex flex-col justify-end p-4 sm:p-5 text-white">
+                <span className="inline-block self-start px-2.5 py-0.5 rounded-full bg-sky-400 text-slate-950 text-[10px] font-black mb-1 shadow-sm">
+                  ตอนที่ {currentPartNumber} จาก {totalActiveParts}
+                </span>
+                <h1 className="font-display font-black text-base sm:text-lg leading-snug text-white drop-shadow">
+                  ตอนที่ 2: พฤติกรรมการใช้บุหรี่ไฟฟ้า (3 ข้อ)
+                </h1>
+                <p className="text-[11px] text-sky-200 mt-0.5 font-medium">
+                  ตอบตามความเป็นจริง ข้อมูลทั้งหมดจะไม่ถูกเปิดเผยเป็นรายบุคคล
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white rounded-[28px] p-5 sm:p-6 shadow-clay border border-slate-100 space-y-4">
             <div className="border-b border-slate-100 pb-3">
               <span className="text-xs font-bold text-[#0284C7]">
                 ตอนที่ {currentPartNumber} จาก {totalActiveParts}
               </span>
               <h2 className="text-base sm:text-lg font-display font-extrabold text-slate-900 mt-1">
-                พฤติกรรมการใช้และประสบการณ์ (3 ข้อ)
+                พฤติกรรมการใช้บุหรี่ไฟฟ้า (3 ข้อ)
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                ตอบตามความเป็นจริง ข้อมูลทั้งหมดจะไม่ถูกเปิดเผยเป็นรายบุคคล
+                เลือกคำตอบที่ตรงกับพฤติกรรมและความเป็นจริงของนักเรียน
               </p>
             </div>
 
             {/* Q1 */}
             <div className="space-y-2">
               <p className="text-xs font-bold text-slate-800">{PART2_BEHAVIORS.everTried.label}</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {PART2_BEHAVIORS.everTried.options.map((opt) => (
                   <button
                     key={opt}
@@ -993,7 +1256,31 @@ export default function Assessment() {
               </div>
             </div>
 
-            {/* Q2: ถ้าเคย */}
+            {/* Never tried Callout Banner */}
+            {!isEverTried && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs space-y-2 text-emerald-900 shadow-sm"
+              >
+                <div className="flex items-center gap-2 font-bold text-emerald-800">
+                  <span className="text-base">🎉</span>
+                  <span>ยอดเยี่ยมมากครับ! นักเรียนไม่เคยลองบุหรี่ไฟฟ้า</span>
+                </div>
+                <p className="text-[11px] text-emerald-700 leading-relaxed">
+                  ตามระเบียบแบบสอบถามวิจัย หากตอบ “ไม่เคยลองเลย” สามารถกด <b>"ข้ามไปตอนที่ 3 (แบบทดสอบความรู้)"</b> ได้ทันทีโดยไม่ต้องตอบข้อ 2 และ 3
+                </p>
+                <button
+                  type="button"
+                  onClick={handlePart2Next}
+                  className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                >
+                  <span>⏩ ข้ามไปทำตอนที่ 3 (แบบทดสอบความรู้) ทันที</span>
+                </button>
+              </motion.div>
+            )}
+
+            {/* Q2: ถ้าเคยลอง */}
             {isEverTried && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
@@ -1012,7 +1299,7 @@ export default function Assessment() {
                       }}
                       className={`p-2.5 text-center rounded-xl border text-xs font-medium transition-all ${
                         part2FirstAge === opt
-                          ? 'bg-[#0284C7] text-white border-[#0284C7] shadow-sm'
+                          ? 'bg-[#0284C7] text-white border-[#0284C7] shadow-sm font-bold'
                           : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
@@ -1024,28 +1311,34 @@ export default function Assessment() {
             )}
 
             {/* Q3 */}
-            <div className="space-y-2">
-              <p className="text-xs font-bold text-slate-800">{PART2_BEHAVIORS.lastMonth.label}</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                {PART2_BEHAVIORS.lastMonth.options.map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => {
-                      sfx.click();
-                      setPart2LastMonth(opt);
-                    }}
-                    className={`p-2.5 text-left rounded-xl border text-xs font-medium transition-all ${
-                      part2LastMonth === opt
-                        ? 'bg-[#0284C7] text-white border-[#0284C7] shadow-sm font-bold'
-                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {isEverTried && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="space-y-2"
+              >
+                <p className="text-xs font-bold text-slate-800">{PART2_BEHAVIORS.lastMonth.label}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {PART2_BEHAVIORS.lastMonth.options.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => {
+                        sfx.click();
+                        setPart2LastMonth(opt);
+                      }}
+                      className={`p-3 text-center rounded-xl border text-xs font-medium transition-all ${
+                        part2LastMonth === opt
+                          ? 'bg-[#0284C7] text-white border-[#0284C7] shadow-sm font-bold'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             <div className="flex gap-2 pt-3 border-t border-slate-100">
               <button
@@ -1068,7 +1361,7 @@ export default function Assessment() {
   }
 
   // =========================================================================
-  // VIEW: 4. STEP 3 KNOWLEDGE QUESTIONS (ตอนที่ 3)
+  // VIEW: 4. STEP 3 KNOWLEDGE QUESTIONS (แบบทดสอบความรู้ 8 ข้อ ถูก/ผิด)
   // =========================================================================
   if (currentStep === 'part3') {
     const q = knowledgeQuestions[part3CurrentIndex];
@@ -1084,6 +1377,28 @@ export default function Assessment() {
         />
 
         <main className="max-w-md md:max-w-xl mx-auto px-4 pt-3 space-y-4">
+          {/* Top 3D Cover Banner Card for Part 3 */}
+          <div className="rounded-[28px] overflow-hidden shadow-clay border border-slate-100 bg-white">
+            <div className="relative h-44 sm:h-52 w-full overflow-hidden bg-slate-950">
+              <img
+                src={asset('assessment/part2_cover.jpg')}
+                alt="หน้าปกตอนที่ 2 แบบทดสอบความรู้"
+                className="w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-transparent flex flex-col justify-end p-4 sm:p-5 text-white">
+                <span className="inline-block self-start px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black mb-1 shadow-sm">
+                  ตอนที่ {currentPartNumber} จาก {totalActiveParts}
+                </span>
+                <h1 className="font-display font-black text-base sm:text-lg leading-snug text-white drop-shadow">
+                  แบบทดสอบความรู้เกี่ยวกับบุหรี่ไฟฟ้า (8 ข้อ)
+                </h1>
+                <p className="text-[11px] text-sky-200 mt-0.5 font-medium">
+                  อ่านข้อความอย่างละเอียด แล้วเลือกว่าข้อความนั้น "ถูก" หรือ "ผิด"
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Progress Bar */}
           <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100">
             <div className="flex justify-between text-xs font-bold text-slate-700 mb-1.5">
@@ -1117,31 +1432,44 @@ export default function Assessment() {
                 </h3>
               </div>
 
-              {/* Choices */}
-              <div className="space-y-2 pt-1">
+              {/* 2 Big True / False Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 {q?.choices.map((choice, cIdx) => {
                   const isSelected = part3Answers[part3CurrentIndex] === cIdx;
+                  const isTrueChoice = choice === 'ถูก' || cIdx === 0;
+
                   return (
                     <button
                       key={cIdx}
                       type="button"
                       onClick={() => handleSelectKnowledgeChoice(part3CurrentIndex, cIdx)}
-                      className={`w-full p-3.5 rounded-2xl text-left text-xs sm:text-sm font-medium border transition-all active:scale-[0.99] flex items-center gap-3 ${
+                      className={`p-4 sm:p-5 rounded-2xl border-2 text-center transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-2 ${
                         isSelected
-                          ? 'bg-gradient-to-r from-sky-50 to-indigo-50/40 border-[#0284C7] text-slate-900 ring-2 ring-[#0284C7] font-bold shadow-sm'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                          ? isTrueChoice
+                            ? 'bg-emerald-600 text-white border-emerald-700 ring-4 ring-emerald-200 shadow-clay font-black scale-[1.02]'
+                            : 'bg-rose-600 text-white border-rose-700 ring-4 ring-rose-200 shadow-clay font-black scale-[1.02]'
+                          : isTrueChoice
+                          ? 'bg-white hover:bg-emerald-50/60 border-emerald-200 text-emerald-800'
+                          : 'bg-white hover:bg-rose-50/60 border-rose-200 text-rose-800'
                       }`}
                     >
                       <span
-                        className={`w-6 h-6 rounded-full border flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                        className={`w-10 h-10 rounded-full flex items-center justify-center text-xl font-black ${
                           isSelected
-                            ? 'bg-[#0284C7] border-[#0284C7] text-white'
-                            : 'border-slate-300 text-slate-400'
+                            ? 'bg-white/25 text-white'
+                            : isTrueChoice
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-rose-100 text-rose-700'
                         }`}
                       >
-                        {isSelected ? '✓' : String.fromCharCode(65 + cIdx)}
+                        {isTrueChoice ? '✓' : '✗'}
                       </span>
-                      <span className="flex-1">{choice}</span>
+                      <span className="text-base sm:text-lg font-display font-extrabold tracking-wide">
+                        {choice}
+                      </span>
+                      <span className={`text-[11px] ${isSelected ? 'text-white/85 font-semibold' : 'text-slate-500'}`}>
+                        {isTrueChoice ? '(ข้อความนี้ถูกต้อง)' : '(ข้อความนี้ผิด)'}
+                      </span>
                     </button>
                   );
                 })}
@@ -1172,7 +1500,7 @@ export default function Assessment() {
   }
 
   // =========================================================================
-  // VIEW: 5. STEP 4 REFUSAL SKILLS 20 QUESTIONS (ตอนที่ 4)
+  // VIEW: 5. STEP 4 REFUSAL SKILLS 15 QUESTIONS (ตอนที่ 4)
   // =========================================================================
   if (currentStep === 'part4') {
     const answeredCount = Object.keys(part4Answers).length;
@@ -1182,24 +1510,46 @@ export default function Assessment() {
       <div className="min-h-screen bg-slate-50/70 pb-14">
         <PageHeader
           title={kind === 'pre' ? '📝 แบบสอบถามก่อนเรียน (Pre-test)' : '🎯 แบบสอบถามหลังเรียน (Post-test)'}
-          subtitle={`ตอนที่ ${currentPartNumber}: แบบประเมินทักษะและความมั่นใจ (20 ข้อ)`}
+          subtitle={`ตอนที่ ${currentPartNumber}: แบบประเมินทักษะการปฏิเสธบุหรี่ไฟฟ้า (15 ข้อ)`}
           backTo="/"
         />
 
         <main className="max-w-md md:max-w-xl mx-auto px-4 pt-3 space-y-4">
+          {/* Top 3D Cover Banner Card for Part 4 */}
+          <div className="rounded-[28px] overflow-hidden shadow-clay border border-slate-100 bg-white">
+            <div className="relative h-44 sm:h-52 w-full overflow-hidden bg-slate-950">
+              <img
+                src={asset('assessment/part2_cover.jpg')}
+                alt="หน้าปกตอนที่ 4 ทักษะการปฏิเสธ"
+                className="w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-transparent flex flex-col justify-end p-4 sm:p-5 text-white">
+                <span className="inline-block self-start px-2.5 py-0.5 rounded-full bg-emerald-400 text-slate-950 text-[10px] font-black mb-1 shadow-sm">
+                  ตอนที่ {currentPartNumber} จาก {totalActiveParts}
+                </span>
+                <h1 className="font-display font-black text-base sm:text-lg leading-snug text-white drop-shadow">
+                  แบบประเมินทักษะการปฏิเสธบุหรี่ไฟฟ้า (15 ข้อ)
+                </h1>
+                <p className="text-[11px] text-emerald-200 mt-0.5 font-medium">
+                  ประเมินระดับความมั่นใจว่าท่านสามารถปฏิเสธได้หรือไม่ (1 = ไม่มั่นใจเลย ถึง 5 = มั่นใจมากที่สุด)
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white rounded-[28px] p-5 sm:p-6 shadow-clay border border-slate-100 space-y-4">
             <div>
               <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
                 ตอนที่ {currentPartNumber} จาก {totalActiveParts}
               </span>
               <h2 className="font-display font-extrabold text-slate-900 text-base mt-2">
-                แบบประเมินทักษะการปฏิเสธบุหรี่ไฟฟ้า
+                แบบประเมินทักษะการปฏิเสธบุหรี่ไฟฟ้า (15 ข้อ)
               </h2>
               <p className="text-xs text-slate-500 leading-relaxed mt-1">
                 อ่านสถานการณ์แล้วประเมินระดับ <b>"ความมั่นใจ"</b> ว่าท่านจะปฏิเสธได้หรือไม่:
                 <br />
                 <span className="text-[11px] text-slate-600">
-                  (1=ไม่มั่นใจเลย, 2=ไม่ค่อยมั่นใจ, 3=ค่อนข้างมั่นใจ, 4=มั่นใจมาก, 5=มั่นใจที่สุด)
+                  (1=ไม่มั่นใจเลย, 2=ไม่ค่อยมั่นใจ, 3=ค่อนข้างมั่นใจ, 4=ค่อนข้างมั่นใจมาก, 5=มั่นใจมากที่สุด)
                 </span>
               </p>
             </div>
@@ -1266,61 +1616,53 @@ export default function Assessment() {
               })}
             </div>
 
-            <div className="pt-3 border-t border-slate-100 pb-16">
+            {/* ส่วนสรุปความคืบหน้า + ปุ่มไปข้อที่ยังไม่ตอบ + ปุ่มไปต่อ (รวมไว้จุดเดียว ไม่ซ้ำซ้อน) */}
+            <div className="pt-3 border-t border-slate-100 space-y-3 pb-4">
+              <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/70 flex items-center justify-between gap-3 shadow-xs">
+                <div>
+                  <p className="text-xs font-bold text-slate-800">
+                    ความคืบหน้า: {answeredCount}/{totalSkills} ข้อ
+                  </p>
+                  <p className="text-[11px] text-slate-600 font-medium">
+                    {answeredCount === totalSkills ? '✓ ตอบครบถ้วนทั้ง 15 ข้อแล้ว' : `เหลืออีก ${totalSkills - answeredCount} ข้อ`}
+                  </p>
+                </div>
+                {answeredCount < totalSkills && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const firstUnanswered = PART4_REFUSAL_SKILLS.findIndex((_, i) => part4Answers[i] === undefined);
+                      if (firstUnanswered !== -1) {
+                        setUnansweredPart4Indices([firstUnanswered]);
+                        document.getElementById(`part4-q-${firstUnanswered}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 active:scale-95 hover:shadow-md transition-all flex-shrink-0"
+                  >
+                    <span>⏩ ไปข้อที่ยังไม่ตอบ</span>
+                  </button>
+                )}
+              </div>
+
               <button
                 onClick={handleFinishPart4}
-                className="btn-primary w-full py-3.5 text-sm font-bold shadow-clay"
+                className="btn-primary w-full py-3.5 text-sm font-bold shadow-clay flex items-center justify-center gap-2"
               >
-                {kind === 'post' && admin.part5Enabled
-                  ? 'ถัดไป (ตอนที่ 5: ประเมินแชตบอต) →'
-                  : 'ส่งคำตอบและดูผลลัพธ์ ✓'}
+                <span>
+                  {kind === 'post' && admin.part5Enabled
+                    ? 'ถัดไป (ตอนที่ 5: ประเมินแชตบอต) →'
+                    : 'ส่งคำตอบและดูผลลัพธ์ ✓'}
+                </span>
               </button>
             </div>
           </div>
         </main>
-
-        {/* Sticky bottom progress & jump bar for Part 4 */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2.5 px-4 shadow-lg">
-          <div className="max-w-md md:max-w-xl mx-auto flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold text-slate-800">
-                ความคืบหน้า: {answeredCount}/{totalSkills} ข้อ
-              </p>
-              <p className="text-[10px] text-slate-500 font-medium">
-                {answeredCount === totalSkills ? '✓ ตอบครบถ้วนทุกข้อแล้ว' : `เหลืออีก ${totalSkills - answeredCount} ข้อ`}
-              </p>
-            </div>
-            {answeredCount < totalSkills ? (
-              <button
-                type="button"
-                onClick={() => {
-                  const firstUnanswered = PART4_REFUSAL_SKILLS.findIndex((_, i) => part4Answers[i] === undefined);
-                  if (firstUnanswered !== -1) {
-                    setUnansweredPart4Indices([firstUnanswered]);
-                    document.getElementById(`part4-q-${firstUnanswered}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }
-                }}
-                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 active:scale-95 transition-all"
-              >
-                <span>⏩ ไปข้อที่ยังไม่ตอบ</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleFinishPart4}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 active:scale-95 transition-all"
-              >
-                <span>{kind === 'post' && admin.part5Enabled ? 'ไปตอนที่ 5 →' : 'ส่งคำตอบ ✓'}</span>
-              </button>
-            )}
-          </div>
-        </div>
       </div>
     );
   }
 
   // =========================================================================
-  // VIEW: 6. STEP 5 CHATBOT EVALUATION (ตอนที่ 5)
+  // VIEW: 6. STEP 5 CHATBOT EVALUATION (ตอนที่ 5: ประโยชน์ของแชตบอต 7 ข้อ)
   // =========================================================================
   if (currentStep === 'part5') {
     const answeredCount = Object.keys(part5Answers).length;
@@ -1335,6 +1677,28 @@ export default function Assessment() {
         />
 
         <main className="max-w-md md:max-w-xl mx-auto px-4 pt-3 space-y-4">
+          {/* Top 3D Cover Banner Card for Part 5 */}
+          <div className="rounded-[28px] overflow-hidden shadow-clay border border-slate-100 bg-white">
+            <div className="relative w-full aspect-[16/9] overflow-hidden bg-slate-950">
+              <img
+                src={asset('assessment/cover_wide.jpg')}
+                alt="หน้าปกตอนที่ 5 ประเมินประโยชน์ของแชตบอต"
+                className="w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-transparent flex flex-col justify-end p-4 sm:p-5 text-white">
+                <span className="inline-block self-start px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black mb-1 shadow-sm">
+                  ตอนที่ {currentPartNumber} จาก {totalActiveParts}
+                </span>
+                <h1 className="font-display font-black text-base sm:text-lg leading-snug text-white drop-shadow">
+                  แบบประเมินประโยชน์ของแชตบอต (7 ข้อ)
+                </h1>
+                <p className="text-[11px] text-amber-200 mt-0.5 font-medium">
+                  ประเมินความพึงพอใจและความคิดเห็นหลังการใช้งาน (1 = น้อยที่สุด ถึง 5 = มากที่สุด)
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white rounded-[28px] p-5 sm:p-6 shadow-clay border border-slate-100 space-y-4">
             <div>
               <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">
@@ -1408,53 +1772,53 @@ export default function Assessment() {
               })}
             </div>
 
-            <div className="pt-3 border-t border-slate-100 pb-16">
+            {/* Concluding Blessing Message from the Researchers */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 via-rose-50/30 to-amber-50 border border-amber-200/80 shadow-sm text-center space-y-1.5">
+              <p className="text-sm font-bold text-amber-900 leading-relaxed">
+                🌸 ขอให้ทุกคนเติบโตไปพร้อมกับความสุขและรอยยิ้มที่แท้จริง โดยไม่ต้องพึ่งบุหรี่ไฟฟ้านะคะ 🌟
+              </p>
+              <p className="text-[11px] text-slate-600 font-medium">
+                — รองศาสตราจารย์ ดร. นิรชร ชูติพัฒนะ และคณะผู้วิจัย มหาวิทยาลัยวลัยลักษณ์
+              </p>
+            </div>
+
+            {/* ส่วนสรุปความคืบหน้า + ปุ่มไปข้อที่ยังไม่ตอบ + ปุ่มบันทึกผล (รวมไว้จุดเดียว ไม่ซ้ำซ้อน) */}
+            <div className="pt-3 border-t border-slate-100 space-y-3 pb-4">
+              <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex items-center justify-between gap-3 shadow-xs">
+                <div>
+                  <p className="text-xs font-bold text-slate-800">
+                    ความคืบหน้า: {answeredCount}/{totalPart5} ข้อ
+                  </p>
+                  <p className="text-[11px] text-slate-600 font-medium">
+                    {answeredCount === totalPart5 ? '✓ ประเมินครบถ้วนทุกข้อแล้ว' : `เหลืออีก ${totalPart5 - answeredCount} ข้อ`}
+                  </p>
+                </div>
+                {answeredCount < totalPart5 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const firstUnanswered = PART5_CHATBOT_EVALUATION.findIndex((_, i) => part5Answers[i] === undefined);
+                      if (firstUnanswered !== -1) {
+                        setUnansweredPart5Indices([firstUnanswered]);
+                        document.getElementById(`part5-q-${firstUnanswered}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 active:scale-95 hover:shadow-md transition-all flex-shrink-0"
+                  >
+                    <span>⏩ ไปข้อที่ยังไม่ตอบ</span>
+                  </button>
+                )}
+              </div>
+
               <button
                 onClick={handleFinishPart5}
-                className="btn-primary w-full py-3.5 text-sm font-bold shadow-clay"
+                className="btn-primary w-full py-3.5 text-sm font-bold shadow-clay flex items-center justify-center gap-2"
               >
-                บันทึกผลการประเมินแชตบอต ✓
+                <span>บันทึกผลการประเมินแชตบอต ✓</span>
               </button>
             </div>
           </div>
         </main>
-
-        {/* Sticky bottom progress & jump bar for Part 5 */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2.5 px-4 shadow-lg">
-          <div className="max-w-md md:max-w-xl mx-auto flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold text-slate-800">
-                ความคืบหน้า: {answeredCount}/{totalPart5} ข้อ
-              </p>
-              <p className="text-[10px] text-slate-500 font-medium">
-                {answeredCount === totalPart5 ? '✓ ประเมินครบถ้วนทุกข้อแล้ว' : `เหลืออีก ${totalPart5 - answeredCount} ข้อ`}
-              </p>
-            </div>
-            {answeredCount < totalPart5 ? (
-              <button
-                type="button"
-                onClick={() => {
-                  const firstUnanswered = PART5_CHATBOT_EVALUATION.findIndex((_, i) => part5Answers[i] === undefined);
-                  if (firstUnanswered !== -1) {
-                    setUnansweredPart5Indices([firstUnanswered]);
-                    document.getElementById(`part5-q-${firstUnanswered}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }
-                }}
-                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 active:scale-95 transition-all"
-              >
-                <span>⏩ ไปข้อที่ยังไม่ตอบ</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleFinishPart5}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 active:scale-95 transition-all"
-              >
-                <span>บันทึกผลประเมิน ✓</span>
-              </button>
-            )}
-          </div>
-        </div>
       </div>
     );
   }
@@ -1543,34 +1907,70 @@ export default function Assessment() {
       />
 
       <main className="max-w-md md:max-w-xl mx-auto px-4 pt-3 space-y-3.5">
-        {/* Banner Topic */}
-        <div className="bg-white rounded-[26px] p-5 text-center shadow-sm border border-slate-100 space-y-2">
-          <div className="flex justify-center pt-0.5">
+        {/* Main 3D Cover Banner Card */}
+        <div className="rounded-[28px] overflow-hidden shadow-clay border border-slate-100 bg-white">
+          <div className="relative w-full aspect-[16/9] overflow-hidden bg-[#E7F0F9]">
             <img
-              src={asset('brand/wu-logo.png')}
-              alt="มหาวิทยาลัยวลัยลักษณ์"
-              className="h-14 w-auto object-contain drop-shadow-sm"
+              src={asset('assessment/cover_wide.jpg')}
+              alt="หน้าปกแบบสอบถามวิจัย"
+              className="w-full h-full object-cover object-center"
             />
           </div>
-          <span className="inline-block px-3 py-0.5 rounded-full bg-[#FEF3C7] text-[#92400E] text-[11px] font-bold">
-            มหาวิทยาลัยวลัยลักษณ์ (Walailak University)
-          </span>
-          <h2 className="font-display font-extrabold text-slate-900 text-sm leading-snug">
-            การพัฒนาแชตบอตแบบเกมมิฟิเคชันเพื่อส่งเสริมความรู้และทักษะการปฏิเสธบุหรี่ไฟฟ้า
-          </h2>
+          <div className="p-4 sm:p-5 space-y-3">
+            {/* Walailak University Branding Badge */}
+            <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-amber-50/80 border border-amber-200/70 shadow-xs">
+              <div className="w-11 h-11 rounded-xl bg-white p-1 shadow-xs border border-amber-200/80 flex items-center justify-center flex-shrink-0">
+                <img
+                  src={asset('brand/wu-logo.png')}
+                  alt="ตราสัญลักษณ์ มหาวิทยาลัยวลัยลักษณ์"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-extrabold text-slate-900 leading-tight">
+                  มหาวิทยาลัยวลัยลักษณ์
+                </p>
+                <p className="text-[11px] text-amber-800 font-semibold mt-0.5">
+                  Walailak University
+                </p>
+              </div>
+            </div>
+
+            {/* Research Title */}
+            <div>
+              <span className="inline-block px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 text-[10px] font-extrabold mb-1.5 border border-sky-200/80">
+                แบบสอบถามเพื่อการวิจัย
+              </span>
+              <h1 className="font-display font-extrabold text-slate-900 text-sm sm:text-base leading-snug">
+                การพัฒนาแชตบอตแบบเกมมิฟิเคชันเพื่อส่งเสริมความรู้และทักษะการปฏิเสธบุหรี่ไฟฟ้าในนักเรียนมัธยมศึกษาตอนต้น
+              </h1>
+            </div>
+
+            {/* Research Team */}
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
+              <span className="text-base">👩‍🏫</span>
+              <p>
+                <span className="font-bold text-slate-800">คณะผู้วิจัย:</span> รองศาสตราจารย์ ดร. นิรชร ชูติพัฒนะ และคณะ
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Card 1: Pre-test */}
         <button
           onClick={() => startMode('pre')}
           disabled={!admin.preTestEnabled}
-          className={`w-full card text-left flex items-center gap-3.5 p-4 transition-all ${
+          className={`w-full card text-left flex items-center gap-3.5 p-4 transition-all group ${
             admin.preTestEnabled ? 'active:scale-[0.99]' : 'opacity-60 cursor-not-allowed'
           }`}
         >
-          <span className="w-12 h-12 rounded-2xl bg-sky-100 text-[#0284C7] flex items-center justify-center text-2xl flex-shrink-0">
-            🅰️
-          </span>
+          <div className="w-14 h-14 min-w-[56px] min-h-[56px] max-w-[56px] max-h-[56px] rounded-2xl overflow-hidden shadow-clay-sm flex-shrink-0 group-hover:scale-105 transition-transform flex items-center justify-center p-1">
+            <img
+              src={asset('assessment/icon_pretest_3d.svg')}
+              alt="แบบประเมินก่อนเรียน (Pre-test)"
+              className="w-full h-full object-contain"
+            />
+          </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-slate-800 text-sm">แบบประเมินก่อนเรียน (Pre-test)</h3>
@@ -1581,7 +1981,7 @@ export default function Assessment() {
               )}
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              {totalActiveParts} ตอน ({admin.part3Enabled ? `${admin.knowledgeQuestionCount === 10 ? '10' : '21'} ข้อความรู้` : ''} {admin.part4Enabled ? '+ ทักษะ 20 ข้อ' : ''})
+              4 ตอน (ข้อมูลทั่วไป 8 ข้อ + พฤติกรรม 3 ข้อ + ความรู้ 8 ข้อ ถูก/ผิด + ทักษะ 15 ข้อ)
             </p>
           </div>
           <span className="text-[#0284C7] font-bold">→</span>
@@ -1593,13 +1993,17 @@ export default function Assessment() {
             if (postUnlocked && admin.postTestEnabled) startMode('post');
           }}
           disabled={!postUnlocked || !admin.postTestEnabled}
-          className={`w-full card text-left flex items-center gap-3.5 p-4 transition-all ${
+          className={`w-full card text-left flex items-center gap-3.5 p-4 transition-all group ${
             postUnlocked && admin.postTestEnabled ? 'active:scale-[0.99]' : 'opacity-60 cursor-not-allowed'
           }`}
         >
-          <span className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl flex-shrink-0">
-            🅱️
-          </span>
+          <div className="w-14 h-14 min-w-[56px] min-h-[56px] max-w-[56px] max-h-[56px] rounded-2xl overflow-hidden shadow-clay-sm flex-shrink-0 group-hover:scale-105 transition-transform flex items-center justify-center p-1">
+            <img
+              src={asset('assessment/icon_posttest_3d.svg')}
+              alt="แบบประเมินหลังเรียน (Post-test)"
+              className="w-full h-full object-contain"
+            />
+          </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-slate-800 text-sm">แบบประเมินหลังเรียน (Post-test)</h3>
@@ -1611,7 +2015,7 @@ export default function Assessment() {
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
               {postUnlocked
-                ? 'ทำหลังเรียนจบเนื้อหา เพื่อบันทึกผลงานวิจัย'
+                ? '3 ตอน (ความรู้ 8 ข้อ ถูก/ผิด + ทักษะ 15 ข้อ + ประเมินแชตบอต 7 ข้อ)'
                 : `🔒 ปลดล็อกเมื่อเล่นจบ ${CERT_STAGE_COUNT} ด่านแรก หรือได้รับอนุญาตจากครู`}
             </p>
           </div>
@@ -1622,11 +2026,15 @@ export default function Assessment() {
         {admin.part5Enabled && (
           <button
             onClick={() => startMode('eval')}
-            className="w-full card text-left flex items-center gap-3.5 p-4 active:scale-[0.99] transition-all"
+            className="w-full card text-left flex items-center gap-3.5 p-4 active:scale-[0.99] transition-all group"
           >
-            <span className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl flex-shrink-0">
-              ⭐
-            </span>
+            <div className="w-14 h-14 min-w-[56px] min-h-[56px] max-w-[56px] max-h-[56px] rounded-2xl overflow-hidden shadow-clay-sm flex-shrink-0 group-hover:scale-105 transition-transform flex items-center justify-center p-1">
+              <img
+                src={asset('assessment/icon_star_3d.svg')}
+                alt="ตอนที่ 5 ประโยชน์ของแชตบอต"
+                className="w-full h-full object-contain"
+              />
+            </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-slate-800 text-sm">

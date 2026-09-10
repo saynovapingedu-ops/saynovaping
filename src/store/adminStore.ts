@@ -22,8 +22,8 @@ export interface StudentRecord {
   preTestScore?: number;        // ความรู้ %
   preTestSkillScore?: number;   // ทักษะ เต็ม 100
   preTestAt?: string;
-  preTestKnowledgeAnswers?: number[]; // ช้อยส์ 0-3 (ก-ง) 21 ข้อ
-  preTestSkillAnswers?: number[];     // ระดับ 1-5 20 ข้อ
+  preTestKnowledgeAnswers?: number[]; // ช้อยส์ 0-1 (ถูก-ผิด) 8 ข้อ
+  preTestSkillAnswers?: number[];     // ระดับ 1-5 15 ข้อ
   // การเล่นเกม
   stagesCompletedCount: number;
   heroStagesCount?: number;
@@ -34,8 +34,8 @@ export interface StudentRecord {
   postTestScore?: number;       // ความรู้ %
   postTestSkillScore?: number;  // ทักษะ เต็ม 100
   postTestAt?: string;
-  postTestKnowledgeAnswers?: number[]; // ช้อยส์ 0-3 (ก-ง) 21 ข้อ
-  postTestSkillAnswers?: number[];     // ระดับ 1-5 20 ข้อ
+  postTestKnowledgeAnswers?: number[]; // ช้อยส์ 0-1 (ถูก-ผิด) 8 ข้อ
+  postTestSkillAnswers?: number[];     // ระดับ 1-5 15 ข้อ
   gainDelta?: number;           // postTestScore - preTestScore
   skillGainDelta?: number;      // postTestSkillScore - preTestSkillScore
   // การประเมินแชตบอต
@@ -52,13 +52,14 @@ export interface AdminSettings {
   // 1. การเข้าถึง Pre / Post Test
   preTestEnabled: boolean;
   postTestEnabled: boolean;
+  requirePreTestBeforePlaying: boolean; // บังคับทำแบบประเมินก่อนเรียนก่อนเริ่มเล่นเกม
   allowBypassStages: boolean;
 
   // 2. การเปิด-ปิด และปรับความยาวแต่ละตอน (เพื่อลดเวลาเมื่อข้อสอบเยอะไป)
   part2Enabled: boolean;              // ตอนที่ 2: พฤติกรรมการใช้และประสบการณ์ (3 ข้อ)
-  part3Enabled: boolean;              // ตอนที่ 3: แบบทดสอบความรู้ (21 ข้อ)
-  knowledgeQuestionCount: number;     // จำนวนข้อความรู้ (21 = เต็มชุด, 10 = ฉบับย่อประหยัดเวลา)
-  part4Enabled: boolean;              // ตอนที่ 4: แบบประเมินทักษะการปฏิเสธ (20 ข้อ)
+  part3Enabled: boolean;              // ตอนที่ 3: แบบทดสอบความรู้ (8 ข้อ)
+  knowledgeQuestionCount: number;     // จำนวนข้อความรู้ (8 ข้อ)
+  part4Enabled: boolean;              // ตอนที่ 4: แบบประเมินทักษะการปฏิเสธ (15 ข้อ)
   part5Enabled: boolean;              // ตอนที่ 5: แบบประเมินแชตบอต (7 ข้อ)
 
   // 3. ระบบทดสอบอื่นๆ ในเกม
@@ -82,10 +83,11 @@ interface AdminState extends AdminSettings {
 const defaultSettings: AdminSettings = {
   preTestEnabled: true,
   postTestEnabled: true,
+  requirePreTestBeforePlaying: true,
   allowBypassStages: false,
   part2Enabled: true,
   part3Enabled: true,
-  knowledgeQuestionCount: 21,
+  knowledgeQuestionCount: 8,
   part4Enabled: true,
   part5Enabled: true,
   finalExamEnabled: true,

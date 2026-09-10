@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bgStar" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <linearGradient id="hiStar" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="goldStarGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFBEB"/>
+      <stop offset="25%" stop-color="#FEF08A"/>
+      <stop offset="70%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+    <filter id="shadowStar" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#78350F" flood-opacity="0.35"/>
+    </filter>
+    <filter id="starGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#92400E" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- 3D Clay Rounded Base Tile -->
+  <rect x="10" y="10" width="108" height="108" rx="32" fill="url(#bgStar)" filter="url(#shadowStar)"/>
+  <!-- Highlight curve -->
+  <path d="M 24 16 Q 64 24 104 16 Q 110 20 112 28 Q 64 38 16 28 Q 18 20 24 16 Z" fill="url(#hiStar)"/>
+
+  <!-- Big 3D Star in center -->
+  <g filter="url(#starGlow)">
+    <!-- Star Shadow back -->
+    <path d="M 64 23 L 76.5 48.5 L 104.5 52.5 L 84 72.5 L 89 100.5 L 64 87.5 L 39 100.5 L 44 72.5 L 23.5 52.5 L 51.5 48.5 Z" fill="#B45309"/>
+    <!-- 3D Star main body -->
+    <path d="M 64 21 L 76.5 46.5 L 104.5 50.5 L 84 70.5 L 89 98.5 L 64 85.5 L 39 98.5 L 44 70.5 L 23.5 50.5 L 51.5 46.5 Z" fill="url(#goldStarGrad)"/>
+    
+    <!-- Star Facet 3D Bevel Highlights -->
+    <path d="M 64 21 L 64 65 L 76.5 46.5 Z" fill="#FFFFFF" opacity="0.6"/>
+    <path d="M 64 65 L 104.5 50.5 L 84 70.5 Z" fill="#FEF08A" opacity="0.5"/>
+    <path d="M 64 65 L 89 98.5 L 64 85.5 Z" fill="#F59E0B" opacity="0.4"/>
+    <path d="M 64 65 L 39 98.5 L 44 70.5 Z" fill="#D97706" opacity="0.5"/>
+    <path d="M 64 21 L 51.5 46.5 L 64 65 Z" fill="#FFFFFF" opacity="0.85"/>
+    
+    <!-- Cute friendly face on the star -->
+    <!-- Eyes -->
+    <ellipse cx="55" cy="61" rx="3.2" ry="4.2" fill="#78350F"/>
+    <ellipse cx="73" cy="61" rx="3.2" ry="4.2" fill="#78350F"/>
+    <circle cx="56" cy="59.5" r="1.2" fill="#FFFFFF"/>
+    <circle cx="74" cy="59.5" r="1.2" fill="#FFFFFF"/>
+    <!-- Rosy cheeks -->
+    <ellipse cx="49" cy="65" rx="3.5" ry="2.2" fill="#F43F5E" opacity="0.6"/>
+    <ellipse cx="79" cy="65" rx="3.5" ry="2.2" fill="#F43F5E" opacity="0.6"/>
+    <!-- Smile -->
+    <path d="M 60 66 Q 64 70 68 66" fill="none" stroke="#78350F" stroke-width="2.4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Sparkle stars and diamonds -->
+  <path d="M 22 28 Q 23 33 27 34 Q 23 35 22 39 Q 21 35 17 34 Q 21 33 22 28 Z" fill="#FFFFFF"/>
+  <path d="M 104 28 Q 105 32 108 33 Q 105 34 104 38 Q 103 34 100 33 Q 103 32 104 28 Z" fill="#FFFFFF"/>
+  <circle cx="96" cy="88" r="2.5" fill="#FEF08A"/>
+</svg>

@@ -176,6 +176,7 @@ export default function ScenarioPage() {
   const [confettiActive, setConfettiActive] = useState(false);
   const [certNameOpen, setCertNameOpen] = useState(false);
   const admin = useAdminStore();
+  const preTestScore = usePlayerStore(s => s.preTestScore);
   const postTestScore = usePlayerStore(s => s.postTestScore);
   const markCertNamePrompted = usePlayerStore(s => s.markCertNamePrompted);
   // ใช้ Hint — เก็บ id ของ node ที่ผู้เล่นเปิด hint แล้ว (โชว์ best choice)
@@ -349,6 +350,48 @@ export default function ScenarioPage() {
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
         <p className="text-gray-600 mb-4">ด่านนี้ยังไม่พร้อมเล่น</p>
         <button onClick={() => nav('/')} className="btn-primary">กลับหน้าแรก</button>
+      </div>
+    );
+  }
+
+  const isPreTestLocked = admin.preTestEnabled && (admin.requirePreTestBeforePlaying ?? true) && preTestScore === undefined && !admin.allowBypassStages;
+
+  if (isPreTestLocked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FBF3EA]">
+        <div className="card max-w-md w-full text-center p-6 space-y-4 shadow-clay">
+          <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-br from-sky-100 to-indigo-100 border-2 border-sky-300 flex items-center justify-center text-3xl shadow-clay-blue">
+            🔒
+          </div>
+          <div className="space-y-2">
+            <div className="inline-block px-3 py-0.5 rounded-full bg-sky-100 text-sky-800 text-xs font-bold">
+              ขั้นตอนที่ 1: แบบประเมินก่อนเรียน
+            </div>
+            <h2 className="text-lg font-display font-extrabold text-slate-800">
+              กรุณาทำแบบประเมินก่อนเรียนก่อนนะ!
+            </h2>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              ตามระเบียบวิธีวิจัยและขั้นตอนการเรียนรู้ กรุณาทำ <b>แบบประเมินก่อนเรียน (Pre-test)</b>
+              {admin.part3Enabled ? ` ความรู้ ${admin.knowledgeQuestionCount ?? 8} ข้อ` : ''}
+              {admin.part3Enabled && admin.part4Enabled ? ' และ' : ''}
+              {admin.part4Enabled ? ' ทักษะปฏิเสธ 15 ข้อ' : ''} ให้เสร็จสิ้นก่อน ระบบจึงจะปลดล็อกด่านที่ {stageId} ให้เข้าเล่นได้จ้า
+            </p>
+          </div>
+          <div className="space-y-2 pt-2">
+            <button
+              onClick={() => { sfx.click(); nav('/assessment?kind=pre'); }}
+              className="btn-primary w-full shadow-clay-blue py-3 flex items-center justify-center gap-2 text-sm font-bold"
+            >
+              <span>📝</span> ไปทำแบบประเมินก่อนเรียนทันที
+            </button>
+            <button
+              onClick={() => { sfx.click(); nav('/'); }}
+              className="btn-secondary w-full py-2.5 text-xs text-slate-500 font-bold"
+            >
+              กลับหน้าหลัก
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

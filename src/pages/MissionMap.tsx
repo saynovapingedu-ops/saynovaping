@@ -25,12 +25,14 @@ export default function MissionMap() {
   const player = usePlayerStore();
   const admin = useAdminStore();
   const [openArcs, setOpenArcs] = useState<Record<string, boolean>>({});
+  const [showPreTestGateModal, setShowPreTestGateModal] = useState(false);
 
   // ด่านที่ "ควรเล่นต่อ" = ด่านแรกที่เล่นได้แต่ยังไม่จบ — ใช้เปิดบทที่กำลังเล่นไว้
   const activeStage = SCENARIO_META.find(
     m => m.available && isStageUnlocked(m.id, player.stagesCompleted) && !player.stagesCompleted.includes(m.id)
   );
 
+  const isPreTestLocked = admin.preTestEnabled && (admin.requirePreTestBeforePlaying ?? true) && player.preTestScore === undefined && !admin.allowBypassStages;
   const mainDone = player.stagesCompleted.filter(id => id <= CERT_STAGE_COUNT).length;
   const postUnlocked = mainDone >= CERT_STAGE_COUNT || admin.allowBypassStages;
 
@@ -61,7 +63,9 @@ export default function MissionMap() {
             className={`w-full mb-3 p-3.5 rounded-[22px] border transition-all cursor-pointer flex items-center justify-between shadow-clay-sm active:scale-[0.99] ${
               player.preTestScore !== undefined
                 ? 'bg-emerald-50/70 border-emerald-200 hover:border-emerald-300'
-                : 'bg-gradient-to-r from-sky-50 to-indigo-50/60 border-sky-300 hover:border-sky-400 animate-pulse-subtle'
+                : isPreTestLocked
+                ? 'bg-gradient-to-r from-sky-100 via-white to-indigo-50 border-sky-400 ring-2 ring-sky-300 animate-pulse-subtle'
+                : 'bg-gradient-to-r from-sky-50 to-indigo-50/60 border-sky-300 hover:border-sky-400'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -83,20 +87,24 @@ export default function MissionMap() {
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                       player.preTestScore !== undefined
                         ? 'bg-emerald-100 text-emerald-700'
+                        : isPreTestLocked
+                        ? 'bg-sky-600 text-white animate-bounce'
                         : 'bg-sky-100 text-sky-700'
                     }`}
                   >
-                    {player.preTestScore !== undefined ? 'เสร็จสมบูรณ์ ✓' : 'ทางลัดเริ่มทำ'}
+                    {player.preTestScore !== undefined ? 'เสร็จสมบูรณ์ ✓' : isPreTestLocked ? 'ต้องทำก่อนเริ่มด่าน' : 'ทางลัดเริ่มทำ'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {player.preTestScore !== undefined
                     ? 'ทำแบบประเมินก่อนเรียนเรียบร้อยแล้ว'
+                    : isPreTestLocked
+                    ? 'กรุณาทำแบบประเมินก่อนเรียนเพื่อปลดล็อกด่านทั้งหมด'
                     : 'ทำก่อนเริ่มเล่นด่านที่ 1 เพื่อบันทึกผลงานวิจัย'}
                 </p>
               </div>
             </div>
-            <span className="text-sm font-bold text-slate-400">
+            <span className={`text-sm font-bold ${isPreTestLocked ? 'text-sky-700' : 'text-slate-400'}`}>
               {player.preTestScore !== undefined ? 'ดู →' : 'เริ่มทำ →'}
             </span>
           </div>
@@ -195,15 +203,23 @@ export default function MissionMap() {
                   {stages.map((meta) => {
                     const unlocked = isStageUnlocked(meta.id, player.stagesCompleted);
                     const completed = player.stagesCompleted.includes(meta.id);
-                    const playable = meta.available && unlocked;
+                    const playable = meta.available && unlocked && !isPreTestLocked;
 
-                    // ====== Locked stage — compact, ไม่กดได้ ======
+                    // ====== Locked stage ======
                     if (!playable) {
                       return (
                         <div
                           key={meta.id}
-                          className="relative flex items-center gap-3 px-3 py-2 rounded-xl
-                                     bg-slate-50/70 border border-slate-200/70 opacity-75"
+                          onClick={() => {
+                            if (isPreTestLocked) {
+                              sfx.wrong();
+                              setShowPreTestGateModal(true);
+                            }
+                          }}
+                          className={`relative flex items-center gap-3 px-3 py-2 rounded-xl
+                                     bg-slate-50/70 border border-slate-200/70 opacity-75 ${
+                                       isPreTestLocked ? 'cursor-pointer hover:bg-amber-50/50 hover:border-amber-200 transition-colors' : ''
+                                     }`}
                         >
                           {/* dot บนเส้น connector */}
                           <span className="absolute -left-[26px] top-1/2 -translate-y-1/2 w-3 h-3
@@ -217,7 +233,9 @@ export default function MissionMap() {
                             <p className="font-semibold text-slate-500 text-sm truncate">{meta.title}</p>
                             <p className="text-[11px] text-slate-400 truncate flex items-center gap-1">
                               <span>🔒</span>
-                              {!meta.available
+                              {isPreTestLocked
+                                ? 'ปลดล็อกหลังทำแบบประเมินก่อนเรียน'
+                                : !meta.available
                                 ? 'เร็วๆ นี้'
                                 : `ปลดล็อกหลังจบด่าน ${meta.unlockAfter}`}
                             </p>
@@ -359,6 +377,63 @@ export default function MissionMap() {
           });
         })()}
       </main>
+
+      {/* ===== ป๊อปอัปเตือน: ต้องทำแบบประเมินก่อนเรียนก่อนเริ่มเล่น ===== */}
+      <AnimatePresence>
+        {showPreTestGateModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+            onClick={() => setShowPreTestGateModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 14 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 14 }}
+              className="relative w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl border border-slate-100 text-center space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-br from-sky-100 to-indigo-100 border-2 border-sky-300 flex items-center justify-center text-3xl shadow-clay-blue">
+                📝
+              </div>
+              <div className="space-y-2">
+                <div className="inline-block px-3 py-0.5 rounded-full bg-sky-100 text-sky-800 text-xs font-bold">
+                  ขั้นตอนที่ 1 ของโครงการ
+                </div>
+                <h3 className="text-lg font-display font-extrabold text-slate-900 leading-snug">
+                  ทำแบบประเมินก่อนเรียนก่อนนะ!
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  เพื่อบันทึกผลการประเมินและการเรียนรู้ของคุณ กรุณาทำ <b>แบบประเมินก่อนเรียน (Pre-test)</b>
+                  {admin.part3Enabled ? ` ความรู้ ${admin.knowledgeQuestionCount ?? 8} ข้อ (ถูก/ผิด)` : ''}
+                  {admin.part3Enabled && admin.part4Enabled ? ' และ' : ''}
+                  {admin.part4Enabled ? ' ทักษะปฏิเสธ 15 ข้อ' : ''} ให้เสร็จสิ้นก่อน ระบบจึงจะปลดล็อกด่านต่างๆ ให้เข้าเล่นจ้า
+                </p>
+              </div>
+              <div className="space-y-2 pt-1">
+                <button
+                  onClick={() => {
+                    sfx.click();
+                    setShowPreTestGateModal(false);
+                    nav('/assessment?kind=pre');
+                  }}
+                  className="btn-primary w-full shadow-clay-blue py-3 font-bold text-sm flex items-center justify-center gap-2"
+                >
+                  <span>📝</span> ไปทำแบบประเมินก่อนเรียนทันที
+                </button>
+                <button
+                  onClick={() => {
+                    sfx.click();
+                    setShowPreTestGateModal(false);
+                  }}
+                  className="w-full py-2 text-xs text-slate-400 hover:text-slate-600 font-semibold transition-colors"
+                >
+                  ปิดหน้าต่างนี้
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

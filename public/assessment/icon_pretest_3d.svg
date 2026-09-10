@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bgA" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#0369A1"/>
+    </linearGradient>
+    <linearGradient id="hiA" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="clipA" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F1F5F9"/>
+    </linearGradient>
+    <linearGradient id="goldA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="50%" stop-color="#EAB308"/>
+      <stop offset="100%" stop-color="#CA8A04"/>
+    </linearGradient>
+    <linearGradient id="checkA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ADE80"/>
+      <stop offset="100%" stop-color="#16A34A"/>
+    </linearGradient>
+    <filter id="shadowA" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#0C4A6E" flood-opacity="0.35"/>
+    </filter>
+    <filter id="badgeShadowA" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- 3D Clay Rounded Base Tile -->
+  <rect x="10" y="10" width="108" height="108" rx="32" fill="url(#bgA)" filter="url(#shadowA)"/>
+  <!-- Highlight curve -->
+  <path d="M 24 16 Q 64 24 104 16 Q 110 20 112 28 Q 64 38 16 28 Q 18 20 24 16 Z" fill="url(#hiA)"/>
+
+  <!-- 3D Clipboard -->
+  <g filter="url(#badgeShadowA)">
+    <rect x="30" y="28" width="68" height="78" rx="12" fill="#475569"/>
+    <rect x="30" y="26" width="68" height="78" rx="12" fill="#64748B"/>
+    <rect x="34" y="32" width="60" height="68" rx="8" fill="url(#clipA)"/>
+    
+    <!-- Lines -->
+    <rect x="42" y="48" width="28" height="4" rx="2" fill="#94A3B8"/>
+    <rect x="42" y="58" width="44" height="4" rx="2" fill="#CBD5E1"/>
+    <rect x="42" y="68" width="36" height="4" rx="2" fill="#CBD5E1"/>
+    <rect x="42" y="78" width="40" height="4" rx="2" fill="#CBD5E1"/>
+
+    <!-- Checkmark Badge -->
+    <circle cx="78" cy="50" r="7" fill="url(#checkA)"/>
+    <path d="M 74 50 L 77 53 L 83 47" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Metal clip -->
+    <rect x="50" y="21" width="28" height="10" rx="3" fill="#334155"/>
+    <rect x="53" y="17" width="22" height="7" rx="3" fill="#E2E8F0"/>
+  </g>
+
+  <!-- Big 3D Badge 'A' -->
+  <g filter="url(#badgeShadowA)">
+    <circle cx="86" cy="86" r="20" fill="url(#goldA)"/>
+    <circle cx="86" cy="86" r="16.5" fill="url(#bgA)"/>
+    <text x="86" y="94" font-family="'Kanit', 'Arial Black', sans-serif" font-weight="900" font-size="22" fill="#082F49" text-anchor="middle">A</text>
+    <text x="86" y="92.5" font-family="'Kanit', 'Arial Black', sans-serif" font-weight="900" font-size="22" fill="#FFFFFF" text-anchor="middle">A</text>
+  </g>
+
+  <!-- Sparkles -->
+  <path d="M 24 30 Q 25 35 30 36 Q 25 37 24 42 Q 23 37 18 36 Q 23 35 24 30 Z" fill="#FDE047"/>
+</svg>
