@@ -15,19 +15,23 @@ interface Shown { level: number; name: string; emoji: string; bonus: number; }
 export default function LevelUpModal() {
   const level = usePlayerStore(s => s.level);
   const totalXP = usePlayerStore(s => s.totalXP);
+  const isInitialized = usePlayerStore(s => s.isInitialized);
   const reducedMotion = useSettingsStore(s => s.reducedMotion);
   const prev = useRef(level);
+  const prevInit = useRef(isInitialized);
   const [shown, setShown] = useState<Shown | null>(null);
 
   useEffect(() => {
-    if (level > prev.current) {
+    const justHydrated = !prevInit.current && isInitialized;
+    if (!justHydrated && isInitialized && level > prev.current) {
       const info = getLevelByXP(totalXP);
       setShown({ level, name: info.name, emoji: info.emoji, bonus: level * 10 });
       sfx.victory();
       vibrate([30, 50, 30, 50, 60]);
     }
     prev.current = level;
-  }, [level, totalXP]);
+    prevInit.current = isInitialized;
+  }, [level, totalXP, isInitialized]);
 
   return (
     <AnimatePresence>

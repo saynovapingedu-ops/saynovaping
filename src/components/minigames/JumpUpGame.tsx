@@ -47,13 +47,16 @@ export default function JumpUpGame({ goalScore, onComplete }: Props) {
   };
 
   const start = () => {
-    px.current = W / 2; py.current = H - 70; vy.current = JUMP; scoreRef.current = 0; setScore(0);
+    px.current = W / 2; py.current = H - 70; vy.current = JUMP; held.current = 0; lastTs.current = 0; scoreRef.current = 0; setScore(0);
     initPlats(); setPhaseBoth('playing');
   };
 
   const over = () => {
-    setPhaseBoth('over'); setBest(b => Math.max(b, scoreRef.current)); sfx.wrong(); vibrate(60);
-    onComplete?.(goalScore ? scoreRef.current >= goalScore : true, scoreRef.current);
+    held.current = 0;
+    setPhaseBoth('over'); setBest(b => Math.max(b, scoreRef.current));
+    const won = goalScore ? scoreRef.current >= goalScore : true;
+    if (won && goalScore) sfx.victory(); else { sfx.wrong(); vibrate(60); }
+    if (!goalScore || won) onComplete?.(won, scoreRef.current);
   };
 
   useEffect(() => {
@@ -141,6 +144,11 @@ export default function JumpUpGame({ goalScore, onComplete }: Props) {
             <p className="text-2xl mb-1">{phase === 'over' ? (goalScore && scoreRef.current >= goalScore ? '🏆 ผ่าน!' : '⬇️ ตกแล้ว!') : '⬆️'}</p>
             <p className="font-display font-bold text-detective-800">{phase === 'over' ? `เก็บเหรียญได้ ${score} · สถิติ ${best}` : 'กดค้าง ◀ ▶ เด้งเก็บ 🪙 ให้ได้มากสุด'}</p>
             <button onClick={(e) => { e.stopPropagation(); start(); }} className="btn-primary mt-3 px-6">{phase === 'over' ? 'เล่นอีกครั้ง 🔄' : 'เริ่ม! ▶'}</button>
+            {phase === 'over' && goalScore && scoreRef.current < goalScore && (
+              <button onClick={(e) => { e.stopPropagation(); onComplete?.(false, scoreRef.current); }} className="text-xs text-slate-500 underline mt-2">
+                ข้ามด่านมินิเกมนี้ →
+              </button>
+            )}
           </div>
         )}
       </div>

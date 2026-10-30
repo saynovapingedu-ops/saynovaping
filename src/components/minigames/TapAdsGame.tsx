@@ -30,6 +30,9 @@ export default function TapAdsGame({ goalScore, onComplete, seconds = 30 }: Prop
   const spawnRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const phaseRef = useRef<'ready' | 'playing' | 'done'>('ready');
+  const setPhaseBoth = (p: 'ready' | 'playing' | 'done') => { phaseRef.current = p; setPhase(p); };
+
   const cleanup = () => {
     if (spawnRef.current) clearInterval(spawnRef.current);
     if (tickRef.current) clearInterval(tickRef.current);
@@ -37,20 +40,22 @@ export default function TapAdsGame({ goalScore, onComplete, seconds = 30 }: Prop
   };
 
   const end = () => {
+    if (phaseRef.current !== 'playing') return;
     cleanup();
     setMoles([]);
-    setPhase('done');
+    setPhaseBoth('done');
     const won = goalScore ? scoreRef.current >= goalScore : true;
     if (won) sfx.victory(); else sfx.wrong();
-    onComplete?.(won, scoreRef.current);
+    if (!goalScore || won) onComplete?.(won, scoreRef.current);
   };
 
   const start = () => {
+    cleanup();
     scoreRef.current = 0;
     setScore(0);
     setTimeLeft(seconds);
     setMoles([]);
-    setPhase('playing');
+    setPhaseBoth('playing');
 
     spawnRef.current = setInterval(() => {
       setMoles(prev => {
@@ -71,16 +76,18 @@ export default function TapAdsGame({ goalScore, onComplete, seconds = 30 }: Prop
     }, 600);
 
     tickRef.current = setInterval(() => {
-      setTimeLeft(t => {
-        if (t <= 1) { end(); return 0; }
-        return t - 1;
-      });
+      setTimeLeft(t => (t <= 1 ? 0 : t - 1));
     }, 1000);
   };
+
+  useEffect(() => {
+    if (phase === 'playing' && timeLeft === 0) end();
+  }, [timeLeft, phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => cleanup, []);
 
   const hit = (m: Mole) => {
+    if (phaseRef.current !== 'playing') return;
     setMoles(prev => prev.filter(x => x.id !== m.id));
     if (m.bad) {
       scoreRef.current += 1;
@@ -94,6 +101,7 @@ export default function TapAdsGame({ goalScore, onComplete, seconds = 30 }: Prop
       setFlash('นั่นข้อมูลจริง! -1');
     }
     setTimeout(() => setFlash(null), 500);
+    if (goalScore && scoreRef.current >= goalScore) end();
   };
 
   return (
@@ -149,6 +157,11 @@ export default function TapAdsGame({ goalScore, onComplete, seconds = 30 }: Prop
             <button onClick={start} className="btn-primary mt-3 px-6">
               {phase === 'ready' ? 'เริ่ม! ▶' : 'เล่นอีกครั้ง 🔄'}
             </button>
+            {phase === 'done' && goalScore && scoreRef.current < goalScore && (
+              <button onClick={() => onComplete?.(false, scoreRef.current)} className="text-xs text-slate-500 underline mt-2">
+                ข้ามด่านมินิเกมนี้ →
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -198,6 +198,9 @@ export default function ScenarioPage() {
   // เลื่อนหน้าจอไปที่ฉากปัจจุบันอัตโนมัติ + ย่อบทสนทนาเก่าให้หน้าสั้นลง
   const currentRef = useRef<HTMLDivElement>(null);
   const [showOlder, setShowOlder] = useState(false);
+  const stagesCompleted = usePlayerStore(s => s.stagesCompleted);
+  const rewardedChoicesRef = useRef<Set<string>>(new Set());
+  const endRewardClaimedRef = useRef(false);
 
   const saveProgress  = useProgressStore(s => s.saveProgress);
   const getProgress   = useProgressStore(s => s.getProgress);
@@ -208,6 +211,11 @@ export default function ScenarioPage() {
     setHistory([]);
     setCurrentNodeId(scenario?.startNode || '');
     setStageScore(0);
+    setReviewLog([]);
+    setHintRevealedNode(null);
+    setShareMsg(null);
+    rewardedChoicesRef.current.clear();
+    endRewardClaimedRef.current = false;
     // โหลดคำท้าถ้าเป็นด่านเดียวกับที่ถูกท้า
     const pending = getPendingChallenge();
     setChallenge(pending && pending.stageId === stageId ? pending : null);
@@ -234,8 +242,8 @@ export default function ScenarioPage() {
     for (const id of saved.historyIds) {
       if (id.startsWith('__pick_')) {
         // re-create player echo
-        const sourceNodeId = id.split('_')[2];
-        const text = saved.pickedChoices[sourceNodeId];
+        const sourceNodeId = id.replace(/^__pick_/, '').replace(/_\d+$/, '');
+        const text = saved.pickedChoices[sourceNodeId] || saved.pickedChoices['pick'];
         if (text) {
           restored.push({
             type: 'dialogue', id, speaker: 'player', text, next: '',
@@ -259,6 +267,12 @@ export default function ScenarioPage() {
     setShowIntro(true);
     setHistory([]);
     setCurrentNodeId(scenario?.startNode || '');
+    setStageScore(0);
+    setReviewLog([]);
+    setHintRevealedNode(null);
+    setShareMsg(null);
+    rewardedChoicesRef.current.clear();
+    endRewardClaimedRef.current = false;
   };
 
   // auto-save ทุกครั้งที่ history เปลี่ยน (ยกเว้นเมื่อจบด่าน)
@@ -272,7 +286,7 @@ export default function ScenarioPage() {
       historyIds: history.map(h => h.id),
       pickedChoices: history.reduce<Record<string, string>>((acc, h) => {
         if (h.id.startsWith('__pick_') && h.type === 'dialogue') {
-          const sourceNodeId = h.id.split('_')[2];
+          const sourceNodeId = h.id.replace(/^__pick_/, '').replace(/_\d+$/, '');
           acc[sourceNodeId] = h.text;
         }
         return acc;
@@ -374,7 +388,7 @@ export default function ScenarioPage() {
               ตามระเบียบวิธีวิจัยและขั้นตอนการเรียนรู้ กรุณาทำ <b>แบบประเมินก่อนเรียน (Pre-test)</b>
               {admin.part3Enabled ? ` ความรู้ ${admin.knowledgeQuestionCount ?? 8} ข้อ` : ''}
               {admin.part3Enabled && admin.part4Enabled ? ' และ' : ''}
-              {admin.part4Enabled ? ' ทักษะปฏิเสธ 15 ข้อ' : ''} ให้เสร็จสิ้นก่อน ระบบจึงจะปลดล็อกด่านที่ {stageId} ให้เข้าเล่นได้จ้า
+              {admin.part4Enabled ? ' ทักษะปฏิเสธ 20 ข้อ' : ''} ให้เสร็จสิ้นก่อน ระบบจึงจะปลดล็อกด่านที่ {stageId} ให้เข้าเล่นได้จ้า
             </p>
           </div>
           <div className="space-y-2 pt-2">
@@ -396,6 +410,36 @@ export default function ScenarioPage() {
     );
   }
 
+  const isStageLocked = !isStageUnlocked(stageId, stagesCompleted) && !admin.allowBypassStages;
+
+  if (isStageLocked) {
+    const meta = SCENARIO_META.find(m => m.id === stageId);
+    const prevId = meta?.unlockAfter ?? (stageId - 1);
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FBF3EA]">
+        <div className="card max-w-md w-full text-center p-6 space-y-4 shadow-clay">
+          <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-br from-amber-100 to-orange-100 border-2 border-amber-300 flex items-center justify-center text-3xl shadow-clay-sm">
+            🔒
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-lg font-display font-extrabold text-slate-800">
+              ด่านที่ {stageId} ยังไม่ปลดล็อก!
+            </h2>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              กรุณาผ่าน <b>ด่านที่ {prevId}</b> ให้สำเร็จก่อน ระบบจึงจะปลดล็อกด่านนี้ให้เข้าเล่นได้จ้า
+            </p>
+          </div>
+          <button
+            onClick={() => { sfx.click(); nav('/missions'); }}
+            className="btn-primary w-full py-3 text-sm font-bold"
+          >
+            🗺️ กลับไปแผนที่ภารกิจ
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const currentNode = scenario.nodes.find(n => n.id === currentNodeId);
 
   const goToNext = (nextId: string) => {
@@ -408,7 +452,8 @@ export default function ScenarioPage() {
   const handleChoice = (choice: Choice) => {
     sfx.pick();
     vibrate(15);
-    if (choice.xp && choice.xp > 0) {
+    const alreadyRewarded = rewardedChoicesRef.current.has(currentNodeId);
+    if (!alreadyRewarded && choice.xp && choice.xp > 0) {
       addXP(choice.xp);
       pushXP(choice.xp);
       setStageScore(s => s + choice.xp!);
@@ -427,26 +472,33 @@ export default function ScenarioPage() {
     // ข้ามข้อเกริ่น/ถามเล่นๆ ที่ไม่มีเฉลย (ทุกตัวเลือกไปทางเดียวกัน + ไม่มี reflection)
     const curNode = scenario?.nodes.find(n => n.id === currentNodeId);
     if (curNode && curNode.type === 'choice') {
+      rewardedChoicesRef.current.add(currentNodeId);
       const isThrowaway =
         curNode.choices.every(c => !c.reflection) &&
         new Set(curNode.choices.map(c => c.next)).size === 1;
       if (!isThrowaway) {
         const maxXp = Math.max(...curNode.choices.map(c => c.xp || 0));
         const best = curNode.choices.find(c => (c.xp || 0) === maxXp);
-        setReviewLog(prev => [
-          ...prev,
-          {
-            kind: 'choice',
-            prompt: curNode.prompt,
-            pickedLabel: choice.label,
-            pickedXp: choice.xp || 0,
-            isBest: (choice.xp || 0) === maxXp,
-            bestLabel: best?.label || choice.label,
-            reflection: choice.reflection,
-            source: choice.source,
-            bestSource: best?.source,
-          },
-        ]);
+        const entry: ReviewEntry = {
+          kind: 'choice',
+          prompt: curNode.prompt,
+          pickedLabel: choice.label,
+          pickedXp: choice.xp || 0,
+          isBest: (choice.xp || 0) === maxXp,
+          bestLabel: best?.label || choice.label,
+          reflection: choice.reflection,
+          source: choice.source,
+          bestSource: best?.source,
+        };
+        setReviewLog(prev => {
+          const idx = prev.findIndex(r => r.kind === 'choice' && r.prompt === curNode.prompt);
+          if (idx !== -1) {
+            const next = [...prev];
+            next[idx] = entry;
+            return next;
+          }
+          return [...prev, entry];
+        });
       }
     }
     const playerEcho: ScenarioNode = {
@@ -506,6 +558,8 @@ export default function ScenarioPage() {
   // claim XP/badge เมื่อจบด่าน (ไม่ navigate)
   const claimEndRewards = () => {
     if (!currentNode || currentNode.type !== 'end') return;
+    if (endRewardClaimedRef.current) return;
+    endRewardClaimedRef.current = true;
     addXP(currentNode.xp);
     pushXP(currentNode.xp);
     setStageScore(s => s + currentNode.xp);
@@ -820,7 +874,10 @@ export default function ScenarioPage() {
                          px-3 pt-3 pb-2">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => nav('/')}
+            onClick={() => {
+              if (currentNode?.type === 'end') claimEndRewards();
+              nav('/');
+            }}
             className="text-detective-500 px-3 py-1.5 rounded-lg hover:bg-detective-50 active:scale-95"
           >
             ←
@@ -1240,6 +1297,7 @@ export default function ScenarioPage() {
                           <button
                             onClick={() => {
                               sfx.click();
+                              claimEndRewards();
                               nav('/assessment?kind=post');
                             }}
                             className="w-full py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-extrabold text-xs shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"
@@ -1250,6 +1308,7 @@ export default function ScenarioPage() {
                           <button
                             onClick={() => {
                               sfx.click();
+                              claimEndRewards();
                               nav('/certificate');
                             }}
                             className="w-full py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-900 font-extrabold text-xs shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"

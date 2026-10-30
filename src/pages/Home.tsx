@@ -315,7 +315,7 @@ export default function Home() {
               <p className="text-xs text-slate-500 truncate mt-0.5">
                 {admin.part3Enabled ? `ความรู้ ${admin.knowledgeQuestionCount ?? 8} ข้อ (ถูก/ผิด)` : ''}
                 {admin.part3Enabled && admin.part4Enabled ? ' + ' : ''}
-                {admin.part4Enabled ? 'ทักษะปฏิเสธ 15 ข้อ' : ''}
+                {admin.part4Enabled ? 'ทักษะปฏิเสธ 20 ข้อ' : ''}
               </p>
             </div>
             <span className="text-3xl text-sky-600 flex-shrink-0">→</span>
@@ -347,7 +347,7 @@ export default function Home() {
                 ทำแบบประเมินหลังเรียน & ดูพัฒนาการ
               </p>
               <p className="text-xs text-slate-500 truncate mt-0.5">
-                เปรียบเทียบผลความรู้ (8 ข้อ) และทักษะปฏิเสธ (15 ข้อ) ทันที
+                เปรียบเทียบผลความรู้ ({admin.knowledgeQuestionCount ?? 8} ข้อ) และทักษะปฏิเสธ (20 ข้อ) ทันที
               </p>
             </div>
             <span className="text-3xl text-emerald-600 flex-shrink-0">→</span>
@@ -662,7 +662,7 @@ export default function Home() {
                   เพื่อบันทึกผลการประเมินและการเรียนรู้ของคุณ กรุณาทำ <b>แบบประเมินก่อนเรียน (Pre-test)</b>
                   {admin.part3Enabled ? ` ความรู้ ${admin.knowledgeQuestionCount ?? 8} ข้อ (ถูก/ผิด)` : ''}
                   {admin.part3Enabled && admin.part4Enabled ? ' และ' : ''}
-                  {admin.part4Enabled ? ' ทักษะปฏิเสธ 15 ข้อ' : ''} ให้เสร็จสิ้นก่อน ระบบจึงจะปลดล็อกด่านที่ 1 และแผนที่ให้เข้าเล่นเกมจ้า
+                  {admin.part4Enabled ? ' ทักษะปฏิเสธ 20 ข้อ' : ''} ให้เสร็จสิ้นก่อน ระบบจึงจะปลดล็อกด่านที่ 1 และแผนที่ให้เข้าเล่นเกมจ้า
                 </p>
               </div>
               <div className="space-y-2 pt-1">

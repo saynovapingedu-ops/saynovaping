@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAvatarStore } from '../store/avatarStore';
 import { usePlayerStore } from '../store/playerStore';
 import { getPlayerCharacter } from '../lib/characters';
@@ -29,6 +29,7 @@ export default function Avatar({
   accessoryId, hideAccessory,
 }: Props) {
   const [pngFailed, setPngFailed] = useState(false);
+  useEffect(() => { setPngFailed(false); }, [preset]);
   const custom = useAvatarStore(s =>
     customId ? s.avatars.find(a => a.id === customId) : undefined
   );

@@ -56,7 +56,7 @@ export default function TMFLogo({ variant = 'inline', width = 120, caption, useB
           style={{ width: width + 24 }}
         >
           <img
-            src={LOGO_SRC}
+            src={src}
             alt={LOGO_ALT}
             width={width}
             height={height}
@@ -77,7 +77,7 @@ export default function TMFLogo({ variant = 'inline', width = 120, caption, useB
   return (
     <div className="inline-flex items-center gap-2 bg-white rounded-xl px-2.5 py-1.5 border border-slate-200">
       <img
-        src={LOGO_SRC}
+        src={src}
         alt={LOGO_ALT}
         width={width}
         height={height}

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
+import { useAdminStore } from '../store/adminStore';
 import { JOURNAL_ENTRIES, type JournalEntry } from '../lib/journalEntries';
 import { SCENARIO_META, isStageUnlocked } from '../scenarios';
 import { SHOP_ITEMS } from '../lib/shopItems';
@@ -37,6 +38,7 @@ interface CombinedCase extends JournalEntry {
 export default function Journal() {
   const nav = useNavigate();
   const player = usePlayerStore();
+  const admin = useAdminStore();
   const completed = useMemo(() => new Set(player.stagesCompleted), [player.stagesCompleted]);
   const [activeCase, setActiveCase] = useState<CombinedCase | null>(null);
 
@@ -47,7 +49,7 @@ export default function Journal() {
       ...e,
       meta,
       cleared: completed.has(e.id),
-      unlocked: isStageUnlocked(e.id, player.stagesCompleted),
+      unlocked: isStageUnlocked(e.id, player.stagesCompleted) || admin.allowBypassStages,
     };
   });
 

@@ -56,7 +56,7 @@ export default function SwipeDecide({ title, cards, onComplete }: Props) {
         <span className="text-success-600 font-semibold">ถูก {correctCount}</span>
       </div>
 
-      <div className="relative h-72">
+      <div className="relative h-72 overflow-hidden">
         <AnimatePresence>
           {!done && current && (
             <motion.div

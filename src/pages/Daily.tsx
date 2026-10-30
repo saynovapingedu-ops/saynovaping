@@ -2,12 +2,14 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
+import { useAdminStore } from '../store/adminStore';
 import { getDailyQuestions, type QuizResultItem } from '../lib/quizBank';
 import QuizRunner from '../components/QuizRunner';
 import QuizReview from '../components/QuizReview';
 import PageHeader from '../components/PageHeader';
 import Confetti from '../components/Confetti';
 import { sfx } from '../lib/sound';
+import EmptyState from '../components/ui/EmptyState';
 import ResultHero from '../components/ui/ResultHero';
 import ProgressCircle from '../components/ui/ProgressCircle';
 import CountUp from '../components/ui/CountUp';
@@ -24,6 +26,7 @@ function todayStr() {
 export default function Daily() {
   const nav = useNavigate();
   const player = usePlayerStore();
+  const admin = useAdminStore();
   const recordDaily = usePlayerStore(s => s.recordDaily);
   const pingDailyPlay = usePlayerStore(s => s.pingDailyPlay);
 
@@ -33,6 +36,28 @@ export default function Daily() {
   const questions = useMemo(() => getDailyQuestions(today, 5), [today]);
   const [started, setStarted] = useState(false);
   const [result, setResult] = useState<{ score: number; total: number; coins: number; details: QuizResultItem[] } | null>(null);
+
+  if (!admin.dailyChallengeEnabled) {
+    return (
+      <div className="min-h-full pb-10">
+        <PageHeader title="📅 ภารกิจรายวัน" backTo="/" />
+        <main className="max-w-md mx-auto px-4 pt-6">
+          <EmptyState
+            hero
+            icon="🔒"
+            tone="info"
+            title="ภารกิจรายวันปิดอยู่ชั่วคราว"
+            description="อาจารย์ผู้ดูแลระบบได้ปิดใช้งานภารกิจรายวันในขณะนี้"
+            action={
+              <button onClick={() => { sfx.click(); nav('/'); }} className="btn-primary">
+                กลับหน้าหลัก
+              </button>
+            }
+          />
+        </main>
+      </div>
+    );
+  }
 
   const handleFinish = (score: number, total: number, details: QuizResultItem[]) => {
     const coins = score * COIN_PER_CORRECT;

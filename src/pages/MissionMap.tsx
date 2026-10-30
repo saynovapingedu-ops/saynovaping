@@ -406,7 +406,7 @@ export default function MissionMap() {
                   เพื่อบันทึกผลการประเมินและการเรียนรู้ของคุณ กรุณาทำ <b>แบบประเมินก่อนเรียน (Pre-test)</b>
                   {admin.part3Enabled ? ` ความรู้ ${admin.knowledgeQuestionCount ?? 8} ข้อ (ถูก/ผิด)` : ''}
                   {admin.part3Enabled && admin.part4Enabled ? ' และ' : ''}
-                  {admin.part4Enabled ? ' ทักษะปฏิเสธ 15 ข้อ' : ''} ให้เสร็จสิ้นก่อน ระบบจึงจะปลดล็อกด่านต่างๆ ให้เข้าเล่นจ้า
+                  {admin.part4Enabled ? ' ทักษะปฏิเสธ 20 ข้อ' : ''} ให้เสร็จสิ้นก่อน ระบบจึงจะปลดล็อกด่านต่างๆ ให้เข้าเล่นจ้า
                 </p>
               </div>
               <div className="space-y-2 pt-1">

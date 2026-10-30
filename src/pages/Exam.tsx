@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { usePlayerStore } from '../store/playerStore';
+import { useAdminStore } from '../store/adminStore';
 import { getExamQuestions, type QuizResultItem } from '../lib/quizBank';
 import { TOTAL_STAGES } from '../scenarios';
 import QuizRunner from '../components/QuizRunner';
@@ -22,16 +23,39 @@ const BONUS_COINS = 200;
 export default function Exam() {
   const nav = useNavigate();
   const player = usePlayerStore();
+  const admin = useAdminStore();
   const recordExam = usePlayerStore(s => s.recordExam);
 
-  // ปลดเมื่อจบครบทุกด่าน หรือมี certificate แล้ว
-  const eligible = player.stagesCompleted.length >= TOTAL_STAGES || !!player.certificateNo;
+  // ปลดเมื่อจบครบทุกด่าน หรือมี certificate แล้ว หรืออาจารย์เปิด Bypass
+  const eligible = player.stagesCompleted.length >= TOTAL_STAGES || !!player.certificateNo || admin.allowBypassStages;
 
   const [started, setStarted] = useState(false);
   const [result, setResult] = useState<{ percent: number; passed: boolean; gotBonus: boolean; details: QuizResultItem[] } | null>(null);
   // สุ่มชุดใหม่ทุกครั้งที่กดเริ่ม
   const [runKey, setRunKey] = useState(0);
   const questions = useMemo(() => getExamQuestions(EXAM_N), [runKey]);
+
+  if (!admin.finalExamEnabled) {
+    return (
+      <div className="min-h-full pb-10">
+        <PageHeader title="🎓 แบบทดสอบรวม" backTo="/" />
+        <main className="max-w-md mx-auto px-4 pt-6">
+          <EmptyState
+            hero
+            icon="🔒"
+            tone="info"
+            title="แบบทดสอบรวมปิดอยู่ชั่วคราว"
+            description="อาจารย์ผู้ดูแลระบบได้ปิดใช้งานแบบทดสอบรวม (Final Exam) ในขณะนี้"
+            action={
+              <button onClick={() => { sfx.click(); nav('/'); }} className="btn-primary">
+                กลับหน้าหลัก
+              </button>
+            }
+          />
+        </main>
+      </div>
+    );
+  }
 
   const handleFinish = (score: number, total: number, details: QuizResultItem[]) => {
     const percent = Math.round((score / total) * 100);

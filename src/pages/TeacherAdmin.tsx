@@ -49,7 +49,8 @@ export default function TeacherAdmin() {
           preTestSkillAnswers: player.preTestSkillAnswers,
           preTestAt: player.preTestAt,
           stagesCompletedCount: player.stagesCompleted.length,
-          totalStages: 10,
+          heroStagesCount: player.stagesCompleted.filter(id => id <= 8).length,
+          totalStages: 20,
           totalXP: player.totalXP,
           level: player.level,
           postTestScore: player.postTestScore,
@@ -207,7 +208,10 @@ export default function TeacherAdmin() {
         s.idCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.school?.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchGrade = selectedGrade === 'all' || s.grade === selectedGrade;
+      const matchGrade =
+        selectedGrade === 'all' ||
+        s.grade === selectedGrade ||
+        (selectedGrade === 'ปวช.' && s.grade?.startsWith('ปวช.'));
       const matchSchool = selectedSchool === 'all' || s.school?.trim() === selectedSchool;
 
       let matchPeriod = true;
@@ -2294,10 +2298,10 @@ export default function TeacherAdmin() {
                 <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
                   <div>
                     <p className="text-xs font-bold text-slate-800">
-                      🛡️ ตอนที่ 4: แบบประเมินทักษะและความมั่นใจในการปฏิเสธ (15 ข้อ)
+                      🛡️ ตอนที่ 4: แบบประเมินทักษะและความมั่นใจในการปฏิเสธ (20 ข้อ)
                     </p>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      {admin.part4Enabled ? 'เปิดใช้งาน (ประเมินระดับความมั่นใจ 1-5 ครบ 15 ข้อ)' : 'ปิดใช้งาน (ข้ามส่วนนี้เพื่อลดเวลาทำข้อสอบลง 3-5 นาที)'}
+                      {admin.part4Enabled ? 'เปิดใช้งาน (ประเมินระดับความมั่นใจ 1-5 ครบ 20 ข้อ)' : 'ปิดใช้งาน (ข้ามส่วนนี้เพื่อลดเวลาทำข้อสอบลง 3-5 นาที)'}
                     </p>
                   </div>
                   <button

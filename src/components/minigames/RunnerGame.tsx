@@ -75,6 +75,7 @@ export default function RunnerGame({ goalScore, onComplete, facts }: Props) {
     obstacles.current = [];
     speed.current = 5;
     spawnTimer.current = 30;
+    lastTs.current = 0;
     scoreRef.current = 0;
     setScore(0);
   };
@@ -90,7 +91,7 @@ export default function RunnerGame({ goalScore, onComplete, facts }: Props) {
     // สุ่มเกร็ดความรู้ตอนจบ (เลี่ยง Math.random ตามนโยบาย → ใช้คะแนนเป็น seed)
     setEndFact(factList[scoreRef.current % factList.length]);
     if (!won) { sfx.wrong(); vibrate(60); } else { sfx.victory(); }
-    onComplete?.(won, scoreRef.current);
+    if (!goalScore || won) onComplete?.(won, scoreRef.current);
   };
 
   // ===== game loop =====
@@ -216,9 +217,16 @@ export default function RunnerGame({ goalScore, onComplete, facts }: Props) {
             <p className="font-display font-bold text-detective-800">หลบได้ {score} ครั้ง · สถิติ {best}</p>
             <p className="text-[11px] text-slate-600 mt-1 max-w-xs leading-snug">💡 {endFact}</p>
             {phase === 'over' && (
-              <button onClick={(e) => { e.stopPropagation(); start(); }} className="btn-primary mt-3 px-6">
-                เล่นอีกครั้ง 🔄
-              </button>
+              <>
+                <button onClick={(e) => { e.stopPropagation(); start(); }} className="btn-primary mt-3 px-6">
+                  เล่นอีกครั้ง 🔄
+                </button>
+                {goalScore && scoreRef.current < goalScore && (
+                  <button onClick={(e) => { e.stopPropagation(); onComplete?.(false, scoreRef.current); }} className="text-xs text-slate-500 underline mt-2">
+                    ข้ามด่านมินิเกมนี้ →
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}

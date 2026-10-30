@@ -42,11 +42,13 @@ export default function LaneRunGame({ goalScore, onComplete }: Props) {
     sfx.click();
   }, []);
 
-  const reset = () => { lane.current = 1; obs.current = []; scoreRef.current = 0; speed.current = 3.0; spawnT.current = 40; setScore(0); spawnCount.current = 0; };
+  const reset = () => { lane.current = 1; obs.current = []; scoreRef.current = 0; speed.current = 3.0; spawnT.current = 40; lastTs.current = 0; setScore(0); spawnCount.current = 0; };
   const start = () => { reset(); setPhaseBoth('playing'); };
   const over = () => {
-    setPhaseBoth('over'); setBest(b => Math.max(b, scoreRef.current)); sfx.wrong(); vibrate(60);
-    onComplete?.(goalScore ? scoreRef.current >= goalScore : true, scoreRef.current);
+    setPhaseBoth('over'); setBest(b => Math.max(b, scoreRef.current));
+    const won = goalScore ? scoreRef.current >= goalScore : true;
+    if (won && goalScore) sfx.victory(); else { sfx.wrong(); vibrate(60); }
+    if (!goalScore || won) onComplete?.(won, scoreRef.current);
   };
 
   useEffect(() => {
@@ -99,8 +101,9 @@ export default function LaneRunGame({ goalScore, onComplete }: Props) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code === 'ArrowLeft') move(-1);
-      else if (e.code === 'ArrowRight') move(1);
+      if (phaseRef.current !== 'playing') return;
+      if (e.code === 'ArrowLeft') { e.preventDefault(); move(-1); }
+      else if (e.code === 'ArrowRight') { e.preventDefault(); move(1); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -119,6 +122,11 @@ export default function LaneRunGame({ goalScore, onComplete }: Props) {
             <p className="text-2xl mb-1">{phase === 'over' ? (goalScore && scoreRef.current >= goalScore ? '🏆 ผ่าน!' : '💥 ชน 🚬!') : '🛹'}</p>
             <p className="font-display font-bold text-detective-800">{phase === 'over' ? `เก็บน้ำได้ ${score} · สถิติ ${best}` : 'กดปุ่ม ◀ ▶ หลบ 🚬 เก็บ 💧'}</p>
             <button onClick={(e) => { e.stopPropagation(); start(); }} className="btn-primary mt-3 px-6">{phase === 'over' ? 'เล่นอีกครั้ง 🔄' : 'เริ่ม! ▶'}</button>
+            {phase === 'over' && goalScore && scoreRef.current < goalScore && (
+              <button onClick={(e) => { e.stopPropagation(); onComplete?.(false, scoreRef.current); }} className="text-xs text-slate-500 underline mt-2">
+                ข้ามด่านมินิเกมนี้ →
+              </button>
+            )}
           </div>
         )}
       </div>

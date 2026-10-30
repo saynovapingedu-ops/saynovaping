@@ -58,10 +58,15 @@ export default function MazeGame({ goalScore, onComplete }: Props) {
     smoke.current = arr;
   };
 
-  const start = () => { levelRef.current = 1; setLevel(1); setupLevel(1); setPhaseBoth('playing'); };
+  const start = () => { heldDir.current = { x: 0, y: 0 }; lastTs.current = 0; levelRef.current = 1; setLevel(1); setupLevel(1); setPhaseBoth('playing'); };
 
-  const die = () => { setPhaseBoth('over'); sfx.wrong(); vibrate(60); onComplete?.(goalScore ? levelRef.current - 1 >= goalScore : true, levelRef.current - 1); };
-  const winAll = () => { setPhaseBoth('win'); sfx.victory(); onComplete?.(true, levelRef.current); };
+  const die = () => {
+    heldDir.current = { x: 0, y: 0 };
+    setPhaseBoth('over'); sfx.wrong(); vibrate(60);
+    const won = goalScore ? levelRef.current - 1 >= goalScore : true;
+    if (!goalScore || won) onComplete?.(won, levelRef.current - 1);
+  };
+  const winAll = () => { heldDir.current = { x: 0, y: 0 }; setPhaseBoth('win'); sfx.victory(); onComplete?.(true, levelRef.current); };
 
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return;
@@ -79,8 +84,8 @@ export default function MazeGame({ goalScore, onComplete }: Props) {
         if (grace.current > 0) grace.current -= dt;
         for (const s of smoke.current) {
           s.x += s.vx * dt; s.y += s.vy * dt;
-          if (s.x < SR || s.x > W - SR) s.vx *= -1;
-          if (s.y < SR || s.y > H - SR) s.vy *= -1;
+          if (s.x < SR || s.x > W - SR) { s.vx *= -1; s.x = Math.max(SR, Math.min(W - SR, s.x)); }
+          if (s.y < SR || s.y > H - SR) { s.vy *= -1; s.y = Math.max(SR, Math.min(H - SR, s.y)); }
           if (grace.current <= 0 && Math.hypot(s.x - player.current.x, s.y - player.current.y) < SR + PR - 6) { die(); return; }
         }
         if (Math.hypot(door.current.x - player.current.x, door.current.y - player.current.y) < 26) {
@@ -129,6 +134,11 @@ export default function MazeGame({ goalScore, onComplete }: Props) {
             </p>
             <p className="text-xs text-slate-500 mt-1">ยิ่งด่านสูง ควันยิ่งเยอะและเร็วขึ้น</p>
             <button onClick={(e) => { e.stopPropagation(); start(); }} className="btn-primary mt-3 px-6">{phase === 'ready' ? 'เริ่ม! ▶' : 'เล่นอีกครั้ง 🔄'}</button>
+            {phase === 'over' && goalScore && levelRef.current - 1 < goalScore && (
+              <button onClick={(e) => { e.stopPropagation(); onComplete?.(false, levelRef.current - 1); }} className="text-xs text-slate-500 underline mt-2">
+                ข้ามด่านมินิเกมนี้ →
+              </button>
+            )}
           </div>
         )}
       </div>

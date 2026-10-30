@@ -113,7 +113,7 @@ export default function Assessment() {
   // =========================================================================
   // FORM STATES (ตอนที่ 2: พฤติกรรมการใช้)
   // =========================================================================
-  const [part2EverTried, setPart2EverTried] = useState<string>('ไม่เคยลองเลย');
+  const [part2EverTried, setPart2EverTried] = useState<string>(PART2_BEHAVIORS.everTried.options[0]);
   const [part2FirstAge, setPart2FirstAge] = useState<string>('ตอน ม.1');
   const [part2LastMonth, setPart2LastMonth] = useState<string>('ไม่เคยสูบเลย');
 
@@ -608,8 +608,8 @@ export default function Assessment() {
               friendsSmoking: friendSmoke,
               behavior: {
                 everTried: part2EverTried,
-                firstAge: part2EverTried === 'ไม่เคยลองเลย' ? 'ไม่เคยลอง' : part2FirstAge,
-                lastMonth: part2EverTried === 'ไม่เคยลองเลย' ? 'ไม่เคยสูบเลย' : part2LastMonth,
+                firstAge: part2EverTried !== 'เคยลอง' ? 'ไม่เคยลอง' : part2FirstAge,
+                lastMonth: part2EverTried !== 'เคยลอง' ? 'ไม่เคยสูบเลย' : part2LastMonth,
               },
             };
 

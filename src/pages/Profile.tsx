@@ -36,6 +36,9 @@ export default function Profile() {
     if (!confirm('แน่ใจไหมว่าต้องการลบข้อมูลทั้งหมดและเริ่มใหม่? — การกระทำนี้กลับคืนไม่ได้')) return;
     reset();
     localStorage.removeItem('hd_mock_user_id');
+    localStorage.removeItem('hd_scenario_progress_v1');
+    localStorage.removeItem('hd_cert_realname_v1');
+    localStorage.removeItem('hd_custom_avatars_v1');
     nav('/');
     location.reload();
   };

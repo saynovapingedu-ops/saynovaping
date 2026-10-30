@@ -25,16 +25,20 @@ export default function ReactionGame({ goalScore, onComplete, seconds = 25 }: Pr
   const swapRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const seedRef = useRef(0);
 
+  const phaseRef = useRef<'ready' | 'playing' | 'done'>('ready');
+  const setPhaseBoth = (p: 'ready' | 'playing' | 'done') => { phaseRef.current = p; setPhase(p); };
+
   const cleanup = () => {
     if (tickRef.current) clearInterval(tickRef.current);
     if (swapRef.current) clearInterval(swapRef.current);
   };
 
   const end = () => {
-    cleanup(); setCur(null); setPhase('done');
+    if (phaseRef.current !== 'playing') return;
+    cleanup(); setCur(null); setPhaseBoth('done');
     const won = goalScore ? scoreRef.current >= goalScore : true;
     if (won) sfx.victory(); else sfx.wrong();
-    onComplete?.(won, scoreRef.current);
+    if (!goalScore || won) onComplete?.(won, scoreRef.current);
   };
 
   const nextItem = () => {
@@ -46,11 +50,15 @@ export default function ReactionGame({ goalScore, onComplete, seconds = 25 }: Pr
 
   const start = () => {
     scoreRef.current = 0; setScore(0); setTimeLeft(seconds); seedRef.current = 0;
-    setPhase('playing'); nextItem();
+    setPhaseBoth('playing'); nextItem();
     cleanup();
     swapRef.current = setInterval(nextItem, 850);
-    tickRef.current = setInterval(() => { setTimeLeft(t => { if (t <= 1) { end(); return 0; } return t - 1; }); }, 1000);
+    tickRef.current = setInterval(() => { setTimeLeft(t => (t <= 1 ? 0 : t - 1)); }, 1000);
   };
+
+  useEffect(() => {
+    if (phase === 'playing' && timeLeft === 0) end();
+  }, [timeLeft, phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => cleanup, []);
 
@@ -97,6 +105,11 @@ export default function ReactionGame({ goalScore, onComplete, seconds = 25 }: Pr
             <button onClick={(e) => { e.stopPropagation(); start(); }} className="btn-primary mt-3 px-6">
               {phase === 'ready' ? 'เริ่ม! ▶' : 'เล่นอีกครั้ง 🔄'}
             </button>
+            {phase === 'done' && goalScore && scoreRef.current < goalScore && (
+              <button onClick={(e) => { e.stopPropagation(); onComplete?.(false, scoreRef.current); }} className="block mx-auto text-xs text-slate-500 underline mt-2">
+                ข้ามด่านมินิเกมนี้ →
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -155,42 +155,43 @@ export async function renderCertificateCanvas(opts: CertRenderOptions): Promise<
   ctx.font = `bold ${nameSize}px "Sukhumvit Set", "Noto Sans Thai", sans-serif`;
   drawCenteredText(ctx, name, CANVAS_W / 2, 436);
 
-  // ถ้ามีชื่อเล่นแสดงเสริมใต้ชื่อจริง
-  let nextY = 478;
-  if (opts.realName && opts.nickname) {
+  // ถ้ามีชื่อเล่นแสดงเสริมใต้ชื่อจริง (ข้ามถ้าซ้ำกับชื่อจริง หรือเป็นตัวเลขล้วน เช่น "1")
+  let nextY = 486;
+  const cleanReal = (opts.realName || '').trim();
+  const cleanNick = (opts.nickname || '').trim();
+  const showNicknameSub =
+    Boolean(cleanReal && cleanNick && cleanNick !== cleanReal && !/^\d+$/.test(cleanNick));
+  if (showNicknameSub) {
     ctx.fillStyle = '#64748B';
     ctx.font = '22px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
-    drawCenteredText(ctx, `(${opts.nickname})`, CANVAS_W / 2, nextY);
-    nextY += 40;
+    drawCenteredText(ctx, `(${cleanNick})`, CANVAS_W / 2, nextY);
+    nextY += 42;
   }
 
   // 11. รายละเอียดข้อความหลักสูตร
   ctx.fillStyle = '#334155';
-  ctx.font = '23px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
-  drawCenteredText(ctx, 'เป็นผู้ผ่านการเข้าร่วมกิจกรรม', CANVAS_W / 2, nextY + 15);
+  ctx.font = '24px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
+  drawCenteredText(ctx, 'เป็นผู้ผ่านการเข้าร่วมกิจกรรม', CANVAS_W / 2, nextY + 28);
 
   ctx.fillStyle = '#0284C7';
-  ctx.font = 'bold 32px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
-  drawCenteredText(ctx, '"นักสืบสู้บุหรี่ไฟฟ้า"', CANVAS_W / 2, nextY + 58);
+  ctx.font = 'bold 34px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
+  drawCenteredText(ctx, '"นักสืบสู้บุหรี่ไฟฟ้า"', CANVAS_W / 2, nextY + 78);
 
   ctx.fillStyle = '#475569';
-  ctx.font = '20px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
-  drawCenteredText(ctx, 'หลักสูตรการเรียนรู้ทักษะปฏิเสธ', CANVAS_W / 2, nextY + 100);
-  drawCenteredText(ctx, 'และรู้เท่าทันภัยจากบุหรี่ไฟฟ้า สำหรับเยาวชน', CANVAS_W / 2, nextY + 130);
+  ctx.font = '21px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
+  drawCenteredText(ctx, 'หลักสูตรการเรียนรู้ทักษะปฏิเสธ', CANVAS_W / 2, nextY + 126);
+  drawCenteredText(ctx, 'และรู้เท่าทันภัยจากบุหรี่ไฟฟ้า สำหรับเยาวชน', CANVAS_W / 2, nextY + 158);
 
-  // 12. ตราประทับเกียรติบัตร (Official Seal) วงกลมน้ำเงิน-ทอง พร้อมดาว 5 แฉก
-  drawSeal(ctx, CANVAS_W / 2, nextY + 230, 64);
-
-  // 13. วันที่มอบเกียรติบัตร (บรรทัดเดียวจัดกึ่งกลางสมบูรณ์แบบ ห่างจาก QR Code ไม่ทับซ้อน)
+  // 12. วันที่มอบเกียรติบัตร (บรรทัดเดียวจัดกึ่งกลางสมบูรณ์แบบ ห่างจาก QR Code และอยู่ในกรอบเส้นคู่)
   ctx.fillStyle = '#334155';
   ctx.font = '23px "Sukhumvit Set", "Noto Sans Thai", sans-serif';
   const dateFullText = `ให้ไว้ ณ วันที่ ${formatThaiDate(opts.issueDate)}`;
-  drawCenteredText(ctx, dateFullText, CANVAS_W / 2, CANVAS_H - 165);
+  drawCenteredText(ctx, dateFullText, CANVAS_W / 2, CANVAS_H - 135);
 
-  // 14. เลขที่เกียรติบัตร
+  // 13. เลขที่เกียรติบัตร
   ctx.fillStyle = '#64748B';
   ctx.font = '19px "Courier New", monospace';
-  drawCenteredText(ctx, `เลขที่ ${opts.certNo}`, CANVAS_W / 2, CANVAS_H - 125);
+  drawCenteredText(ctx, `เลขที่ ${opts.certNo}`, CANVAS_W / 2, CANVAS_H - 92);
 
   // 15. วาด QR Code ตรวจสอบมุมขวาล่าง
   if (opts.verifyUrl) {
@@ -276,100 +277,6 @@ function drawRibbon(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: nu
   ctx.restore();
 }
 
-// วาดตราประทับ TMF Blue + Gold
-function drawSeal(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
-  ctx.save();
-
-  // วงนอกสุดสีทอง
-  ctx.strokeStyle = '#F59E0B';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // จุดไข่ปลาสีทอง 16 จุด
-  for (let i = 0; i < 16; i++) {
-    const a = (i / 16) * Math.PI * 2;
-    const dotX = cx + Math.cos(a) * (r - 7);
-    const dotY = cy + Math.sin(a) * (r - 7);
-    ctx.fillStyle = '#F59E0B';
-    ctx.beginPath();
-    ctx.arc(dotX, dotY, 2.2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // วงกลมน้ำเงินไล่สี
-  const grad = ctx.createRadialGradient(cx, cy, 5, cx, cy, r - 14);
-  grad.addColorStop(0, '#0072CC');
-  grad.addColorStop(1, '#003C73');
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r - 14, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#FBBF24';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // วงแหวนทองด้านใน
-  ctx.strokeStyle = 'rgba(251, 191, 36, 0.7)';
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r - 23, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // ดาว 5 แฉกสีทองตรงกลาง
-  drawStar(ctx, cx, cy, 5, 25, 11, '#FBBF24', '#F59E0B');
-
-  // แสงสะท้อนประกายขาว
-  ctx.save();
-  ctx.translate(cx - 15, cy - 18);
-  ctx.rotate(-Math.PI / 6);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
-  ctx.beginPath();
-  ctx.ellipse(0, 0, 14, 7, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  ctx.restore();
-}
-
-function drawStar(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  spikes: number,
-  outerRadius: number,
-  innerRadius: number,
-  fillColor: string,
-  strokeColor: string
-) {
-  let rot = (Math.PI / 2) * 3;
-  let x = cx;
-  let y = cy;
-  const step = Math.PI / spikes;
-
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - outerRadius);
-  for (let i = 0; i < spikes; i++) {
-    x = cx + Math.cos(rot) * outerRadius;
-    y = cy + Math.sin(rot) * outerRadius;
-    ctx.lineTo(x, y);
-    rot += step;
-
-    x = cx + Math.cos(rot) * innerRadius;
-    y = cy + Math.sin(rot) * innerRadius;
-    ctx.lineTo(x, y);
-    rot += step;
-  }
-  ctx.lineTo(cx, cy - outerRadius);
-  ctx.closePath();
-  ctx.fillStyle = fillColor;
-  ctx.fill();
-  ctx.strokeStyle = strokeColor;
-  ctx.lineWidth = 1;
-  ctx.stroke();
-}
-
 // วาดลวดลายสี่เหลี่ยมเรขาคณิตตรงมุมล่างซ้ายและขวา
 function drawCornerPatterns(ctx: CanvasRenderingContext2D) {
   ctx.save();
@@ -380,12 +287,12 @@ function drawCornerPatterns(ctx: CanvasRenderingContext2D) {
     ['rgba(254, 243, 199, 0.7)'],
   ];
 
-  const sq = 34;
+  const sq = 26;
   const gap = 3;
 
   // วาดมุมซ้าย
-  const baseX = 46;
-  const baseY = CANVAS_H - 46;
+  const baseX = 48;
+  const baseY = CANVAS_H - 48;
 
   for (let row = 0; row < colors.length; row++) {
     const rColors = colors[row];
@@ -398,7 +305,7 @@ function drawCornerPatterns(ctx: CanvasRenderingContext2D) {
   }
 
   // วาดมุมขวา (กลับด้าน)
-  const baseXR = CANVAS_W - 46;
+  const baseXR = CANVAS_W - 48;
   for (let row = 0; row < colors.length; row++) {
     const rColors = colors[row];
     for (let col = 0; col < rColors.length; col++) {

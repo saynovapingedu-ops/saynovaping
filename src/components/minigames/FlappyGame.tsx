@@ -40,13 +40,14 @@ export default function FlappyGame({ goalScore, onComplete }: Props) {
     if (phaseRef.current === 'playing') { vy.current = -6; sfx.click(); vibrate(8); }
   }, []);
 
-  const reset = () => { birdY.current = H / 2; vy.current = 0; pipes.current = []; scoreRef.current = 0; spawnT.current = 0; setScore(0); };
+  const reset = () => { birdY.current = H / 2; vy.current = 0; pipes.current = []; scoreRef.current = 0; spawnT.current = 0; lastTs.current = 0; setScore(0); };
   const start = () => { reset(); setPhaseBoth('playing'); };
   const over = () => {
     setPhaseBoth('over');
     setBest(b => Math.max(b, scoreRef.current));
-    sfx.wrong(); vibrate(60);
-    onComplete?.(goalScore ? scoreRef.current >= goalScore : true, scoreRef.current);
+    const won = goalScore ? scoreRef.current >= goalScore : true;
+    if (won && goalScore) sfx.victory(); else { sfx.wrong(); vibrate(60); }
+    if (!goalScore || won) onComplete?.(won, scoreRef.current);
   };
 
   useEffect(() => {
@@ -121,6 +122,11 @@ export default function FlappyGame({ goalScore, onComplete }: Props) {
             <p className="text-2xl mb-1">{phase === 'over' ? (goalScore && scoreRef.current >= goalScore ? '🏆 ผ่าน!' : '💥 ชน!') : '🐦'}</p>
             <p className="font-display font-bold text-detective-800">{phase === 'over' ? `ผ่าน ${score} ท่อ · สถิติ ${best}` : 'แตะให้บินหลบท่อ 🚬'}</p>
             <button onClick={(e) => { e.stopPropagation(); start(); }} className="btn-primary mt-3 px-6">{phase === 'over' ? 'เล่นอีกครั้ง 🔄' : 'เริ่ม! ▶'}</button>
+            {phase === 'over' && goalScore && scoreRef.current < goalScore && (
+              <button onClick={(e) => { e.stopPropagation(); onComplete?.(false, scoreRef.current); }} className="text-xs text-slate-500 underline mt-2">
+                ข้ามด่านมินิเกมนี้ →
+              </button>
+            )}
           </div>
         )}
       </div>

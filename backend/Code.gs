@@ -308,8 +308,8 @@ function buildPlayerResearchRow_(p, existing) {
   const heroCount = stagesList.filter(function(stg) { return Number(stg) >= 1 && Number(stg) <= 8; }).length;
   const totalStagesCount = stagesList.length;
 
-  let heroStr = heroCount > 0 ? (heroCount + '/8') : (existing ? (existing[COL_PLAYER.HERO_STAGES_COUNT - 1] || '0/8') : '0/8');
-  let totalStagesStr = totalStagesCount > 0 ? (totalStagesCount + '/20') : (existing ? (existing[COL_PLAYER.TOTAL_STAGES_COUNT - 1] || '0/20') : '0/20');
+  let heroStr = heroCount > 0 ? ("'" + heroCount + '/8') : (existing ? (existing[COL_PLAYER.HERO_STAGES_COUNT - 1] || "'0/8") : "'0/8");
+  let totalStagesStr = totalStagesCount > 0 ? ("'" + totalStagesCount + '/20') : (existing ? (existing[COL_PLAYER.TOTAL_STAGES_COUNT - 1] || "'0/20") : "'0/20");
 
   const row = new Array(PLAYERS_COLS).fill('');
   row[COL_PLAYER.ID_CODE - 1]                 = idCode;
@@ -596,6 +596,7 @@ function handleRestore_(params) {
         ? undefined : numOr_(pr[COL_PLAYER.POST_TEST_SKILL_SCORE - 1], undefined),
       evalPart5Avg: (pr[COL_PLAYER.EVAL_PART5_AVG - 1] === '' || pr[COL_PLAYER.EVAL_PART5_AVG - 1] === null)
         ? undefined : numOr_(pr[COL_PLAYER.EVAL_PART5_AVG - 1], undefined),
+      evalPart5Details: pr[COL_PLAYER.EVAL_PART5_DETAILS - 1] ? parseJsonArray_(pr[COL_PLAYER.EVAL_PART5_DETAILS - 1]) : undefined,
       preTestAt: strOrUndef_(pr[COL_PLAYER.PRE_TEST_AT - 1]),
       postTestAt: strOrUndef_(pr[COL_PLAYER.POST_TEST_AT - 1]),
       preTestKnowledgeAnswers: pr[COL_PLAYER.PRE_TEST_KNOWLEDGE_ANSWERS - 1] ? parseJsonArray_(pr[COL_PLAYER.PRE_TEST_KNOWLEDGE_ANSWERS - 1]) : undefined,
@@ -645,8 +646,10 @@ function handleGetAdminData_(params) {
     const hash = String(r[COL_PLAYER.USER_ID_HASH - 1] || '');
     if (!hash && !r[COL_PLAYER.ID_CODE - 1] && !r[COL_PLAYER.REAL_NAME - 1]) continue;
 
-    const heroStr = String(r[COL_PLAYER.HERO_STAGES_COUNT - 1] || '');
-    const totalStagesStr = String(r[COL_PLAYER.TOTAL_STAGES_COUNT - 1] || '');
+    const rawHero = r[COL_PLAYER.HERO_STAGES_COUNT - 1];
+    const rawTotal = r[COL_PLAYER.TOTAL_STAGES_COUNT - 1];
+    const heroParsed = (rawHero instanceof Date) ? rawHero.getDate() : (parseInt(String(rawHero || '').replace(/^'/, ''), 10) || 0);
+    const totalParsed = (rawTotal instanceof Date) ? rawTotal.getDate() : (parseInt(String(rawTotal || '').replace(/^'/, ''), 10) || 0);
     const preK = numOr_(r[COL_PLAYER.PRE_TEST_SCORE - 1], undefined);
     const postK = numOr_(r[COL_PLAYER.POST_TEST_SCORE - 1], undefined);
     const gainDelta = (preK !== undefined && postK !== undefined) ? (postK - preK) : undefined;
@@ -665,8 +668,8 @@ function handleGetAdminData_(params) {
       preTestAt: strOrUndef_(r[COL_PLAYER.PRE_TEST_AT - 1]),
       preTestKnowledgeAnswers: parseJsonArray_(r[COL_PLAYER.PRE_TEST_KNOWLEDGE_ANSWERS - 1]),
       preTestSkillAnswers: parseJsonArray_(r[COL_PLAYER.PRE_TEST_SKILL_ANSWERS - 1]),
-      stagesCompletedCount: parseInt(totalStagesStr, 10) || 0,
-      heroStagesCount: parseInt(heroStr, 10) || 0,
+      stagesCompletedCount: totalParsed,
+      heroStagesCount: heroParsed,
       totalStages: 20,
       totalXP: numOr_(r[COL_PLAYER.TOTAL_XP - 1], 0),
       level: numOr_(r[COL_PLAYER.LEVEL - 1], 1),

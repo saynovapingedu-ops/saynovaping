@@ -15,8 +15,7 @@ import { useCertNameStore } from '../store/certNameStore';
 import SkeletonCard from '../components/ui/SkeletonCard';
 import EmptyState from '../components/ui/EmptyState';
 import Ribbon from '../components/ui/Ribbon';
-import CertSeal from '../components/ui/CertSeal';
-import { renderCertificateCanvas, saveCertificateImage, formatThaiDate } from '../lib/certRenderer';
+import { renderCertificateCanvas, saveCertificateImage } from '../lib/certRenderer';
 import { shareCertificateViaLiff, openInExternalBrowser, isInLineBrowser } from '../lib/liff';
 
 // ขนาดออกแบบคงที่ของใบ (A-ratio 1:1.414) — เรนเดอร์ที่ขนาดนี้เสมอแล้วย่อให้พอดีจอ
@@ -39,11 +38,21 @@ export default function Certificate() {
   // ชื่อจริงบนเกียรติบัตร (local-only) — ถ้าไม่ใส่ใช้ชื่อเล่น
   const realName = useCertNameStore(s => s.realName);
   const displayName = realName.trim() || player.nickname;
+  const cleanReal = realName.trim();
+  const cleanNick = (player.nickname || '').trim();
+  // แสดงชื่อเล่นในวงเล็บเฉพาะกรณีที่เป็นชื่อเล่นคนละคำกับชื่อจริง และไม่ใช่ตัวเลขเดี่ยวๆ เช่น "1"
+  const showNicknameSub =
+    Boolean(cleanReal && cleanNick && cleanNick !== cleanReal && !/^\d+$/.test(cleanNick));
   const [editNameOpen, setEditNameOpen] = useState(false);
   const inLine = isInLineBrowser();
   const [certImgUrl, setCertImgUrl] = useState<string | null>(null);
   const [screenshotMode, setScreenshotMode] = useState(false);
   const [hideGuide, setHideGuide] = useState(false);
+
+  // ล้างแคชรูป Canvas เมื่อมีการแก้ไขชื่อจริงหรือเลขเกียรติบัตร เพื่อให้เรนเดอร์ใหม่เสมอ
+  useEffect(() => {
+    setCertImgUrl(null);
+  }, [displayName, cleanReal, cleanNick, certNo, issueDate, verifyCode]);
 
   // ย่อใบให้พอดีความกว้างจอ (กันเนื้อหาล้นกรอบบนจอแคบ)
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -347,9 +356,9 @@ export default function Certificate() {
               <CornerPattern position="bottom-right" />
 
               {/* === Content === */}
-              <div className="relative px-8 pt-8 pb-12 h-full flex flex-col items-center text-center z-10">
+              <div className="relative px-7 pt-8 pb-9 h-full flex flex-col items-center text-center z-10">
                 {/* === Logos: TMF + ผู้รับทุน (กึ่งกลางบนสุด) === */}
-                <div className="flex items-center justify-center gap-6 mb-6 w-full">
+                <div className="flex items-center justify-center gap-6 mb-5 w-full">
                   <TMFLogo variant="bare" width={110} useBase64 />
                   <div className="w-px h-16 bg-slate-300" />
                   <div className="text-left">
@@ -361,57 +370,52 @@ export default function Certificate() {
                 </div>
 
                 {/* === Title === */}
-                <h1 className="text-detective-800 font-bold text-[2.5rem] leading-tight tracking-wide">
+                <h1 className="text-detective-800 font-bold text-[2.4rem] leading-tight tracking-wide">
                   ประกาศนียบัตร
                 </h1>
                 {/* Ribbon ทอง แทน divider เส้นบาง */}
-                <Ribbon width={130} height={26} className="my-2" />
+                <Ribbon width={130} height={26} className="my-2.5" />
 
                 {/* === Issuing statement === */}
-                <p className="text-slate-700 text-sm mt-1">ฉบับนี้ไว้เพื่อแสดงว่า</p>
+                <p className="text-slate-700 text-sm mt-2">ฉบับนี้ไว้เพื่อแสดงว่า</p>
 
                 {/* === Recipient name === ชื่อจริงเป็นหลัก, ไม่ใส่ใช้ชื่อเล่น — ตัดบรรทัดแสดงเต็มไม่ตัดทิ้ง */}
-                <h2 className={`text-detective-800 font-bold my-1 leading-tight px-4 w-full break-words ${
+                <h2 className={`text-detective-800 font-bold my-2 leading-tight px-4 w-full break-words ${
                   displayName.length > 30 ? 'text-lg' : displayName.length > 22 ? 'text-xl' : displayName.length > 14 ? 'text-2xl' : 'text-3xl'}`} >
                   {displayName}
                 </h2>
-                {realName.trim() && player.nickname && (
-                  <p className="text-slate-500 text-sm mb-2">({player.nickname})</p>
+                {showNicknameSub && (
+                  <p className="text-slate-500 text-sm mb-1.5">({cleanNick})</p>
                 )}
 
                 {/* === Description === */}
-                <p className="text-slate-700 text-sm leading-relaxed max-w-xs mt-1">
+                <p className="text-slate-700 text-sm leading-relaxed max-w-xs mt-2">
                   เป็นผู้ผ่านการเข้าร่วมกิจกรรม
                 </p>
-                <p className="text-detective-700 font-semibold text-base leading-tight mt-1">
+                <p className="text-detective-700 font-semibold text-lg leading-tight mt-1.5">
                   "นักสืบสู้บุหรี่ไฟฟ้า"
                 </p>
-                <p className="text-slate-600 text-xs mt-1.5 leading-relaxed max-w-xs">
+                <p className="text-slate-600 text-xs mt-2 leading-relaxed max-w-xs">
                   หลักสูตรการเรียนรู้ทักษะปฏิเสธ
                   และรู้เท่าทันภัยจากบุหรี่ไฟฟ้า สำหรับเยาวชน
                 </p>
 
-                {/* === Seal (ตราประทับ) === */}
-                <div className="mt-3">
-                  <CertSeal size={72} />
+                {/* === Date & Cert number — จัดวางในกรอบด้านล่าง ไม่ล้นทับเส้นขอบและไม่ชน QR === */}
+                <div className="mt-auto pt-4 pb-1 w-full flex flex-col items-center">
+                  <p className="text-slate-700 text-[13px] leading-snug">
+                    ให้ไว้ ณ วันที่ <span className="font-semibold text-detective-800">{formatThaiDate(issueDate)}</span>
+                  </p>
+                  <p className="text-[10px] text-slate-500 font-mono mt-1 leading-tight">
+                    เลขที่ {certNo}
+                  </p>
                 </div>
-
-                {/* === Date === */}
-                <p className="text-slate-700 text-sm mt-auto pt-4">
-                  ให้ไว้ ณ วันที่ <span className="font-semibold text-detective-800">{formatThaiDate(issueDate)}</span>
-                </p>
-
-                {/* === Cert number — เล็ก ด้านล่าง === */}
-                <p className="text-[10px] text-slate-500 font-mono mt-1">
-                  เลขที่ {certNo}
-                </p>
               </div>
 
               {/* === QR เล็ก มุมขวาล่าง === */}
               {qrDataUrl && (
-                <div className="absolute bottom-6 right-6 bg-white p-1 border border-slate-300 z-10">
-                  <img src={qrDataUrl} alt="ตรวจสอบ" className="w-12 h-12 block" />
-                  <p className="text-[7px] text-slate-500 text-center mt-0.5 leading-tight">ตรวจสอบ</p>
+                <div className="absolute bottom-7 right-7 bg-white p-1 border border-slate-300 rounded-sm shadow-xs z-20">
+                  <img src={qrDataUrl} alt="ตรวจสอบ" className="w-11 h-11 block" />
+                  <p className="text-[6.5px] text-slate-500 text-center mt-0.5 leading-none">ตรวจสอบ</p>
                 </div>
               )}
             </div>
@@ -745,7 +749,7 @@ function CornerPattern({ position }: { position: 'bottom-left' | 'bottom-right' 
   const flip = position === 'bottom-right';
   return (
     <div
-      className="absolute bottom-6 w-24 h-24 pointer-events-none z-[5]"
+      className="absolute bottom-6 w-[72px] h-[72px] pointer-events-none z-[5]"
       style={{
         [flip ? 'right' : 'left']: '24px',
         transform: flip ? 'scaleX(-1)' : 'none',

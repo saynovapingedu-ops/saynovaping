@@ -37,7 +37,13 @@ export default function SnakeGame({ goalScore, onComplete }: Props) {
   const setPhaseBoth = (p: 'ready' | 'playing' | 'over') => { phaseRef.current = p; setPhase(p); };
 
   const rnd = () => { seed.current = (seed.current * 9301 + 49297) % 233280; return seed.current / 233280; };
-  const randCell = (): Pt => ({ x: Math.floor(rnd() * COLS), y: Math.floor(rnd() * ROWS) });
+  const randCell = (exclude: Pt[] = []): Pt => {
+    for (let i = 0; i < 60; i++) {
+      const p = { x: Math.floor(rnd() * COLS), y: Math.floor(rnd() * ROWS) };
+      if (!exclude.some(e => e.x === p.x && e.y === p.y)) return p;
+    }
+    return { x: Math.floor(rnd() * COLS), y: Math.floor(rnd() * ROWS) };
+  };
 
   const draw = useCallback(() => {
     const ctx = canvasRef.current?.getContext('2d'); if (!ctx) return;
@@ -64,8 +70,10 @@ export default function SnakeGame({ goalScore, onComplete }: Props) {
 
   const over = () => {
     if (stepRef.current) clearInterval(stepRef.current);
-    setPhaseBoth('over'); sfx.wrong(); vibrate(60);
-    onComplete?.(goalScore ? scoreRef.current >= goalScore : true, scoreRef.current);
+    setPhaseBoth('over');
+    const won = goalScore ? scoreRef.current >= goalScore : true;
+    if (won && goalScore) sfx.victory(); else { sfx.wrong(); vibrate(60); }
+    if (!goalScore || won) onComplete?.(won, scoreRef.current);
   };
 
   const step = () => {
@@ -80,8 +88,8 @@ export default function SnakeGame({ goalScore, onComplete }: Props) {
     const newSnake = [{ x: nx, y: ny }, ...snake.current];
     if (nx === food.current.x && ny === food.current.y) {
       scoreRef.current += 1; setScore(scoreRef.current); sfx.correct(); vibrate(10);
-      food.current = randCell();
-      bad.current = randCell();
+      food.current = randCell(newSnake);
+      bad.current = randCell([...newSnake, food.current]);
       if (goalScore && scoreRef.current >= goalScore) { snake.current = newSnake; draw(); return over(); }
     } else {
       newSnake.pop();
@@ -92,7 +100,8 @@ export default function SnakeGame({ goalScore, onComplete }: Props) {
 
   const start = () => {
     snake.current = [{ x: 8, y: 7 }]; dir.current = { x: 1, y: 0 }; nextDir.current = { x: 1, y: 0 };
-    food.current = { x: 12, y: 7 }; bad.current = { x: 4, y: 4 }; scoreRef.current = 0; setScore(0); seed.current = 1;
+    seed.current = (Date.now() % 233279) + 1;
+    food.current = { x: 12, y: 7 }; bad.current = { x: 4, y: 4 }; scoreRef.current = 0; setScore(0);
     setPhaseBoth('playing');
     if (stepRef.current) clearInterval(stepRef.current);
     stepRef.current = setInterval(step, 150);
@@ -109,10 +118,11 @@ export default function SnakeGame({ goalScore, onComplete }: Props) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code === 'ArrowUp') turn({ x: 0, y: -1 });
-      else if (e.code === 'ArrowDown') turn({ x: 0, y: 1 });
-      else if (e.code === 'ArrowLeft') turn({ x: -1, y: 0 });
-      else if (e.code === 'ArrowRight') turn({ x: 1, y: 0 });
+      if (phaseRef.current !== 'playing') return;
+      if (e.code === 'ArrowUp') { e.preventDefault(); turn({ x: 0, y: -1 }); }
+      else if (e.code === 'ArrowDown') { e.preventDefault(); turn({ x: 0, y: 1 }); }
+      else if (e.code === 'ArrowLeft') { e.preventDefault(); turn({ x: -1, y: 0 }); }
+      else if (e.code === 'ArrowRight') { e.preventDefault(); turn({ x: 1, y: 0 }); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -131,6 +141,11 @@ export default function SnakeGame({ goalScore, onComplete }: Props) {
             <p className="text-2xl mb-1">{phase === 'over' ? (goalScore && scoreRef.current >= goalScore ? '🏆 ผ่าน!' : '💥 จบเกม!') : '🐍'}</p>
             <p className="font-display font-bold text-detective-800">{phase === 'over' ? `กินของดี ${score} ชิ้น` : 'กดปุ่มทิศทางให้งูกิน 💧 เลี่ยง 🚬'}</p>
             <button onClick={(e) => { e.stopPropagation(); start(); }} className="btn-primary mt-3 px-6">{phase === 'over' ? 'เล่นอีกครั้ง 🔄' : 'เริ่ม! ▶'}</button>
+            {phase === 'over' && goalScore && scoreRef.current < goalScore && (
+              <button onClick={(e) => { e.stopPropagation(); onComplete?.(false, scoreRef.current); }} className="text-xs text-slate-500 underline mt-2">
+                ข้ามด่านมินิเกมนี้ →
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -41,25 +41,33 @@ export default function CatchGame({ goalScore, onComplete, seconds = 30 }: Props
   const setPhaseBoth = (p: 'ready' | 'playing' | 'done') => { phaseRef.current = p; setPhase(p); };
 
   const end = () => {
+    if (phaseRef.current !== 'playing') return;
     if (tickRef.current) clearInterval(tickRef.current);
+    held.current = 0;
     setPhaseBoth('done');
     const won = goalScore ? scoreRef.current >= goalScore : true;
     if (won) sfx.victory(); else sfx.wrong();
-    onComplete?.(won, scoreRef.current);
+    if (!goalScore || won) onComplete?.(won, scoreRef.current);
   };
 
   const start = () => {
     items.current = [];
     scoreRef.current = 0;
+    held.current = 0;
+    lastTs.current = 0;
     setScore(0);
     setTimeLeft(seconds);
     spawnT.current = 0;
     setPhaseBoth('playing');
     if (tickRef.current) clearInterval(tickRef.current);
     tickRef.current = setInterval(() => {
-      setTimeLeft(t => { if (t <= 1) { end(); return 0; } return t - 1; });
+      setTimeLeft(t => (t <= 1 ? 0 : t - 1));
     }, 1000);
   };
+
+  useEffect(() => {
+    if (phase === 'playing' && timeLeft === 0) end();
+  }, [timeLeft, phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -162,6 +170,11 @@ export default function CatchGame({ goalScore, onComplete, seconds = 30 }: Props
             <button onClick={start} className="btn-primary mt-3 px-6">
               {phase === 'ready' ? 'เริ่ม! ▶' : 'เล่นอีกครั้ง 🔄'}
             </button>
+            {phase === 'done' && goalScore && scoreRef.current < goalScore && (
+              <button onClick={() => onComplete?.(false, scoreRef.current)} className="text-xs text-slate-500 underline mt-2">
+                ข้ามด่านมินิเกมนี้ →
+              </button>
+            )}
           </div>
         )}
       </div>

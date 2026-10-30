@@ -62,13 +62,18 @@ export default function MemoryMatch({ title, pairs, onComplete }: Props) {
       const reveal = pairs[s1.pairIdx].reveal;
       setRevealing({ pairIdx: s1.pairIdx, reveal });
       setOpened([]);
-      const t = setTimeout(() => setRevealing(null), 1600);  // เพิ่มเวลาอ่านเฉลย
-      return () => clearTimeout(t);
     } else {
       const t = setTimeout(() => setOpened([]), 900);  // เพิ่มเวลาให้จำตำแหน่งทัน
       return () => clearTimeout(t);
     }
   }, [opened, slots, pairs]);
+
+  // ปิด reveal popup อัตโนมัติหลัง 1.6 วินาที (แยก effect เพื่อไม่ให้ setOpened([]) ยกเลิก timeout)
+  useEffect(() => {
+    if (!revealing) return;
+    const t = setTimeout(() => setRevealing(null), 1600);
+    return () => clearTimeout(t);
+  }, [revealing]);
 
   // ไม่ auto-onComplete แล้ว — รอเด็กกดปุ่ม "ไปต่อ" เอง (อ่านเฉลยทุกคู่ทัน)
 

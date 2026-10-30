@@ -123,7 +123,7 @@ export default function AvatarFolder({ preset, customId, onPick }: Props) {
                 loading="lazy"
               />
               {active && (
-                <span className="absolute -top-1 -right-1 bg-success-500 text-white text-[10px]
+                <span className="absolute top-1 right-1 bg-success-500 text-white text-[10px]
                                  rounded-full w-5 h-5 flex items-center justify-center shadow">
                   ✓
                 </span>
@@ -157,7 +157,7 @@ export default function AvatarFolder({ preset, customId, onPick }: Props) {
                 >
                   <img src={av.dataUrl} alt={av.name} className="w-full h-full object-cover" />
                   {active && (
-                    <span className="absolute -top-1 -right-1 bg-success-500 text-white text-[10px]
+                    <span className="absolute top-1 right-1 bg-success-500 text-white text-[10px]
                                      rounded-full w-5 h-5 flex items-center justify-center shadow">
                       ✓
                     </span>

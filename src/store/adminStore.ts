@@ -142,6 +142,7 @@ export const useAdminStore = create<AdminState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         preTestEnabled: state.preTestEnabled,
+        requirePreTestBeforePlaying: state.requirePreTestBeforePlaying,
         postTestEnabled: state.postTestEnabled,
         allowBypassStages: state.allowBypassStages,
         part2Enabled: state.part2Enabled,

@@ -95,6 +95,9 @@ export interface RestoreResponse {
   ok: boolean;
   found: boolean;
   player?: {
+    idCode?: string;
+    realName?: string;
+    lineName?: string;
     nickname: string;
     grade: string;
     school: string;
@@ -134,6 +137,9 @@ export interface RestoreResponse {
     postTestKnowledgeAnswers?: number[];
     preTestSkillAnswers?: number[];
     postTestSkillAnswers?: number[];
+    evalPart5Avg?: number;
+    evalPart5Details?: number[];
+    demographics?: any;
     preTestAt?: string;
     postTestAt?: string;
     funRating?: number;

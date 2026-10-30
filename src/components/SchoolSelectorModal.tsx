@@ -124,12 +124,16 @@ export default function SchoolSelectorModal({
       {/* Modal / Dialog */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm">
+          <div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
+            onClick={handleClose}
+          >
             <motion.div
               initial={{ opacity: 0, y: 100 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 100 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
               className="bg-white w-full sm:max-w-lg rounded-t-[28px] sm:rounded-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden border border-slate-100"
             >
               {/* Header */}
@@ -234,7 +238,7 @@ export default function SchoolSelectorModal({
                       <div className="text-center py-8 text-slate-400">
                         <p className="text-3xl mb-2">🔍</p>
                         <p className="text-sm font-semibold text-slate-600">
-                          ไม่พบชื่อโรงเรียน "${searchQuery}"
+                          ไม่พบชื่อโรงเรียน "{searchQuery}"
                         </p>
                         <p className="text-xs text-slate-400 mt-1">
                           คุณสามารถเลือก "ระบุโรงเรียนอื่นๆ" ด้านบนเพื่อพิมพ์เองได้เลย

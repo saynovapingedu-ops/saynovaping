@@ -21,32 +21,32 @@ interface Props {
 // จึงต้องสมดุล: logo กว้างพอเห็นชัด แต่ไม่สูงจนทำให้ pill อ้วน
 function LogoPill() {
   return (
-    <div className="inline-flex items-center gap-2 bg-white rounded-2xl
-                    pl-2.5 pr-2.5 py-1 shadow-[0_4px_12px_-3px_rgba(0,0,0,0.20)]">
+    <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-white rounded-2xl
+                    px-2 sm:px-2.5 py-1 shadow-[0_4px_12px_-3px_rgba(0,0,0,0.20)] flex-shrink-0">
       {/* TMF logo — clamp ความสูงสูงสุดด้วย max-h เพื่อไม่ให้ pill อ้วน */}
       {/* container ตัด whitespace ของไฟล์ — logo จริงใหญ่ขึ้นแต่ pill ยังเตี้ย
          marginTop ติดลบ shift image ขึ้น เพราะ visual center ของไฟล์เลื่อนล่าง
          (นกพิราบยื่นลงล่างเยอะกว่าด้านบน) */}
-      <div className="overflow-hidden flex items-center justify-center flex-shrink-0"
-           style={{ height: 44, width: 112 }}>
+      <div className="overflow-hidden flex items-center justify-center flex-shrink-0 w-[92px] sm:w-[112px]"
+           style={{ height: 40 }}>
         <img
           src={asset('brand/tmf-logo.png')}
           alt="กองทุนพัฒนาสื่อปลอดภัยและสร้างสรรค์"
-          className="block max-w-none"
-          style={{ height: 110, marginTop: -8 }}
+          className="block max-w-none h-[96px] sm:h-[110px]"
+          style={{ marginTop: -8 }}
           loading="eager"
         />
       </div>
 
       {/* เส้นคั่นแนวตั้ง */}
-      <div className="w-px h-7 bg-slate-200" />
+      <div className="w-px h-6 sm:h-7 bg-slate-200" />
 
       {/* SayNo — text เล็ก */}
       <div className="leading-tight">
-        <p className="font-display font-extrabold text-detective-700 text-[11px] leading-tight tracking-tight">
+        <p className="font-display font-extrabold text-detective-700 text-[10.5px] sm:text-[11px] leading-tight tracking-tight">
           SayNo
         </p>
-        <p className="text-[9px] font-bold text-slate-500 mt-0.5 leading-tight">
+        <p className="text-[8.5px] sm:text-[9px] font-bold text-slate-500 mt-0.5 leading-tight whitespace-nowrap">
           สู้บุหรี่ไฟฟ้า
         </p>
       </div>

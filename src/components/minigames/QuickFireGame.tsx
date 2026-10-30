@@ -25,24 +25,32 @@ export default function QuickFireGame({ goalScore, onComplete, seconds = 30, fac
   const scoreRef = useRef(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const phaseRef = useRef<'ready' | 'playing' | 'done'>('ready');
+  const setPhaseBoth = (p: 'ready' | 'playing' | 'done') => { phaseRef.current = p; setPhase(p); };
+
   const end = () => {
+    if (phaseRef.current !== 'playing') return;
     if (tickRef.current) clearInterval(tickRef.current);
-    setPhase('done');
+    setPhaseBoth('done');
     const won = goalScore ? scoreRef.current >= goalScore : true;
     if (won) sfx.victory(); else sfx.wrong();
-    onComplete?.(won, scoreRef.current);
+    if (!goalScore || won) onComplete?.(won, scoreRef.current);
   };
 
   const start = () => {
     order.current = shuffledFacts(Math.floor(timeLeft + score + 7));
     scoreRef.current = 0;
     setScore(0); setIdx(0); setTimeLeft(seconds); setFeedback(null);
-    setPhase('playing');
+    setPhaseBoth('playing');
     if (tickRef.current) clearInterval(tickRef.current);
     tickRef.current = setInterval(() => {
-      setTimeLeft(t => { if (t <= 1) { end(); return 0; } return t - 1; });
+      setTimeLeft(t => (t <= 1 ? 0 : t - 1));
     }, 1000);
   };
+
+  useEffect(() => {
+    if (phase === 'playing' && timeLeft === 0) end();
+  }, [timeLeft, phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => () => { if (tickRef.current) clearInterval(tickRef.current); }, []);
 
@@ -94,6 +102,11 @@ export default function QuickFireGame({ goalScore, onComplete, seconds = 30, fac
             <p className="text-2xl mb-1">{goalScore && scoreRef.current >= goalScore ? '🏆 ผ่าน!' : '⏰ หมดเวลา!'}</p>
             <p className="font-display font-bold text-detective-800">ตอบถูก {score} ข้อ</p>
             <button onClick={start} className="btn-primary mt-3 px-6">เล่นอีกครั้ง 🔄</button>
+            {goalScore && scoreRef.current < goalScore && (
+              <button onClick={() => onComplete?.(false, scoreRef.current)} className="text-xs text-slate-500 underline mt-2">
+                ข้ามด่านมินิเกมนี้ →
+              </button>
+            )}
           </>
         )}
       </div>

@@ -7,6 +7,7 @@ import { startBgm } from './lib/bgm';
 import { usePlayerStore } from './store/playerStore';
 import { useSettingsStore } from './store/settingsStore';
 import { useAdminStore } from './store/adminStore';
+import { useCertNameStore } from './store/certNameStore';
 import { SHOP_ITEMS } from './lib/shopItems';
 import Toaster from './components/Toaster';
 import LevelUpModal from './components/LevelUpModal';
@@ -152,6 +153,9 @@ export default function App() {
               const p = r.player;
               // ไม่ใช้ initProfile เพราะจะ trigger sync กลับทันที — set ตรงๆ ผ่าน setState
               usePlayerStore.setState({
+                idCode: p.idCode,
+                realName: p.realName,
+                lineName: p.lineName,
                 nickname: p.nickname,
                 grade: p.grade,
                 school: p.school,
@@ -180,6 +184,15 @@ export default function App() {
                 examBonusClaimed: p.examBonusClaimed,
                 preTestScore: p.preTestScore,
                 postTestScore: p.postTestScore,
+                preTestSkillScore: p.preTestSkillScore,
+                postTestSkillScore: p.postTestSkillScore,
+                preTestKnowledgeAnswers: p.preTestKnowledgeAnswers,
+                postTestKnowledgeAnswers: p.postTestKnowledgeAnswers,
+                preTestSkillAnswers: p.preTestSkillAnswers,
+                postTestSkillAnswers: p.postTestSkillAnswers,
+                evalPart5Avg: p.evalPart5Avg,
+                evalPart5Details: p.evalPart5Details,
+                demographics: p.demographics,
                 preTestAt: p.preTestAt,
                 postTestAt: p.postTestAt,
                 funRating: p.funRating,
@@ -191,6 +204,9 @@ export default function App() {
                 lastActiveAt: new Date().toISOString(),
                 isInitialized: true,
               });
+              if (p.realName && p.realName.trim()) {
+                useCertNameStore.getState().setRealName(p.realName.trim());
+              }
               console.info('[App] restored progress from backend');
             }
           } catch (e) {

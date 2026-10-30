@@ -36,25 +36,31 @@ export default function ShootMythGame({ goalScore, onComplete, seconds = 35, fac
   const setPhaseBoth = (p: 'ready' | 'playing' | 'done') => { phaseRef.current = p; setPhase(p); };
 
   const end = () => {
+    if (phaseRef.current !== 'playing') return;
     if (tickRef.current) clearInterval(tickRef.current);
     setFloaters([]);
     setPhaseBoth('done');
     const won = goalScore ? scoreRef.current >= goalScore : true;
     if (won) sfx.victory(); else sfx.wrong();
-    onComplete?.(won, scoreRef.current);
+    if (!goalScore || won) onComplete?.(won, scoreRef.current);
   };
 
   const start = () => {
     scoreRef.current = 0; setScore(0); setTimeLeft(seconds); setFloaters([]);
-    poolIdx.current = 0; spawnT.current = 0;
+    poolIdx.current = 0; spawnT.current = 0; lastTs.current = 0;
     setPhaseBoth('playing');
     if (tickRef.current) clearInterval(tickRef.current);
     tickRef.current = setInterval(() => {
-      setTimeLeft(t => { if (t <= 1) { end(); return 0; } return t - 1; });
+      setTimeLeft(t => (t <= 1 ? 0 : t - 1));
     }, 1000);
   };
 
   useEffect(() => {
+    if (phase === 'playing' && timeLeft === 0) end();
+  }, [timeLeft, phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const myths = pool.filter(f => !f.isTrue);
     const loop = (ts: number) => {
       rafRef.current = requestAnimationFrame(loop);
       if (phaseRef.current !== 'playing') return;
@@ -63,17 +69,20 @@ export default function ShootMythGame({ goalScore, onComplete, seconds = 35, fac
 
       spawnT.current -= dt;
       if (spawnT.current <= 0) {
-        const f = pool[poolIdx.current % pool.length];
-        poolIdx.current += 1;
         const id = ++idRef.current;
+        const useMyth = myths.length > 0 && id % 3 !== 0;
+        const f = useMyth
+          ? myths[poolIdx.current % myths.length]
+          : pool[poolIdx.current % pool.length];
+        poolIdx.current += 1;
         const y = 8 + (id * 29) % 70;
         setFloaters(prev => [...prev, { id, text: f.text, isTrue: f.isTrue, x: W + 5, y }]);
-        spawnT.current = 75 + (id % 3) * 20;
+        spawnT.current = 55 + (id % 3) * 15;
       }
 
       setFloaters(prev => prev
         .map(f => ({ ...f, x: f.x - 0.35 * dt }))
-        .filter(f => f.x > -60));
+        .filter(f => f.x > -120));
     };
     rafRef.current = requestAnimationFrame(loop);
     return () => {
@@ -133,6 +142,11 @@ export default function ShootMythGame({ goalScore, onComplete, seconds = 35, fac
               </>
             )}
             <button onClick={start} className="btn-primary mt-3 px-6">{phase === 'ready' ? 'เริ่ม! ▶' : 'เล่นอีกครั้ง 🔄'}</button>
+            {phase === 'done' && goalScore && scoreRef.current < goalScore && (
+              <button onClick={() => onComplete?.(false, scoreRef.current)} className="text-xs text-slate-500 underline mt-2">
+                ข้ามด่านมินิเกมนี้ →
+              </button>
+            )}
           </div>
         )}
       </div>

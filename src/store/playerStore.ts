@@ -196,6 +196,7 @@ export const usePlayerStore = create<PlayerState>()(
         const cur = get();
         if ((cur.hintTokens || 0) <= 0) return false;
         set({ hintTokens: (cur.hintTokens || 0) - 1 });
+        get().syncIfReady();
         return true;
       },
 
@@ -203,15 +204,16 @@ export const usePlayerStore = create<PlayerState>()(
         const cur = get();
         if ((cur.streakShields || 0) <= 0) return false;
         set({ streakShields: (cur.streakShields || 0) - 1 });
+        get().syncIfReady();
         return true;
       },
 
-      equipTitle:     (title) => set({ equippedTitle: title }),
-      equipFrame:     (frame) => set({ equippedFrame: frame }),
-      equipTheme:     (theme) => set({ equippedTheme: theme }),
-      equipAccessory: (id)    => set({ equippedAccessory: id }),
-      equipBackdrop:  (id)    => set({ equippedBackdrop: id }),
-      equipCertDeco:  (id)    => set({ equippedCertDeco: id }),
+      equipTitle:     (title) => { set({ equippedTitle: title }); get().syncIfReady(); },
+      equipFrame:     (frame) => { set({ equippedFrame: frame }); get().syncIfReady(); },
+      equipTheme:     (theme) => { set({ equippedTheme: theme }); get().syncIfReady(); },
+      equipAccessory: (id)    => { set({ equippedAccessory: id }); get().syncIfReady(); },
+      equipBackdrop:  (id)    => { set({ equippedBackdrop: id }); get().syncIfReady(); },
+      equipCertDeco:  (id)    => { set({ equippedCertDeco: id }); get().syncIfReady(); },
 
       rateFun: (stars, prevStars) => {
         if (stars < 1 || stars > 5) return;
@@ -256,6 +258,7 @@ export const usePlayerStore = create<PlayerState>()(
         if (streak >= 7)  get().awardBadge('streak-7');
         if (streak >= 14) get().awardBadge('streak-14');
         if (streak >= 30) get().awardBadge('streak-30');
+        get().syncIfReady();
       },
 
       awardBadge: (id) => {
@@ -272,7 +275,10 @@ export const usePlayerStore = create<PlayerState>()(
         if ((cur.coinX2Remaining || 0) > 0) {
           set({ coinX2Remaining: (cur.coinX2Remaining || 0) - 1 });
         }
-        if (cur.stagesCompleted.includes(stageId)) return;
+        if (cur.stagesCompleted.includes(stageId)) {
+          if ((cur.coinX2Remaining || 0) > 0) get().syncIfReady();
+          return;
+        }
         set({
           stagesCompleted: [...cur.stagesCompleted, stageId].sort((a, b) => a - b),
           lastActiveAt: new Date().toISOString(),
