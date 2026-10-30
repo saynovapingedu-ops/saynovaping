@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { motion } from 'framer-motion';
@@ -15,12 +15,8 @@ import { useCertNameStore } from '../store/certNameStore';
 import SkeletonCard from '../components/ui/SkeletonCard';
 import EmptyState from '../components/ui/EmptyState';
 import Ribbon from '../components/ui/Ribbon';
-import { renderCertificateCanvas, saveCertificateImage } from '../lib/certRenderer';
-import { shareCertificateViaLiff, openInExternalBrowser, isInLineBrowser } from '../lib/liff';
-
-// ขนาดออกแบบคงที่ของใบ (A-ratio 1:1.414) — เรนเดอร์ที่ขนาดนี้เสมอแล้วย่อให้พอดีจอ
-const CERT_W = 420;
-const CERT_H = Math.round(CERT_W * 1.414); // 594
+import { renderCertificateCanvas, saveCertificateImage, formatThaiDate } from '../lib/certRenderer';
+import { shareCertificateViaLiff, isInLineBrowser } from '../lib/liff';
 
 export default function Certificate() {
   const nav = useNavigate();
@@ -28,9 +24,9 @@ export default function Certificate() {
   const admin = useAdminStore();
   const setCertificate = usePlayerStore(s => s.setCertificate);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
   const [certNo, setCertNo] = useState(player.certificateNo || '');
-  const [verifyCode, setVerifyCode] = useState('');
+  const [verifyCode, setVerifyCode] = useState(player.certificateVerifyCode || '');
   const [issueDate, setIssueDate] = useState(player.certificateIssuedAt || '');
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [shareMsg, setShareMsg] = useState<string | null>(null);
@@ -49,27 +45,16 @@ export default function Certificate() {
   const [screenshotMode, setScreenshotMode] = useState(false);
   const [hideGuide, setHideGuide] = useState(false);
 
-  // ล้างแคชรูป Canvas เมื่อมีการแก้ไขชื่อจริงหรือเลขเกียรติบัตร เพื่อให้เรนเดอร์ใหม่เสมอ
-  useEffect(() => {
-    setCertImgUrl(null);
-  }, [displayName, cleanReal, cleanNick, certNo, issueDate, verifyCode]);
+  const heroCompletedCount = [1, 2, 3, 4, 5, 6, 7, 8].filter((id) => player.stagesCompleted.includes(id)).length;
+  const eligible = heroCompletedCount >= 8;
+  const verifyUrl = verifyCode ? `${location.origin}/saynovaping/verify?code=${verifyCode}` : '';
 
-  // ย่อใบให้พอดีความกว้างจอ (กันเนื้อหาล้นกรอบบนจอแคบ)
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [certScale, setCertScale] = useState(1);
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const update = () => setCertScale(Math.min(1, el.clientWidth / CERT_W));
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [certNo, loading, error]);
+  // === Cert decoration (equipped) ===
+  const certDeco = player.equippedCertDeco
+    ? SHOP_ITEMS.find(i => i.id === player.equippedCertDeco)?.certDeco
+    : undefined;
 
   useEffect(() => {
-    const heroCompletedCount = [1, 2, 3, 4, 5, 6, 7, 8].filter((id) => player.stagesCompleted.includes(id)).length;
-    const eligible = heroCompletedCount >= 8;
     if (!eligible) return;
 
     // 1. ถ้ามีข้อมูลครบในเครื่องแล้ว โหลดขึ้นมาแสดงทันที ไม่ต้องรอเน็ต
@@ -95,7 +80,7 @@ export default function Certificate() {
         } else {
           // Fallback อัตโนมัติ: ไม่แสดงหน้าจอ Error ให้ผู้เรียนที่ผ่านเกณฑ์แล้ว
           const fallbackCertNo = player.certificateNo || `HD-${new Date().getFullYear() + 543}-${(player.userIdHash || 'ST').slice(0, 6).toUpperCase()}`;
-          const fallbackCode = player.certificateVerifyCode || (player.userIdHash || Math.random().toString(36).slice(2, 10)).slice(0, 8).toUpperCase();
+          const fallbackCode = player.certificateVerifyCode || (player.userIdHash || Math.random().toString(36).slice(2, 8)).slice(0, 6).toUpperCase();
           const fallbackDate = player.certificateIssuedAt || new Date().toISOString();
           setCertNo(fallbackCertNo);
           setVerifyCode(fallbackCode);
@@ -106,7 +91,7 @@ export default function Certificate() {
       .catch(() => {
         setLoading(false);
         const fallbackCertNo = player.certificateNo || `HD-${new Date().getFullYear() + 543}-${(player.userIdHash || 'ST').slice(0, 6).toUpperCase()}`;
-        const fallbackCode = player.certificateVerifyCode || (player.userIdHash || Math.random().toString(36).slice(2, 10)).slice(0, 8).toUpperCase();
+        const fallbackCode = player.certificateVerifyCode || (player.userIdHash || Math.random().toString(36).slice(2, 8)).slice(0, 6).toUpperCase();
         const fallbackDate = player.certificateIssuedAt || new Date().toISOString();
         setCertNo(fallbackCertNo);
         setVerifyCode(fallbackCode);
@@ -114,6 +99,7 @@ export default function Certificate() {
         setCertificate(fallbackCertNo, fallbackDate, fallbackCode);
       });
   }, [
+    eligible,
     player.userIdHash,
     player.certificateNo,
     player.certificateVerifyCode,
@@ -125,15 +111,42 @@ export default function Certificate() {
 
   useEffect(() => {
     if (!verifyCode) return;
-    const verifyUrl = `${location.origin}/saynovaping/verify?code=${verifyCode}`;
-    QRCode.toDataURL(verifyUrl, { width: 220, margin: 1, color: { dark: '#003C73', light: '#FFFFFF' } })
+    const url = `${location.origin}/saynovaping/verify?code=${verifyCode}`;
+    QRCode.toDataURL(url, { width: 220, margin: 1, color: { dark: '#003C73', light: '#FFFFFF' } })
       .then(setQrDataUrl)
       .catch(() => { /* ignore */ });
   }, [verifyCode]);
 
-  const heroCompletedCount = [1, 2, 3, 4, 5, 6, 7, 8].filter((id) => player.stagesCompleted.includes(id)).length;
-  const eligible = heroCompletedCount >= 8;
-  const verifyUrl = verifyCode ? `${location.origin}/saynovaping/verify?code=${verifyCode}` : '';
+  // เรนเดอร์เกียรติบัตรจาก Canvas 840x1188 อัตโนมัติ เพื่อให้หน้าเว็บ โหมดแคปจอ และไฟล์ดาวน์โหลดเหมือนกันทุกพิกเซล 100%
+  useEffect(() => {
+    if (!eligible || !certNo) return;
+    let cancelled = false;
+    const render = async () => {
+      try {
+        if (document.fonts?.ready) {
+          await document.fonts.ready;
+        }
+        const canvas = await renderCertificateCanvas({
+          displayName,
+          nickname: player.nickname,
+          realName,
+          certNo,
+          issueDate,
+          verifyUrl,
+          cornerEmoji: certDeco?.corner,
+        });
+        if (!cancelled) {
+          setCertImgUrl(canvas.toDataURL('image/png'));
+        }
+      } catch (err) {
+        console.warn('[Certificate] Auto render canvas failed:', err);
+      }
+    };
+    render();
+    return () => {
+      cancelled = true;
+    };
+  }, [eligible, displayName, player.nickname, realName, certNo, issueDate, verifyUrl, certDeco?.corner]);
 
   const [saving, setSaving] = useState(false);
   const [previewImgUrl, setPreviewImgUrl] = useState<string | null>(null);
@@ -282,20 +295,6 @@ export default function Certificate() {
     );
   }
 
-  // === Cert decoration (equipped) ===
-  const certDeco = player.equippedCertDeco
-    ? SHOP_ITEMS.find(i => i.id === player.equippedCertDeco)?.certDeco
-    : undefined;
-
-  // จัดวันที่แบบไทย "วันที่ DD เดือน พ.ศ. YYYY"
-  const formatThaiDate = (iso: string) => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    const months = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-                    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-    return `${d.getDate()} ${months[d.getMonth()]} พ.ศ. ${d.getFullYear() + 543}`;
-  };
-
   return (
     <div className="min-h-full pb-8 bg-white">
       <PageHeader title="🏆 ประกาศนียบัตร" backTo="/" />
@@ -321,105 +320,99 @@ export default function Certificate() {
         )}
 
         {certNo && !loading && !error && (
-          <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}>
-            {/* ===== Certificate artwork — ทางการ พื้นขาวล้วน (เรนเดอร์ 420px แล้วย่อพอดีจอ) ===== */}
-            <div ref={wrapRef} className="relative w-full mx-auto overflow-hidden"
-                 style={{ maxWidth: CERT_W, height: CERT_H * certScale }}>
-            <div style={{ width: CERT_W, height: CERT_H, transform: `scale(${certScale})`, transformOrigin: 'top left' }}>
+          <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}>
+            {/* ===== Certificate Artwork (แสดงภาพเรนเดอร์จริงระดับ HD 840x1188 เต็มกรอบ ไม่แคบ ไม่เพี้ยน) ===== */}
             <div
               id="cert-card"
-              className={`relative bg-white shadow-2xl font-official overflow-hidden ${certDeco?.borderClass || ''}`}
-              style={{ width: CERT_W, height: CERT_H, fontFamily: '"Sukhumvit Set", "Noto Sans Thai", "IBM Plex Sans Thai", sans-serif' }}
+              className={`relative w-full aspect-[840/1188] bg-white shadow-2xl rounded-sm overflow-hidden select-none ${certDeco?.borderClass || ''}`}
+              style={{ fontFamily: '"Sukhumvit Set", "Noto Sans Thai", "IBM Plex Sans Thai", sans-serif' }}
             >
-              {/* === ขอบทอง outer (achievement accent — TMF gold #F59E0B) === */}
-              <div className="absolute inset-1 border-2 border-warning-500 pointer-events-none" />
-              {/* === กรอบเส้นคู่ น้ำเงินเข้ม (หนา + บาง) === */}
-              <div className="absolute inset-3 border-[3px] border-[#003C73] pointer-events-none" />
-              <div className="absolute inset-[18px] border border-[#003C73] pointer-events-none" />
+              {certImgUrl ? (
+                <img
+                  src={certImgUrl}
+                  alt="ประกาศนียบัตร"
+                  className="w-full h-full object-contain block pointer-events-auto"
+                  style={{ WebkitTouchCallout: 'default' }}
+                />
+              ) : (
+                /* Fallback DOM ระหว่างรอเรนเดอร์เสี้ยววินาที — สัดส่วนเดียวกับ Canvas 100% */
+                <div className="relative w-full h-full flex flex-col items-center justify-between px-7 py-8 text-center">
+                  {/* ขอบทอง outer */}
+                  <div className="absolute inset-1.5 border-2 border-warning-500 pointer-events-none" />
+                  {/* กรอบเส้นคู่ น้ำเงินเข้ม */}
+                  <div className="absolute inset-3 border-[3px] border-[#003C73] pointer-events-none" />
+                  <div className="absolute inset-[18px] border border-[#003C73] pointer-events-none" />
 
-              {/* === Watermark TMF Logo (subtle, behind content) === */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
-                   aria-hidden style={{ opacity: 0.04 }}>
-                <TMFLogo variant="bare" width={360} useBase64 />
-              </div>
+                  {/* Watermark */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
+                       aria-hidden style={{ opacity: 0.04 }}>
+                    <TMFLogo variant="bare" width={320} useBase64 />
+                  </div>
 
-              {/* === Decorative corner emoji (จาก cert-deco ที่สวม) === */}
-              {certDeco?.corner && (
-                <>
-                  <span className="absolute top-6 left-6 text-2xl pointer-events-none z-10" aria-hidden>{certDeco.corner}</span>
-                  <span className="absolute top-6 right-6 text-2xl pointer-events-none z-10" aria-hidden>{certDeco.corner}</span>
-                </>
-              )}
+                  {/* ลวดลายมุมล่างซ้าย */}
+                  <CornerPattern position="bottom-left" />
 
-              {/* === ลวดลายเรขาคณิตที่มุมล่าง (ฟ้า + ทอง) === */}
-              <CornerPattern position="bottom-left" />
-              <CornerPattern position="bottom-right" />
+                  {/* ส่วนบน: โลโก้ + หัวข้อ */}
+                  <div className="relative z-10 flex flex-col items-center w-full">
+                    <div className="flex items-center justify-center gap-5 mb-4 w-full">
+                      <TMFLogo variant="bare" width={110} useBase64 />
+                      <div className="w-0.5 h-12 bg-slate-300 flex-shrink-0" />
+                      <div className="text-left flex-shrink-0">
+                        <p className="text-[10px] text-slate-500 font-semibold tracking-wide">ผู้รับทุน</p>
+                        <p className="text-detective-800 font-bold text-sm leading-tight">
+                          โครงการ SayNo<br/>สู้บุหรี่ไฟฟ้า
+                        </p>
+                      </div>
+                    </div>
 
-              {/* === Content === */}
-              <div className="relative px-7 pt-8 pb-9 h-full flex flex-col items-center text-center z-10">
-                {/* === Logos: TMF + ผู้รับทุน (กึ่งกลางบนสุด) === */}
-                <div className="flex items-center justify-center gap-6 mb-5 w-full">
-                  <TMFLogo variant="bare" width={110} useBase64 />
-                  <div className="w-px h-16 bg-slate-300" />
-                  <div className="text-left">
-                    <p className="text-[10px] text-slate-500 font-medium tracking-wide">ผู้รับทุน</p>
-                    <p className="text-detective-800 font-bold text-sm leading-tight">
-                      โครงการ SayNo<br/>สู้บุหรี่ไฟฟ้า
+                    <h1 className="text-detective-800 font-bold text-3xl sm:text-4xl leading-tight tracking-wide">
+                      ประกาศนียบัตร
+                    </h1>
+                    <Ribbon width={125} height={24} className="my-2 flex-shrink-0" />
+                  </div>
+
+                  {/* ส่วนกลาง: ชื่อผู้รับและรายละเอียดหลักสูตร */}
+                  <div className="relative z-10 flex flex-col items-center w-full my-auto py-2">
+                    <p className="text-slate-600 text-xs sm:text-sm">ฉบับนี้ไว้เพื่อแสดงว่า</p>
+                    <h2 className="text-detective-800 font-bold text-xl sm:text-2xl my-1.5 leading-tight px-4 w-full break-words">
+                      {displayName}
+                    </h2>
+                    {showNicknameSub && (
+                      <p className="text-slate-500 text-xs mb-1">({cleanNick})</p>
+                    )}
+                    <div className="w-44 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent my-1.5" />
+
+                    <p className="text-slate-700 text-xs sm:text-sm mt-2">
+                      เป็นผู้ผ่านการเข้าร่วมกิจกรรม
+                    </p>
+                    <p className="text-detective-800 font-bold text-base sm:text-lg leading-tight mt-1">
+                      "นักสืบสู้บุหรี่ไฟฟ้า"
+                    </p>
+                    <p className="text-slate-600 text-[11px] sm:text-xs mt-1.5 leading-relaxed max-w-xs">
+                      หลักสูตรการเรียนรู้ทักษะปฏิเสธ<br />
+                      และรู้เท่าทันภัยจากบุหรี่ไฟฟ้า สำหรับเยาวชน
                     </p>
                   </div>
-                </div>
 
-                {/* === Title === */}
-                <h1 className="text-detective-800 font-bold text-[2.4rem] leading-tight tracking-wide">
-                  ประกาศนียบัตร
-                </h1>
-                {/* Ribbon ทอง แทน divider เส้นบาง */}
-                <Ribbon width={130} height={26} className="my-2.5" />
+                  {/* ส่วนล่าง: วันที่และเลขที่เกียรติบัตร */}
+                  <div className="relative z-10 flex flex-col items-center w-full pb-6">
+                    <p className="text-slate-700 text-xs sm:text-[13px] leading-snug">
+                      ให้ไว้ ณ วันที่ <span className="font-bold text-detective-800">{formatThaiDate(issueDate)}</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-mono mt-1 leading-tight">
+                      เลขที่ {certNo}
+                    </p>
+                  </div>
 
-                {/* === Issuing statement === */}
-                <p className="text-slate-700 text-sm mt-2">ฉบับนี้ไว้เพื่อแสดงว่า</p>
-
-                {/* === Recipient name === ชื่อจริงเป็นหลัก, ไม่ใส่ใช้ชื่อเล่น — ตัดบรรทัดแสดงเต็มไม่ตัดทิ้ง */}
-                <h2 className={`text-detective-800 font-bold my-2 leading-tight px-4 w-full break-words ${
-                  displayName.length > 30 ? 'text-lg' : displayName.length > 22 ? 'text-xl' : displayName.length > 14 ? 'text-2xl' : 'text-3xl'}`} >
-                  {displayName}
-                </h2>
-                {showNicknameSub && (
-                  <p className="text-slate-500 text-sm mb-1.5">({cleanNick})</p>
-                )}
-
-                {/* === Description === */}
-                <p className="text-slate-700 text-sm leading-relaxed max-w-xs mt-2">
-                  เป็นผู้ผ่านการเข้าร่วมกิจกรรม
-                </p>
-                <p className="text-detective-700 font-semibold text-lg leading-tight mt-1.5">
-                  "นักสืบสู้บุหรี่ไฟฟ้า"
-                </p>
-                <p className="text-slate-600 text-xs mt-2 leading-relaxed max-w-xs">
-                  หลักสูตรการเรียนรู้ทักษะปฏิเสธ
-                  และรู้เท่าทันภัยจากบุหรี่ไฟฟ้า สำหรับเยาวชน
-                </p>
-
-                {/* === Date & Cert number — จัดวางในกรอบด้านล่าง ไม่ล้นทับเส้นขอบและไม่ชน QR === */}
-                <div className="mt-auto pt-4 pb-1 w-full flex flex-col items-center">
-                  <p className="text-slate-700 text-[13px] leading-snug">
-                    ให้ไว้ ณ วันที่ <span className="font-semibold text-detective-800">{formatThaiDate(issueDate)}</span>
-                  </p>
-                  <p className="text-[10px] text-slate-500 font-mono mt-1 leading-tight">
-                    เลขที่ {certNo}
-                  </p>
-                </div>
-              </div>
-
-              {/* === QR เล็ก มุมขวาล่าง === */}
-              {qrDataUrl && (
-                <div className="absolute bottom-7 right-7 bg-white p-1 border border-slate-300 rounded-sm shadow-xs z-20">
-                  <img src={qrDataUrl} alt="ตรวจสอบ" className="w-11 h-11 block" />
-                  <p className="text-[6.5px] text-slate-500 text-center mt-0.5 leading-none">ตรวจสอบ</p>
+                  {/* QR เล็ก มุมขวาล่าง */}
+                  {qrDataUrl && (
+                    <div className="absolute bottom-7 right-7 bg-white p-1 border border-slate-300 rounded-sm shadow-xs z-20">
+                      <img src={qrDataUrl} alt="ตรวจสอบ" className="w-11 h-11 block" />
+                      <p className="text-[6.5px] text-slate-500 text-center mt-0.5 leading-none">ตรวจสอบ</p>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-            </div>
             </div>
 
             {/* ===== ชื่อบนเกียรติบัตร ===== */}
@@ -555,7 +548,7 @@ export default function Certificate() {
       {/* ===== Preview Modal สำหรับบันทึกรูปภาพ (แตะค้างเพื่อบันทึก) บน LINE / Android ===== */}
       {previewImgUrl && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-3 md:p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-4 md:p-6 max-w-lg w-full shadow-2xl flex flex-col items-center text-center max-h-[92vh] overflow-y-auto">
+          <div className="bg-white rounded-3xl p-4 md:p-6 max-w-md w-full shadow-2xl flex flex-col items-center text-center max-h-[94dvh] overflow-y-auto">
             <div className="flex items-center justify-between w-full mb-2.5">
               <div className="flex items-center gap-2 text-left">
                 <span className="text-2xl">🖼️</span>
@@ -572,11 +565,11 @@ export default function Certificate() {
               </button>
             </div>
 
-            <div className="p-2 bg-slate-50 rounded-2xl border border-slate-200 mb-3 w-full">
+            <div className="p-2 bg-slate-50 rounded-2xl border border-slate-200 mb-3 w-full flex items-center justify-center">
               <img
                 src={previewImgUrl}
                 alt="เกียรติบัตรของคุณ"
-                className="w-full h-auto rounded-xl shadow-sm block max-h-[50vh] object-contain mx-auto pointer-events-auto"
+                className="w-full max-w-[320px] aspect-[840/1188] h-auto rounded-xl shadow-sm block object-contain mx-auto pointer-events-auto"
                 style={{ WebkitTouchCallout: 'default', userSelect: 'auto' }}
               />
             </div>
@@ -693,7 +686,7 @@ export default function Certificate() {
         <div className="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-between p-2 sm:p-4 select-none animate-in fade-in duration-200">
           {/* แถบคำแนะนำด้านบน */}
           {!hideGuide ? (
-            <div className="w-full max-w-md bg-amber-500 text-amber-950 px-3.5 py-2 rounded-2xl text-xs font-bold flex items-center justify-between shadow-xl mb-1 z-20">
+            <div className="w-full max-w-md bg-amber-500 text-amber-950 px-3.5 py-2 rounded-2xl text-xs font-bold flex items-center justify-between shadow-xl mb-1 z-20 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <span className="text-lg">📸</span>
                 <span>กดปุ่ม <strong>ลดเสียง + Power</strong> เพื่อแคปจอได้เลย!</span>
@@ -706,19 +699,19 @@ export default function Certificate() {
               </button>
             </div>
           ) : (
-            <div className="h-1" />
+            <div className="h-1 flex-shrink-0" />
           )}
 
-          {/* การ์ดเกียรติบัตรคมชัดระดับ HD เต็มจอ */}
+          {/* การ์ดเกียรติบัตรคมชัดระดับ HD เต็มจอ สัดส่วน A4 ไม่แคบ */}
           <div
-            className="flex-1 w-full flex items-center justify-center my-auto p-1 cursor-pointer"
+            className="min-h-0 flex-1 w-full flex items-center justify-center p-1 sm:p-2 cursor-pointer"
             onClick={() => setHideGuide(prev => !prev)}
           >
             {certImgUrl ? (
               <img
                 src={certImgUrl}
                 alt="ประกาศนียบัตร"
-                className="max-h-[85vh] max-w-full w-auto object-contain rounded shadow-2xl block border border-slate-700/50"
+                className="w-full max-w-[440px] max-h-[82dvh] aspect-[840/1188] object-contain rounded shadow-2xl block mx-auto"
               />
             ) : (
               <div className="text-white text-center py-20 font-bold">กำลังเรนเดอร์ภาพเกียรติบัตร...</div>
@@ -726,7 +719,7 @@ export default function Certificate() {
           </div>
 
           {/* ปุ่มปิดด้านล่าง */}
-          <div className="w-full max-w-xs flex flex-col items-center gap-1.5 mt-1 z-20">
+          <div className="w-full max-w-xs flex flex-col items-center gap-1.5 mt-1 z-20 flex-shrink-0">
             <p className="text-[10px] text-slate-400">แตะที่รูปเพื่อซ่อนหรือแสดงแถบคำแนะนำ</p>
             <button
               onClick={() => {
@@ -749,7 +742,7 @@ function CornerPattern({ position }: { position: 'bottom-left' | 'bottom-right' 
   const flip = position === 'bottom-right';
   return (
     <div
-      className="absolute bottom-6 w-[72px] h-[72px] pointer-events-none z-[5]"
+      className="absolute bottom-6 w-[68px] h-[68px] pointer-events-none z-[5]"
       style={{
         [flip ? 'right' : 'left']: '24px',
         transform: flip ? 'scaleX(-1)' : 'none',
