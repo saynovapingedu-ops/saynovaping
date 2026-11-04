@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@line/liff": "^2.24.0",
+    "@supabase/supabase-js": "^2.119.0",
     "framer-motion": "^11.0.0",
     "html-to-image": "^1.11.13",
     "qrcode": "^1.5.3",

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAdminStore, type StudentRecord } from '../store/adminStore';
+import { useAdminStore, type StudentRecord, type AdminSettings } from '../store/adminStore';
 import { usePlayerStore } from '../store/playerStore';
 import {
   fetchAdminStudents,
@@ -104,6 +104,11 @@ export default function TeacherAdmin() {
   const [editSuccessToast, setEditSuccessToast] = useState<string | null>(null);
   const [copyResearchSuccess, setCopyResearchSuccess] = useState(false);
 
+  // Pagination State for high student volume (up to 1,600+ students)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number | 'all'>(50);
+  const [copyItemAnalysisSuccess, setCopyItemAnalysisSuccess] = useState(false);
+
   // Auto fetch real students and cloud settings on mount or authentication
   useEffect(() => {
     if (admin.isTeacherAuthenticated || sessionStorage.getItem('hd_teacher_auth') === '1') {
@@ -142,6 +147,8 @@ export default function TeacherAdmin() {
       const res = await fetchAdminStudents();
       if (res.ok && res.students && res.students.length > 0) {
         setStudents(res.students);
+        setEditSuccessToast(`🔄 ดึงข้อมูลสดสำเร็จแล้ว! พบบัญชีนักเรียนทั้งหมด ${res.students.length} คน`);
+        setTimeout(() => setEditSuccessToast(null), 3000);
       } else {
         // If cloud returns empty, check if local player exists
         if (player.nickname) {
@@ -186,7 +193,7 @@ export default function TeacherAdmin() {
       }
     } catch (err) {
       console.warn('[TeacherAdmin] Refresh error:', err);
-      setFetchError('ไม่สามารถเชื่อมต่อฐานข้อมูล Google Sheets ได้ในขณะนี้');
+      setFetchError('ไม่สามารถเชื่อมต่อฐานข้อมูลคลาวด์ได้ในขณะนี้');
     } finally {
       setIsLoading(false);
     }
@@ -262,6 +269,130 @@ export default function TeacherAdmin() {
       return matchSearch && matchGrade && matchSchool && matchPeriod && matchStatus;
     });
   }, [students, searchQuery, selectedGrade, selectedSchool, selectedPeriod, customStartDate, customEndDate, statusFilter]);
+
+  // Reset pagination to page 1 whenever any filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedGrade, selectedSchool, selectedPeriod, customStartDate, customEndDate, statusFilter]);
+
+  // Total pages and sliced students for ultra-smooth DOM rendering (no lag even with 1,600+ students)
+  const totalPages = useMemo(() => {
+    if (pageSize === 'all') return 1;
+    return Math.max(1, Math.ceil(filteredStudents.length / pageSize));
+  }, [filteredStudents.length, pageSize]);
+
+  const displayedStudents = useMemo(() => {
+    if (pageSize === 'all') return filteredStudents;
+    const start = (currentPage - 1) * pageSize;
+    return filteredStudents.slice(start, start + pageSize);
+  }, [filteredStudents, currentPage, pageSize]);
+
+  // Active Preset Mode calculation for Tab 2
+  const currentPreset = useMemo<'pre_only' | 'gameplay' | 'post_only' | 'bypass_all' | 'custom'>(() => {
+    if (
+      admin.preTestEnabled &&
+      admin.requirePreTestBeforePlaying &&
+      !admin.postTestEnabled &&
+      !admin.allowBypassStages
+    ) {
+      return 'pre_only';
+    }
+    if (
+      !admin.preTestEnabled &&
+      admin.postTestEnabled &&
+      !admin.allowBypassStages
+    ) {
+      return 'post_only';
+    }
+    if (
+      admin.preTestEnabled &&
+      admin.postTestEnabled &&
+      !admin.requirePreTestBeforePlaying &&
+      admin.allowBypassStages
+    ) {
+      return 'bypass_all';
+    }
+    return 'custom';
+  }, [admin.preTestEnabled, admin.requirePreTestBeforePlaying, admin.postTestEnabled, admin.allowBypassStages]);
+
+  // Apply 1-Click Preset Modes
+  const handleApplyPreset = async (presetKey: 'pre_only' | 'gameplay' | 'post_only' | 'bypass_all') => {
+    sfx.click();
+    let updates: Partial<AdminSettings> = {};
+    let title = '';
+    if (presetKey === 'pre_only') {
+      updates = {
+        preTestEnabled: true,
+        requirePreTestBeforePlaying: true,
+        postTestEnabled: false,
+        allowBypassStages: false,
+      };
+      title = 'โหมด 1: สอบก่อนเรียน (Pre-test Only)';
+    } else if (presetKey === 'gameplay') {
+      updates = {
+        preTestEnabled: true,
+        requirePreTestBeforePlaying: true,
+        postTestEnabled: false,
+        allowBypassStages: false,
+      };
+      title = 'โหมด 2: เข้าเรียนเนื้อหา/เล่นเกม (Gameplay)';
+    } else if (presetKey === 'post_only') {
+      updates = {
+        preTestEnabled: false,
+        requirePreTestBeforePlaying: false,
+        postTestEnabled: true,
+        allowBypassStages: false,
+      };
+      title = 'โหมด 3: สอบหลังเรียน (Post-test Mode)';
+    } else if (presetKey === 'bypass_all') {
+      updates = {
+        preTestEnabled: true,
+        requirePreTestBeforePlaying: false,
+        postTestEnabled: true,
+        allowBypassStages: true,
+      };
+      title = 'โหมด 4: ทดสอบระบบอิสระ (Bypass All)';
+    }
+
+    const nextSettings = { ...admin, ...updates };
+    admin.updateSettings(updates);
+    const ok = await saveAppSettingsToCloud(nextSettings, 'wu2535');
+    if (ok) {
+      sfx.correct();
+      setEditSuccessToast(`✅ เปิดใช้งาน "${title}" เรียบร้อยแล้ว (ซิงค์ไปยังผู้เรียนทุกคนทันที)`);
+      setTimeout(() => setEditSuccessToast(null), 3500);
+    }
+  };
+
+  // 1-Tap Copy Item Analysis Table to Clipboard
+  const handleCopyItemAnalysis = () => {
+    sfx.click();
+    const headers = [
+      'ข้อที่',
+      'ข้อคำถาม',
+      'เฉลย',
+      'ก่อนเรียน ถูก (คน)',
+      'ก่อนเรียน ถูก (%)',
+      'หลังเรียน ถูก (คน)',
+      'หลังเรียน ถูก (%)',
+      'พัฒนาการ (Δ %)',
+    ];
+    const rows = itemAnalysisData.map((item) => [
+      item.no,
+      `"${item.question.question.replace(/"/g, '""')}"`,
+      `"${item.correctChoiceLabel.replace(/"/g, '""')}"`,
+      item.preCorrectCount,
+      item.prePct !== null ? `${item.prePct}%` : '-',
+      item.postCorrectCount,
+      item.postPct !== null ? `${item.postPct}%` : '-',
+      item.deltaPct !== null ? `${item.deltaPct > 0 ? '+' : ''}${item.deltaPct}%` : '-',
+    ]);
+    const tsvContent = [headers.join('\t'), ...rows.map((r) => r.join('\t'))].join('\n');
+    navigator.clipboard.writeText(tsvContent).then(() => {
+      setCopyItemAnalysisSuccess(true);
+      setTimeout(() => setCopyItemAnalysisSuccess(false), 3000);
+    });
+  };
 
   // Analytics & Educational Research Statistics calculated strictly from REAL filtered data
   const analytics = useMemo(() => {
@@ -493,7 +624,7 @@ export default function TeacherAdmin() {
     if (e) e.stopPropagation();
     sfx.click();
     const confirmDelete = window.confirm(
-      `⚠️ ยืนยันการลบข้อมูลของ "${student.realName}" (ID: ${student.idCode || '-'}) ออกจากระบบงานวิจัยหรือไม่?\n\n(ระบบจะลบข้อมูลออกจาก Google Sheets เพื่อให้ข้อมูลสถิติงวดนี้สะอาดถูกต้อง)`
+      `⚠️ ยืนยันการลบข้อมูลของ "${student.realName}" (ID: ${student.idCode || '-'}) ออกจากระบบงานวิจัยหรือไม่?\n\n(ระบบจะลบข้อมูลออกจากฐานข้อมูลคลาวด์ เพื่อให้ข้อมูลสถิติงวดนี้สะอาดถูกต้อง)`
     );
     if (!confirmDelete) return;
 
@@ -1002,10 +1133,10 @@ export default function TeacherAdmin() {
         {/* Tab Buttons */}
         <div className="max-w-6xl mx-auto px-4 flex gap-2 border-t border-slate-100 pt-2 pb-1.5 overflow-x-auto">
           {[
-            { id: 'analytics', label: '📊 พัฒนาการผู้เรียน (ข้อมูลจริง)', count: analytics.total },
+            { id: 'analytics', label: '📊 ข้อมูลและสถิติผู้เรียน', count: analytics.total },
             { id: 'item_analysis', label: `🎯 วิเคราะห์ข้อสอบรายข้อ (${PART3_KNOWLEDGE_QUESTIONS.length} ข้อ & ช้อยส์)`, count: PART3_KNOWLEDGE_QUESTIONS.length },
-            { id: 'controls', label: '⚙️ ตั้งค่าระบบการสอบ' },
-            { id: 'sheets', label: '📑 ฐานข้อมูล Google Sheets & คู่มือ' },
+            { id: 'controls', label: '⚙️ ควบคุมการจัดสอบ' },
+            { id: 'sheets', label: '☁️ ฐานข้อมูลคลาวด์ & ส่งออก' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1151,7 +1282,7 @@ export default function TeacherAdmin() {
                     handleRefreshData();
                   }}
                   disabled={isLoading}
-                  title="รีเฟรชข้อมูลล่าสุดจาก Google Sheets"
+                  title="รีเฟรชข้อมูลล่าสุดจากฐานข้อมูลคลาวด์ Supabase"
                   className="px-2.5 py-1.5 rounded-xl bg-detective-50 text-detective-700 border border-detective-200 text-xs font-bold hover:bg-detective-100 flex items-center gap-1 shadow-sm"
                 >
                   <span className={isLoading ? 'animate-spin' : ''}>🔄</span>
@@ -1190,6 +1321,45 @@ export default function TeacherAdmin() {
                 )}
               </div>
             )}
+
+            {/* Quick Status Filter Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 text-xs">
+              <span className="text-[11px] font-bold text-slate-400 whitespace-nowrap mr-1">สถานะด่วน:</span>
+              {[
+                { id: 'all', label: 'ทั้งหมด', count: students.length, icon: '👥' },
+                { id: 'both', label: 'ทำครบ Pre & Post', count: students.filter((s) => s.preTestScore !== undefined && s.postTestScore !== undefined).length, icon: '✨' },
+                { id: 'pre_only', label: 'ค้าง Post-test (ทำแค่ Pre)', count: students.filter((s) => s.preTestScore !== undefined && s.postTestScore === undefined).length, icon: '⏳' },
+                { id: 'certified', label: 'ได้เกียรติบัตรแล้ว', count: students.filter((s) => !!s.certificateNo).length, icon: '🏆' },
+                { id: 'hero_done', label: 'จบด่าน 1-8 แล้ว', count: students.filter((s) => (s.heroStagesCount !== undefined ? s.heroStagesCount >= 8 : s.stagesCompletedCount >= 8)).length, icon: '🕹️' },
+              ].map((chip) => {
+                const isActive = statusFilter === chip.id;
+                return (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    onClick={() => {
+                      sfx.click();
+                      setStatusFilter(chip.id as any);
+                    }}
+                    className={`px-3 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-1.5 border ${
+                      isActive
+                        ? 'bg-detective-600 text-white border-detective-600 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                    }`}
+                  >
+                    <span>{chip.icon}</span>
+                    <span>{chip.label}</span>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                        isActive ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {chip.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
 
             {/* Row 2: Cohort Summary & 1-Tap Export Buttons */}
             <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -1455,7 +1625,7 @@ export default function TeacherAdmin() {
                 </h3>
                 <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
                   เมื่อนักเรียนเริ่มเข้าใช้งาน ทำแบบทดสอบก่อนเรียน (Pre-test) เล่นเกม หรือทำแบบทดสอบหลังเรียน (Post-test)
-                  ข้อมูลคะแนนจริงและพัฒนาการจะถูกส่งมาแสดงที่นี่และบันทึกลง Google Sheets ทันที
+                  ข้อมูลคะแนนจริงและพัฒนาการจะถูกส่งมาแสดงที่นี่และบันทึกลงฐานข้อมูลคลาวด์ทันที
                 </p>
                 <div className="pt-2">
                   <a
@@ -1475,7 +1645,9 @@ export default function TeacherAdmin() {
             {/* =============================================================== */}
             {filteredStudents.length > 0 && (
               <div className="block md:hidden space-y-3">
-                {filteredStudents.map((s, idx) => (
+                {displayedStudents.map((s, idx) => {
+                  const globalIdx = pageSize === 'all' ? idx + 1 : (currentPage - 1) * pageSize + idx + 1;
+                  return (
                   <div
                     key={s.userIdHash || idx}
                     onClick={() => setSelectedStudent(s)}
@@ -1486,7 +1658,7 @@ export default function TeacherAdmin() {
                       <div>
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-extrabold text-detective-700 bg-detective-50 px-2 py-0.5 rounded-lg">
-                            #{idx + 1}
+                            #{globalIdx}
                           </span>
                           <h3 className="font-bold text-slate-900 text-sm">{s.realName}</h3>
                           {s.nickname && s.nickname !== s.realName && (
@@ -1568,7 +1740,8 @@ export default function TeacherAdmin() {
                       </button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -1599,14 +1772,16 @@ export default function TeacherAdmin() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {filteredStudents.map((s, idx) => (
+                      {displayedStudents.map((s, idx) => {
+                        const globalIdx = pageSize === 'all' ? idx + 1 : (currentPage - 1) * pageSize + idx + 1;
+                        return (
                         <tr
                           key={s.userIdHash || idx}
                           onClick={() => setSelectedStudent(s)}
                           className="hover:bg-sky-50/40 transition-colors cursor-pointer"
                         >
                           <td className="py-3 px-3 text-center font-bold text-slate-400">
-                            {idx + 1}
+                            {globalIdx}
                           </td>
                           <td className="py-3 px-3 font-extrabold text-detective-700">
                             {s.idCode || '-'}
@@ -1694,9 +1869,114 @@ export default function TeacherAdmin() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+            {/* =============================================================== */}
+            {/* PAGINATION CONTROLS (Responsive for both Mobile & Desktop)     */}
+            {/* =============================================================== */}
+            {filteredStudents.length > 0 && (
+              <div className="bg-white rounded-2xl p-3 shadow-clay border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                {/* Info */}
+                <div className="text-slate-600 text-xs text-center sm:text-left">
+                  แสดง{' '}
+                  <b className="text-detective-800 font-extrabold">
+                    {pageSize === 'all'
+                      ? `1 - ${filteredStudents.length}`
+                      : `${Math.min((currentPage - 1) * pageSize + 1, filteredStudents.length)} - ${Math.min(
+                          currentPage * pageSize,
+                          filteredStudents.length
+                        )}`}
+                  </b>{' '}
+                  จากทั้งหมด <b className="text-slate-900 font-extrabold">{filteredStudents.length}</b> คน
+                </div>
+
+                {/* Page Controls */}
+                {pageSize !== 'all' && totalPages > 1 && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sfx.click();
+                        setCurrentPage((p) => Math.max(1, p - 1));
+                      }}
+                      disabled={currentPage === 1}
+                      className="w-8 h-8 rounded-xl border border-slate-200 bg-white font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    >
+                      ‹
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(
+                        (p) =>
+                          p === 1 ||
+                          p === totalPages ||
+                          (p >= currentPage - 1 && p <= currentPage + 1)
+                      )
+                      .map((p, idx, arr) => {
+                        const prev = arr[idx - 1];
+                        const showEllipsis = prev && p - prev > 1;
+                        return (
+                          <React.Fragment key={p}>
+                            {showEllipsis && <span className="px-1 text-slate-400 font-bold">...</span>}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                sfx.click();
+                                setCurrentPage(p);
+                              }}
+                              className={`w-8 h-8 rounded-xl font-bold text-xs transition-all ${
+                                currentPage === p
+                                  ? 'bg-detective-600 text-white shadow-sm'
+                                  : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              {p}
+                            </button>
+                          </React.Fragment>
+                        );
+                      })}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sfx.click();
+                        setCurrentPage((p) => Math.min(totalPages, p + 1));
+                      }}
+                      disabled={currentPage === totalPages}
+                      className="w-8 h-8 rounded-xl border border-slate-200 bg-white font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    >
+                      ›
+                    </button>
+                  </div>
+                )}
+
+                {/* Page Size Selector */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-slate-400 font-semibold">แสดงหน้าละ:</span>
+                  {[25, 50, 100, 'all'].map((sz) => (
+                    <button
+                      key={sz}
+                      type="button"
+                      onClick={() => {
+                        sfx.click();
+                        setPageSize(sz as any);
+                        setCurrentPage(1);
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        pageSize === sz
+                          ? 'bg-detective-100 text-detective-800 border border-detective-300'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 border border-transparent'
+                      }`}
+                    >
+                      {sz === 'all' ? 'ทั้งหมด' : sz}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -1734,7 +2014,16 @@ export default function TeacherAdmin() {
               </div>
 
               {/* SPSS Quick Action Buttons */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleCopyItemAnalysis}
+                  className="px-3 py-1.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-800 text-xs font-bold hover:bg-sky-100 flex items-center gap-1.5 transition-all shadow-sm"
+                  title="คัดลอกตารางวิเคราะห์ความยากและอัตราตอบถูกรายข้อไปวางใน Word หรือ Excel ได้ทันที"
+                >
+                  <span>📋</span>
+                  <span>{copyItemAnalysisSuccess ? 'คัดลอกรายข้อแล้ว!' : 'คัดลอกตารางวิเคราะห์รายข้อ'}</span>
+                </button>
                 <button
                   onClick={handleCopyBinaryToClipboard}
                   className="px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold hover:bg-indigo-100 flex items-center gap-1.5 transition-all shadow-sm"
@@ -2103,7 +2392,169 @@ export default function TeacherAdmin() {
         {/* TAB 2: Exam & App Controls                                         */}
         {/* =================================================================== */}
         {activeTab === 'controls' && (
-          <div className="max-w-2xl mx-auto space-y-5">
+          <div className="max-w-3xl mx-auto space-y-5">
+            {/* 1-Click Classroom Preset Modes Card */}
+            <div className="bg-gradient-to-br from-indigo-50/80 via-white to-sky-50/60 rounded-3xl p-5 sm:p-6 shadow-clay border border-indigo-100 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 pb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">⚡</span>
+                    <h2 className="text-sm sm:text-base font-display font-extrabold text-slate-900">
+                      โหมดควบคุมด่วนสำหรับชั้นเรียน (1-Click Classroom Presets)
+                    </h2>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    คลิกปุ่มเดียวเพื่อสลับโหมดการสอบสำหรับนักเรียนทั้งห้อง โดยไม่ต้องไล่เปิด-ปิดสวิตช์ทีละตัว
+                  </p>
+                </div>
+
+                <div className="text-xs font-bold">
+                  <span className="text-slate-500 mr-1.5">สถานะปัจจุบัน:</span>
+                  <span className={`px-2.5 py-1 rounded-xl text-xs font-bold border ${
+                    currentPreset === 'pre_only'
+                      ? 'bg-sky-50 text-sky-800 border-sky-300'
+                      : currentPreset === 'post_only'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                      : currentPreset === 'bypass_all'
+                      ? 'bg-purple-50 text-purple-800 border-purple-300'
+                      : 'bg-amber-50 text-amber-800 border-amber-300'
+                  }`}>
+                    {currentPreset === 'pre_only' && '📝 โหมดสอบก่อนเรียน (Pre-test)'}
+                    {currentPreset === 'post_only' && '🎯 โหมดสอบหลังเรียน (Post-test)'}
+                    {currentPreset === 'bypass_all' && '🔓 โหมดทดสอบระบบอิสระ (Bypass All)'}
+                    {currentPreset === 'custom' && '⚙️ กำหนดค่าเอง (Custom)'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Preset 1: Pre-test Only */}
+                <div className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${
+                  currentPreset === 'pre_only'
+                    ? 'bg-sky-50/90 border-sky-300 ring-2 ring-sky-200'
+                    : 'bg-white border-slate-200 hover:border-sky-300 hover:shadow-sm'
+                }`}>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-extrabold text-sky-800 flex items-center gap-1.5">
+                        <span>📝</span> โหมด 1: สอบก่อนเรียน
+                      </span>
+                      {currentPreset === 'pre_only' && (
+                        <span className="text-[10px] font-bold bg-sky-600 text-white px-2 py-0.5 rounded-full">
+                          ✓ ใช้งานอยู่
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                      เปิดให้ทำ Pre-test และ<b>บังคับทำให้เสร็จก่อน</b>จึงจะปลดล็อกด่านแรก ปิด Post-test ไม่ให้เด็กกดล่วงหน้า
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset('pre_only')}
+                    disabled={currentPreset === 'pre_only'}
+                    className={`w-full py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                      currentPreset === 'pre_only'
+                        ? 'bg-sky-200 text-sky-700 cursor-default'
+                        : 'bg-sky-600 hover:bg-sky-700 text-white active:scale-95'
+                    }`}
+                  >
+                    {currentPreset === 'pre_only' ? '✓ เปิดใช้งานอยู่แล้ว' : '🚀 สลับเป็นโหมดสอบก่อนเรียน'}
+                  </button>
+                </div>
+
+                {/* Preset 2: Gameplay / Learning */}
+                <div className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 hover:shadow-sm transition-all flex flex-col justify-between space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-extrabold text-indigo-800 flex items-center gap-1.5">
+                        <span>🎮</span> โหมด 2: เข้าเรียนเนื้อหา/เล่นเกม
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                      นักเรียนเข้าผจญภัยเรียนรู้เนื้อหาด่าน 1-8 ตามลำดับ พร้อมระบบ AI Chatbot (เด็กที่ยังไม่ทำ Pre-test ต้องทำให้เสร็จก่อน)
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset('gameplay')}
+                    className="w-full py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95 transition-all shadow-sm"
+                  >
+                    🎮 สลับเป็นโหมดเรียนรู้เนื้อหา
+                  </button>
+                </div>
+
+                {/* Preset 3: Post-test Mode */}
+                <div className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${
+                  currentPreset === 'post_only'
+                    ? 'bg-emerald-50/90 border-emerald-300 ring-2 ring-emerald-200'
+                    : 'bg-white border-slate-200 hover:border-emerald-300 hover:shadow-sm'
+                }`}>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-extrabold text-emerald-800 flex items-center gap-1.5">
+                        <span>🎯</span> โหมด 3: สอบหลังเรียน
+                      </span>
+                      {currentPreset === 'post_only' && (
+                        <span className="text-[10px] font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-full">
+                          ✓ ใช้งานอยู่
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                      เปิดให้นักเรียนเข้าทำ Post-test (เมื่อผ่านด่านครบ 8 ด่าน) พร้อมรับเกียรติบัตร และปิด Pre-test
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset('post_only')}
+                    disabled={currentPreset === 'post_only'}
+                    className={`w-full py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                      currentPreset === 'post_only'
+                        ? 'bg-emerald-200 text-emerald-700 cursor-default'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95'
+                    }`}
+                  >
+                    {currentPreset === 'post_only' ? '✓ เปิดใช้งานอยู่แล้ว' : '🎯 สลับเป็นโหมดสอบหลังเรียน'}
+                  </button>
+                </div>
+
+                {/* Preset 4: Bypass All / Testing */}
+                <div className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${
+                  currentPreset === 'bypass_all'
+                    ? 'bg-purple-50/90 border-purple-300 ring-2 ring-purple-200'
+                    : 'bg-white border-slate-200 hover:border-purple-300 hover:shadow-sm'
+                }`}>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-extrabold text-purple-800 flex items-center gap-1.5">
+                        <span>🔓</span> โหมด 4: ทดสอบระบบอิสระ
+                      </span>
+                      {currentPreset === 'bypass_all' && (
+                        <span className="text-[10px] font-bold bg-purple-600 text-white px-2 py-0.5 rounded-full">
+                          ✓ ใช้งานอยู่
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                      ปลดล็อกทุกส่วน ข้ามด่านได้อิสระ เปิดทั้ง Pre และ Post เหมาะสำหรับการตรวจสอบระบบของอาจารย์
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset('bypass_all')}
+                    disabled={currentPreset === 'bypass_all'}
+                    className={`w-full py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                      currentPreset === 'bypass_all'
+                        ? 'bg-purple-200 text-purple-700 cursor-default'
+                        : 'bg-purple-600 hover:bg-purple-700 text-white active:scale-95'
+                    }`}
+                  >
+                    {currentPreset === 'bypass_all' ? '✓ เปิดใช้งานอยู่แล้ว' : '🔓 สลับเป็นโหมดทดสอบอิสระ'}
+                  </button>
+                </div>
+              </div>
+            </div>
             {/* Group 1: Core Exam Access */}
             <div className="bg-white rounded-3xl p-6 shadow-clay border border-slate-100 space-y-4">
               <div className="border-b border-slate-100 pb-2.5">
@@ -2478,63 +2929,90 @@ export default function TeacherAdmin() {
         )}
 
         {/* =================================================================== */}
-        {/* TAB 3: Google Sheets Database & Admin Guide                         */}
+        {/* TAB 4: Cloud Database & Academic Export Hub                        */}
         {/* =================================================================== */}
         {activeTab === 'sheets' && (
           <div className="space-y-6">
             {/* 1.1 HERO CARD: โทนสว่าง (Light Clay Tone) */}
-            <div className="bg-gradient-to-br from-sky-50 via-indigo-50/30 to-white rounded-[26px] p-6 md:p-8 shadow-clay border border-sky-100 space-y-4">
+            <div className="bg-gradient-to-br from-emerald-50/70 via-sky-50/40 to-white rounded-[26px] p-6 md:p-8 shadow-clay border border-emerald-100 space-y-4">
               {/* Live Status Pill */}
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold shadow-sm">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>☁️ ระบบคลาวด์เชื่อมต่อสมบูรณ์ (Real-Time Auto Sync)</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>☁️ Supabase Cloud Database เชื่อมต่อสมบูรณ์ (Real-Time Auto Sync)</span>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold">
+                  ⚡ รองรับ 1,600+ คนพร้อมกัน
+                </span>
               </div>
 
               <div className="space-y-1">
                 <h2 className="text-xl md:text-2xl font-display font-extrabold text-slate-900 leading-tight">
-                  Google Sheets ศูนย์กลางฐานข้อมูลคะแนนสด
+                  ระบบฐานข้อมูลคลาวด์ความเร็วสูง (Supabase Cloud Database)
                 </h2>
                 <p className="text-xs md:text-sm text-slate-600 leading-relaxed max-w-2xl">
-                  ระบบเว็บแอปบันทึกคะแนนและพัฒนาการของนักเรียนทุกคนเข้าสู่ Google Sheets โดยอัตโนมัติ
-                  อาจารย์สามารถเปิดดูข้อมูลอัปเดตแบบเรียลไทม์ได้ตลอด 24 ชั่วโมง
+                  บันทึกคะแนนสอบ พัฒนาการ และเกียรติบัตรของนักเรียนทุกคนเข้าสู่ระบบคลาวด์ PostgreSQL ความเร็วสูงระดับเสี้ยววินาที
+                  เสถียร ไม่ดีเลย์ ป้องกันข้อมูลสูญหาย และพร้อมส่งออกข้อมูลสำหรับงานวิจัยและวิทยานิพนธ์ได้ทันที
                 </p>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="flex flex-wrap items-center gap-2.5 pt-2">
                 <a
-                  href={admin.googleSheetUrl}
+                  href="https://supabase.com/dashboard/project/yxljxtlgnjwqxhjgfhdv/editor"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="!bg-emerald-600 hover:!bg-emerald-700 text-white font-bold px-5 py-3 rounded-2xl shadow-clay active:scale-[0.98] transition-all flex items-center gap-2 text-xs sm:text-sm"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-2xl shadow-clay active:scale-[0.98] transition-all flex items-center gap-2 text-xs sm:text-sm"
                 >
-                  <span>🌐 เปิด Google Sheets ตารางคะแนนสด ↗</span>
+                  <span>🌐 เปิด Supabase Database Dashboard ↗</span>
                 </a>
 
                 <button
+                  type="button"
+                  onClick={handleDownloadBinaryCsv}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-2xl shadow-clay active:scale-[0.98] transition-all flex items-center gap-2 text-xs sm:text-sm"
+                >
+                  <span>📥 ดาวน์โหลด SPSS CSV (1/0)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCopyTableToClipboard}
+                  className="bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 font-bold px-4 py-2.5 rounded-2xl active:scale-[0.98] transition-all flex items-center gap-2 text-xs sm:text-sm shadow-sm"
+                >
+                  <span>📋</span>
+                  <span>{copySuccess ? 'คัดลอกตารางแล้ว!' : 'คัดลอกตาราง (1-Tap TSV)'}</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => {
                     sfx.click();
                     handleRefreshData();
                   }}
                   disabled={isLoading}
-                  className="bg-white border-2 border-sky-200 text-sky-700 hover:bg-sky-50 font-bold px-4 py-3 rounded-2xl active:scale-[0.98] transition-all flex items-center gap-2 text-xs sm:text-sm shadow-sm"
+                  className="bg-white border-2 border-sky-200 text-sky-700 hover:bg-sky-50 font-bold px-4 py-2.5 rounded-2xl active:scale-[0.98] transition-all flex items-center gap-2 text-xs sm:text-sm shadow-sm"
                 >
                   <span className={isLoading ? 'animate-spin' : ''}>🔄</span>
-                  <span>{isLoading ? 'กำลังดึงข้อมูล...' : 'ดึงข้อมูลสถิติล่าสุดลงเครื่อง'}</span>
+                  <span>{isLoading ? 'กำลังดึงข้อมูล...' : 'ดึงข้อมูลสดลงเครื่อง'}</span>
                 </button>
 
-                <button
-                  onClick={handleCopyTableToClipboard}
-                  className="bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 font-bold px-4 py-3 rounded-2xl active:scale-[0.98] transition-all flex items-center gap-2 text-xs sm:text-sm shadow-sm"
-                >
-                  <span>📋</span>
-                  <span>{copySuccess ? 'คัดลอกตารางแล้ว!' : 'คัดลอกด่วน (1-Tap TSV)'}</span>
-                </button>
+                {admin.googleSheetUrl && (
+                  <a
+                    href={admin.googleSheetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-slate-500 hover:text-slate-800 underline px-2 py-1"
+                    title="เปิดดูชีตสำรองเดิมบน Google Sheets"
+                  >
+                    เปิดชีตสำรองเดิม (Google Sheets) ↗
+                  </a>
+                )}
               </div>
 
               {/* Footer Bar */}
-              <div className="pt-3 border-t border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-500 gap-1">
-                <span>🔒 สถานะการเข้าถึง: ทุกคนที่มีลิงก์มีสิทธิ์ดู (อ่านเท่านั้น / Viewer) ปลอดภัย 100% ข้อมูลไม่สูญหาย</span>
+              <div className="pt-3 border-t border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-500 gap-1">
+                <span>🔒 ความปลอดภัย: Row Level Security (RLS) เปิดใช้งาน 100% นักเรียนแก้ไขคะแนนตนเองไม่ได้</span>
                 <span className="font-bold text-detective-700">
                   นักเรียนทั้งหมดในระบบ: {analytics.total} คน
                 </span>
@@ -2600,7 +3078,7 @@ export default function TeacherAdmin() {
             {/* 2.3 โครงสร้าง 18 คอลัมน์ในฐานข้อมูล (Data Dictionary Table) */}
             <div className="bg-white rounded-3xl p-6 shadow-clay border border-slate-100 space-y-4">
               <h3 className="font-display font-extrabold text-slate-900 text-base flex items-center gap-2">
-                <span>📋</span> โครงสร้าง 18 คอลัมน์ใน Google Sheets (Data Dictionary)
+                <span>📋</span> โครงสร้างข้อมูลหลักในระบบคลาวด์ (Data Dictionary)
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
@@ -3028,7 +3506,7 @@ export default function TeacherAdmin() {
                     </h3>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    แก้ไขชื่อ, รหัส, ระดับชั้น, หรือโรงเรียน (ซิงค์ขึ้น Google Sheets ทันที)
+                    แก้ไขชื่อ, รหัส, ระดับชั้น, หรือโรงเรียน (ซิงค์ขึ้นฐานข้อมูลคลาวด์ทันที)
                   </p>
                 </div>
                 <button

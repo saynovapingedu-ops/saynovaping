@@ -1,0 +1,20 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # รันอัตโนมัติทุกๆ วัน เวลา 00:00 UTC (07:00 น. เวลาไทย)
+    - cron: '0 0 * * *'
+  workflow_dispatch: # รองรับการกดรันแบบ manual
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase API
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${{ vars.VITE_SUPABASE_ANON_KEY || 'sb_publishable_ax7ABpWgBMs7yhCl1ddqiQ_aJXz3eeK' }}" \
+            -H "Authorization: Bearer ${{ vars.VITE_SUPABASE_ANON_KEY || 'sb_publishable_ax7ABpWgBMs7yhCl1ddqiQ_aJXz3eeK' }}" \
+            "https://yxljxtlgnjwqxhjgfhdv.supabase.co/rest/v1/players?select=user_id_hash&limit=1"
+          echo "Supabase successfully pinged to prevent pausing."
+

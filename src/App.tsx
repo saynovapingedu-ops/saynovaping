@@ -123,7 +123,8 @@ export default function App() {
 
     window.addEventListener('focus', syncTeacherSettings);
     document.addEventListener('visibilitychange', onVisibilityChange);
-    const interval = setInterval(syncTeacherSettings, 20000);
+    // ตรวจสอบสถานะการสอบจากคุณครูทุกๆ 60 วินาที (และตรวจทันทีเมื่อสลับกลับมาที่หน้าจอ)
+    const interval = setInterval(syncTeacherSettings, 60000);
 
     return () => {
       window.removeEventListener('focus', syncTeacherSettings);

@@ -4,3 +4,8 @@ dist/
 *.log
 *.tsbuildinfo
 .claude/
+*.xlsx
+*.xls
+output/
+scripts/
+Project Presentation Video

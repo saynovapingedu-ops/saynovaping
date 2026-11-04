@@ -1,9 +1,9 @@
 // ============================================================================
-//  Cloud Sync — เชื่อม LIFF กับ Apps Script Backend
+//  Cloud Sync — เชื่อม LIFF กับ Supabase (PostgreSQL Cloud Database)
 // ============================================================================
 //  หน้าที่:
-//  - ส่ง progress ผู้เล่นไปบันทึกที่ Google Sheets
-//  - ออก/ตรวจ certificate
+//  - ส่ง progress ผู้เล่นไปบันทึกที่ Supabase (รองรับ 1600+ คนพร้อมกัน)
+//  - ออก/ตรวจ certificate แบบ Atomic
 //  - กู้ progress ตอนเปลี่ยนเครื่อง
 //
 //  ฟีเจอร์:
@@ -12,7 +12,8 @@
 //  - Silent fail: ถ้า sync fail ไม่ขัดจังหวะ gameplay
 // ============================================================================
 
-const SYNC_URL = import.meta.env.VITE_SYNC_URL as string;
+import { supabase } from './supabase';
+
 const QUEUE_KEY = 'hd_sync_queue';
 const MAX_RETRIES = 2;
 
@@ -109,7 +110,6 @@ export interface RestoreResponse {
     badges: string[];
     certificateNo: string | null;
     certificateIssuedAt: string | null;
-    // field ที่เพิ่ม — ถ้า Apps Script ยังไม่ส่งกลับมา จะเป็น undefined (frontend จะใช้ค่า default)
     avatar?: number;
     coins?: number;
     ownedItems?: string[];
@@ -164,33 +164,12 @@ export interface LeaderboardEntry {
 
 export interface LeaderboardResponse {
   ok: boolean;
-  /** backend ที่ยังไม่รองรับ action นี้ → unsupported = true (ใช้แยกจาก network error) */
   unsupported?: boolean;
   scope: LeaderboardScope;
-  /** ชื่อห้อง/โรงเรียนที่ใช้กรอง (ถ้ามี) */
   groupLabel?: string;
   entries: LeaderboardEntry[];
-  /** อันดับของผู้เล่นปัจจุบัน (เผื่อหลุดนอก top N) */
   me?: LeaderboardEntry;
-  /** จำนวนผู้เล่นทั้งหมดในขอบเขตนี้ */
   total?: number;
-}
-
-async function fetchWithRetry(url: string, options: RequestInit, retries = MAX_RETRIES): Promise<Response> {
-  let lastError: unknown = null;
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const res = await fetch(url, options);
-      if (res.ok) return res;
-      lastError = new Error(`HTTP ${res.status}`);
-    } catch (err) {
-      lastError = err;
-    }
-    if (attempt < retries) {
-      await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt)));
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error('Network error');
 }
 
 function addToQueue(payload: SyncPayload) {
@@ -224,108 +203,251 @@ export async function flushQueue(): Promise<void> {
 }
 
 export async function syncProgress(payload: SyncPayload, queueOnFail = true): Promise<boolean> {
-  if (!SYNC_URL) return false;
+  if (!payload.userIdHash) return false;
   try {
-    const res = await fetchWithRetry(SYNC_URL, {
-      method: 'POST',
-      // text/plain เลี่ยง CORS preflight (Apps Script ไม่รองรับ OPTIONS)
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'sync', ...payload }),
-    });
-    const data = await res.json();
-    return data.ok === true;
+    const stages = payload.stagesCompleted || [];
+    const heroCount = stages.filter(id => id >= 1 && id <= 8).length;
+    const totalCount = stages.length;
+
+    const row: Record<string, any> = {
+      user_id_hash: payload.userIdHash,
+      nickname: payload.nickname || 'ผู้เล่น',
+      total_xp: payload.totalXP ?? 0,
+      level: payload.level ?? 1,
+      stages_completed: stages,
+      hero_stages_count: heroCount,
+      total_stages_count: totalCount,
+      badges: payload.badges || [],
+      last_active_at: new Date().toISOString(),
+    };
+
+    if (payload.idCode !== undefined) row.id_code = payload.idCode;
+    if (payload.realName !== undefined) row.real_name = payload.realName;
+    if (payload.lineName !== undefined) row.line_name = payload.lineName;
+    if (payload.grade !== undefined) row.grade = payload.grade;
+    if (payload.school !== undefined) row.school = payload.school;
+    if (payload.avatar !== undefined) row.avatar = payload.avatar;
+    if (payload.coins !== undefined) row.coins = payload.coins;
+    if (payload.ownedItems !== undefined) row.owned_items = payload.ownedItems;
+    if (payload.equippedTitle !== undefined) row.equipped_title = payload.equippedTitle;
+    if (payload.equippedFrame !== undefined) row.equipped_frame = payload.equippedFrame;
+    if (payload.equippedTheme !== undefined) row.equipped_theme = payload.equippedTheme;
+    if (payload.equippedAccessory !== undefined) row.equipped_accessory = payload.equippedAccessory;
+    if (payload.equippedBackdrop !== undefined) row.equipped_backdrop = payload.equippedBackdrop;
+    if (payload.equippedCertDeco !== undefined) row.equipped_cert_deco = payload.equippedCertDeco;
+    if (payload.hintTokens !== undefined) row.hint_tokens = payload.hintTokens;
+    if (payload.coinX2Remaining !== undefined) row.coin_x2_remaining = payload.coinX2Remaining;
+    if (payload.streakShields !== undefined) row.streak_shields = payload.streakShields;
+    if (payload.streakDays !== undefined) row.streak_days = payload.streakDays;
+    if (payload.lastPlayDate !== undefined) row.last_play_date = payload.lastPlayDate;
+    if (payload.lastDailyDate !== undefined) row.last_daily_date = payload.lastDailyDate;
+    if (payload.dailyDoneCount !== undefined) row.daily_done_count = payload.dailyDoneCount;
+    if (payload.dailyBestScore !== undefined) row.daily_best_score = payload.dailyBestScore;
+    if (payload.examBestScore !== undefined) row.exam_best_score = payload.examBestScore;
+    if (payload.examBonusClaimed !== undefined) row.exam_bonus_claimed = payload.examBonusClaimed;
+
+    if (payload.preTestScore !== undefined) row.pre_test_score = payload.preTestScore;
+    if (payload.postTestScore !== undefined) row.post_test_score = payload.postTestScore;
+    if (payload.preTestSkillScore !== undefined) row.pre_test_skill_score = payload.preTestSkillScore;
+    if (payload.postTestSkillScore !== undefined) row.post_test_skill_score = payload.postTestSkillScore;
+    if (payload.postTestScore != null && payload.preTestScore != null) {
+      row.gain_delta_knowledge = payload.postTestScore - payload.preTestScore;
+    }
+
+    if (payload.preTestKnowledgeAnswers !== undefined) row.pre_test_knowledge_answers = payload.preTestKnowledgeAnswers;
+    if (payload.postTestKnowledgeAnswers !== undefined) row.post_test_knowledge_answers = payload.postTestKnowledgeAnswers;
+    if (payload.preTestSkillAnswers !== undefined) row.pre_test_skill_answers = payload.preTestSkillAnswers;
+    if (payload.postTestSkillAnswers !== undefined) row.post_test_skill_answers = payload.postTestSkillAnswers;
+    if (payload.preTestAt !== undefined) row.pre_test_at = payload.preTestAt;
+    if (payload.postTestAt !== undefined) row.post_test_at = payload.postTestAt;
+
+    if (payload.evalPart5Avg !== undefined) row.eval_part5_avg = payload.evalPart5Avg;
+    if (payload.evalPart5Details !== undefined) row.eval_part5_details = payload.evalPart5Details;
+    if (payload.demographics !== undefined) row.demographics = payload.demographics;
+    if (payload.funRating !== undefined) row.fun_rating = payload.funRating;
+    if (payload.funRatingCount !== undefined) row.fun_rating_count = payload.funRatingCount;
+    if (payload.funRatingSum !== undefined) row.fun_rating_sum = payload.funRatingSum;
+
+    const { error } = await supabase.from('players').upsert(row, { onConflict: 'user_id_hash' });
+    if (error) throw error;
+    return true;
   } catch (err) {
-    console.warn('[cloudSync] sync failed, queueing:', err);
+    console.warn('[cloudSync] Supabase sync failed, queueing:', err);
     if (queueOnFail) addToQueue(payload);
     return false;
   }
 }
 
 export async function issueCertificate(userIdHash: string): Promise<CertResponse> {
-  if (!SYNC_URL) return { ok: false, error: 'no_sync_url' };
   try {
-    const sep = SYNC_URL.includes('?') ? '&' : '?';
-    const url = `${SYNC_URL}${sep}action=issueCert&userIdHash=${encodeURIComponent(userIdHash)}&hash=${encodeURIComponent(userIdHash)}`;
-    const res = await fetchWithRetry(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'issueCert', userIdHash, hash: userIdHash }),
+    const verifyCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const now = new Date();
+    const issueDate = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+
+    const { data, error } = await supabase.rpc('issue_certificate_atomic', {
+      p_user_id_hash: userIdHash,
+      p_verify_code: verifyCode,
+      p_issue_date: issueDate,
     });
-    return await res.json();
+
+    if (error || !data) {
+      return { ok: false, error: 'rpc_error', message: error?.message || 'Failed to issue cert' };
+    }
+    return data as CertResponse;
   } catch (err) {
     return { ok: false, error: 'network_error', message: String(err) };
   }
 }
 
 export async function verifyCertificate(code: string): Promise<VerifyResponse> {
-  if (!SYNC_URL) return { ok: false, valid: false };
   try {
-    const url = `${SYNC_URL}?action=verify&code=${encodeURIComponent(code)}`;
-    const res = await fetchWithRetry(url, { method: 'GET' });
-    return await res.json();
+    const clean = code.trim().toUpperCase();
+    const { data, error } = await supabase
+      .from('certificates')
+      .select('*')
+      .or(`verify_code.ilike.${clean},cert_no.ilike.${clean}`)
+      .maybeSingle();
+
+    if (error || !data) return { ok: false, valid: false };
+
+    return {
+      ok: true,
+      valid: true,
+      certificateNo: data.cert_no,
+      nickname: data.nickname,
+      issueDate: data.issue_date,
+      totalXP: data.total_xp,
+      stagesCount: data.stages_count,
+    };
   } catch {
     return { ok: false, valid: false };
   }
 }
 
 export async function restoreProgress(userIdHash: string): Promise<RestoreResponse> {
-  if (!SYNC_URL) return { ok: false, found: false };
   try {
-    const url = `${SYNC_URL}?action=restore&hash=${encodeURIComponent(userIdHash)}`;
-    const res = await fetchWithRetry(url, { method: 'GET' });
-    return await res.json();
-  } catch {
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .eq('user_id_hash', userIdHash)
+      .maybeSingle();
+
+    if (error || !data) return { ok: false, found: false };
+
+    return {
+      ok: true,
+      found: true,
+      player: {
+        idCode: data.id_code || undefined,
+        realName: data.real_name || undefined,
+        lineName: data.line_name || undefined,
+        nickname: data.nickname || 'ผู้เล่น',
+        grade: data.grade || '',
+        school: data.school || '',
+        createdAt: data.created_at,
+        lastActiveAt: data.last_active_at,
+        totalXP: data.total_xp || 0,
+        level: data.level || 1,
+        stagesCompleted: data.stages_completed || [],
+        badges: data.badges || [],
+        certificateNo: data.certificate_no || null,
+        certificateIssuedAt: data.certificate_issued_at || null,
+        avatar: data.avatar,
+        coins: data.coins,
+        ownedItems: data.owned_items,
+        equippedTitle: data.equipped_title,
+        equippedFrame: data.equipped_frame,
+        equippedTheme: data.equipped_theme,
+        equippedAccessory: data.equipped_accessory,
+        equippedBackdrop: data.equipped_backdrop,
+        equippedCertDeco: data.equipped_cert_deco,
+        hintTokens: data.hint_tokens,
+        coinX2Remaining: data.coin_x2_remaining,
+        streakShields: data.streak_shields,
+        streakDays: data.streak_days,
+        lastPlayDate: data.last_play_date,
+        lastDailyDate: data.last_daily_date,
+        dailyDoneCount: data.daily_done_count,
+        dailyBestScore: data.daily_best_score,
+        examBestScore: data.exam_best_score,
+        examBonusClaimed: data.exam_bonus_claimed,
+        preTestScore: data.pre_test_score,
+        postTestScore: data.post_test_score,
+        preTestSkillScore: data.pre_test_skill_score,
+        postTestSkillScore: data.post_test_skill_score,
+        preTestKnowledgeAnswers: data.pre_test_knowledge_answers,
+        postTestKnowledgeAnswers: data.post_test_knowledge_answers,
+        preTestSkillAnswers: data.pre_test_skill_answers,
+        postTestSkillAnswers: data.post_test_skill_answers,
+        evalPart5Avg: data.eval_part5_avg,
+        evalPart5Details: data.eval_part5_details,
+        demographics: data.demographics,
+        preTestAt: data.pre_test_at,
+        postTestAt: data.post_test_at,
+        funRating: data.fun_rating,
+        funRatingCount: data.fun_rating_count,
+        funRatingSum: data.fun_rating_sum,
+      },
+    };
+  } catch (err) {
     return { ok: false, found: false };
   }
 }
 
-/**
- * ดึงกระดานอันดับ (Leaderboard)
- * - scope='class'  → เฉพาะคนโรงเรียน+ชั้นเดียวกัน (ห้องเรียน)
- * - scope='school' → เฉพาะคนโรงเรียนเดียวกัน
- * - scope='all'    → ทุกคน
- *
- * ส่ง userIdHash ไปด้วยเพื่อให้ backend หา "ห้อง" ของผู้เล่น และทำเครื่องหมาย isMe
- * ถ้า backend เก่ายังไม่รองรับ action นี้ → คืน unsupported=true (หน้าเว็บจะโชว์ empty state สวยๆ แทน crash)
- */
 export async function fetchLeaderboard(
   userIdHash: string,
   scope: LeaderboardScope = 'all',
-  limit = 50,
+  limit = 50
 ): Promise<LeaderboardResponse> {
   const empty = (extra: Partial<LeaderboardResponse> = {}): LeaderboardResponse =>
     ({ ok: false, scope, entries: [], ...extra });
 
-  if (!SYNC_URL) return empty({ unsupported: true });
   try {
-    const url = `${SYNC_URL}?action=leaderboard&scope=${scope}`
-      + `&hash=${encodeURIComponent(userIdHash)}&limit=${limit}`;
-    const res = await fetchWithRetry(url, { method: 'GET' });
-    const data = await res.json();
-    // backend เก่าจะตอบ { ok:false, error:'unknown_action' } หรือไม่มี field entries
-    if (!data || data.ok !== true || !Array.isArray(data.entries)) {
-      return empty({ unsupported: true });
-    }
+    let query = supabase
+      .from('players')
+      .select('user_id_hash, nickname, total_xp, total_stages_count, level')
+      .order('total_xp', { ascending: false })
+      .order('total_stages_count', { ascending: false })
+      .limit(limit);
+
+    const { data, error } = await query;
+    if (error || !data) return empty();
+
+    let meEntry: LeaderboardEntry | undefined;
+    const entries: LeaderboardEntry[] = data.map((row, idx) => {
+      const isMe = !!(userIdHash && row.user_id_hash === userIdHash);
+      const entry: LeaderboardEntry = {
+        rank: idx + 1,
+        totalXP: row.total_xp || 0,
+        stagesCount: row.total_stages_count || 0,
+        level: row.level || 1,
+        isMe,
+      };
+      if (isMe) {
+        entry.nickname = row.nickname || 'ผู้เล่น';
+        meEntry = entry;
+      }
+      return entry;
+    });
+
     return {
       ok: true,
-      scope: data.scope || scope,
-      groupLabel: data.groupLabel,
-      entries: data.entries as LeaderboardEntry[],
-      me: data.me as LeaderboardEntry | undefined,
-      total: typeof data.total === 'number' ? data.total : data.entries.length,
+      scope,
+      groupLabel: 'ผู้เล่นทั้งหมด',
+      entries,
+      me: meEntry,
+      total: entries.length,
     };
   } catch (err) {
-    console.warn('[cloudSync] leaderboard failed:', err);
+    console.warn('[cloudSync] fetchLeaderboard failed:', err);
     return empty();
   }
 }
 
 export async function pingBackend(): Promise<boolean> {
-  if (!SYNC_URL) return false;
   try {
-    const res = await fetch(`${SYNC_URL}?action=ping`);
-    const data = await res.json();
-    return data.ok === true;
+    const { count, error } = await supabase.from('players').select('*', { count: 'exact', head: true });
+    return !error;
   } catch {
     return false;
   }
@@ -338,64 +460,91 @@ export interface AdminStudentsResponse {
   error?: string;
 }
 
-/**
- * ดึงข้อมูลนักศึกษาทั้งหมดสำหรับหน้า Teacher Admin Dashboard
- */
 export async function fetchAdminStudents(passcode = 'wu2535'): Promise<AdminStudentsResponse> {
-  if (!SYNC_URL) return { ok: false, error: 'no_sync_url' };
+  if (passcode !== 'wu2535') return { ok: false, error: 'unauthorized' };
   try {
-    const url = `${SYNC_URL}?action=getAdminData&passcode=${encodeURIComponent(passcode)}`;
-    const res = await fetchWithRetry(url, { method: 'GET' });
-    const data = await res.json();
-    if (data && data.ok) {
-      return { ok: true, students: data.students || [], total: data.total || 0 };
-    }
-    return { ok: false, error: data?.error || 'failed_to_fetch' };
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error || !data) return { ok: false, error: error?.message || 'failed_to_fetch' };
+
+    const students = data.map((r, i) => {
+      const preK = r.pre_test_score != null ? Number(r.pre_test_score) : undefined;
+      const postK = r.post_test_score != null ? Number(r.post_test_score) : undefined;
+      const gainDelta = (preK !== undefined && postK !== undefined) ? (postK - preK) : undefined;
+
+      return {
+        no: i + 1,
+        userIdHash: r.user_id_hash,
+        idCode: r.id_code || '',
+        realName: r.real_name || r.nickname || 'ไม่ระบุชื่อ',
+        lineName: r.line_name || '',
+        nickname: r.nickname || 'ผู้เล่น',
+        grade: r.grade || '',
+        school: r.school || '',
+        preTestScore: preK,
+        preTestSkillScore: r.pre_test_skill_score != null ? Number(r.pre_test_skill_score) : undefined,
+        preTestAt: r.pre_test_at || undefined,
+        preTestKnowledgeAnswers: r.pre_test_knowledge_answers || [],
+        preTestSkillAnswers: r.pre_test_skill_answers || [],
+        stagesCompletedCount: r.total_stages_count || 0,
+        heroStagesCount: r.hero_stages_count || 0,
+        totalStages: 20,
+        totalXP: r.total_xp || 0,
+        level: r.level || 1,
+        postTestScore: postK,
+        postTestSkillScore: r.post_test_skill_score != null ? Number(r.post_test_skill_score) : undefined,
+        postTestAt: r.post_test_at || undefined,
+        postTestKnowledgeAnswers: r.post_test_knowledge_answers || [],
+        postTestSkillAnswers: r.post_test_skill_answers || [],
+        gainDelta: gainDelta,
+        evalPart5Avg: r.eval_part5_avg != null ? Number(r.eval_part5_avg) : undefined,
+        evalPart5Details: r.eval_part5_details || [],
+        certificateNo: r.certificate_no || undefined,
+        certificateIssuedAt: r.certificate_issued_at || undefined,
+        lastActiveAt: r.last_active_at || r.created_at || '',
+        createdAt: r.created_at || undefined,
+      };
+    });
+
+    return { ok: true, total: students.length, students };
   } catch (err) {
     console.warn('[cloudSync] fetchAdminStudents failed:', err);
     return { ok: false, error: String(err) };
   }
 }
 
-/**
- * ดึงการตั้งค่าระบบกลาง (Exam Controls) จากคลาวด์สำหรับนักเรียนทุกคน
- */
 export async function fetchAppSettings(): Promise<Record<string, any> | null> {
-  if (!SYNC_URL) return null;
   try {
-    const url = `${SYNC_URL}?action=getSettings`;
-    const res = await fetchWithRetry(url, { method: 'GET' });
-    const data = await res.json();
-    if (data && data.ok && data.settings) {
-      return data.settings;
-    }
-    return null;
+    const { data } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'exam_controls')
+      .maybeSingle();
+
+    return data?.value || null;
   } catch (err) {
     console.warn('[cloudSync] fetchAppSettings failed:', err);
     return null;
   }
 }
 
-/**
- * บันทึกการตั้งค่าระบบกลาง (Exam Controls) ขึ้นคลาวด์เพื่อให้มีผลกับทุกคน
- */
 export async function saveAppSettingsToCloud(
   settings: Record<string, any>,
   passcode = 'wu2535'
 ): Promise<boolean> {
-  if (!SYNC_URL) return false;
+  if (passcode !== 'wu2535') return false;
   try {
-    const res = await fetchWithRetry(SYNC_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        action: 'updateSettings',
-        passcode: passcode,
-        settings: settings,
-      }),
-    });
-    const data = await res.json();
-    return data && data.ok === true;
+    const { error } = await supabase
+      .from('app_settings')
+      .upsert({
+        key: 'exam_controls',
+        value: settings,
+        updated_at: new Date().toISOString(),
+      });
+    return !error;
   } catch (err) {
     console.warn('[cloudSync] saveAppSettingsToCloud failed:', err);
     return false;
@@ -410,9 +559,6 @@ export interface StudentProfileUpdates {
   school?: string;
 }
 
-/**
- * อาจารย์แก้ไขข้อมูลส่วนตัวของนักเรียน (ชื่อ, ชื่อเล่น, รหัส, ชั้น, โรงเรียน) บนคลาวด์
- */
 export async function updateStudentProfileCloud(
   userIdHash: string,
   idCode: string,
@@ -420,50 +566,50 @@ export async function updateStudentProfileCloud(
   oldRealName?: string,
   passcode = 'wu2535'
 ): Promise<boolean> {
-  if (!SYNC_URL) return false;
+  if (passcode !== 'wu2535') return false;
   try {
-    const res = await fetchWithRetry(SYNC_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        action: 'updateStudent',
-        passcode: passcode,
-        userIdHash: userIdHash,
-        idCode: idCode,
-        updates: updates,
-        oldRealName: oldRealName,
-      }),
-    });
-    const data = await res.json();
-    return data && data.ok === true;
+    const updateData: Record<string, any> = {};
+    if (updates.realName !== undefined) updateData.real_name = updates.realName;
+    if (updates.nickname !== undefined) updateData.nickname = updates.nickname;
+    if (updates.idCode !== undefined) updateData.id_code = updates.idCode;
+    if (updates.grade !== undefined) updateData.grade = updates.grade;
+    if (updates.school !== undefined) updateData.school = updates.school;
+
+    let query = supabase.from('players').update(updateData);
+    if (userIdHash) {
+      query = query.eq('user_id_hash', userIdHash);
+    } else if (idCode) {
+      query = query.eq('id_code', idCode);
+    } else {
+      return false;
+    }
+
+    const { error } = await query;
+    return !error;
   } catch (err) {
     console.warn('[cloudSync] updateStudentProfileCloud failed:', err);
     return false;
   }
 }
 
-/**
- * อาจารย์ลบข้อมูลทดสอบ (Mock / Test Data) ออกจากฐานข้อมูล
- */
 export async function deleteStudentCloud(
   userIdHash: string,
   idCode: string,
   passcode = 'wu2535'
 ): Promise<boolean> {
-  if (!SYNC_URL) return false;
+  if (passcode !== 'wu2535') return false;
   try {
-    const res = await fetchWithRetry(SYNC_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        action: 'deleteStudent',
-        passcode: passcode,
-        userIdHash: userIdHash,
-        idCode: idCode,
-      }),
-    });
-    const data = await res.json();
-    return data && data.ok === true;
+    let query = supabase.from('players').delete();
+    if (userIdHash) {
+      query = query.eq('user_id_hash', userIdHash);
+    } else if (idCode) {
+      query = query.eq('id_code', idCode);
+    } else {
+      return false;
+    }
+
+    const { error } = await query;
+    return !error;
   } catch (err) {
     console.warn('[cloudSync] deleteStudentCloud failed:', err);
     return false;
