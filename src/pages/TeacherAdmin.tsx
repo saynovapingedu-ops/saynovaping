@@ -28,8 +28,15 @@ export default function TeacherAdmin() {
   const [passcode, setPasscode] = useState('');
   const [passError, setPassError] = useState(false);
 
+  // Live Clock State for Windows Phone Glance Screen
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Tab State: 'analytics' | 'item_analysis' | 'controls' | 'sheets'
-  const [activeTab, setActiveTab] = useState<'analytics' | 'item_analysis' | 'controls' | 'sheets'>('analytics');
+  const [activeTab, setActiveTab] = useState<'hub' | 'analytics' | 'controls' | 'item_analysis' | 'sheets'>('hub');
 
   // Students Data State - ONLY REAL DATA
   const [students, setStudents] = useState<StudentRecord[]>(() => {
@@ -1028,59 +1035,92 @@ export default function TeacherAdmin() {
   };
 
   // =========================================================================
-  // VIEW: Passcode Lock Screen (If not authenticated)
+  // VIEW: Windows Phone Style Lock Screen (Glance Screen)
   // =========================================================================
   if (!admin.isTeacherAuthenticated && sessionStorage.getItem('hd_teacher_auth') !== '1') {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center px-4">
-        <div className="w-full max-w-sm card p-6 text-center space-y-4 shadow-clay border-2 border-detective-100 bg-white">
-          <div className="w-16 h-16 bg-detective-50 text-detective-600 rounded-3xl mx-auto flex items-center justify-center text-3xl shadow-inner">
-            🔒
-          </div>
-          <div>
-            <h1 className="text-xl font-display font-extrabold text-detective-900">
-              ระบบสำหรับอาจารย์
-            </h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Teacher Admin Dashboard & Analytics
-            </p>
-          </div>
+    const timeStr = currentTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = currentTime.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-          <form onSubmit={handleLogin} className="space-y-3 pt-2">
-            <div>
-              <input
-                type="password"
-                value={passcode}
-                onChange={(e) => {
-                  setPasscode(e.target.value);
-                  setPassError(false);
-                }}
-                placeholder="กรุณาใส่รหัสผ่านเพื่อเข้าใช้งาน"
-                className={`w-full px-4 py-3 rounded-2xl border text-center font-bold tracking-widest text-sm focus:outline-none transition-all ${
-                  passError
-                    ? 'border-rose-400 bg-rose-50 text-rose-700 ring-2 ring-rose-300'
-                    : 'border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-detective-400'
-                }`}
-                autoFocus
-              />
-              {passError && (
-                <p className="text-xs font-semibold text-rose-500 mt-1.5">
-                  ❌ รหัสผ่านไม่ถูกต้อง (รหัสเริ่มต้นคือ wu2535)
+    return (
+      <div className="min-h-screen bg-[#001428] text-white flex flex-col justify-between p-6 sm:p-10 select-none">
+        {/* Top Glance: Live Digital Clock & Date (Windows Phone style) */}
+        <div className="space-y-1">
+          <p className="text-6xl sm:text-7xl font-display font-light tracking-tight text-white/95">
+            {timeStr}
+          </p>
+          <p className="text-sm sm:text-base text-cyan-300 font-medium tracking-wide">
+            {dateStr}
+          </p>
+        </div>
+
+        {/* Center: Metro PIN / Password Live Tile */}
+        <div className="w-full max-w-sm mx-auto my-auto space-y-4">
+          <div className="bg-[#0078D7] rounded-2xl p-6 sm:p-7 shadow-2xl border border-white/20 space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
+                👨‍🏫
+              </span>
+              <div>
+                <h1 className="text-lg font-bold text-white leading-tight">
+                  ระบบสำหรับอาจารย์
+                </h1>
+                <p className="text-xs text-white/80 mt-0.5">
+                  Health Detective Admin Hub
                 </p>
-              )}
+              </div>
             </div>
 
-            <button type="submit" className="btn-primary w-full py-3 text-sm font-bold shadow-clay">
-              🔓 เข้าสู่ระบบอาจารย์
-            </button>
-          </form>
+            <form onSubmit={handleLogin} className="space-y-3 pt-2">
+              <div>
+                <label className="block text-[11px] font-bold text-white/90 mb-1">
+                  กรุณากรอกรหัสผ่านเพื่อเข้าใช้งาน:
+                </label>
+                <input
+                  type="password"
+                  value={passcode}
+                  onChange={(e) => {
+                    setPasscode(e.target.value);
+                    setPassError(false);
+                  }}
+                  placeholder="รหัสเริ่มต้น wu2535"
+                  className={`w-full px-4 py-3 rounded-xl border text-center font-bold tracking-widest text-base focus:outline-none transition-all ${
+                    passError
+                      ? 'border-rose-400 bg-rose-50 text-rose-900 ring-2 ring-rose-300'
+                      : 'border-white/30 bg-white text-slate-900 focus:ring-4 focus:ring-cyan-300'
+                  }`}
+                  autoFocus
+                />
+                {passError && (
+                  <p className="text-xs font-bold text-yellow-300 mt-1.5 text-center">
+                    ❌ รหัสผ่านไม่ถูกต้อง (รหัสเริ่มต้นคือ wu2535)
+                  </p>
+                )}
+              </div>
 
-          <button
-            onClick={() => nav('/settings')}
-            className="text-xs font-semibold text-slate-400 hover:text-slate-600 pt-2"
-          >
-            ← กลับหน้าตั้งค่า
-          </button>
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-xl bg-white text-[#0078D7] hover:bg-slate-100 font-display font-extrabold text-sm shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <span>🔓</span>
+                <span>เข้าสู่แดชบอร์ดอาจารย์</span>
+              </button>
+            </form>
+          </div>
+
+          <div className="text-center">
+            <button
+              onClick={() => nav('/')}
+              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-medium text-white/80 transition-all inline-flex items-center gap-1.5"
+            >
+              <span>🏠</span>
+              <span>กลับสู่หน้าแรกของเกม</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Note */}
+        <div className="text-center text-[11px] text-white/40">
+          Health Detective Game — โครงการวิจัย มหาวิทยาลัยวลัยลักษณ์
         </div>
       </div>
     );
@@ -1091,30 +1131,43 @@ export default function TeacherAdmin() {
   // =========================================================================
   return (
     <div className="min-h-screen bg-slate-50/60 pb-16">
-      {/* Top Navbar */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+      {/* Top Metro Header */}
+      <header className="bg-[#0078D7] text-white sticky top-0 z-30 shadow-md">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="w-10 h-10 rounded-2xl bg-gradient-to-br from-detective-500 to-indigo-600 text-white flex items-center justify-center text-xl shadow-sm">
+            <span className="w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-xl shadow-inner">
               👨‍🏫
             </span>
             <div>
-              <h1 className="font-display font-extrabold text-slate-900 text-base leading-none">
-                แดชบอร์ดอาจารย์ (Teacher Admin)
+              <h1 className="font-display font-black text-white text-base leading-none tracking-tight">
+                แดชบอร์ดอาจารย์ (Teacher Hub)
               </h1>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                โครงการวิจัยแชตบอตเกมมิฟิเคชัน ม.วลัยลักษณ์ (ข้อมูลจริงจากระบบ)
+              <p className="text-[11px] text-white/80 mt-0.5">
+                Windows Phone Live Tiles & Analytics
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                sfx.click();
+                handleRefreshData();
+              }}
+              disabled={isLoading}
+              title="ดึงข้อมูลล่าสุดจาก Supabase"
+              className="p-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition-all flex items-center gap-1"
+            >
+              <span className={isLoading ? 'animate-spin' : ''}>🔄</span>
+              <span className="hidden sm:inline">{isLoading ? 'กำลังดึง...' : 'ดึงข้อมูลสด'}</span>
+            </button>
             <button
               onClick={() => {
                 sfx.click();
                 nav('/');
               }}
-              className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50"
+              className="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition-all"
             >
               🏠 หน้าเกม
             </button>
@@ -1123,45 +1176,52 @@ export default function TeacherAdmin() {
                 sfx.click();
                 admin.logoutTeacher();
               }}
-              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+              className="px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all"
             >
-              ออกจากระบบ
+              ออก
             </button>
           </div>
         </div>
 
-        {/* Tab Buttons */}
-        <div className="max-w-6xl mx-auto px-4 flex gap-2 border-t border-slate-100 pt-2 pb-1.5 overflow-x-auto">
-          {[
-            { id: 'analytics', label: '📊 ข้อมูลและสถิติผู้เรียน', count: analytics.total },
-            { id: 'item_analysis', label: `🎯 วิเคราะห์ข้อสอบรายข้อ (${PART3_KNOWLEDGE_QUESTIONS.length} ข้อ & ช้อยส์)`, count: PART3_KNOWLEDGE_QUESTIONS.length },
-            { id: 'controls', label: '⚙️ ควบคุมการจัดสอบ' },
-            { id: 'sheets', label: '☁️ ฐานข้อมูลคลาวด์ & ส่งออก' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                sfx.click();
-                setActiveTab(tab.id as any);
-              }}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                activeTab === tab.id
-                  ? 'bg-detective-600 text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
-              }`}
-            >
-              <span>{tab.label}</span>
-              {tab.count !== undefined && (
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                    activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+        {/* Windows Phone Metro Hub Navigation Bar */}
+        <div className="bg-[#005A9E] border-t border-white/15">
+          <div className="max-w-6xl mx-auto px-4 flex gap-1.5 py-1.5 overflow-x-auto scrollbar-none">
+            {[
+              { id: 'hub', label: 'Start Hub', icon: '📱' },
+              { id: 'analytics', label: 'ผู้เรียน & คะแนน', icon: '👥', count: analytics.total },
+              { id: 'controls', label: 'โหมดจัดสอบ', icon: '⚡' },
+              { id: 'item_analysis', label: 'วิเคราะห์ข้อสอบ', icon: '🎯', count: PART3_KNOWLEDGE_QUESTIONS.length },
+              { id: 'sheets', label: 'คลาวด์ & ส่งออก', icon: '☁️' },
+            ].map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    sfx.click();
+                    setActiveTab(tab.id as any);
+                  }}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-white text-[#0078D7] shadow-md font-black scale-100'
+                      : 'bg-white/10 text-white/90 hover:bg-white/20'
                   }`}
                 >
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
+                  <span>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                  {tab.count !== undefined && (
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                        isActive ? 'bg-[#0078D7] text-white' : 'bg-white/20 text-white'
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </header>
 
@@ -1406,6 +1466,561 @@ export default function TeacherAdmin() {
                   <span>📥</span>
                   <span>ดาวน์โหลด CSV 1/0</span>
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =================================================================== */}
+        {/* TAB 0: Windows Phone Live Tiles Start Hub                           */}
+        {/* =================================================================== */}
+        {activeTab === 'hub' && (
+          <div className="space-y-5 animate-fade-in">
+            {/* Header greeting & date */}
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+              <div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Windows Phone Live Hub
+                </p>
+                <h2 className="text-lg sm:text-xl font-display font-extrabold text-slate-900 mt-0.5">
+                  ยินดีต้อนรับสู่แดชบอร์ดอาจารย์ผู้สอน
+                </h2>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  แตะกล่องสีเหลี่ยมด้านล่างเพื่อเปิดดูข้อมูล สลับโหมดสอบ หรือดาวน์โหลดรายงานวิจัยได้ทันที
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Supabase Live (พร้อมรับ 1,600+ คน)</span>
+                </span>
+              </div>
+            </div>
+
+            {/* 1. HERO TILE: สถานะการจัดสอบห้องเรียนขณะนี้ (Wide Metro Tile) */}
+            <div
+              onClick={() => setActiveTab('controls')}
+              className={`rounded-2xl p-5 sm:p-6 text-white shadow-md cursor-pointer transition-all active:scale-[0.99] border border-white/20 ${
+                currentPreset === 'pre_only'
+                  ? 'bg-gradient-to-r from-[#0078D7] to-[#005A9E]'
+                  : currentPreset === 'post_only'
+                  ? 'bg-gradient-to-r from-[#107C41] to-[#0E6C38]'
+                  : currentPreset === 'gameplay'
+                  ? 'bg-gradient-to-r from-[#6B69D6] to-[#5552B9]'
+                  : currentPreset === 'bypass_all'
+                  ? 'bg-gradient-to-r from-[#D83B01] to-[#B33000]'
+                  : 'bg-gradient-to-r from-slate-800 to-slate-900'
+              }`}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2 border-b border-white/20 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">⚡</span>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider font-bold text-white/80">
+                      สถานะการจัดสอบห้องเรียนขณะนี้ (Active Exam Mode)
+                    </p>
+                    <h3 className="text-lg sm:text-xl font-display font-black text-white mt-0.5">
+                      {currentPreset === 'pre_only' && 'โหมด 1: ทำแบบทดสอบก่อนเรียน (Pre-test Only)'}
+                      {currentPreset === 'gameplay' && 'โหมด 2: เข้าเรียนเนื้อหา/เล่นเกม (Gameplay)'}
+                      {currentPreset === 'post_only' && 'โหมด 3: ทำแบบทดสอบหลังเรียน (Post-test Mode)'}
+                      {currentPreset === 'bypass_all' && 'โหมด 4: ทดสอบระบบอิสระ (Bypass All)'}
+                      {currentPreset === 'custom' && 'โหมดกำหนดค่าแบบกำหนดเอง (Custom Settings)'}
+                    </h3>
+                  </div>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-white/25 text-white text-xs font-bold backdrop-blur-sm">
+                  แตะเพื่อตั้งค่า ↗
+                </span>
+              </div>
+
+              <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <p className="text-white/90 leading-relaxed max-w-2xl text-[11px] sm:text-xs">
+                  {currentPreset === 'pre_only' && 'นักเรียนทุกคนต้องทำ Pre-test ให้เสร็จก่อนจึงจะปลดล็อกด่าน 1 และปิด Post-test ป้องกันเด็กลักไก่'}
+                  {currentPreset === 'gameplay' && 'นักเรียนเข้าผจญภัยเรียนรู้เนื้อหาด่าน 1-8 ตามลำดับ พร้อมระบบ AI Chatbot'}
+                  {currentPreset === 'post_only' && 'เปิดให้ทำ Post-test เมื่อผ่านด่านครบตามเกณฑ์ พร้อมออกเกียรติบัตรทางการ'}
+                  {currentPreset === 'bypass_all' && 'ปลดล็อกทุกด่านและข้อสอบ เพื่อให้อาจารย์และผู้ประเมินตรวจทานระบบได้อิสระ'}
+                  {currentPreset === 'custom' && 'เปิด-ปิดส่วนประกอบข้อสอบตามการตั้งค่าแบบละเอียดของอาจารย์'}
+                </p>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="px-2.5 py-1 rounded-xl bg-white text-slate-900 font-bold text-xs shadow">
+                    ⚙️ จัดการโหมดสอบ
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. WINDOWS PHONE 8-GRID LIVE TILES (2 cols mobile / 4 cols desktop) */}
+            <div>
+              <div className="flex items-center justify-between mb-2 px-1">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>📊</span> กล่องสถิติเรียลไทม์ (Live Metric Tiles)
+                </h3>
+                <span className="text-[11px] text-slate-400">แตะกล่องเพื่อดูรายชื่อ</span>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
+                {/* Tile 1: Total Students (Cobalt Blue) */}
+                <div
+                  onClick={() => {
+                    sfx.click();
+                    setStatusFilter('all');
+                    setActiveTab('analytics');
+                  }}
+                  className="bg-[#0078D7] hover:bg-[#006BBB] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-blue-400/30"
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="text-2xl">👥</span>
+                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                      ดูรายชื่อ ↗
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
+                      {analytics.total}
+                    </p>
+                    <p className="text-xs font-bold text-white/90 mt-1">
+                      นักเรียนทั้งหมด
+                    </p>
+                    <p className="text-[10px] text-white/70">
+                      ในระบบ Supabase Cloud
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tile 2: Pre-test Avg (Teal) */}
+                <div
+                  onClick={() => {
+                    sfx.click();
+                    setStatusFilter('all');
+                    setActiveTab('analytics');
+                  }}
+                  className="bg-[#008272] hover:bg-[#006E61] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-teal-400/30"
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="text-2xl">📝</span>
+                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                      Pre-test
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
+                      {analytics.avgPre !== null ? `${analytics.avgPre}%` : '-'}
+                    </p>
+                    <p className="text-xs font-bold text-white/90 mt-1">
+                      ก่อนเรียนเฉลี่ย
+                    </p>
+                    <p className="text-[10px] text-white/70">
+                      ทำแล้ว {analytics.preDoneCount} คน
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tile 3: Post-test Avg (Emerald Green) */}
+                <div
+                  onClick={() => {
+                    sfx.click();
+                    setStatusFilter('both');
+                    setActiveTab('analytics');
+                  }}
+                  className="bg-[#107C41] hover:bg-[#0E6C38] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-emerald-400/30"
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="text-2xl">🎯</span>
+                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                      Post-test
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
+                      {analytics.avgPost !== null ? `${analytics.avgPost}%` : '-'}
+                    </p>
+                    <p className="text-xs font-bold text-white/90 mt-1">
+                      หลังเรียนเฉลี่ย
+                    </p>
+                    <p className="text-[10px] text-white/70">
+                      ทำแล้ว {analytics.postDoneCount} คน
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tile 4: Gain Delta (Deep Purple) */}
+                <div
+                  onClick={() => {
+                    sfx.click();
+                    setActiveTab('analytics');
+                  }}
+                  className="bg-[#6B69D6] hover:bg-[#5A58BF] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-purple-400/30"
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="text-2xl">🚀</span>
+                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                      Delta
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
+                      {analytics.avgDelta !== null
+                        ? `${analytics.avgDelta > 0 ? '+' : ''}${analytics.avgDelta}%`
+                        : '-'}
+                    </p>
+                    <p className="text-xs font-bold text-white/90 mt-1">
+                      พัฒนาการเฉลี่ย
+                    </p>
+                    <p className="text-[10px] text-white/70">
+                      Hake ⟨g⟩: {analytics.hakeGainAvg !== null ? analytics.hakeGainAvg : '-'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tile 5: Certificates Issued (Orange) */}
+                <div
+                  onClick={() => {
+                    sfx.click();
+                    setStatusFilter('certified');
+                    setActiveTab('analytics');
+                  }}
+                  className="bg-[#D83B01] hover:bg-[#BF3401] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-orange-400/30"
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="text-2xl">🏆</span>
+                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                      สำเร็จ
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
+                      {analytics.certCount}
+                    </p>
+                    <p className="text-xs font-bold text-white/90 mt-1">
+                      ออกเกียรติบัตรแล้ว
+                    </p>
+                    <p className="text-[10px] text-white/70">
+                      ผ่านเกณฑ์สำเร็จการศึกษา
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tile 6: Pending Post-test (Crimson Red) */}
+                <div
+                  onClick={() => {
+                    sfx.click();
+                    setStatusFilter('pre_only');
+                    setActiveTab('analytics');
+                  }}
+                  className="bg-[#D13438] hover:bg-[#BA2D31] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-rose-400/30"
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="text-2xl">⏳</span>
+                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                      ค้างสอบ
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
+                      {students.filter(s => s.preTestScore !== undefined && s.postTestScore === undefined).length}
+                    </p>
+                    <p className="text-xs font-bold text-white/90 mt-1">
+                      ค้างสอบ Post-test
+                    </p>
+                    <p className="text-[10px] text-white/70">
+                      ทำแค่ Pre (แตะตามเด็ก) ↗
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tile 7: Refusal Skills (Navy Blue) */}
+                <div
+                  onClick={() => {
+                    sfx.click();
+                    setActiveTab('item_analysis');
+                    setItemAnalysisSubTab('skills');
+                  }}
+                  className="bg-[#004E8C] hover:bg-[#004177] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-blue-400/30"
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="text-2xl">🛡️</span>
+                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                      Part 4
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
+                      {analytics.postSkillStats.mean || '-'}
+                    </p>
+                    <p className="text-xs font-bold text-white/90 mt-1">
+                      ทักษะปฏิเสธ (เต็ม 100)
+                    </p>
+                    <p className="text-[10px] text-white/70">
+                      {analytics.skillDeltaStats.mean >= 0 ? `+${analytics.skillDeltaStats.mean}` : analytics.skillDeltaStats.mean} คะแนนหลังเรียน
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tile 8: Chatbot Usability (Magenta) */}
+                <div
+                  onClick={() => {
+                    sfx.click();
+                    setActiveTab('item_analysis');
+                    setItemAnalysisSubTab('app_eval');
+                  }}
+                  className="bg-[#881798] hover:bg-[#741382] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-fuchsia-400/30"
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="text-2xl">⭐</span>
+                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                      Part 5
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
+                      {analytics.evalStats.mean || '-'}
+                    </p>
+                    <p className="text-xs font-bold text-white/90 mt-1">
+                      ความพึงพอใจแชตบอต
+                    </p>
+                    <p className="text-[10px] text-white/70">
+                      คะแนนเฉลี่ย / 5.00
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. 1-CLICK CLASSROOM PRESET TILES (4 Big Windows Phone Action Tiles) */}
+            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>⚡</span> สลับโหมดจัดสอบด่วน (1-Click Classroom Tiles)
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    แตะกล่องเพื่อสลับโหมดการสอบให้นักเรียนทั้งห้องทันที
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+                {/* Preset 1 */}
+                <button
+                  type="button"
+                  onClick={() => handleApplyPreset('pre_only')}
+                  className={`p-4 rounded-xl text-left transition-all active:scale-95 flex flex-col justify-between min-h-[110px] ${
+                    currentPreset === 'pre_only'
+                      ? 'bg-[#0078D7] text-white shadow-md ring-2 ring-blue-300'
+                      : 'bg-blue-50/80 text-blue-900 border border-blue-200 hover:bg-blue-100'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xl">📝</span>
+                    {currentPreset === 'pre_only' && (
+                      <span className="text-[10px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">
+                        ✓ กำลังใช้งาน
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-display font-extrabold text-sm">
+                      1. สอบก่อนเรียน
+                    </p>
+                    <p className={`text-[10px] mt-0.5 leading-snug ${currentPreset === 'pre_only' ? 'text-white/80' : 'text-blue-700'}`}>
+                      เปิด Pre-test บังคับทำให้เสร็จก่อนเล่น
+                    </p>
+                  </div>
+                </button>
+
+                {/* Preset 2 */}
+                <button
+                  type="button"
+                  onClick={() => handleApplyPreset('gameplay')}
+                  className={`p-4 rounded-xl text-left transition-all active:scale-95 flex flex-col justify-between min-h-[110px] ${
+                    currentPreset === 'gameplay'
+                      ? 'bg-[#6B69D6] text-white shadow-md ring-2 ring-purple-300'
+                      : 'bg-indigo-50/80 text-indigo-900 border border-indigo-200 hover:bg-indigo-100'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xl">🎮</span>
+                    {currentPreset === 'gameplay' && (
+                      <span className="text-[10px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">
+                        ✓ กำลังใช้งาน
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-display font-extrabold text-sm">
+                      2. เล่นเกมเนื้อหา
+                    </p>
+                    <p className={`text-[10px] mt-0.5 leading-snug ${currentPreset === 'gameplay' ? 'text-white/80' : 'text-indigo-700'}`}>
+                      ผจญภัยด่าน 1-8 พร้อม AI Chatbot
+                    </p>
+                  </div>
+                </button>
+
+                {/* Preset 3 */}
+                <button
+                  type="button"
+                  onClick={() => handleApplyPreset('post_only')}
+                  className={`p-4 rounded-xl text-left transition-all active:scale-95 flex flex-col justify-between min-h-[110px] ${
+                    currentPreset === 'post_only'
+                      ? 'bg-[#107C41] text-white shadow-md ring-2 ring-emerald-300'
+                      : 'bg-emerald-50/80 text-emerald-900 border border-emerald-200 hover:bg-emerald-100'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xl">🎯</span>
+                    {currentPreset === 'post_only' && (
+                      <span className="text-[10px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">
+                        ✓ กำลังใช้งาน
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-display font-extrabold text-sm">
+                      3. สอบหลังเรียน
+                    </p>
+                    <p className={`text-[10px] mt-0.5 leading-snug ${currentPreset === 'post_only' ? 'text-white/80' : 'text-emerald-700'}`}>
+                      เปิด Post-test และรับเกียรติบัตร
+                    </p>
+                  </div>
+                </button>
+
+                {/* Preset 4 */}
+                <button
+                  type="button"
+                  onClick={() => handleApplyPreset('bypass_all')}
+                  className={`p-4 rounded-xl text-left transition-all active:scale-95 flex flex-col justify-between min-h-[110px] ${
+                    currentPreset === 'bypass_all'
+                      ? 'bg-[#D83B01] text-white shadow-md ring-2 ring-orange-300'
+                      : 'bg-orange-50/80 text-orange-900 border border-orange-200 hover:bg-orange-100'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xl">🔓</span>
+                    {currentPreset === 'bypass_all' && (
+                      <span className="text-[10px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">
+                        ✓ กำลังใช้งาน
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-display font-extrabold text-sm">
+                      4. ทดสอบอิสระ
+                    </p>
+                    <p className={`text-[10px] mt-0.5 leading-snug ${currentPreset === 'bypass_all' ? 'text-white/80' : 'text-orange-700'}`}>
+                      ปลดล็อกทุกด่านและข้อสอบ
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* 4. QUICK TOOLS & RESEARCH EXPORT TILES */}
+            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 space-y-3">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <span>🛠️</span> เครื่องมือส่งออกข้อมูลวิจัย (Academic Export Tiles)
+              </h3>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleDownloadBinaryCsv}
+                  className="p-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex flex-col justify-between min-h-[95px] active:scale-95 transition-all shadow-sm"
+                >
+                  <span className="text-xl">📥</span>
+                  <div>
+                    <p className="leading-tight">ดาวน์โหลด CSV</p>
+                    <p className="text-[10px] text-white/70 font-normal">SPSS Binary 1/0</p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCopyTableToClipboard}
+                  className="p-3.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs flex flex-col justify-between min-h-[95px] active:scale-95 transition-all shadow-sm"
+                >
+                  <span className="text-xl">📋</span>
+                  <div>
+                    <p className="leading-tight">{copySuccess ? 'คัดลอกแล้ว!' : 'คัดลอกตาราง (TSV)'}</p>
+                    <p className="text-[10px] text-white/70 font-normal">วางลงใน Excel ทันที</p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCopyResearchSummary}
+                  className="p-3.5 rounded-xl bg-[#0078D7] hover:bg-[#0063B1] text-white font-bold text-xs flex flex-col justify-between min-h-[95px] active:scale-95 transition-all shadow-sm"
+                >
+                  <span className="text-xl">📊</span>
+                  <div>
+                    <p className="leading-tight">{copyResearchSuccess ? 'คัดลอกสำเร็จ!' : 'สรุปสถิติวิจัย'}</p>
+                    <p className="text-[10px] text-white/70 font-normal">สำหรับบทที่ 4 ใน Word</p>
+                  </div>
+                </button>
+
+                <a
+                  href="https://supabase.com/dashboard/project/yxljxtlgnjwqxhjgfhdv/editor"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3.5 rounded-xl bg-[#107C41] hover:bg-[#0E6C38] text-white font-bold text-xs flex flex-col justify-between min-h-[95px] active:scale-95 transition-all shadow-sm"
+                >
+                  <span className="text-xl">🌐</span>
+                  <div>
+                    <p className="leading-tight">Supabase Studio</p>
+                    <p className="text-[10px] text-white/70 font-normal">ฐานข้อมูลคลาวด์สด ↗</p>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            {/* 5. ACADEMIC RESEARCH SUMMARY TILE (For Thesis Chapter 4) */}
+            <div className="bg-gradient-to-br from-indigo-50/60 via-white to-sky-50/50 rounded-2xl p-5 shadow-sm border border-indigo-100 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 pb-2.5">
+                <div>
+                  <h4 className="font-display font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
+                    <span>📈</span> สรุปสถิติเปรียบเทียบผลสัมฤทธิ์ (Pre vs Post Paired Samples)
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    กลุ่มตัวอย่างคู่สมบูรณ์ N = {analytics.pairedCount} คน (มีทั้งคะแนนก่อนเรียนและหลังเรียน)
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyResearchSummary}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm"
+                >
+                  {copyResearchSuccess ? '✓ คัดลอกแล้ว' : '📋 คัดลอกสรุปสถิติ'}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500">1. ผลสัมฤทธิ์ความรู้ ({PART3_KNOWLEDGE_QUESTIONS.length} ข้อ)</span>
+                  <p className="text-slate-700">ก่อนเรียน: <b className="text-sky-800 font-mono">{analytics.pairedPreStats.str}%</b></p>
+                  <p className="text-slate-700">หลังเรียน: <b className="text-emerald-700 font-mono">{analytics.pairedPostStats.str}%</b></p>
+                  <p className="text-slate-800 font-bold pt-1 border-t border-slate-100">
+                    พัฒนาการ: <span className="text-indigo-700 font-mono">+{analytics.pairedDeltaStats.mean}%</span> (SD {analytics.pairedDeltaStats.sd})
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500">2. Hake's Gain & Effect Size</span>
+                  <p className="text-slate-700">
+                    Hake's ⟨g⟩: <b className="text-amber-800 font-mono text-sm">{analytics.hakeGainAvg !== null ? analytics.hakeGainAvg : '-'}</b>
+                  </p>
+                  <p className="text-[11px] text-amber-700 font-medium">{analytics.hakeGainCategory}</p>
+                  <p className="text-slate-700 pt-1 border-t border-slate-100">
+                    Cohen's d: <b className="text-purple-700 font-mono">{analytics.cohensD !== null ? analytics.cohensD : '-'}</b> ({analytics.cohensCategory})
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500">3. ทักษะปฏิเสธ & ความพึงพอใจ</span>
+                  <p className="text-slate-700">ทักษะก่อน: <b className="text-slate-800 font-mono">{analytics.preSkillStats.str}</b></p>
+                  <p className="text-slate-700">ทักษะหลัง: <b className="text-slate-800 font-mono">{analytics.postSkillStats.str}</b></p>
+                  <p className="text-slate-800 font-bold pt-1 border-t border-slate-100">
+                    ประเมินแชตบอต: <span className="text-amber-600 font-mono font-bold">⭐ {analytics.evalStats.str}</span> / 5.0
+                  </p>
+                </div>
               </div>
             </div>
           </div>
