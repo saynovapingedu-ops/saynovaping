@@ -202,6 +202,18 @@ export async function flushQueue(): Promise<void> {
   } catch { /* try again next time */ }
 }
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    flushQueue().catch(() => {});
+  });
+  // Auto-flush queue periodically every 45s if online
+  setInterval(() => {
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      flushQueue().catch(() => {});
+    }
+  }, 45000);
+}
+
 export async function syncProgress(payload: SyncPayload, queueOnFail = true): Promise<boolean> {
   if (!payload.userIdHash) return false;
   try {
@@ -268,8 +280,22 @@ export async function syncProgress(payload: SyncPayload, queueOnFail = true): Pr
     if (payload.funRatingCount !== undefined) row.fun_rating_count = payload.funRatingCount;
     if (payload.funRatingSum !== undefined) row.fun_rating_sum = payload.funRatingSum;
 
-    const { error } = await supabase.from('players').upsert(row, { onConflict: 'user_id_hash' });
-    if (error) throw error;
+    let attempts = 0;
+    const maxAttempts = 3;
+    let lastError: any = null;
+
+    while (attempts < maxAttempts) {
+      attempts++;
+      const { error } = await supabase.from('players').upsert(row, { onConflict: 'user_id_hash' });
+      if (!error) return true;
+      lastError = error;
+      if (attempts < maxAttempts) {
+        // Random jitter backoff: 600ms, 1200ms + random jitter เพื่อกระจายแรงกดทับของ Free Tier (0 บาท)
+        const delay = 600 * attempts + Math.random() * 800;
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+    if (lastError) throw lastError;
     return true;
   } catch (err) {
     console.warn('[cloudSync] Supabase sync failed, queueing:', err);
