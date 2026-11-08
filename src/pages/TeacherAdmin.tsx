@@ -9,10 +9,12 @@ import {
   saveAppSettingsToCloud,
   updateStudentProfileCloud,
   deleteStudentCloud,
+  cleanupLoadTestStudents,
 } from '../lib/cloudSync';
 import { ALL_PRESET_SCHOOLS, OTHER_SCHOOL_VALUE } from '../lib/schools';
 import SchoolSelectorModal from '../components/SchoolSelectorModal';
 import { sfx } from '../lib/sound';
+import { exportFullExcelWorkbook } from '../lib/excelExport';
 import {
   PART3_KNOWLEDGE_QUESTIONS,
   PART4_REFUSAL_SKILLS,
@@ -115,6 +117,22 @@ export default function TeacherAdmin() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number | 'all'>(50);
   const [copyItemAnalysisSuccess, setCopyItemAnalysisSuccess] = useState(false);
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [isCleaningLoadTest, setIsCleaningLoadTest] = useState(false);
+
+  // Check if simulated load test data exists in memory
+  const hasLoadTestData = useMemo(
+    () => students.some((s) => s.userIdHash?.startsWith('loadtest_1600_')),
+    [students]
+  );
+
+  // Collapsible UI Sections for Clean & Uncluttered Teacher UX
+  const [showResearchStats, setShowResearchStats] = useState(false);
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [showDataDictionary, setShowDataDictionary] = useState(false);
+  const [showExportGuide, setShowExportGuide] = useState(false);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [studentViewMode, setStudentViewMode] = useState<'auto' | 'cards' | 'table'>('auto');
 
   // Auto fetch real students and cloud settings on mount or authentication
   useEffect(() => {
@@ -203,6 +221,32 @@ export default function TeacherAdmin() {
       setFetchError('ไม่สามารถเชื่อมต่อฐานข้อมูลคลาวด์ได้ในขณะนี้');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // 1-Click Cleanup all simulated load test students (1,600 users) safely
+  const handleCleanupLoadTest = async () => {
+    const ok = window.confirm(
+      '⚠️ ยืนยันการล้างข้อมูลจำลอง 1,600 คนออกทั้งหมดหรือไม่?\n\n(ระบบจะลบเฉพาะข้อมูลที่สร้างขึ้นเพื่อทดสอบโหลดเท่านั้น ข้อมูลนักเรียนจริง 55 คนจะปลอดภัยและคงอยู่ครบถ้วน 100%)'
+    );
+    if (!ok) return;
+
+    sfx.click();
+    setIsCleaningLoadTest(true);
+    try {
+      const res = await cleanupLoadTestStudents('wu2535');
+      if (res.ok) {
+        sfx.correct();
+        setEditSuccessToast(`🧹 ล้างข้อมูลจำลองสำเร็จแล้ว (${res.count || 0} คน) คืนค่าสู่ข้อมูลจริงเรียบร้อย`);
+        setTimeout(() => setEditSuccessToast(null), 4000);
+        await handleRefreshData();
+      } else {
+        alert('เกิดข้อผิดพลาดในการล้างข้อมูล: ' + res.error);
+      }
+    } catch (err) {
+      alert('เกิดข้อผิดพลาด: ' + String(err));
+    } finally {
+      setIsCleaningLoadTest(false);
     }
   };
 
@@ -295,7 +339,17 @@ export default function TeacherAdmin() {
   }, [filteredStudents, currentPage, pageSize]);
 
   // Active Preset Mode calculation for Tab 2
-  const currentPreset = useMemo<'pre_only' | 'gameplay' | 'post_only' | 'bypass_all' | 'custom'>(() => {
+  const currentPreset = useMemo<'public' | 'pre_only' | 'gameplay' | 'post_only' | 'bypass_all' | 'custom'>(() => {
+    // 1. โหมดเปิดสาธารณะ (Public / Self-Paced) - ทำ Pre -> เล่นเกม -> ทำ Post -> รับเกียรติบัตรอัตโนมัติ
+    if (
+      admin.preTestEnabled &&
+      admin.requirePreTestBeforePlaying &&
+      admin.postTestEnabled &&
+      !admin.allowBypassStages
+    ) {
+      return 'public';
+    }
+    // 2. โหมดคุมสอบก่อนเรียนในห้องเรียน
     if (
       admin.preTestEnabled &&
       admin.requirePreTestBeforePlaying &&
@@ -304,6 +358,7 @@ export default function TeacherAdmin() {
     ) {
       return 'pre_only';
     }
+    // 3. โหมดคุมสอบหลังเรียนในห้องเรียน
     if (
       !admin.preTestEnabled &&
       admin.postTestEnabled &&
@@ -311,6 +366,7 @@ export default function TeacherAdmin() {
     ) {
       return 'post_only';
     }
+    // 4. โหมดทดสอบระบบอิสระ
     if (
       admin.preTestEnabled &&
       admin.postTestEnabled &&
@@ -322,19 +378,27 @@ export default function TeacherAdmin() {
     return 'custom';
   }, [admin.preTestEnabled, admin.requirePreTestBeforePlaying, admin.postTestEnabled, admin.allowBypassStages]);
 
-  // Apply 1-Click Preset Modes
-  const handleApplyPreset = async (presetKey: 'pre_only' | 'gameplay' | 'post_only' | 'bypass_all') => {
+  // Apply 1-Click Preset Modes (รองรับทั้งโหมดเปิดสาธารณะ และโหมดคุมสอบในห้องเรียน)
+  const handleApplyPreset = async (presetKey: 'public' | 'pre_only' | 'gameplay' | 'post_only' | 'bypass_all') => {
     sfx.click();
     let updates: Partial<AdminSettings> = {};
     let title = '';
-    if (presetKey === 'pre_only') {
+    if (presetKey === 'public') {
+      updates = {
+        preTestEnabled: true,
+        requirePreTestBeforePlaying: true,
+        postTestEnabled: true,
+        allowBypassStages: false,
+      };
+      title = 'โหมดเปิดสาธารณะ (Public / Self-Paced)';
+    } else if (presetKey === 'pre_only') {
       updates = {
         preTestEnabled: true,
         requirePreTestBeforePlaying: true,
         postTestEnabled: false,
         allowBypassStages: false,
       };
-      title = 'โหมด 1: สอบก่อนเรียน (Pre-test Only)';
+      title = 'โหมดสอบก่อนเรียนในชั้นเรียน (Pre-test Only)';
     } else if (presetKey === 'gameplay') {
       updates = {
         preTestEnabled: true,
@@ -342,7 +406,7 @@ export default function TeacherAdmin() {
         postTestEnabled: false,
         allowBypassStages: false,
       };
-      title = 'โหมด 2: เข้าเรียนเนื้อหา/เล่นเกม (Gameplay)';
+      title = 'โหมดเข้าเรียนเนื้อหา/เล่นเกม (Gameplay)';
     } else if (presetKey === 'post_only') {
       updates = {
         preTestEnabled: false,
@@ -350,7 +414,7 @@ export default function TeacherAdmin() {
         postTestEnabled: true,
         allowBypassStages: false,
       };
-      title = 'โหมด 3: สอบหลังเรียน (Post-test Mode)';
+      title = 'โหมดสอบหลังเรียนในชั้นเรียน (Post-test Mode)';
     } else if (presetKey === 'bypass_all') {
       updates = {
         preTestEnabled: true,
@@ -358,7 +422,7 @@ export default function TeacherAdmin() {
         postTestEnabled: true,
         allowBypassStages: true,
       };
-      title = 'โหมด 4: ทดสอบระบบอิสระ (Bypass All)';
+      title = 'โหมดทดสอบระบบอิสระ (Bypass All)';
     }
 
     const nextSettings = { ...admin, ...updates };
@@ -1006,6 +1070,22 @@ export default function TeacherAdmin() {
     document.body.removeChild(link);
   };
 
+  // 1-Click Direct Excel (.xlsx) Exporter with All Sheets
+  const handleExportExcel = () => {
+    sfx.click();
+    setIsExportingExcel(true);
+    setTimeout(() => {
+      try {
+        exportFullExcelWorkbook(filteredStudents, analytics, {
+          school: selectedSchool,
+          period: selectedPeriod,
+        });
+      } finally {
+        setIsExportingExcel(false);
+      }
+    }, 60);
+  };
+
   // Toggle single admin setting with instant cloud sync
   const handleToggleSetting = (key: string, value: any) => {
     sfx.click();
@@ -1035,46 +1115,32 @@ export default function TeacherAdmin() {
   };
 
   // =========================================================================
-  // VIEW: Windows Phone Style Lock Screen (Glance Screen)
+  // VIEW: Modern Mobile App Login Screen (Dribbble/iOS Style)
   // =========================================================================
   if (!admin.isTeacherAuthenticated && sessionStorage.getItem('hd_teacher_auth') !== '1') {
-    const timeStr = currentTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-    const dateStr = currentTime.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-
     return (
-      <div className="min-h-screen bg-[#001428] text-white flex flex-col justify-between p-6 sm:p-10 select-none">
-        {/* Top Glance: Live Digital Clock & Date (Windows Phone style) */}
-        <div className="space-y-1">
-          <p className="text-6xl sm:text-7xl font-display font-light tracking-tight text-white/95">
-            {timeStr}
-          </p>
-          <p className="text-sm sm:text-base text-cyan-300 font-medium tracking-wide">
-            {dateStr}
-          </p>
-        </div>
+      <div className="min-h-screen bg-[#F6F8FC] flex flex-col justify-center items-center px-4 py-8">
+        <div className="w-full max-w-sm bg-white rounded-3xl p-7 shadow-xl shadow-slate-200/60 border border-slate-100 text-center space-y-5">
+          {/* Top Icon */}
+          <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-3xl shadow-sm mx-auto">
+            👨‍🏫
+          </div>
 
-        {/* Center: Metro PIN / Password Live Tile */}
-        <div className="w-full max-w-sm mx-auto my-auto space-y-4">
-          <div className="bg-[#0078D7] rounded-2xl p-6 sm:p-7 shadow-2xl border border-white/20 space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
-                👨‍🏫
-              </span>
-              <div>
-                <h1 className="text-lg font-bold text-white leading-tight">
-                  ระบบสำหรับอาจารย์
-                </h1>
-                <p className="text-xs text-white/80 mt-0.5">
-                  Health Detective Admin Hub
-                </p>
-              </div>
-            </div>
+          <div>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+              Teacher Admin Portal
+            </span>
+            <h1 className="text-xl font-display font-extrabold text-slate-900 mt-2">
+              แดชบอร์ดอาจารย์ผู้สอน
+            </h1>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              โครงการวิจัยแชตบอตเกมมิฟิเคชัน ม.วลัยลักษณ์
+            </p>
+          </div>
 
-            <form onSubmit={handleLogin} className="space-y-3 pt-2">
-              <div>
-                <label className="block text-[11px] font-bold text-white/90 mb-1">
-                  กรุณากรอกรหัสผ่านเพื่อเข้าใช้งาน:
-                </label>
+          <form onSubmit={handleLogin} className="space-y-3.5 pt-1">
+            <div>
+              <div className="relative">
                 <input
                   type="password"
                   value={passcode}
@@ -1082,45 +1148,44 @@ export default function TeacherAdmin() {
                     setPasscode(e.target.value);
                     setPassError(false);
                   }}
-                  placeholder="รหัสเริ่มต้น wu2535"
-                  className={`w-full px-4 py-3 rounded-xl border text-center font-bold tracking-widest text-base focus:outline-none transition-all ${
+                  placeholder="กรุณากรอกรหัสผ่าน (wu2535)"
+                  className={`w-full px-4 py-3.5 rounded-2xl border text-center font-bold tracking-widest text-sm focus:outline-none transition-all ${
                     passError
-                      ? 'border-rose-400 bg-rose-50 text-rose-900 ring-2 ring-rose-300'
-                      : 'border-white/30 bg-white text-slate-900 focus:ring-4 focus:ring-cyan-300'
+                      ? 'border-rose-400 bg-rose-50 text-rose-800 ring-2 ring-rose-200'
+                      : 'border-slate-200 bg-slate-50/80 text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-500'
                   }`}
                   autoFocus
                 />
-                {passError && (
-                  <p className="text-xs font-bold text-yellow-300 mt-1.5 text-center">
-                    ❌ รหัสผ่านไม่ถูกต้อง (รหัสเริ่มต้นคือ wu2535)
-                  </p>
-                )}
               </div>
+              {passError && (
+                <p className="text-xs font-bold text-rose-500 mt-1.5 animate-fade-in">
+                  ❌ รหัสผ่านไม่ถูกต้อง (รหัสเริ่มต้น: wu2535)
+                </p>
+              )}
+            </div>
 
-              <button
-                type="submit"
-                className="w-full py-3.5 rounded-xl bg-white text-[#0078D7] hover:bg-slate-100 font-display font-extrabold text-sm shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                <span>🔓</span>
-                <span>เข้าสู่แดชบอร์ดอาจารย์</span>
-              </button>
-            </form>
-          </div>
+            <button
+              type="submit"
+              className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-display font-extrabold text-sm shadow-sm active:scale-98 transition-all flex items-center justify-center gap-2"
+            >
+              <span>🔓</span>
+              <span>เข้าสู่แดชบอร์ด</span>
+            </button>
+          </form>
 
-          <div className="text-center">
+          <div className="pt-2 border-t border-slate-100">
             <button
               onClick={() => nav('/')}
-              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-medium text-white/80 transition-all inline-flex items-center gap-1.5"
+              className="text-xs font-semibold text-slate-400 hover:text-slate-700 transition-colors inline-flex items-center gap-1"
             >
-              <span>🏠</span>
+              <span>←</span>
               <span>กลับสู่หน้าแรกของเกม</span>
             </button>
           </div>
         </div>
 
-        {/* Bottom Note */}
-        <div className="text-center text-[11px] text-white/40">
-          Health Detective Game — โครงการวิจัย มหาวิทยาลัยวลัยลักษณ์
+        <div className="text-center text-[11px] text-slate-400 mt-6">
+          Health Detective • ระบบฐานข้อมูลคลาวด์ความเร็วสูง Supabase
         </div>
       </div>
     );
@@ -1130,25 +1195,46 @@ export default function TeacherAdmin() {
   // VIEW: Main Teacher Admin Dashboard
   // =========================================================================
   return (
-    <div className="min-h-screen bg-slate-50/60 pb-16">
-      {/* Top Metro Header */}
-      <header className="bg-[#0078D7] text-white sticky top-0 z-30 shadow-md">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-xl shadow-inner">
-              👨‍🏫
-            </span>
-            <div>
-              <h1 className="font-display font-black text-white text-base leading-none tracking-tight">
-                แดชบอร์ดอาจารย์ (Teacher Hub)
-              </h1>
-              <p className="text-[11px] text-white/80 mt-0.5">
-                Windows Phone Live Tiles & Analytics
-              </p>
+    <div className="min-h-screen bg-[#F4F6FB] pb-12 sm:pb-16">
+      {/* Modern Responsive Top Header (Phone / iPad / PC) - มีข้อความภาษาไทยชัดเจนทุกปุ่ม ไม่ใช้แต่อิโมจิ */}
+      <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 shadow-sm">
+        <div className="max-w-5xl mx-auto px-3.5 sm:px-6 py-2.5 sm:py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          {/* Left: Title & Cloud Status */}
+          <div className="flex items-center justify-between sm:justify-start gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-lg sm:text-xl shadow-sm flex-shrink-0">
+                👨‍🏫
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    Teacher Dashboard
+                  </p>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-bold text-emerald-700">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    ออนไลน์
+                  </span>
+                </div>
+                <h1 className="font-display font-black text-slate-900 text-sm sm:text-base leading-tight truncate">
+                  อาจารย์ผู้สอน ({analytics.total} คน)
+                </h1>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          {/* Right: Action Buttons with Clear Thai Text on ALL Devices */}
+          <div className="grid grid-cols-4 sm:flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              disabled={isExportingExcel}
+              title="ดาวน์โหลดรายงาน Excel (.xlsx) ทันที"
+              className="px-2 sm:px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-[11px] sm:text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 active:scale-95"
+            >
+              <span className={isExportingExcel ? 'animate-spin' : ''}>📊</span>
+              <span className="truncate">{isExportingExcel ? 'กำลังสร้าง...' : 'โหลด Excel'}</span>
+            </button>
+
             <button
               type="button"
               onClick={() => {
@@ -1156,42 +1242,50 @@ export default function TeacherAdmin() {
                 handleRefreshData();
               }}
               disabled={isLoading}
-              title="ดึงข้อมูลล่าสุดจาก Supabase"
-              className="p-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition-all flex items-center gap-1"
+              title="ดึงข้อมูลล่าสุดจากฐานข้อมูลคลาวด์"
+              className="px-2 sm:px-3 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200/90 text-[11px] sm:text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 active:scale-95"
             >
               <span className={isLoading ? 'animate-spin' : ''}>🔄</span>
-              <span className="hidden sm:inline">{isLoading ? 'กำลังดึง...' : 'ดึงข้อมูลสด'}</span>
+              <span className="truncate">{isLoading ? 'กำลังโหลด' : 'รีเฟรชข้อมูล'}</span>
             </button>
+
             <button
+              type="button"
               onClick={() => {
                 sfx.click();
                 nav('/');
               }}
-              className="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition-all"
+              className="px-2 sm:px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-[11px] sm:text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 active:scale-95"
+              title="กลับไปหน้าแรกของเกม"
             >
-              🏠 หน้าเกม
+              <span>🏠</span>
+              <span className="truncate">กลับหน้าเกม</span>
             </button>
+
             <button
+              type="button"
               onClick={() => {
                 sfx.click();
                 admin.logoutTeacher();
               }}
-              className="px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all"
+              className="px-2 sm:px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 active:scale-95"
+              title="ออกจากระบบอาจารย์"
             >
-              ออก
+              <span>🚪</span>
+              <span className="truncate">ออกจากระบบ</span>
             </button>
           </div>
         </div>
 
-        {/* Windows Phone Metro Hub Navigation Bar */}
-        <div className="bg-[#005A9E] border-t border-white/15">
-          <div className="max-w-6xl mx-auto px-4 flex gap-1.5 py-1.5 overflow-x-auto scrollbar-none">
+        {/* 5-Tab Navigation Bar: Fits 100% on Phone, iPad & PC without horizontal scrolling */}
+        <div className="max-w-5xl mx-auto px-2.5 sm:px-6 pb-2">
+          <div className="bg-slate-100/90 p-1 rounded-2xl grid grid-cols-5 gap-1">
             {[
-              { id: 'hub', label: 'Start Hub', icon: '📱' },
-              { id: 'analytics', label: 'ผู้เรียน & คะแนน', icon: '👥', count: analytics.total },
-              { id: 'controls', label: 'โหมดจัดสอบ', icon: '⚡' },
-              { id: 'item_analysis', label: 'วิเคราะห์ข้อสอบ', icon: '🎯', count: PART3_KNOWLEDGE_QUESTIONS.length },
-              { id: 'sheets', label: 'คลาวด์ & ส่งออก', icon: '☁️' },
+              { id: 'hub', label: 'หน้าหลัก', shortLabel: 'หน้าหลัก', icon: '📊' },
+              { id: 'analytics', label: 'รายชื่อนักเรียน', shortLabel: 'นักเรียน', icon: '👥', count: analytics.total },
+              { id: 'controls', label: 'โหมดจัดสอบ', shortLabel: 'โหมดสอบ', icon: '⚡' },
+              { id: 'item_analysis', label: 'วิเคราะห์ข้อสอบ', shortLabel: 'ข้อสอบ', icon: '🎯' },
+              { id: 'sheets', label: 'คลาวด์ & ส่งออก', shortLabel: 'ส่งออก', icon: '☁️' },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -1201,18 +1295,19 @@ export default function TeacherAdmin() {
                     sfx.click();
                     setActiveTab(tab.id as any);
                   }}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                  className={`py-2 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 ${
                     isActive
-                      ? 'bg-white text-[#0078D7] shadow-md font-black scale-100'
-                      : 'bg-white/10 text-white/90 hover:bg-white/20'
+                      ? 'bg-white text-blue-600 shadow-sm font-extrabold'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                   }`}
                 >
-                  <span>{tab.icon}</span>
-                  <span>{tab.label}</span>
+                  <span className="text-sm sm:text-base leading-none">{tab.icon}</span>
+                  <span className="sm:hidden text-[10px] leading-tight truncate max-w-full">{tab.shortLabel}</span>
+                  <span className="hidden sm:inline whitespace-nowrap">{tab.label}</span>
                   {tab.count !== undefined && (
                     <span
-                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                        isActive ? 'bg-[#0078D7] text-white' : 'bg-white/20 text-white'
+                      className={`hidden md:inline-block px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                        isActive ? 'bg-blue-50 text-blue-700' : 'bg-slate-200/80 text-slate-600'
                       }`}
                     >
                       {tab.count}
@@ -1225,997 +1320,773 @@ export default function TeacherAdmin() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 pt-5 space-y-5">
+      <main className="max-w-5xl mx-auto px-3.5 sm:px-6 pt-4 space-y-4 sm:space-y-5">
+        {/* Load Test Active Banner & 1-Click Safe Cleanup */}
+        {hasLoadTestData && (
+          <div className="p-4 sm:p-5 rounded-3xl bg-amber-50/90 border border-amber-200 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 shadow-sm animate-fade-in">
+            <div className="flex items-start gap-3 min-w-0">
+              <span className="w-10 h-10 rounded-2xl bg-amber-200/70 text-amber-900 flex items-center justify-center text-xl flex-shrink-0">
+                🧪
+              </span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-display font-extrabold text-xs sm:text-sm text-amber-950">
+                    ตรวจพบข้อมูลจำลองทดสอบ 1,600 คน ในระบบ
+                  </p>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 font-extrabold text-[10px]">
+                    โหมดทดสอบโหลด
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                  คุณครูสามารถทดสอบคลิกดูรายชื่อ, ค้นหา, สลับหน้า, และดาวน์โหลดไฟล์ Excel (.xlsx) ได้ทันที เมื่อทดสอบเสร็จสิ้นสามารถกดปุ่มล้างข้อมูลด้านขวาได้ทันที
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCleanupLoadTest}
+              disabled={isCleaningLoadTest}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-amber-700 hover:bg-amber-800 disabled:opacity-50 text-white font-bold text-xs shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2 flex-shrink-0"
+            >
+              <span>{isCleaningLoadTest ? '⏳' : '🧹'}</span>
+              <span>{isCleaningLoadTest ? 'กำลังล้างข้อมูล...' : 'ล้างข้อมูลทดสอบ 1,600 คน'}</span>
+            </button>
+          </div>
+        )}
         {/* =================================================================== */}
-        {/* SHARED COHORT FILTER BAR (Multi-Cohort / School / Grade / Period)    */}
+        {/* TAB 0: Modern Mobile / Tablet / PC Dashboard                        */}
         {/* =================================================================== */}
-        {(activeTab === 'analytics' || activeTab === 'item_analysis') && (
-          <div className="bg-white rounded-3xl p-4 shadow-clay border border-slate-100 space-y-3">
-            {/* Row 1: Search, School Dropdown, Grade, Period, Refresh */}
-            <div className="flex flex-col lg:flex-row gap-2.5 items-stretch lg:items-center justify-between">
-              {/* Search & School */}
-              <div className="flex flex-1 flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-                {/* Search */}
+        {activeTab === 'hub' && (
+          <div className="space-y-4 sm:space-y-5 animate-fade-in">
+            {/* 1. HERO STATUS BANNER */}
+            <div className="bg-gradient-to-br from-[#0284C7] to-[#0369A1] rounded-3xl p-5 sm:p-6 text-white shadow-sm border border-sky-400/30 space-y-3.5">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-semibold text-blue-100 uppercase tracking-wider">
+                    สถานะระบบปัจจุบัน
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 text-[10px] font-bold text-white backdrop-blur-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
+                    Supabase Live
+                  </span>
+                </div>
+                <h2 className="text-lg sm:text-2xl font-display font-black text-white mt-1 leading-snug">
+                  {currentPreset === 'public' && '🌐 โหมดเปิดบริการสู่สาธารณะ (Public 24 ชม.)'}
+                  {currentPreset === 'pre_only' && '📝 โหมดสอบก่อนเรียน (Pre-test Only)'}
+                  {currentPreset === 'gameplay' && '🎮 โหมดเรียนรู้เนื้อหา (Gameplay 1-8)'}
+                  {currentPreset === 'post_only' && '🎯 โหมดสอบหลังเรียน (Post-test Mode)'}
+                  {currentPreset === 'bypass_all' && '🔓 โหมดทดสอบอิสระ (Bypass All)'}
+                  {currentPreset === 'custom' && '⚙️ โหมดกำหนดค่าเอง (Custom)'}
+                </h2>
+                <p className="text-xs text-white/90 mt-1 max-w-2xl leading-relaxed">
+                  {currentPreset === 'public' && 'ผู้เรียนเข้าใช้งานได้ตลอด 24 ชม. ทำ Pre-test ➔ ด่าน 1-8 ➔ ปลดล็อก Post-test ➔ รับเกียรติบัตรอัตโนมัติ'}
+                  {currentPreset === 'pre_only' && 'บังคับทำ Pre-test ก่อนเริ่มด่าน 1 และล็อก Post-test ไว้ก่อนสำหรับคุมสอบในห้อง'}
+                  {currentPreset === 'gameplay' && 'ผู้เรียนตะลุยเนื้อหาด่าน 1-8 ตามลำดับ พร้อมพูดคุยกับ AI Chatbot'}
+                  {currentPreset === 'post_only' && 'เปิดให้ทำ Post-test เมื่อผ่านด่านครบตามเกณฑ์ พร้อมออกเกียรติบัตรทันที'}
+                  {currentPreset === 'bypass_all' && 'ปลดล็อกทุกด่านและข้อสอบ เพื่อให้อาจารย์และกรรมการตรวจทานระบบได้อิสระ'}
+                  {currentPreset === 'custom' && 'เปิด-ปิดส่วนประกอบข้อสอบตามการตั้งค่าแบบละเอียด'}
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-white/20 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-3 text-white/95">
+                  <span>ผู้เรียน: <b className="text-white font-mono text-sm">{analytics.total}</b> คน</span>
+                  <span>·</span>
+                  <span>เกียรติบัตร: <b className="text-amber-300 font-mono text-sm">{analytics.certCount}</b> ใบ</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('controls')}
+                  className="px-3.5 py-1.5 rounded-xl bg-white text-blue-700 hover:bg-blue-50 font-display font-extrabold text-xs shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
+                >
+                  <span>⚡ ตั้งค่าโหมดสอบ</span>
+                  <span>→</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 2. SERVICES ACTION GRID (โหมดการใช้งานจริง: สาธารณะ + 4 โหมดห้องเรียน) */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-xs font-extrabold text-slate-700">
+                  ⚡ สลับโหมดด่วน (แตะครั้งเดียวมีผลทันที)
+                </h3>
+                <span className="text-[11px] text-slate-400">ซิงค์ทุกเครื่องอัตโนมัติ</span>
+              </div>
+
+              {/* 2.1 FEATURED: โหมดเปิดสาธารณะ */}
+              <div
+                onClick={() => handleApplyPreset('public')}
+                className={`p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl cursor-pointer transition-all active:scale-[0.99] flex items-center justify-between gap-3 border ${
+                  currentPreset === 'public'
+                    ? 'bg-blue-50/60 border-blue-600 ring-2 ring-blue-100 shadow-sm'
+                    : 'bg-white border-slate-200/90 hover:border-blue-300 shadow-sm'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-xl sm:text-2xl shadow-sm flex-shrink-0 ${
+                    currentPreset === 'public' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-700'
+                  }`}>
+                    🌐
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-display font-extrabold text-xs sm:text-sm text-slate-900">
+                        โหมดเปิดสาธารณะ (24 ชม.)
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-extrabold text-[10px]">
+                        ⭐ แนะนำ
+                      </span>
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 leading-snug">
+                      เล่นตามขั้นตอนอัตโนมัติ: Pre-test ➔ ด่าน 1-8 ➔ Post-test ➔ เกียรติบัตร
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex-shrink-0">
+                  {currentPreset === 'public' ? (
+                    <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-blue-600 text-white text-[11px] sm:text-xs font-bold shadow-sm flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-white" />
+                      <span>เปิดใช้อยู่</span>
+                    </span>
+                  ) : (
+                    <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] sm:text-xs font-bold">
+                      เลือกโหมดนี้
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* 2.2 4 โหมดควบคุมในห้องเรียน (2x2 on Phone, 4 cols on iPad/PC) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {[
+                  {
+                    key: 'pre_only',
+                    icon: '📝',
+                    title: 'คุมสอบก่อนเรียน',
+                    sub: 'ทำเฉพาะ Pre-test',
+                  },
+                  {
+                    key: 'gameplay',
+                    icon: '🎮',
+                    title: 'คุมเรียนในคาบ',
+                    sub: 'เล่นด่าน 1-8 + AI',
+                  },
+                  {
+                    key: 'post_only',
+                    icon: '🎯',
+                    title: 'คุมสอบหลังเรียน',
+                    sub: 'เปิดสอบ Post-test',
+                  },
+                  {
+                    key: 'bypass_all',
+                    icon: '🔓',
+                    title: 'ทดสอบอิสระ',
+                    sub: 'ปลดล็อกทุกด่าน',
+                  },
+                ].map((m) => {
+                  const isCurrent = currentPreset === m.key;
+                  return (
+                    <button
+                      key={m.key}
+                      type="button"
+                      onClick={() => handleApplyPreset(m.key as any)}
+                      className={`p-3.5 rounded-2xl transition-all active:scale-95 text-left sm:text-center flex sm:flex-col items-center gap-2.5 sm:gap-1.5 relative border ${
+                        isCurrent
+                          ? 'bg-blue-50/40 border-blue-600 ring-2 ring-blue-100 shadow-sm'
+                          : 'bg-white border-slate-200/80 shadow-sm hover:border-slate-300'
+                      }`}
+                    >
+                      <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-lg sm:text-xl shadow-sm flex-shrink-0 ${
+                        isCurrent ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700'
+                      }`}>
+                        {m.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <p className={`font-display font-extrabold text-xs truncate ${isCurrent ? 'text-blue-900' : 'text-slate-800'}`}>
+                          {m.title}
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-0.5 truncate">
+                          {m.sub}
+                        </p>
+                      </div>
+                      {isCurrent && (
+                        <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 3. ANALYTICS & 3 PILLARS SUMMARY */}
+            <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-3.5">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="font-display font-extrabold text-slate-900 text-xs sm:text-sm flex items-center gap-1.5">
+                    <span>📊</span> ผลสัมฤทธิ์ภาพรวม (Overview)
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    ทำครบทั้งก่อนและหลังเรียน N = <b>{analytics.pairedCount}</b> คน (จาก {analytics.total} คน)
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyResearchSummary}
+                  className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 text-[11px] sm:text-xs font-bold transition-colors"
+                >
+                  {copyResearchSuccess ? '✓ คัดลอกแล้ว' : '📋 คัดลอกสรุปบทที่ 4'}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center py-1">
+                <div className="p-2.5 rounded-2xl bg-blue-50/50">
+                  <p className="text-[10px] sm:text-[11px] font-bold text-slate-500">ก่อนเรียน (Pre)</p>
+                  <p className="text-xl sm:text-3xl font-display font-black text-blue-600 mt-0.5">
+                    {analytics.avgPre !== null ? `${analytics.avgPre}%` : '-'}
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    {analytics.preDoneCount} คน
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-2xl bg-emerald-50/50">
+                  <p className="text-[10px] sm:text-[11px] font-bold text-slate-500">หลังเรียน (Post)</p>
+                  <p className="text-xl sm:text-3xl font-display font-black text-emerald-600 mt-0.5">
+                    {analytics.avgPost !== null ? `${analytics.avgPost}%` : '-'}
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    {analytics.postDoneCount} คน
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-2xl bg-indigo-50/50">
+                  <p className="text-[10px] sm:text-[11px] font-bold text-slate-500">พัฒนาการ (Gain)</p>
+                  <p className="text-xl sm:text-3xl font-display font-black text-indigo-600 mt-0.5">
+                    {analytics.avgDelta !== null ? `${analytics.avgDelta > 0 ? '+' : ''}${analytics.avgDelta}%` : '-'}
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    เพิ่มขึ้นเฉลี่ย
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-slate-600">
+                <div>Hake's ⟨g⟩: <b className="text-amber-700 font-mono">{analytics.hakeGainAvg !== null ? analytics.hakeGainAvg : '-'}</b></div>
+                <div>Cohen's d: <b className="text-purple-700 font-mono">{analytics.cohensD !== null ? analytics.cohensD : '-'}</b></div>
+                <div>ทักษะปฏิเสธ: <b className="text-slate-800 font-mono">{analytics.postSkillStats.mean || '-'}/100</b></div>
+                <div>ประเมินบอท: <b className="text-amber-600 font-mono">⭐ {analytics.evalStats.mean || '-'}/5.0</b></div>
+              </div>
+            </div>
+
+            {/* 4. FAST EXPORT TOOLS (Balanced 2x2 on Phone, 4 cols on iPad/PC) */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-xs font-extrabold text-slate-700">
+                  ☁️ ส่งออกข้อมูล & ซิงค์คลาวด์ด่วน
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('sheets')}
+                  className="text-[11px] font-bold text-blue-600 hover:underline"
+                >
+                  ดูเครื่องมือทั้งหมด →
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleExportExcel}
+                  disabled={isExportingExcel}
+                  className="p-3.5 sm:p-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white shadow-sm transition-all text-left flex items-center gap-3 active:scale-95 border border-emerald-500/80"
+                  title="ดาวน์โหลดข้อมูลทั้งหมดเป็นไฟล์ Excel (.xlsx) ครบ 4 ชีต"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-xl flex-shrink-0">
+                    <span className={isExportingExcel ? 'animate-spin' : ''}>📊</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-extrabold leading-tight truncate">
+                      {isExportingExcel ? 'กำลังสร้างไฟล์...' : 'ไฟล์ Excel (.xlsx)'}
+                    </p>
+                    <p className="text-[10px] text-white/85 mt-0.5 truncate">
+                      {isExportingExcel ? 'โปรดรอสักครู่' : 'ครบ 4 ชีตในปุ่มเดียว'}
+                    </p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadBinaryCsv}
+                  className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all text-left flex items-center gap-3 active:scale-95"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl flex-shrink-0">
+                    📥
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-extrabold text-slate-800 leading-tight truncate">ไฟล์ CSV (1/0)</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5 truncate">สำหรับโปรแกรม SPSS</p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCopyTableToClipboard}
+                  className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:border-amber-300 transition-all text-left flex items-center gap-3 active:scale-95"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl flex-shrink-0">
+                    📋
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-extrabold text-slate-800 leading-tight truncate">
+                      {copySuccess ? 'คัดลอกแล้ว!' : 'คัดลอกตาราง'}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5 truncate">กดวางใน Excel ทันที</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* 5. RECENT STUDENTS LIST */}
+            <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div>
+                  <h3 className="font-display font-extrabold text-slate-900 text-xs sm:text-sm">
+                    👥 ผู้เรียนล่าสุด (Recent Students)
+                  </h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    แตะที่รายชื่อเพื่อดูผลสอบรายข้อและแก้ไขข้อมูล
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('analytics')}
+                  className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-extrabold flex items-center gap-1 transition-colors"
+                >
+                  <span>ดูทั้งหมด ({analytics.total})</span>
+                  <span>→</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                {students.slice(0, 6).map((s, idx) => (
+                  <div
+                    key={s.userIdHash || idx}
+                    onClick={() => setSelectedStudent(s)}
+                    className="p-3 rounded-2xl border border-slate-100 bg-slate-50/40 hover:border-blue-200 hover:bg-blue-50/30 transition-all flex items-center justify-between gap-2.5 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-blue-100/80 text-blue-700 font-display font-black flex items-center justify-center text-xs flex-shrink-0">
+                        {s.nickname ? s.nickname.slice(0, 1) : idx + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-900 text-xs truncate">
+                          {s.realName} {s.nickname && s.nickname !== s.realName && `(${s.nickname})`}
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate mt-0.5">
+                          ID: <b className="text-slate-700">{s.idCode || '-'}</b> · {s.grade}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 flex-shrink-0 text-right">
+                      <span className="px-2 py-1 rounded-lg bg-blue-50 border border-blue-100 text-blue-800 text-[10px] font-bold">
+                        Pre {s.preTestScore !== undefined ? `${s.preTestScore}%` : '-'}
+                      </span>
+                      <span className="px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-800 text-[10px] font-bold">
+                        Post {s.postTestScore !== undefined ? `${s.postTestScore}%` : '-'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =================================================================== */}
+        {/* TAB 1: Student Analytics & Progress (รายชื่อผู้เรียน & สถิติ)        */}
+        {/* =================================================================== */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-4 animate-fade-in">
+            {/* 1. COMPACT STUDENT TOOLBAR (ค้นหา & กรองด่วน สะอาดตา ไม่รกหน้าจอ) */}
+            <div className="bg-white rounded-3xl p-3.5 sm:p-4 shadow-sm border border-slate-100 space-y-3">
+              {/* Row 1: Search + School + Quick Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
+                {/* Search Input */}
                 <div className="relative flex-1">
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="🔍 ค้นหาชื่อจริง, ชื่อเล่น, ID Code..."
-                    className="w-full pl-3.5 pr-8 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-detective-400"
+                    placeholder="🔍 ค้นหาชื่อจริง, ชื่อเล่น, รหัส ID..."
+                    className="w-full pl-3.5 pr-8 py-2.5 text-xs rounded-2xl border border-slate-200 bg-slate-50/80 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all shadow-inner"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs"
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 text-xs"
                     >
                       ✕
                     </button>
                   )}
                 </div>
 
-                {/* School Dropdown */}
-                <div className="sm:w-60">
-                  <select
-                    value={selectedSchool}
-                    onChange={(e) => setSelectedSchool(e.target.value)}
-                    className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-detective-400 cursor-pointer"
+                {/* School Selector (if multiple) */}
+                {availableSchools.length > 1 && (
+                  <div className="sm:w-56">
+                    <select
+                      value={selectedSchool}
+                      onChange={(e) => setSelectedSchool(e.target.value)}
+                      className="w-full px-3 py-2.5 text-xs font-semibold rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+                    >
+                      <option value="all">🏫 ทุกโรงเรียน ({availableSchools.length} แห่ง)</option>
+                      {availableSchools.map((sch) => (
+                        <option key={sch} value={sch}>
+                          🏫 {sch}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Quick Action Buttons */}
+                <div className="flex items-center gap-1.5 self-end sm:self-auto flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
+                    className={`px-3 py-2 rounded-2xl border text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      showAdvancedFilter || selectedGrade !== 'all' || selectedPeriod !== 'all'
+                        ? 'bg-blue-50 text-blue-700 border-blue-300 ring-1 ring-blue-200'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}
+                    title="ตัวกรองเพิ่มเติม (ระดับชั้น, ช่วงเวลา)"
                   >
-                    <option value="all">🏫 ทุกโรงเรียน ({availableSchools.length} แห่ง)</option>
-                    {availableSchools.map((sch) => (
-                      <option key={sch} value={sch}>
-                        🏫 {sch}
-                      </option>
-                    ))}
-                  </select>
+                    <span>⚙️</span>
+                    <span>{showAdvancedFilter ? 'ซ่อนตัวกรอง' : 'ตัวกรอง'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sfx.click();
+                      handleRefreshData();
+                    }}
+                    disabled={isLoading}
+                    className="px-3 py-2 rounded-2xl bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold hover:bg-blue-100 flex items-center gap-1.5 transition-all shadow-sm"
+                    title="ดึงข้อมูลสดจากฐานข้อมูลคลาวด์ Supabase"
+                  >
+                    <span className={isLoading ? 'animate-spin' : ''}>🔄</span>
+                    <span>{isLoading ? 'กำลังดึง...' : 'ดึงสด'}</span>
+                  </button>
                 </div>
               </div>
 
-              {/* Grade & Period & Actions */}
-              <div className="flex flex-wrap items-center gap-2 justify-between lg:justify-end">
-                {/* Grade Dropdown */}
-                <div className="w-32 sm:w-36">
+              {/* Advanced Filter Drawer (Only when showAdvancedFilter is true) */}
+              {showAdvancedFilter && (
+                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-wrap items-center gap-2 text-xs animate-fade-in">
+                  <span className="text-[11px] font-bold text-slate-500 mr-1">ตัวกรองละเอียด:</span>
+                  {/* Grade Dropdown */}
                   <select
                     value={selectedGrade}
                     onChange={(e) => setSelectedGrade(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-detective-400 cursor-pointer"
+                    className="px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800"
                   >
                     <option value="all">🎓 ทุกระดับชั้น</option>
-                    <optgroup label="🌱 ประถมศึกษา">
-                      <option value="ป.4">ป.4</option>
-                      <option value="ป.5">ป.5</option>
-                      <option value="ป.6">ป.6</option>
-                      <option value="ประถมศึกษาอื่นๆ">ประถมอื่นๆ</option>
-                    </optgroup>
-                    <optgroup label="🌿 มัธยมศึกษาตอนต้น">
-                      <option value="ม.1">ม.1</option>
-                      <option value="ม.2">ม.2</option>
-                      <option value="ม.3">ม.3</option>
-                    </optgroup>
-                    <optgroup label="🌳 มัธยมศึกษาตอนปลาย & อาชีวะ">
-                      <option value="ม.4">ม.4</option>
-                      <option value="ม.5">ม.5</option>
-                      <option value="ม.6">ม.6</option>
-                      <option value="ปวช.">ปวช.</option>
-                      <option value="อื่นๆ">อื่นๆ</option>
-                    </optgroup>
+                    <option value="ป.4">ป.4</option>
+                    <option value="ป.5">ป.5</option>
+                    <option value="ป.6">ป.6</option>
+                    <option value="ม.1">ม.1</option>
+                    <option value="ม.2">ม.2</option>
+                    <option value="ม.3">ม.3</option>
+                    <option value="ม.4">ม.4</option>
+                    <option value="ม.5">ม.5</option>
+                    <option value="ม.6">ม.6</option>
+                    <option value="ปวช.">ปวช.</option>
+                    <option value="อื่นๆ">อื่นๆ</option>
                   </select>
-                </div>
 
-                {/* Status Filter Dropdown */}
-                <div className="w-36 sm:w-44">
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as any)}
-                    className="w-full px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-detective-400 cursor-pointer"
-                  >
-                    <option value="all">🎯 สถานะ: ทั้งหมด</option>
-                    <option value="both">
-                      ✨ ทำครบ Pre & Post ({students.filter((s) => s.preTestScore !== undefined && s.postTestScore !== undefined).length} คน)
-                    </option>
-                    <option value="pre_only">📝 ทำเฉพาะ Pre-test</option>
-                    <option value="post_only">📝 ทำเฉพาะ Post-test</option>
-                    <option value="hero_done">🕹️ จบด่าน 1-8 แล้ว</option>
-                    <option value="certified">🏆 ได้เกียรติบัตรแล้ว</option>
-                  </select>
-                </div>
-
-                {/* Period Dropdown */}
-                <div className="w-36 sm:w-40">
+                  {/* Period Dropdown */}
                   <select
                     value={selectedPeriod}
                     onChange={(e) => setSelectedPeriod(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-detective-400 cursor-pointer"
+                    className="px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800"
                   >
                     <option value="all">📅 ตลอดเวลาทั้งหมด</option>
                     <option value="today">📅 วันนี้</option>
                     <option value="7days">📅 7 วันล่าสุด</option>
                     <option value="30days">📅 30 วันล่าสุด</option>
-                    <option value="custom">📅 กำหนดช่วงวันที่เอง...</option>
+                    <option value="custom">📅 กำหนดช่วงวันที่เอง</option>
                   </select>
+
+                  {selectedPeriod === 'custom' && (
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        className="px-2 py-1 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs"
+                      />
+                      <span className="text-slate-400">-</span>
+                      <input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        className="px-2 py-1 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs"
+                      />
+                    </div>
+                  )}
+
+                  {(selectedGrade !== 'all' || selectedPeriod !== 'all' || customStartDate || customEndDate) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedGrade('all');
+                        setSelectedPeriod('all');
+                        setCustomStartDate('');
+                        setCustomEndDate('');
+                      }}
+                      className="text-[11px] text-blue-600 hover:underline font-bold ml-auto"
+                    >
+                      ล้างตัวกรอง
+                    </button>
+                  )}
                 </div>
+              )}
 
-                {/* Refresh Button */}
-                <button
-                  onClick={() => {
-                    sfx.click();
-                    handleRefreshData();
-                  }}
-                  disabled={isLoading}
-                  title="รีเฟรชข้อมูลล่าสุดจากฐานข้อมูลคลาวด์ Supabase"
-                  className="px-2.5 py-1.5 rounded-xl bg-detective-50 text-detective-700 border border-detective-200 text-xs font-bold hover:bg-detective-100 flex items-center gap-1 shadow-sm"
-                >
-                  <span className={isLoading ? 'animate-spin' : ''}>🔄</span>
-                  <span className="hidden sm:inline">{isLoading ? 'กำลังดึง...' : 'ดึงข้อมูลสด'}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Custom Date Pickers Row (if selectedPeriod === 'custom') */}
-            {selectedPeriod === 'custom' && (
-              <div className="flex flex-wrap items-center gap-2 p-2.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs animate-fade-in">
-                <span className="font-bold text-slate-600">ช่วงวันที่:</span>
-                <input
-                  type="date"
-                  value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="px-2 py-1 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium"
-                />
-                <span className="text-slate-400">ถึง</span>
-                <input
-                  type="date"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="px-2 py-1 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium"
-                />
-                {(customStartDate || customEndDate) && (
-                  <button
-                    onClick={() => {
-                      setCustomStartDate('');
-                      setCustomEndDate('');
-                    }}
-                    className="text-[11px] text-slate-400 hover:text-slate-600 underline ml-1"
-                  >
-                    ล้างวันที่
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Quick Status Filter Chips */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 text-xs">
-              <span className="text-[11px] font-bold text-slate-400 whitespace-nowrap mr-1">สถานะด่วน:</span>
-              {[
-                { id: 'all', label: 'ทั้งหมด', count: students.length, icon: '👥' },
-                { id: 'both', label: 'ทำครบ Pre & Post', count: students.filter((s) => s.preTestScore !== undefined && s.postTestScore !== undefined).length, icon: '✨' },
-                { id: 'pre_only', label: 'ค้าง Post-test (ทำแค่ Pre)', count: students.filter((s) => s.preTestScore !== undefined && s.postTestScore === undefined).length, icon: '⏳' },
-                { id: 'certified', label: 'ได้เกียรติบัตรแล้ว', count: students.filter((s) => !!s.certificateNo).length, icon: '🏆' },
-                { id: 'hero_done', label: 'จบด่าน 1-8 แล้ว', count: students.filter((s) => (s.heroStagesCount !== undefined ? s.heroStagesCount >= 8 : s.stagesCompletedCount >= 8)).length, icon: '🕹️' },
-              ].map((chip) => {
-                const isActive = statusFilter === chip.id;
-                return (
-                  <button
-                    key={chip.id}
-                    type="button"
-                    onClick={() => {
-                      sfx.click();
-                      setStatusFilter(chip.id as any);
-                    }}
-                    className={`px-3 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-1.5 border ${
-                      isActive
-                        ? 'bg-detective-600 text-white border-detective-600 shadow-sm'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
-                    }`}
-                  >
-                    <span>{chip.icon}</span>
-                    <span>{chip.label}</span>
-                    <span
-                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                        isActive ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-600'
+              {/* Row 2: Status Filter Chips (Pill Scroll) */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 text-xs scrollbar-none">
+                {[
+                  { id: 'all', label: 'ทั้งหมด', count: students.length, icon: '👥' },
+                  { id: 'both', label: 'ทำครบ Pre & Post', count: students.filter((s) => s.preTestScore !== undefined && s.postTestScore !== undefined).length, icon: '✨' },
+                  { id: 'pre_only', label: 'ค้าง Post-test', count: students.filter((s) => s.preTestScore !== undefined && s.postTestScore === undefined).length, icon: '⏳' },
+                  { id: 'certified', label: 'ได้เกียรติบัตร', count: students.filter((s) => !!s.certificateNo).length, icon: '🏆' },
+                  { id: 'hero_done', label: 'จบด่าน 1-8', count: students.filter((s) => (s.heroStagesCount !== undefined ? s.heroStagesCount >= 8 : s.stagesCompletedCount >= 8)).length, icon: '🕹️' },
+                ].map((chip) => {
+                  const isActive = statusFilter === chip.id;
+                  return (
+                    <button
+                      key={chip.id}
+                      type="button"
+                      onClick={() => {
+                        sfx.click();
+                        setStatusFilter(chip.id as any);
+                      }}
+                      className={`px-3 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-1.5 border ${
+                        isActive
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                          : 'bg-slate-50 text-slate-700 border-slate-200/80 hover:bg-slate-100'
                       }`}
                     >
-                      {chip.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Row 2: Cohort Summary & 1-Tap Export Buttons */}
-            <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
-              <div className="text-slate-500 text-[11px] flex items-center gap-2 flex-wrap">
-                <span>
-                  ผู้เรียนที่แสดง: <b className="text-detective-700 font-extrabold">{filteredStudents.length}</b> จาก {students.length} คน
-                </span>
-                {selectedSchool !== 'all' && (
-                  <span className="px-2 py-0.5 rounded-md bg-detective-50 text-detective-700 font-semibold border border-detective-200 text-[10px]">
-                    {selectedSchool}
-                  </span>
-                )}
-                {selectedPeriod !== 'all' && (
-                  <span className="px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 font-semibold border border-sky-200 text-[10px]">
-                    ช่วงเวลา: {selectedPeriod === 'today' ? 'วันนี้' : selectedPeriod === '7days' ? '7 วันล่าสุด' : selectedPeriod === '30days' ? '30 วันล่าสุด' : 'กำหนดเอง'}
-                  </span>
-                )}
+                      <span>{chip.icon}</span>
+                      <span>{chip.label}</span>
+                      <span
+                        className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                          isActive ? 'bg-white/20 text-white' : 'bg-slate-200/70 text-slate-600'
+                        }`}
+                      >
+                        {chip.count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  onClick={handleCopyTableToClipboard}
-                  className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-[11px] font-bold hover:bg-slate-50 flex items-center gap-1 shadow-sm transition-all"
-                  title="คัดลอกตารางสรุปรายบุคคล (TSV) ไปวางใน Excel ได้ทันที"
-                >
-                  <span>📋</span>
-                  <span>{copySuccess ? 'คัดลอกแล้ว!' : 'คัดลอกตาราง (TSV)'}</span>
-                </button>
-
-                <button
-                  onClick={handleCopyBinaryToClipboard}
-                  className="px-2.5 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-bold hover:bg-indigo-100 flex items-center gap-1 shadow-sm transition-all"
-                  title="คัดลอกข้อมูล 1/0 สำหรับ SPSS / Jamovi (TSV)"
-                >
-                  <span>🎯</span>
-                  <span>{copyBinarySuccess ? 'คัดลอก 1/0 สำเร็จ!' : 'คัดลอก 1/0 (SPSS TSV)'}</span>
-                </button>
-
-                <button
-                  onClick={handleDownloadBinaryCsv}
-                  className="px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold hover:bg-emerald-100 flex items-center gap-1 shadow-sm transition-all"
-                  title="ดาวน์โหลดไฟล์ CSV รูปแบบ 1/0 สำหรับ SPSS พร้อม UTF-8 BOM"
-                >
-                  <span>📥</span>
-                  <span>ดาวน์โหลด CSV 1/0</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* =================================================================== */}
-        {/* TAB 0: Windows Phone Live Tiles Start Hub                           */}
-        {/* =================================================================== */}
-        {activeTab === 'hub' && (
-          <div className="space-y-5 animate-fade-in">
-            {/* Header greeting & date */}
-            <div className="flex flex-wrap items-center justify-between gap-2 bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
-              <div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Windows Phone Live Hub
-                </p>
-                <h2 className="text-lg sm:text-xl font-display font-extrabold text-slate-900 mt-0.5">
-                  ยินดีต้อนรับสู่แดชบอร์ดอาจารย์ผู้สอน
-                </h2>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  แตะกล่องสีเหลี่ยมด้านล่างเพื่อเปิดดูข้อมูล สลับโหมดสอบ หรือดาวน์โหลดรายงานวิจัยได้ทันที
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Supabase Live (พร้อมรับ 1,600+ คน)</span>
-                </span>
-              </div>
-            </div>
-
-            {/* 1. HERO TILE: สถานะการจัดสอบห้องเรียนขณะนี้ (Wide Metro Tile) */}
-            <div
-              onClick={() => setActiveTab('controls')}
-              className={`rounded-2xl p-5 sm:p-6 text-white shadow-md cursor-pointer transition-all active:scale-[0.99] border border-white/20 ${
-                currentPreset === 'pre_only'
-                  ? 'bg-gradient-to-r from-[#0078D7] to-[#005A9E]'
-                  : currentPreset === 'post_only'
-                  ? 'bg-gradient-to-r from-[#107C41] to-[#0E6C38]'
-                  : currentPreset === 'gameplay'
-                  ? 'bg-gradient-to-r from-[#6B69D6] to-[#5552B9]'
-                  : currentPreset === 'bypass_all'
-                  ? 'bg-gradient-to-r from-[#D83B01] to-[#B33000]'
-                  : 'bg-gradient-to-r from-slate-800 to-slate-900'
-              }`}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-2 border-b border-white/20 pb-3">
+              {/* Row 3: Count, View Mode Switcher (iPad/PC) and 1-Click Export Buttons */}
+              <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl">⚡</span>
-                  <div>
-                    <p className="text-[11px] uppercase tracking-wider font-bold text-white/80">
-                      สถานะการจัดสอบห้องเรียนขณะนี้ (Active Exam Mode)
-                    </p>
-                    <h3 className="text-lg sm:text-xl font-display font-black text-white mt-0.5">
-                      {currentPreset === 'pre_only' && 'โหมด 1: ทำแบบทดสอบก่อนเรียน (Pre-test Only)'}
-                      {currentPreset === 'gameplay' && 'โหมด 2: เข้าเรียนเนื้อหา/เล่นเกม (Gameplay)'}
-                      {currentPreset === 'post_only' && 'โหมด 3: ทำแบบทดสอบหลังเรียน (Post-test Mode)'}
-                      {currentPreset === 'bypass_all' && 'โหมด 4: ทดสอบระบบอิสระ (Bypass All)'}
-                      {currentPreset === 'custom' && 'โหมดกำหนดค่าแบบกำหนดเอง (Custom Settings)'}
-                    </h3>
-                  </div>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-white/25 text-white text-xs font-bold backdrop-blur-sm">
-                  แตะเพื่อตั้งค่า ↗
-                </span>
-              </div>
-
-              <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <p className="text-white/90 leading-relaxed max-w-2xl text-[11px] sm:text-xs">
-                  {currentPreset === 'pre_only' && 'นักเรียนทุกคนต้องทำ Pre-test ให้เสร็จก่อนจึงจะปลดล็อกด่าน 1 และปิด Post-test ป้องกันเด็กลักไก่'}
-                  {currentPreset === 'gameplay' && 'นักเรียนเข้าผจญภัยเรียนรู้เนื้อหาด่าน 1-8 ตามลำดับ พร้อมระบบ AI Chatbot'}
-                  {currentPreset === 'post_only' && 'เปิดให้ทำ Post-test เมื่อผ่านด่านครบตามเกณฑ์ พร้อมออกเกียรติบัตรทางการ'}
-                  {currentPreset === 'bypass_all' && 'ปลดล็อกทุกด่านและข้อสอบ เพื่อให้อาจารย์และผู้ประเมินตรวจทานระบบได้อิสระ'}
-                  {currentPreset === 'custom' && 'เปิด-ปิดส่วนประกอบข้อสอบตามการตั้งค่าแบบละเอียดของอาจารย์'}
-                </p>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="px-2.5 py-1 rounded-xl bg-white text-slate-900 font-bold text-xs shadow">
-                    ⚙️ จัดการโหมดสอบ
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    แสดง <b className="text-blue-700 font-extrabold">{filteredStudents.length}</b> จาก {students.length} คน
                   </span>
+                  <div className="hidden sm:inline-flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/70">
+                    <button
+                      type="button"
+                      onClick={() => setStudentViewMode('cards')}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                        studentViewMode === 'cards' || studentViewMode === 'auto'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      🗂️ การ์ด
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStudentViewMode('table')}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                        studentViewMode === 'table'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      📋 ตาราง
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleExportExcel}
+                    className="px-2.5 py-1.5 rounded-xl bg-emerald-600 text-white text-[11px] font-bold hover:bg-emerald-700 flex items-center gap-1 transition-all shadow-sm"
+                    title="ดาวน์โหลดไฟล์ Excel (.xlsx) ทันที"
+                  >
+                    <span>📊</span>
+                    <span>Excel (.xlsx)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCopyTableToClipboard}
+                    className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-[11px] font-bold hover:bg-slate-100 flex items-center gap-1 transition-all"
+                    title="คัดลอกตารางไปวางใน Excel"
+                  >
+                    <span>📋</span>
+                    <span>{copySuccess ? 'คัดลอกแล้ว!' : 'คัดลอก'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownloadBinaryCsv}
+                    className="px-2.5 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-bold hover:bg-indigo-100 flex items-center gap-1 transition-all"
+                    title="ดาวน์โหลดไฟล์ CSV 1/0 สำหรับ SPSS"
+                  >
+                    <span>📥</span>
+                    <span>CSV (1/0)</span>
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* 2. WINDOWS PHONE 8-GRID LIVE TILES (2 cols mobile / 4 cols desktop) */}
-            <div>
-              <div className="flex items-center justify-between mb-2 px-1">
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                  <span>📊</span> กล่องสถิติเรียลไทม์ (Live Metric Tiles)
-                </h3>
-                <span className="text-[11px] text-slate-400">แตะกล่องเพื่อดูรายชื่อ</span>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
-                {/* Tile 1: Total Students (Cobalt Blue) */}
-                <div
-                  onClick={() => {
-                    sfx.click();
-                    setStatusFilter('all');
-                    setActiveTab('analytics');
-                  }}
-                  className="bg-[#0078D7] hover:bg-[#006BBB] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-blue-400/30"
-                >
-                  <div className="flex items-start justify-between">
-                    <span className="text-2xl">👥</span>
-                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
-                      ดูรายชื่อ ↗
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
-                      {analytics.total}
-                    </p>
-                    <p className="text-xs font-bold text-white/90 mt-1">
-                      นักเรียนทั้งหมด
-                    </p>
-                    <p className="text-[10px] text-white/70">
-                      ในระบบ Supabase Cloud
-                    </p>
-                  </div>
-                </div>
-
-                {/* Tile 2: Pre-test Avg (Teal) */}
-                <div
-                  onClick={() => {
-                    sfx.click();
-                    setStatusFilter('all');
-                    setActiveTab('analytics');
-                  }}
-                  className="bg-[#008272] hover:bg-[#006E61] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-teal-400/30"
-                >
-                  <div className="flex items-start justify-between">
-                    <span className="text-2xl">📝</span>
-                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
-                      Pre-test
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
-                      {analytics.avgPre !== null ? `${analytics.avgPre}%` : '-'}
-                    </p>
-                    <p className="text-xs font-bold text-white/90 mt-1">
-                      ก่อนเรียนเฉลี่ย
-                    </p>
-                    <p className="text-[10px] text-white/70">
-                      ทำแล้ว {analytics.preDoneCount} คน
-                    </p>
-                  </div>
-                </div>
-
-                {/* Tile 3: Post-test Avg (Emerald Green) */}
-                <div
-                  onClick={() => {
-                    sfx.click();
-                    setStatusFilter('both');
-                    setActiveTab('analytics');
-                  }}
-                  className="bg-[#107C41] hover:bg-[#0E6C38] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-emerald-400/30"
-                >
-                  <div className="flex items-start justify-between">
-                    <span className="text-2xl">🎯</span>
-                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
-                      Post-test
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
-                      {analytics.avgPost !== null ? `${analytics.avgPost}%` : '-'}
-                    </p>
-                    <p className="text-xs font-bold text-white/90 mt-1">
-                      หลังเรียนเฉลี่ย
-                    </p>
-                    <p className="text-[10px] text-white/70">
-                      ทำแล้ว {analytics.postDoneCount} คน
-                    </p>
-                  </div>
-                </div>
-
-                {/* Tile 4: Gain Delta (Deep Purple) */}
-                <div
-                  onClick={() => {
-                    sfx.click();
-                    setActiveTab('analytics');
-                  }}
-                  className="bg-[#6B69D6] hover:bg-[#5A58BF] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-purple-400/30"
-                >
-                  <div className="flex items-start justify-between">
-                    <span className="text-2xl">🚀</span>
-                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
-                      Delta
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
-                      {analytics.avgDelta !== null
-                        ? `${analytics.avgDelta > 0 ? '+' : ''}${analytics.avgDelta}%`
-                        : '-'}
-                    </p>
-                    <p className="text-xs font-bold text-white/90 mt-1">
-                      พัฒนาการเฉลี่ย
-                    </p>
-                    <p className="text-[10px] text-white/70">
-                      Hake ⟨g⟩: {analytics.hakeGainAvg !== null ? analytics.hakeGainAvg : '-'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Tile 5: Certificates Issued (Orange) */}
-                <div
-                  onClick={() => {
-                    sfx.click();
-                    setStatusFilter('certified');
-                    setActiveTab('analytics');
-                  }}
-                  className="bg-[#D83B01] hover:bg-[#BF3401] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-orange-400/30"
-                >
-                  <div className="flex items-start justify-between">
-                    <span className="text-2xl">🏆</span>
-                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
-                      สำเร็จ
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
-                      {analytics.certCount}
-                    </p>
-                    <p className="text-xs font-bold text-white/90 mt-1">
-                      ออกเกียรติบัตรแล้ว
-                    </p>
-                    <p className="text-[10px] text-white/70">
-                      ผ่านเกณฑ์สำเร็จการศึกษา
-                    </p>
-                  </div>
-                </div>
-
-                {/* Tile 6: Pending Post-test (Crimson Red) */}
-                <div
-                  onClick={() => {
-                    sfx.click();
-                    setStatusFilter('pre_only');
-                    setActiveTab('analytics');
-                  }}
-                  className="bg-[#D13438] hover:bg-[#BA2D31] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-rose-400/30"
-                >
-                  <div className="flex items-start justify-between">
-                    <span className="text-2xl">⏳</span>
-                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
-                      ค้างสอบ
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
-                      {students.filter(s => s.preTestScore !== undefined && s.postTestScore === undefined).length}
-                    </p>
-                    <p className="text-xs font-bold text-white/90 mt-1">
-                      ค้างสอบ Post-test
-                    </p>
-                    <p className="text-[10px] text-white/70">
-                      ทำแค่ Pre (แตะตามเด็ก) ↗
-                    </p>
-                  </div>
-                </div>
-
-                {/* Tile 7: Refusal Skills (Navy Blue) */}
-                <div
-                  onClick={() => {
-                    sfx.click();
-                    setActiveTab('item_analysis');
-                    setItemAnalysisSubTab('skills');
-                  }}
-                  className="bg-[#004E8C] hover:bg-[#004177] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-blue-400/30"
-                >
-                  <div className="flex items-start justify-between">
-                    <span className="text-2xl">🛡️</span>
-                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
-                      Part 4
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
-                      {analytics.postSkillStats.mean || '-'}
-                    </p>
-                    <p className="text-xs font-bold text-white/90 mt-1">
-                      ทักษะปฏิเสธ (เต็ม 100)
-                    </p>
-                    <p className="text-[10px] text-white/70">
-                      {analytics.skillDeltaStats.mean >= 0 ? `+${analytics.skillDeltaStats.mean}` : analytics.skillDeltaStats.mean} คะแนนหลังเรียน
-                    </p>
-                  </div>
-                </div>
-
-                {/* Tile 8: Chatbot Usability (Magenta) */}
-                <div
-                  onClick={() => {
-                    sfx.click();
-                    setActiveTab('item_analysis');
-                    setItemAnalysisSubTab('app_eval');
-                  }}
-                  className="bg-[#881798] hover:bg-[#741382] text-white p-4 sm:p-5 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-[0.97] flex flex-col justify-between min-h-[135px] border border-fuchsia-400/30"
-                >
-                  <div className="flex items-start justify-between">
-                    <span className="text-2xl">⭐</span>
-                    <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
-                      Part 5
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-3xl sm:text-4xl font-display font-black leading-none tracking-tight">
-                      {analytics.evalStats.mean || '-'}
-                    </p>
-                    <p className="text-xs font-bold text-white/90 mt-1">
-                      ความพึงพอใจแชตบอต
-                    </p>
-                    <p className="text-[10px] text-white/70">
-                      คะแนนเฉลี่ย / 5.00
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 3. 1-CLICK CLASSROOM PRESET TILES (4 Big Windows Phone Action Tiles) */}
-            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                <div>
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <span>⚡</span> สลับโหมดจัดสอบด่วน (1-Click Classroom Tiles)
-                  </h3>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    แตะกล่องเพื่อสลับโหมดการสอบให้นักเรียนทั้งห้องทันที
+            {/* 2. COMPACT STATS PILLS + COLLAPSIBLE RESEARCH STATS */}
+            <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3">
+              {/* 4 Quick Metric Pills */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="p-3 rounded-2xl bg-blue-50/70 border border-blue-100 text-center">
+                  <p className="text-[10px] font-bold text-blue-600 uppercase">Pre-test เฉลี่ย</p>
+                  <p className="text-lg font-display font-black text-blue-900 mt-0.5">
+                    {analytics.avgPre !== null ? `${analytics.avgPre}%` : '-'}
                   </p>
+                  <p className="text-[10px] text-blue-500">{analytics.preDoneCount} คน</p>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
-                {/* Preset 1 */}
-                <button
-                  type="button"
-                  onClick={() => handleApplyPreset('pre_only')}
-                  className={`p-4 rounded-xl text-left transition-all active:scale-95 flex flex-col justify-between min-h-[110px] ${
-                    currentPreset === 'pre_only'
-                      ? 'bg-[#0078D7] text-white shadow-md ring-2 ring-blue-300'
-                      : 'bg-blue-50/80 text-blue-900 border border-blue-200 hover:bg-blue-100'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl">📝</span>
-                    {currentPreset === 'pre_only' && (
-                      <span className="text-[10px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">
-                        ✓ กำลังใช้งาน
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-display font-extrabold text-sm">
-                      1. สอบก่อนเรียน
-                    </p>
-                    <p className={`text-[10px] mt-0.5 leading-snug ${currentPreset === 'pre_only' ? 'text-white/80' : 'text-blue-700'}`}>
-                      เปิด Pre-test บังคับทำให้เสร็จก่อนเล่น
-                    </p>
-                  </div>
-                </button>
-
-                {/* Preset 2 */}
-                <button
-                  type="button"
-                  onClick={() => handleApplyPreset('gameplay')}
-                  className={`p-4 rounded-xl text-left transition-all active:scale-95 flex flex-col justify-between min-h-[110px] ${
-                    currentPreset === 'gameplay'
-                      ? 'bg-[#6B69D6] text-white shadow-md ring-2 ring-purple-300'
-                      : 'bg-indigo-50/80 text-indigo-900 border border-indigo-200 hover:bg-indigo-100'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl">🎮</span>
-                    {currentPreset === 'gameplay' && (
-                      <span className="text-[10px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">
-                        ✓ กำลังใช้งาน
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-display font-extrabold text-sm">
-                      2. เล่นเกมเนื้อหา
-                    </p>
-                    <p className={`text-[10px] mt-0.5 leading-snug ${currentPreset === 'gameplay' ? 'text-white/80' : 'text-indigo-700'}`}>
-                      ผจญภัยด่าน 1-8 พร้อม AI Chatbot
-                    </p>
-                  </div>
-                </button>
-
-                {/* Preset 3 */}
-                <button
-                  type="button"
-                  onClick={() => handleApplyPreset('post_only')}
-                  className={`p-4 rounded-xl text-left transition-all active:scale-95 flex flex-col justify-between min-h-[110px] ${
-                    currentPreset === 'post_only'
-                      ? 'bg-[#107C41] text-white shadow-md ring-2 ring-emerald-300'
-                      : 'bg-emerald-50/80 text-emerald-900 border border-emerald-200 hover:bg-emerald-100'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl">🎯</span>
-                    {currentPreset === 'post_only' && (
-                      <span className="text-[10px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">
-                        ✓ กำลังใช้งาน
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-display font-extrabold text-sm">
-                      3. สอบหลังเรียน
-                    </p>
-                    <p className={`text-[10px] mt-0.5 leading-snug ${currentPreset === 'post_only' ? 'text-white/80' : 'text-emerald-700'}`}>
-                      เปิด Post-test และรับเกียรติบัตร
-                    </p>
-                  </div>
-                </button>
-
-                {/* Preset 4 */}
-                <button
-                  type="button"
-                  onClick={() => handleApplyPreset('bypass_all')}
-                  className={`p-4 rounded-xl text-left transition-all active:scale-95 flex flex-col justify-between min-h-[110px] ${
-                    currentPreset === 'bypass_all'
-                      ? 'bg-[#D83B01] text-white shadow-md ring-2 ring-orange-300'
-                      : 'bg-orange-50/80 text-orange-900 border border-orange-200 hover:bg-orange-100'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl">🔓</span>
-                    {currentPreset === 'bypass_all' && (
-                      <span className="text-[10px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">
-                        ✓ กำลังใช้งาน
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-display font-extrabold text-sm">
-                      4. ทดสอบอิสระ
-                    </p>
-                    <p className={`text-[10px] mt-0.5 leading-snug ${currentPreset === 'bypass_all' ? 'text-white/80' : 'text-orange-700'}`}>
-                      ปลดล็อกทุกด่านและข้อสอบ
-                    </p>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* 4. QUICK TOOLS & RESEARCH EXPORT TILES */}
-            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 space-y-3">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <span>🛠️</span> เครื่องมือส่งออกข้อมูลวิจัย (Academic Export Tiles)
-              </h3>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-                <button
-                  type="button"
-                  onClick={handleDownloadBinaryCsv}
-                  className="p-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex flex-col justify-between min-h-[95px] active:scale-95 transition-all shadow-sm"
-                >
-                  <span className="text-xl">📥</span>
-                  <div>
-                    <p className="leading-tight">ดาวน์โหลด CSV</p>
-                    <p className="text-[10px] text-white/70 font-normal">SPSS Binary 1/0</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleCopyTableToClipboard}
-                  className="p-3.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs flex flex-col justify-between min-h-[95px] active:scale-95 transition-all shadow-sm"
-                >
-                  <span className="text-xl">📋</span>
-                  <div>
-                    <p className="leading-tight">{copySuccess ? 'คัดลอกแล้ว!' : 'คัดลอกตาราง (TSV)'}</p>
-                    <p className="text-[10px] text-white/70 font-normal">วางลงใน Excel ทันที</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleCopyResearchSummary}
-                  className="p-3.5 rounded-xl bg-[#0078D7] hover:bg-[#0063B1] text-white font-bold text-xs flex flex-col justify-between min-h-[95px] active:scale-95 transition-all shadow-sm"
-                >
-                  <span className="text-xl">📊</span>
-                  <div>
-                    <p className="leading-tight">{copyResearchSuccess ? 'คัดลอกสำเร็จ!' : 'สรุปสถิติวิจัย'}</p>
-                    <p className="text-[10px] text-white/70 font-normal">สำหรับบทที่ 4 ใน Word</p>
-                  </div>
-                </button>
-
-                <a
-                  href="https://supabase.com/dashboard/project/yxljxtlgnjwqxhjgfhdv/editor"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3.5 rounded-xl bg-[#107C41] hover:bg-[#0E6C38] text-white font-bold text-xs flex flex-col justify-between min-h-[95px] active:scale-95 transition-all shadow-sm"
-                >
-                  <span className="text-xl">🌐</span>
-                  <div>
-                    <p className="leading-tight">Supabase Studio</p>
-                    <p className="text-[10px] text-white/70 font-normal">ฐานข้อมูลคลาวด์สด ↗</p>
-                  </div>
-                </a>
-              </div>
-            </div>
-
-            {/* 5. ACADEMIC RESEARCH SUMMARY TILE (For Thesis Chapter 4) */}
-            <div className="bg-gradient-to-br from-indigo-50/60 via-white to-sky-50/50 rounded-2xl p-5 shadow-sm border border-indigo-100 space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 pb-2.5">
-                <div>
-                  <h4 className="font-display font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
-                    <span>📈</span> สรุปสถิติเปรียบเทียบผลสัมฤทธิ์ (Pre vs Post Paired Samples)
-                  </h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    กลุ่มตัวอย่างคู่สมบูรณ์ N = {analytics.pairedCount} คน (มีทั้งคะแนนก่อนเรียนและหลังเรียน)
+                <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-100 text-center">
+                  <p className="text-[10px] font-bold text-emerald-600 uppercase">Post-test เฉลี่ย</p>
+                  <p className="text-lg font-display font-black text-emerald-900 mt-0.5">
+                    {analytics.avgPost !== null ? `${analytics.avgPost}%` : '-'}
                   </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCopyResearchSummary}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm"
-                >
-                  {copyResearchSuccess ? '✓ คัดลอกแล้ว' : '📋 คัดลอกสรุปสถิติ'}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500">1. ผลสัมฤทธิ์ความรู้ ({PART3_KNOWLEDGE_QUESTIONS.length} ข้อ)</span>
-                  <p className="text-slate-700">ก่อนเรียน: <b className="text-sky-800 font-mono">{analytics.pairedPreStats.str}%</b></p>
-                  <p className="text-slate-700">หลังเรียน: <b className="text-emerald-700 font-mono">{analytics.pairedPostStats.str}%</b></p>
-                  <p className="text-slate-800 font-bold pt-1 border-t border-slate-100">
-                    พัฒนาการ: <span className="text-indigo-700 font-mono">+{analytics.pairedDeltaStats.mean}%</span> (SD {analytics.pairedDeltaStats.sd})
-                  </p>
+                  <p className="text-[10px] text-emerald-500">{analytics.postDoneCount} คน</p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500">2. Hake's Gain & Effect Size</span>
-                  <p className="text-slate-700">
-                    Hake's ⟨g⟩: <b className="text-amber-800 font-mono text-sm">{analytics.hakeGainAvg !== null ? analytics.hakeGainAvg : '-'}</b>
+                <div className="p-3 rounded-2xl bg-indigo-50/70 border border-indigo-100 text-center">
+                  <p className="text-[10px] font-bold text-indigo-600 uppercase">พัฒนาการ (Gain)</p>
+                  <p className="text-lg font-display font-black text-indigo-900 mt-0.5">
+                    {analytics.avgDelta !== null ? `${analytics.avgDelta > 0 ? '+' : ''}${analytics.avgDelta}%` : '-'}
                   </p>
-                  <p className="text-[11px] text-amber-700 font-medium">{analytics.hakeGainCategory}</p>
-                  <p className="text-slate-700 pt-1 border-t border-slate-100">
-                    Cohen's d: <b className="text-purple-700 font-mono">{analytics.cohensD !== null ? analytics.cohensD : '-'}</b> ({analytics.cohensCategory})
-                  </p>
+                  <p className="text-[10px] text-indigo-500">เฉลี่ยเพิ่มขึ้น</p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500">3. ทักษะปฏิเสธ & ความพึงพอใจ</span>
-                  <p className="text-slate-700">ทักษะก่อน: <b className="text-slate-800 font-mono">{analytics.preSkillStats.str}</b></p>
-                  <p className="text-slate-700">ทักษะหลัง: <b className="text-slate-800 font-mono">{analytics.postSkillStats.str}</b></p>
-                  <p className="text-slate-800 font-bold pt-1 border-t border-slate-100">
-                    ประเมินแชตบอต: <span className="text-amber-600 font-mono font-bold">⭐ {analytics.evalStats.str}</span> / 5.0
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* =================================================================== */}
-        {/* TAB 1: Student Analytics & Progress                                 */}
-        {/* =================================================================== */}
-        {activeTab === 'analytics' && (
-          <div className="space-y-5">
-            {/* 4 Analytics Highlights Cards (Strictly Real Data) */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              {/* Card 1: Pre-test avg */}
-              <div className="bg-white rounded-3xl p-4 shadow-clay border border-slate-100 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center text-2xl flex-shrink-0">
-                  🟦
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-slate-400">Pre-test เฉลี่ย</p>
-                  <p className="text-xl font-display font-extrabold text-slate-900 mt-0.5">
-                    {analytics.avgPre !== null ? `${analytics.avgPre}%` : 'ยังไม่มีข้อมูล'}
-                  </p>
-                  <p className="text-[10px] text-slate-500">
-                    {analytics.preDoneCount > 0 ? `ทำแล้ว ${analytics.preDoneCount} คน` : 'รอเริ่มทำก่อนเรียน'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Card 2: Post-test avg */}
-              <div className="bg-white rounded-3xl p-4 shadow-clay border border-slate-100 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl flex-shrink-0">
-                  🟩
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-slate-400">Post-test เฉลี่ย</p>
-                  <p className="text-xl font-display font-extrabold text-emerald-600 mt-0.5">
-                    {analytics.avgPost !== null ? `${analytics.avgPost}%` : 'ยังไม่มีข้อมูล'}
-                  </p>
-                  <p className="text-[10px] text-slate-500">
-                    {analytics.postDoneCount > 0 ? `ทำแล้ว ${analytics.postDoneCount} คน` : 'รอเรียนจบเนื้อหา'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Card 3: Gain Delta avg */}
-              <div className="bg-white rounded-3xl p-4 shadow-clay border border-slate-100 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl flex-shrink-0">
-                  🚀
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-slate-400">พัฒนาการ (Gain Delta)</p>
-                  <p className="text-xl font-display font-extrabold text-indigo-600 mt-0.5">
-                    {analytics.avgDelta !== null
-                      ? `${analytics.avgDelta > 0 ? '+' : ''}${analytics.avgDelta}%`
-                      : 'รอเปรียบเทียบ'}
-                  </p>
-                  <p className="text-[10px] text-slate-500">
-                    {analytics.avgDelta !== null ? 'คะแนนเพิ่มขึ้นเฉลี่ย' : 'ต้องมีทั้ง Pre และ Post'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Card 4: Certificates issued */}
-              <div className="bg-white rounded-3xl p-4 shadow-clay border border-slate-100 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl flex-shrink-0">
-                  🏆
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-slate-400">เกียรติบัตรที่ออกแล้ว</p>
-                  <p className="text-xl font-display font-extrabold text-amber-600 mt-0.5">
+                <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-100 text-center">
+                  <p className="text-[10px] font-bold text-amber-600 uppercase">เกียรติบัตร</p>
+                  <p className="text-lg font-display font-black text-amber-900 mt-0.5">
                     {analytics.certCount} <span className="text-xs font-normal text-slate-500">/{analytics.total}</span>
                   </p>
-                  <p className="text-[10px] text-slate-500">ผ่านเกณฑ์สำเร็จการศึกษา</p>
+                  <p className="text-[10px] text-amber-600">สำเร็จการศึกษา</p>
                 </div>
               </div>
-            </div>
 
-            {/* Academic Research Statistics Card (สรุปสถิติสำหรับรายงานวิจัย/วิทยานิพนธ์ - Light Theme) */}
-            <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-clay border border-slate-200/80 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xl">📊</span>
-                    <h3 className="font-display font-extrabold text-base text-slate-900">
-                      สถิติวิเคราะห์งานวิจัย (Research Statistical Analysis)
-                    </h3>
-                    <span className="text-[11px] bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2.5 py-0.5 rounded-full font-bold">
-                      N = {analytics.pairedCount} คน (กลุ่มตัวอย่างคู่สมบูรณ์)
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    วิเคราะห์เปรียบเทียบผลสัมฤทธิ์ก่อน-หลังเรียน, ดัชนีประสิทธิผลการเรียนรู้แบบปรับฐานของเฮค (Hake's Gain), และขนาดอิทธิพล (Cohen's d)
-                  </p>
+              {/* Collapsible Research Stats Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setShowResearchStats(!showResearchStats)}
+                className="w-full py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200/70 flex items-center justify-between gap-2 transition-all"
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span>📊</span>
+                  <span className="truncate">สถิติงานวิจัย (Hake's Gain / Cohen's d)</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold flex-shrink-0">
+                    N={analytics.pairedCount}
+                  </span>
                 </div>
+                <span className="text-slate-400 font-mono text-[11px] flex-shrink-0">{showResearchStats ? '▲ ซ่อน' : '▼ ดูสถิติ'}</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={handleCopyResearchSummary}
-                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm hover:shadow transition-all active:scale-95 flex-shrink-0"
-                  title="คัดลอกข้อความสรุปสถิติทั้งหมดพร้อมนำไปวางในเล่มรายงานวิจัยหรือโปรแกรม Word"
-                >
-                  <span>📋</span>
-                  <span>{copyResearchSuccess ? 'คัดลอกสรุปสถิติสำเร็จ!' : 'คัดลอกสรุปสำหรับรายงานวิจัย/Word'}</span>
-                </button>
-              </div>
-
-              {/* 3 Academic Metrics Columns */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
-                {/* Column 1: Knowledge Test (Pre vs Post) */}
-                <div className="bg-sky-50/60 hover:bg-sky-50/90 border border-sky-100 rounded-2xl p-4 space-y-3 flex flex-col justify-between transition-colors">
-                  <div>
-                    <p className="text-xs font-extrabold text-sky-800 flex items-center gap-1.5">
-                      <span>🎯</span> 1. ผลสัมฤทธิ์ความรู้ ({PART3_KNOWLEDGE_QUESTIONS.length} ข้อ)
+              {/* Research Statistics Expanded Box */}
+              {showResearchStats && (
+                <div className="pt-2 space-y-3 animate-fade-in border-t border-slate-100">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-slate-500">
+                      สรุปข้อมูลเปรียบเทียบก่อน-หลังเรียนสำหรับนำไปเขียนเล่มวิจัย/วิทยานิพนธ์
                     </p>
-                    <div className="space-y-2 mt-2.5">
-                      <div className="flex justify-between items-center text-slate-600">
-                        <span className="text-slate-600 font-medium">ก่อนเรียน (Pre Mean ± SD):</span>
-                        <b className="text-sky-800 font-mono text-sm font-bold">{analytics.pairedPreStats.str}%</b>
-                      </div>
-                      <div className="flex justify-between items-center text-slate-600">
-                        <span className="text-slate-600 font-medium">หลังเรียน (Post Mean ± SD):</span>
-                        <b className="text-emerald-700 font-mono text-sm font-bold">{analytics.pairedPostStats.str}%</b>
-                      </div>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyResearchSummary}
+                      className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
+                    >
+                      <span>📋</span>
+                      <span>{copyResearchSuccess ? 'คัดลอกสำเร็จ!' : 'คัดลอกสรุปสถิติใส่ Word'}</span>
+                    </button>
                   </div>
 
-                  <div className="pt-2.5 border-t border-sky-200/70 flex justify-between items-center">
-                    <span className="text-slate-700 font-semibold">พัฒนาการ (Mean Gain):</span>
-                    <b className="text-indigo-700 font-mono text-sm font-bold">
-                      {analytics.pairedDeltaStats.mean >= 0 ? `+${analytics.pairedDeltaStats.mean}%` : `${analytics.pairedDeltaStats.mean}%`}
-                      <span className="text-[10px] text-slate-500 font-normal ml-1">(SD {analytics.pairedDeltaStats.sd})</span>
-                    </b>
-                  </div>
-                </div>
-
-                {/* Column 2: Hake's Gain & Cohen's d */}
-                <div className="bg-amber-50/60 hover:bg-amber-50/90 border border-amber-100 rounded-2xl p-4 space-y-3 flex flex-col justify-between transition-colors">
-                  <div>
-                    <p className="text-xs font-extrabold text-amber-800 flex items-center gap-1.5">
-                      <span>📈</span> 2. ประสิทธิผล & ขนาดอิทธิพล
-                    </p>
-                    <div className="space-y-2.5 mt-2.5">
-                      <div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-slate-600 font-medium">Hake's Gain ⟨g⟩:</span>
-                          <b className="text-amber-800 font-mono text-sm font-bold">
-                            {analytics.hakeGainAvg !== null ? analytics.hakeGainAvg : '-'}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs">
+                    {/* Column 1 */}
+                    <div className="bg-sky-50/70 border border-sky-100 rounded-2xl p-3 space-y-2">
+                      <p className="font-extrabold text-sky-900">🎯 1. ผลสัมฤทธิ์ความรู้ ({PART3_KNOWLEDGE_QUESTIONS.length} ข้อ)</p>
+                      <div className="space-y-1 text-slate-700 text-[11px]">
+                        <div className="flex justify-between">
+                          <span>ก่อนเรียน (Pre):</span>
+                          <b>{analytics.pairedPreStats.str}%</b>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>หลังเรียน (Post):</span>
+                          <b className="text-emerald-700">{analytics.pairedPostStats.str}%</b>
+                        </div>
+                        <div className="flex justify-between pt-1 border-t border-sky-200">
+                          <span>Mean Gain:</span>
+                          <b className="text-indigo-700">
+                            {analytics.pairedDeltaStats.mean >= 0 ? `+${analytics.pairedDeltaStats.mean}%` : `${analytics.pairedDeltaStats.mean}%`}
                           </b>
                         </div>
-                        <p className="text-[11px] font-medium text-amber-700 mt-0.5">
-                          {analytics.hakeGainCategory}
-                        </p>
                       </div>
+                    </div>
 
-                      <div className="pt-2 border-t border-amber-200/70">
-                        <div className="flex justify-between items-center">
-                          <span className="text-slate-600 font-medium">Cohen's d:</span>
-                          <b className="text-purple-700 font-mono text-sm font-bold">
-                            {analytics.cohensD !== null ? analytics.cohensD : '-'}
-                          </b>
+                    {/* Column 2 */}
+                    <div className="bg-amber-50/70 border border-amber-100 rounded-2xl p-3 space-y-2">
+                      <p className="font-extrabold text-amber-900">📈 2. ประสิทธิผล & ขนาดอิทธิพล</p>
+                      <div className="space-y-1 text-slate-700 text-[11px]">
+                        <div className="flex justify-between">
+                          <span>Hake's Gain ⟨g⟩:</span>
+                          <b className="text-amber-800">{analytics.hakeGainAvg !== null ? analytics.hakeGainAvg : '-'}</b>
                         </div>
-                        <p className="text-[11px] font-medium text-purple-700 mt-0.5">
-                          {analytics.cohensCategory}
-                        </p>
+                        <p className="text-[10px] text-amber-700">{analytics.hakeGainCategory}</p>
+                        <div className="flex justify-between pt-1 border-t border-amber-200">
+                          <span>Cohen's d:</span>
+                          <b className="text-purple-700">{analytics.cohensD !== null ? analytics.cohensD : '-'}</b>
+                        </div>
+                        <p className="text-[10px] text-purple-700">{analytics.cohensCategory}</p>
+                      </div>
+                    </div>
+
+                    {/* Column 3 */}
+                    <div className="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-3 space-y-2">
+                      <p className="font-extrabold text-emerald-900">🛡️ 3. ทักษะปฏิเสธ & พึงพอใจ</p>
+                      <div className="space-y-1 text-slate-700 text-[11px]">
+                        <div className="flex justify-between">
+                          <span>ทักษะก่อน:</span>
+                          <b>{analytics.preSkillStats.str}</b>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>ทักษะหลัง:</span>
+                          <b>{analytics.postSkillStats.str}</b>
+                        </div>
+                        <div className="flex justify-between pt-1 border-t border-emerald-200">
+                          <span>ความพึงพอใจบอท:</span>
+                          <b className="text-amber-600">⭐ {analytics.evalStats.str}/5.0</b>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Column 3: Refusal Skills & Chatbot Usability */}
-                <div className="bg-emerald-50/60 hover:bg-emerald-50/90 border border-emerald-100 rounded-2xl p-4 space-y-3 flex flex-col justify-between transition-colors">
-                  <div>
-                    <p className="text-xs font-extrabold text-emerald-800 flex items-center gap-1.5">
-                      <span>🛡️</span> 3. ทักษะปฏิเสธ & ความพึงพอใจ
-                    </p>
-                    <div className="space-y-2 mt-2.5">
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-600 font-medium">ทักษะก่อน (Pre Mean ± SD):</span>
-                        <b className="text-slate-800 font-mono text-sm font-bold">{analytics.preSkillStats.str}</b>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-600 font-medium">ทักษะหลัง (Post Mean ± SD):</span>
-                        <b className="text-slate-800 font-mono text-sm font-bold">{analytics.postSkillStats.str}</b>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-2.5 border-t border-emerald-200/70 flex justify-between items-center">
-                    <span className="text-slate-700 font-semibold">ความพึงพอใจบอท (ตอน 5):</span>
-                    <b className="text-amber-600 font-mono text-sm font-bold flex items-center gap-1">
-                      <span>⭐</span> {analytics.evalStats.str} <span className="text-[10px] text-slate-500 font-normal">/ 5.0</span>
-                    </b>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Error banner if any */}
@@ -2233,126 +2104,103 @@ export default function TeacherAdmin() {
 
             {/* Empty State when no real students exist */}
             {filteredStudents.length === 0 && (
-              <div className="bg-white rounded-3xl p-8 text-center border border-slate-100 shadow-clay space-y-3">
+              <div className="bg-white rounded-3xl p-8 text-center border border-slate-100 shadow-sm space-y-3">
                 <span className="text-4xl">📝</span>
                 <h3 className="font-display font-bold text-slate-800 text-base">
-                  ยังไม่มีข้อมูลผู้เรียนในระบบ
+                  ยังไม่มีข้อมูลผู้เรียนที่ตรงกับเงื่อนไข
                 </h3>
                 <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                  เมื่อนักเรียนเริ่มเข้าใช้งาน ทำแบบทดสอบก่อนเรียน (Pre-test) เล่นเกม หรือทำแบบทดสอบหลังเรียน (Post-test)
-                  ข้อมูลคะแนนจริงและพัฒนาการจะถูกส่งมาแสดงที่นี่และบันทึกลงฐานข้อมูลคลาวด์ทันที
+                  เมื่อนักเรียนเริ่มเข้าใช้งาน ทำแบบทดสอบก่อนเรียน หรือเล่นเกม ข้อมูลคะแนนและพัฒนาการจะปรากฏที่นี่ทันที
                 </p>
-                <div className="pt-2">
-                  <a
-                    href={admin.googleSheetUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200 hover:bg-emerald-100 transition-colors"
-                  >
-                    <span>🌐 ตรวจสอบบน Google Sheets</span>
-                  </a>
-                </div>
               </div>
             )}
 
             {/* =============================================================== */}
-            {/* 1.2 A: MOBILE CARDS VIEW (block md:hidden)                      */}
+            {/* 1.2 A: CARDS VIEW (1 col on Phone, 2 cols on iPad/PC)           */}
             {/* =============================================================== */}
-            {filteredStudents.length > 0 && (
-              <div className="block md:hidden space-y-3">
+            {filteredStudents.length > 0 && studentViewMode !== 'table' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {displayedStudents.map((s, idx) => {
                   const globalIdx = pageSize === 'all' ? idx + 1 : (currentPage - 1) * pageSize + idx + 1;
                   return (
                   <div
                     key={s.userIdHash || idx}
                     onClick={() => setSelectedStudent(s)}
-                    className="bg-white rounded-3xl p-4 shadow-clay border border-slate-100 space-y-3 cursor-pointer hover:border-detective-300 transition-all active:scale-[0.99]"
+                    className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80 space-y-3 cursor-pointer hover:border-blue-300 active:scale-[0.99] transition-all flex flex-col justify-between"
                   >
-                    {/* Row 1: Student info + Cert badge */}
-                    <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-extrabold text-detective-700 bg-detective-50 px-2 py-0.5 rounded-lg">
-                            #{globalIdx}
-                          </span>
-                          <h3 className="font-bold text-slate-900 text-sm">{s.realName}</h3>
-                          {s.nickname && s.nickname !== s.realName && (
-                            <span className="text-xs text-slate-500 font-medium">({s.nickname})</span>
-                          )}
+                    {/* Row 1: Student avatar + name + cert */}
+                    <div className="flex items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 font-display font-black flex items-center justify-center text-xs flex-shrink-0 border border-blue-100">
+                          {globalIdx}
                         </div>
-                        <p className="text-[11px] text-slate-500 mt-0.5">
-                          ID: <b className="text-detective-700">{s.idCode || '-'}</b> · {s.grade} · {s.school}
-                        </p>
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-slate-900 text-xs sm:text-sm truncate">
+                            {s.realName} {s.nickname && s.nickname !== s.realName && `(${s.nickname})`}
+                          </h4>
+                          <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                            ID: <b className="text-blue-700">{s.idCode || '-'}</b> · {s.grade} · {s.school}
+                          </p>
+                        </div>
                       </div>
 
                       {s.certificateNo ? (
-                        <span className="px-2 py-1 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold flex items-center gap-1">
-                          <span>🏆</span> {s.certificateNo.slice(-4)}
+                        <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200/80 flex items-center gap-1 flex-shrink-0">
+                          🏆 {s.certificateNo.slice(-4)}
                         </span>
                       ) : (
-                        <span className="text-[10px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg">
-                          ยังไม่จบ
+                        <span className="text-[10px] text-slate-400 bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded-full flex-shrink-0">
+                          กำลังเรียน
                         </span>
                       )}
                     </div>
 
-                    {/* Row 2: 3-colored Score Pills */}
-                    <div className="grid grid-cols-3 gap-1.5 text-center">
-                      <div className="bg-sky-50 border border-sky-100 rounded-2xl p-2">
-                        <p className="text-[10px] font-bold text-sky-700">Pre-test</p>
-                        <p className="font-display font-extrabold text-sm text-sky-900 mt-0.5">
+                    {/* Row 2: 3 Score Pillars */}
+                    <div className="grid grid-cols-3 gap-1.5 text-center bg-slate-50/90 p-2.5 rounded-2xl border border-slate-100">
+                      <div>
+                        <p className="text-[10px] text-slate-500 font-bold">ก่อนเรียน (Pre)</p>
+                        <p className="font-display font-black text-sm text-blue-600 mt-0.5">
                           {s.preTestScore !== undefined ? `${s.preTestScore}%` : '-'}
                         </p>
                       </div>
-
-                      <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-2">
-                        <p className="text-[10px] font-bold text-emerald-700">Post-test</p>
-                        <p className="font-display font-extrabold text-sm text-emerald-900 mt-0.5">
+                      <div className="border-x border-slate-200/70">
+                        <p className="text-[10px] text-slate-500 font-bold">หลังเรียน (Post)</p>
+                        <p className="font-display font-black text-sm text-emerald-600 mt-0.5">
                           {s.postTestScore !== undefined ? `${s.postTestScore}%` : '-'}
                         </p>
                       </div>
-
-                      <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-2">
-                        <p className="text-[10px] font-bold text-indigo-700">พัฒนาการ</p>
-                        <p
-                          className={`font-display font-extrabold text-sm mt-0.5 ${
-                            s.gainDelta !== undefined && s.gainDelta >= 0
-                              ? 'text-emerald-600'
-                              : 'text-rose-600'
-                          }`}
-                        >
-                          {s.gainDelta !== undefined
-                            ? `${s.gainDelta > 0 ? '+' : ''}${s.gainDelta}%`
-                            : '-'}
+                      <div>
+                        <p className="text-[10px] text-slate-500 font-bold">พัฒนาการ</p>
+                        <p className={`font-display font-black text-sm mt-0.5 ${
+                          s.gainDelta !== undefined && s.gainDelta >= 0 ? 'text-indigo-600' : 'text-rose-600'
+                        }`}>
+                          {s.gainDelta !== undefined ? `${s.gainDelta > 0 ? '+' : ''}${s.gainDelta}%` : '-'}
                         </p>
                       </div>
                     </div>
 
-                    {/* Row 3: Progress indicators */}
-                    <div className="flex items-center justify-between text-[11px] text-slate-600 bg-slate-50/80 px-3 py-1.5 rounded-xl">
-                      <span>ด่าน: <b>{s.stagesCompletedCount}/{s.totalStages || 20}</b></span>
-                      <span>XP: <b className="text-detective-700">{s.totalXP.toLocaleString()}</b></span>
-                      <span>ประเมินแชตบอต: <b className="text-amber-700">{s.evalPart5Avg ? `⭐ ${s.evalPart5Avg}` : '-'}</b></span>
-                    </div>
-
-                    {/* Row 4: Action Buttons (Edit & Delete) */}
-                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                      <button
-                        type="button"
-                        onClick={(e) => handleOpenEdit(s, e)}
-                        className="px-2.5 py-1 rounded-xl bg-detective-50 text-detective-700 hover:bg-detective-100 text-xs font-bold border border-detective-200 flex items-center gap-1 transition-colors"
-                        title="แก้ไขข้อมูล (โรงเรียน, ชั้น, ชื่อ, รหัส)"
-                      >
-                        <span>✏️</span> แก้ไขข้อมูล
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => handleDeleteStudent(s, e)}
-                        className="px-2 py-1 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold border border-rose-200 flex items-center gap-1 transition-colors"
-                        title="ลบข้อมูลทดสอบ"
-                      >
-                        <span>🗑️</span>
-                      </button>
+                    {/* Row 3: Action Buttons */}
+                    <div className="flex items-center justify-between text-xs pt-0.5">
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        🎮 ด่าน {s.stagesCompletedCount}/{s.totalStages || 20} · <b className="text-slate-700">{s.totalXP.toLocaleString()} XP</b>
+                      </span>
+                      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleOpenEdit(s, e)}
+                          className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200/80 transition-colors"
+                        >
+                          ✏️ แก้ไข
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteStudent(s, e)}
+                          className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold border border-rose-200/80 transition-colors"
+                          title="ลบข้อมูล"
+                        >
+                          🗑️ ลบ
+                        </button>
+                      </div>
                     </div>
                   </div>
                   );
@@ -2361,14 +2209,14 @@ export default function TeacherAdmin() {
             )}
 
             {/* =============================================================== */}
-            {/* 1.2 B: DESKTOP TABLE VIEW (hidden md:block)                      */}
+            {/* 1.2 B: FULL TABLE VIEW (When toggled to Table mode on iPad/PC)   */}
             {/* =============================================================== */}
-            {filteredStudents.length > 0 && (
-              <div className="hidden md:block bg-white rounded-3xl shadow-clay border border-slate-100 overflow-hidden">
+            {filteredStudents.length > 0 && studentViewMode === 'table' && (
+              <div className="bg-white rounded-3xl shadow-clay border border-slate-100 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-gradient-to-r from-detective-50 to-sky-50 text-detective-900 font-bold border-b border-slate-200">
+                      <tr className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                         <th className="py-3 px-3 text-center">#</th>
                         <th className="py-3 px-3">ID Code</th>
                         <th className="py-3 px-3">ชื่อ-นามสกุลจริง</th>
@@ -2602,14 +2450,15 @@ export default function TeacherAdmin() {
         {/* TAB: Item Analysis & Distractor Distribution (21 ข้อ & ตัวลวง)       */}
         {/* =================================================================== */}
         {activeTab === 'item_analysis' && (
-          <div className="space-y-5">
-            {/* Sub-tabs for Item Analysis */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-2xl shadow-sm border border-slate-100">
-              <div className="flex gap-1.5 overflow-x-auto">
+          <div className="space-y-4 sm:space-y-5">
+            {/* Sub-tabs & Export Bar for Item Analysis */}
+            <div className="bg-white p-3.5 sm:p-4 rounded-3xl shadow-sm border border-slate-200/80 space-y-3">
+              {/* Row 1: 3-Column Sub-tab Switcher (Fits 100% on Phone, iPad, PC) */}
+              <div className="grid grid-cols-3 gap-1.5 bg-slate-100/90 p-1 rounded-2xl">
                 {[
-                  { id: 'knowledge', label: `🎯 ${PART3_KNOWLEDGE_QUESTIONS.length} ข้อความรู้ & อัตราตอบถูก/ผิด` },
-                  { id: 'skills', label: `🛡️ ${PART4_REFUSAL_SKILLS.length} ข้อทักษะการปฏิเสธ (1-5)` },
-                  { id: 'app_eval', label: `⭐ ${PART5_CHATBOT_EVALUATION.length} ข้อประเมินแชตบอต` },
+                  { id: 'knowledge', label: `🎯 ความรู้ (${PART3_KNOWLEDGE_QUESTIONS.length} ข้อ)`, shortLabel: `🎯 ความรู้ (${PART3_KNOWLEDGE_QUESTIONS.length})` },
+                  { id: 'skills', label: `🛡️ ทักษะปฏิเสธ (${PART4_REFUSAL_SKILLS.length} ข้อ)`, shortLabel: `🛡️ ทักษะ (${PART4_REFUSAL_SKILLS.length})` },
+                  { id: 'app_eval', label: `⭐ ประเมินบอท (${PART5_CHATBOT_EVALUATION.length} ข้อ)`, shortLabel: `⭐ ประเมิน (${PART5_CHATBOT_EVALUATION.length})` },
                 ].map((st) => (
                   <button
                     key={st.id}
@@ -2617,44 +2466,73 @@ export default function TeacherAdmin() {
                       sfx.click();
                       setItemAnalysisSubTab(st.id as any);
                     }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                    className={`py-2 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center truncate ${
                       itemAnalysisSubTab === st.id
-                        ? 'bg-detective-600 text-white shadow-sm'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        ? 'bg-blue-600 text-white shadow-sm font-extrabold'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                     }`}
                   >
-                    {st.label}
+                    <span className="sm:hidden">{st.shortLabel}</span>
+                    <span className="hidden sm:inline">{st.label}</span>
                   </button>
                 ))}
               </div>
 
-              {/* SPSS Quick Action Buttons */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={handleCopyItemAnalysis}
-                  className="px-3 py-1.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-800 text-xs font-bold hover:bg-sky-100 flex items-center gap-1.5 transition-all shadow-sm"
-                  title="คัดลอกตารางวิเคราะห์ความยากและอัตราตอบถูกรายข้อไปวางใน Word หรือ Excel ได้ทันที"
-                >
-                  <span>📋</span>
-                  <span>{copyItemAnalysisSuccess ? 'คัดลอกรายข้อแล้ว!' : 'คัดลอกตารางวิเคราะห์รายข้อ'}</span>
-                </button>
-                <button
-                  onClick={handleCopyBinaryToClipboard}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold hover:bg-indigo-100 flex items-center gap-1.5 transition-all shadow-sm"
-                  title="คัดลอกตาราง 1/0 ทั้งหมด (SPSS TSV) เพื่อนำไปวางใน SPSS / Jamovi"
-                >
-                  <span>📋</span>
-                  <span>{copyBinarySuccess ? 'คัดลอก 1/0 สำเร็จ!' : 'คัดลอก 1/0 สำหรับ SPSS'}</span>
-                </button>
-                <button
-                  onClick={handleDownloadBinaryCsv}
-                  className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold hover:bg-emerald-100 flex items-center gap-1.5 transition-all shadow-sm"
-                  title="ดาวน์โหลดไฟล์ CSV 1/0 พร้อม UTF-8 BOM"
-                >
-                  <span>📥</span>
-                  <span>ดาวน์โหลด CSV 1/0</span>
-                </button>
+              {/* Row 2: School Filter + SPSS Quick Action Buttons */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                {availableSchools.length > 1 ? (
+                  <div className="w-full sm:w-52">
+                    <select
+                      value={selectedSchool}
+                      onChange={(e) => setSelectedSchool(e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+                    >
+                      <option value="all">🏫 ทุกโรงเรียน ({availableSchools.length} แห่ง)</option>
+                      {availableSchools.map((sch) => (
+                        <option key={sch} value={sch}>
+                          🏫 {sch}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    ส่งออกข้อมูลวิเคราะห์รายข้อ (SPSS / Excel):
+                  </span>
+                )}
+
+                <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={handleExportExcel}
+                    className="px-2.5 py-1.5 rounded-xl bg-emerald-600 text-white text-[11px] font-bold hover:bg-emerald-700 flex items-center gap-1 transition-all shadow-sm"
+                  >
+                    <span>📊</span>
+                    <span>Excel (.xlsx)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCopyItemAnalysis}
+                    className="px-2.5 py-1.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-800 text-[11px] font-bold hover:bg-sky-100 flex items-center gap-1 transition-all"
+                  >
+                    <span>📋</span>
+                    <span>{copyItemAnalysisSuccess ? 'คัดลอกแล้ว!' : 'คัดลอกตารางรายข้อ'}</span>
+                  </button>
+                  <button
+                    onClick={handleCopyBinaryToClipboard}
+                    className="px-2.5 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-bold hover:bg-indigo-100 flex items-center gap-1 transition-all"
+                  >
+                    <span>📋</span>
+                    <span>{copyBinarySuccess ? 'คัดลอก 1/0 แล้ว!' : 'คัดลอก 1/0 (SPSS)'}</span>
+                  </button>
+                  <button
+                    onClick={handleDownloadBinaryCsv}
+                    className="px-2.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-200 flex items-center gap-1 transition-all"
+                  >
+                    <span>📥</span>
+                    <span>CSV 1/0</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -2880,17 +2758,53 @@ export default function TeacherAdmin() {
 
             {/* Sub-tab 2: Refusal Skills (20 Items) */}
             {itemAnalysisSubTab === 'skills' && (
-              <div className="space-y-4">
-                <div className="bg-white rounded-3xl p-5 shadow-clay border border-slate-100 space-y-2">
-                  <h2 className="text-base font-display font-extrabold text-slate-900 flex items-center gap-2">
-                    <span>🛡️</span> การประเมินทักษะการปฏิเสธบุหรี่ไฟฟ้า (ตอนที่ 4 จำนวน 20 ข้อ)
+              <div className="space-y-3.5">
+                <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200/80 space-y-1">
+                  <h2 className="text-sm sm:text-base font-display font-extrabold text-slate-900 flex items-center gap-2">
+                    <span>🛡️</span> การประเมินทักษะการปฏิเสธบุหรี่ไฟฟ้า ({PART4_REFUSAL_SKILLS.length} ข้อ)
                   </h2>
                   <p className="text-xs text-slate-500">
-                    เกณฑ์การให้คะแนน Likert Scale 1 - 5 ระดับ (1 = น้อยที่สุด, 5 = มากที่สุด) เปรียบเทียบค่าเฉลี่ยก่อนเรียนและหลังเรียน
+                    เกณฑ์ Likert Scale 1 - 5 ระดับ เปรียบเทียบค่าเฉลี่ยก่อนเรียน (Pre) และหลังเรียน (Post)
                   </p>
                 </div>
 
-                <div className="bg-white rounded-3xl shadow-clay border border-slate-100 overflow-hidden">
+                {/* Mobile & iPad Card View */}
+                <div className="grid grid-cols-1 md:hidden gap-2.5">
+                  {refusalSkillsAnalysis.map((sk) => (
+                    <div
+                      key={sk.no}
+                      className="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-sm space-y-2.5"
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-extrabold text-xs flex-shrink-0">
+                          ข้อ {sk.no}
+                        </span>
+                        <p className="text-xs font-bold text-slate-800 leading-snug">
+                          {sk.item.text}
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-center bg-slate-50 p-2 rounded-xl border border-slate-100 text-[11px]">
+                        <div>
+                          <span className="text-[10px] text-slate-400 block">ก่อนเรียน</span>
+                          <b className="text-sky-700">{sk.preAvg !== null ? sk.preAvg.toFixed(2) : '-'}</b>
+                        </div>
+                        <div className="border-x border-slate-200/70">
+                          <span className="text-[10px] text-slate-400 block">หลังเรียน</span>
+                          <b className="text-emerald-700">{sk.postAvg !== null ? sk.postAvg.toFixed(2) : '-'}</b>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block">ผลต่าง (Δ)</span>
+                          <b className={sk.delta !== null && sk.delta >= 0 ? 'text-indigo-700' : 'text-rose-600'}>
+                            {sk.delta !== null ? (sk.delta > 0 ? `+${sk.delta.toFixed(2)}` : sk.delta.toFixed(2)) : '-'}
+                          </b>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block bg-white rounded-3xl shadow-clay border border-slate-100 overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
@@ -3004,539 +2918,357 @@ export default function TeacherAdmin() {
         )}
 
         {/* =================================================================== */}
-        {/* TAB 2: Exam & App Controls                                         */}
+        {/* TAB 2: Exam & App Controls (โหมดจัดสอบ & ตั้งค่าระบบแบบ Mobile-First) */}
         {/* =================================================================== */}
         {activeTab === 'controls' && (
-          <div className="max-w-3xl mx-auto space-y-5">
-            {/* 1-Click Classroom Preset Modes Card */}
-            <div className="bg-gradient-to-br from-indigo-50/80 via-white to-sky-50/60 rounded-3xl p-5 sm:p-6 shadow-clay border border-indigo-100 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 pb-3">
+          <div className="space-y-4 animate-fade-in max-w-2xl mx-auto">
+            {/* 1. STATUS HEADER CARD (บอกสถานะปัจจุบันชัดเจน ไม่ว่างเปล่า) */}
+            <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-sm sm:text-base font-display font-extrabold text-slate-900 flex items-center gap-2">
+                  <span>⚡</span> โหมดควบคุมระบบ (System Preset Modes)
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  แตะปุ่มเพื่อสลับโหมดทันที ซิงค์ไปยังนักเรียนทุกคนแบบเรียลไทม์
+                </p>
+              </div>
+
+              {/* Status Badge with Live Indicator */}
+              <div className="flex items-center gap-1.5 self-start sm:self-center flex-shrink-0">
+                <span className="text-[11px] font-bold text-slate-400">สถานะขณะนี้:</span>
+                <span className="px-3 py-1.5 rounded-2xl text-xs font-bold border border-blue-200 bg-blue-50 text-blue-700 flex items-center gap-1.5 shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-blue-600" />
+                  {currentPreset === 'public' && '🌐 โหมดเปิดสาธารณะ (24 ชม.)'}
+                  {currentPreset === 'pre_only' && '📝 โหมดสอบก่อนเรียน (Pre-test)'}
+                  {currentPreset === 'gameplay' && '🎮 โหมดเรียนรู้ในคาบ (Gameplay)'}
+                  {currentPreset === 'post_only' && '🎯 โหมดสอบหลังเรียน (Post-test)'}
+                  {currentPreset === 'bypass_all' && '🔓 โหมดทดสอบอิสระ (Bypass All)'}
+                  {currentPreset === 'custom' && '⚙️ กำหนดค่าเอง (Custom)'}
+                </span>
+              </div>
+            </div>
+
+            {/* 2. FEATURED: โหมดเปิดบริการสู่สาธารณะ */}
+            <div
+              onClick={() => handleApplyPreset('public')}
+              className={`p-4 sm:p-5 rounded-3xl cursor-pointer transition-all active:scale-[0.98] border shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                currentPreset === 'public'
+                  ? 'bg-blue-50/50 border-blue-600 ring-2 ring-blue-100 shadow-sm text-slate-900'
+                  : 'bg-white hover:border-blue-300 text-slate-800 border-slate-200/90'
+              }`}
+            >
+              <div className="flex items-center gap-3.5">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 shadow-sm ${
+                  currentPreset === 'public' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'
+                }`}>
+                  🌐
+                </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">⚡</span>
-                    <h2 className="text-sm sm:text-base font-display font-extrabold text-slate-900">
-                      โหมดควบคุมด่วนสำหรับชั้นเรียน (1-Click Classroom Presets)
-                    </h2>
+                    <span className="font-display font-extrabold text-sm sm:text-base text-slate-900">
+                      โหมดเปิดบริการสู่สาธารณะ (Public Release)
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full font-extrabold text-[10px] bg-blue-100 text-blue-800">
+                      ⭐ แนะนำสำหรับปล่อยจริง
+                    </span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    คลิกปุ่มเดียวเพื่อสลับโหมดการสอบสำหรับนักเรียนทั้งห้อง โดยไม่ต้องไล่เปิด-ปิดสวิตช์ทีละตัว
+                  <p className="text-xs mt-1 leading-relaxed text-slate-500">
+                    ผู้เรียนเล่นเองได้ 24 ชั่วโมง: <b>Pre-test ➔ ผจญภัยด่าน 1-8 ➔ ปลดล็อก Post-test อัตโนมัติ ➔ รับเกียรติบัตร</b>
                   </p>
                 </div>
-
-                <div className="text-xs font-bold">
-                  <span className="text-slate-500 mr-1.5">สถานะปัจจุบัน:</span>
-                  <span className={`px-2.5 py-1 rounded-xl text-xs font-bold border ${
-                    currentPreset === 'pre_only'
-                      ? 'bg-sky-50 text-sky-800 border-sky-300'
-                      : currentPreset === 'post_only'
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                      : currentPreset === 'bypass_all'
-                      ? 'bg-purple-50 text-purple-800 border-purple-300'
-                      : 'bg-amber-50 text-amber-800 border-amber-300'
-                  }`}>
-                    {currentPreset === 'pre_only' && '📝 โหมดสอบก่อนเรียน (Pre-test)'}
-                    {currentPreset === 'post_only' && '🎯 โหมดสอบหลังเรียน (Post-test)'}
-                    {currentPreset === 'bypass_all' && '🔓 โหมดทดสอบระบบอิสระ (Bypass All)'}
-                    {currentPreset === 'custom' && '⚙️ กำหนดค่าเอง (Custom)'}
-                  </span>
-                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Preset 1: Pre-test Only */}
-                <div className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${
-                  currentPreset === 'pre_only'
-                    ? 'bg-sky-50/90 border-sky-300 ring-2 ring-sky-200'
-                    : 'bg-white border-slate-200 hover:border-sky-300 hover:shadow-sm'
+              <div className="self-end sm:self-center flex-shrink-0">
+                <span className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 ${
+                  currentPreset === 'public'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}>
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold text-sky-800 flex items-center gap-1.5">
-                        <span>📝</span> โหมด 1: สอบก่อนเรียน
-                      </span>
-                      {currentPreset === 'pre_only' && (
-                        <span className="text-[10px] font-bold bg-sky-600 text-white px-2 py-0.5 rounded-full">
-                          ✓ ใช้งานอยู่
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
-                      เปิดให้ทำ Pre-test และ<b>บังคับทำให้เสร็จก่อน</b>จึงจะปลดล็อกด่านแรก ปิด Post-test ไม่ให้เด็กกดล่วงหน้า
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleApplyPreset('pre_only')}
-                    disabled={currentPreset === 'pre_only'}
-                    className={`w-full py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                      currentPreset === 'pre_only'
-                        ? 'bg-sky-200 text-sky-700 cursor-default'
-                        : 'bg-sky-600 hover:bg-sky-700 text-white active:scale-95'
-                    }`}
-                  >
-                    {currentPreset === 'pre_only' ? '✓ เปิดใช้งานอยู่แล้ว' : '🚀 สลับเป็นโหมดสอบก่อนเรียน'}
-                  </button>
-                </div>
-
-                {/* Preset 2: Gameplay / Learning */}
-                <div className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 hover:shadow-sm transition-all flex flex-col justify-between space-y-3">
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold text-indigo-800 flex items-center gap-1.5">
-                        <span>🎮</span> โหมด 2: เข้าเรียนเนื้อหา/เล่นเกม
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
-                      นักเรียนเข้าผจญภัยเรียนรู้เนื้อหาด่าน 1-8 ตามลำดับ พร้อมระบบ AI Chatbot (เด็กที่ยังไม่ทำ Pre-test ต้องทำให้เสร็จก่อน)
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleApplyPreset('gameplay')}
-                    className="w-full py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95 transition-all shadow-sm"
-                  >
-                    🎮 สลับเป็นโหมดเรียนรู้เนื้อหา
-                  </button>
-                </div>
-
-                {/* Preset 3: Post-test Mode */}
-                <div className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${
-                  currentPreset === 'post_only'
-                    ? 'bg-emerald-50/90 border-emerald-300 ring-2 ring-emerald-200'
-                    : 'bg-white border-slate-200 hover:border-emerald-300 hover:shadow-sm'
-                }`}>
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold text-emerald-800 flex items-center gap-1.5">
-                        <span>🎯</span> โหมด 3: สอบหลังเรียน
-                      </span>
-                      {currentPreset === 'post_only' && (
-                        <span className="text-[10px] font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-full">
-                          ✓ ใช้งานอยู่
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
-                      เปิดให้นักเรียนเข้าทำ Post-test (เมื่อผ่านด่านครบ 8 ด่าน) พร้อมรับเกียรติบัตร และปิด Pre-test
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleApplyPreset('post_only')}
-                    disabled={currentPreset === 'post_only'}
-                    className={`w-full py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                      currentPreset === 'post_only'
-                        ? 'bg-emerald-200 text-emerald-700 cursor-default'
-                        : 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95'
-                    }`}
-                  >
-                    {currentPreset === 'post_only' ? '✓ เปิดใช้งานอยู่แล้ว' : '🎯 สลับเป็นโหมดสอบหลังเรียน'}
-                  </button>
-                </div>
-
-                {/* Preset 4: Bypass All / Testing */}
-                <div className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${
-                  currentPreset === 'bypass_all'
-                    ? 'bg-purple-50/90 border-purple-300 ring-2 ring-purple-200'
-                    : 'bg-white border-slate-200 hover:border-purple-300 hover:shadow-sm'
-                }`}>
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold text-purple-800 flex items-center gap-1.5">
-                        <span>🔓</span> โหมด 4: ทดสอบระบบอิสระ
-                      </span>
-                      {currentPreset === 'bypass_all' && (
-                        <span className="text-[10px] font-bold bg-purple-600 text-white px-2 py-0.5 rounded-full">
-                          ✓ ใช้งานอยู่
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
-                      ปลดล็อกทุกส่วน ข้ามด่านได้อิสระ เปิดทั้ง Pre และ Post เหมาะสำหรับการตรวจสอบระบบของอาจารย์
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleApplyPreset('bypass_all')}
-                    disabled={currentPreset === 'bypass_all'}
-                    className={`w-full py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                      currentPreset === 'bypass_all'
-                        ? 'bg-purple-200 text-purple-700 cursor-default'
-                        : 'bg-purple-600 hover:bg-purple-700 text-white active:scale-95'
-                    }`}
-                  >
-                    {currentPreset === 'bypass_all' ? '✓ เปิดใช้งานอยู่แล้ว' : '🔓 สลับเป็นโหมดทดสอบอิสระ'}
-                  </button>
-                </div>
-              </div>
-            </div>
-            {/* Group 1: Core Exam Access */}
-            <div className="bg-white rounded-3xl p-6 shadow-clay border border-slate-100 space-y-4">
-              <div className="border-b border-slate-100 pb-2.5">
-                <h2 className="text-sm font-display font-extrabold text-slate-900 flex items-center gap-2">
-                  <span>📌 1.</span> การเข้าถึงแบบทดสอบวิจัย (Pre-test / Post-test)
-                </h2>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  ควบคุมการเปิด-ปิดการทำข้อสอบก่อนและหลังเรียนสำหรับนักเรียนทุกคน
-                </p>
-              </div>
-
-              <div className="space-y-2.5">
-                {/* Control 1: Pre-test */}
-                <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">
-                      📝 เปิดให้ทำแบบทดสอบก่อนเรียน (Pre-test)
-                    </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      เปิดให้นักเรียนทำแบบทดสอบวัดผลก่อนเริ่มเล่นเนื้อหา
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleToggleSetting('preTestEnabled', !admin.preTestEnabled)}
-                    className={`w-12 h-7 rounded-full p-0.5 transition-colors ${
-                      admin.preTestEnabled ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 bg-white rounded-full shadow transform transition-transform ${
-                        admin.preTestEnabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Control 1.1: Mandatory Pre-test Gatekeeping */}
-                <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs font-bold text-slate-800">
-                        🔒 บังคับทำแบบประเมินก่อนเรียนก่อนเริ่มเล่นเกม (Pre-test Gatekeeping)
-                      </p>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        admin.requirePreTestBeforePlaying ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'
-                      }`}>
-                        {admin.requirePreTestBeforePlaying ? 'บังคับก่อนเริ่ม' : 'อิสระ'}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      {admin.requirePreTestBeforePlaying
-                        ? 'เปิดใช้งาน: นักเรียนต้องทำ Pre-test ให้เสร็จก่อน จึงจะปลดล็อกด่านที่ 1 และแผนที่ภารกิจ (ป้องกันเด็กข้ามข้อสอบ)'
-                        : 'ปิดใช้งาน: นักเรียนสามารถเข้าเล่นเกมได้ทันทีโดยไม่ต้องทำ Pre-test ให้เสร็จก่อน'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleToggleSetting('requirePreTestBeforePlaying', !admin.requirePreTestBeforePlaying)}
-                    className={`w-12 h-7 rounded-full p-0.5 transition-colors ${
-                      admin.requirePreTestBeforePlaying ? 'bg-indigo-600' : 'bg-slate-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 bg-white rounded-full shadow transform transition-transform ${
-                        admin.requirePreTestBeforePlaying ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Control 2: Post-test */}
-                <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">
-                      🎯 เปิดให้ทำแบบทดสอบหลังเรียน (Post-test)
-                    </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      เปิดให้นักเรียนทำแบบทดสอบวัดผลหลังเรียนจบ
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleToggleSetting('postTestEnabled', !admin.postTestEnabled)}
-                    className={`w-12 h-7 rounded-full p-0.5 transition-colors ${
-                      admin.postTestEnabled ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 bg-white rounded-full shadow transform transition-transform ${
-                        admin.postTestEnabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Control 3: Bypass stage requirement */}
-                <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">
-                      🔓 ปลดล็อกให้ข้ามบทหลักมาทำข้อสอบได้ทันที (Bypass Stages)
-                    </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      นักเรียนสามารถกดทำ Post-test ได้ทันทีแม้ยังเล่นไม่จบ 8 ด่านหลัก (เหมาะสำหรับการทดสอบระบบ)
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleToggleSetting('allowBypassStages', !admin.allowBypassStages)}
-                    className={`w-12 h-7 rounded-full p-0.5 transition-colors ${
-                      admin.allowBypassStages ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 bg-white rounded-full shadow transform transition-transform ${
-                        admin.allowBypassStages ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
+                  {currentPreset === 'public' ? '✓ กำลังเปิดใช้งาน' : 'แตะสลับเป็นโหมดนี้'}
+                </span>
               </div>
             </div>
 
-            {/* Group 2: Modular Test Sections (ปรับลดเมื่อข้อสอบเยอะไป) */}
-            <div className="bg-white rounded-3xl p-6 shadow-clay border border-slate-100 space-y-4">
-              <div className="border-b border-slate-100 pb-2.5">
-                <h2 className="text-sm font-display font-extrabold text-slate-900 flex items-center gap-2">
-                  <span>✂️ 2.</span> ปรับลด/เลือกตอนของแบบทดสอบ (Modular Test Sections)
-                </h2>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  เลือกเปิด-ปิดตอนที่ต้องการ เพื่อย่นระยะเวลาทำแบบทดสอบให้เหมาะสมกับคาบเรียน
-                </p>
+            {/* 3. IN-CLASS 4 PRESETS GRID */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  โหมดคุมสอบในชั้นเรียน & ทดสอบระบบ (In-Class & Sandbox)
+                </span>
+                <span className="text-[11px] text-slate-400">แตะเพื่อสลับทันที</span>
               </div>
 
-              <div className="space-y-2.5">
-                {/* Part 2 Toggle: Behaviors */}
-                <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">
-                      🚬 ตอนที่ 2: แบบสำรวจพฤติกรรมและการลองสูบ (3 ข้อ)
-                    </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      {admin.part2Enabled ? 'เปิดใช้งาน (นักเรียนต้องทำ 3 ข้อ)' : 'ปิดใช้งาน (ข้ามไปทำข้อสอบความรู้ทันที ประหยัดเวลา 2 นาที)'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleToggleSetting('part2Enabled', !admin.part2Enabled)}
-                    className={`w-12 h-7 rounded-full p-0.5 transition-colors ${
-                      admin.part2Enabled ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
-                  >
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {[
+                  {
+                    key: 'pre_only',
+                    icon: '📝',
+                    title: 'คุมสอบก่อนเรียน',
+                    sub: 'เปิดเฉพาะ Pre-test ล็อกเกม',
+                  },
+                  {
+                    key: 'gameplay',
+                    icon: '🎮',
+                    title: 'เรียนรู้ในคาบ',
+                    sub: 'ด่าน 1-8 พร้อม AI',
+                  },
+                  {
+                    key: 'post_only',
+                    icon: '🎯',
+                    title: 'คุมสอบหลังเรียน',
+                    sub: 'เปิด Post ออกเกียรติบัตร',
+                  },
+                  {
+                    key: 'bypass_all',
+                    icon: '🔓',
+                    title: 'ทดสอบอิสระ',
+                    sub: 'ปลดล็อกทุกด่านตรวจงาน',
+                  },
+                ].map((m) => {
+                  const isCurrent = currentPreset === m.key;
+                  return (
                     <div
-                      className={`w-6 h-6 bg-white rounded-full shadow transform transition-transform ${
-                        admin.part2Enabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Part 3 Toggle: Knowledge Questions */}
-                <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-bold text-slate-800">
-                        🧠 ตอนที่ 3: แบบทดสอบความรู้บุหรี่ไฟฟ้า (Knowledge Test)
-                      </p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        {admin.part3Enabled ? 'เปิดใช้งาน (แบบทดสอบ 8 ข้อ ถูก/ผิด)' : 'ปิดใช้งาน (ข้ามส่วนความรู้)'}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleToggleSetting('part3Enabled', !admin.part3Enabled)}
-                      className={`w-12 h-7 rounded-full p-0.5 transition-colors ${
-                        admin.part3Enabled ? 'bg-emerald-500' : 'bg-slate-300'
+                      key={m.key}
+                      onClick={() => handleApplyPreset(m.key as any)}
+                      className={`p-3.5 sm:p-4 rounded-3xl cursor-pointer transition-all active:scale-95 text-center flex flex-col items-center justify-between gap-2 border min-h-[135px] relative ${
+                        isCurrent
+                          ? 'bg-blue-50/40 border-blue-600 ring-2 ring-blue-100 shadow-sm text-slate-900'
+                          : 'bg-white hover:border-slate-300 text-slate-800 border-slate-200/90 shadow-sm'
                       }`}
                     >
-                      <div
-                        className={`w-6 h-6 bg-white rounded-full shadow transform transition-transform ${
-                          admin.part3Enabled ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  {admin.part3Enabled && (
-                    <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between gap-2">
-                      <span className="text-[11px] text-slate-600 font-semibold">ข้อสอบความรู้:</span>
-                      <span className="text-xs font-bold text-detective-700 bg-detective-50 px-2.5 py-1 rounded-xl border border-detective-200">
-                        8 ข้อ ถูก/ผิด (ตรงตามแบบวิจัย 100%)
+                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl shadow-sm ${
+                        isCurrent ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {m.icon}
+                      </div>
+                      <div>
+                        <p className={`font-display font-extrabold text-xs sm:text-sm ${isCurrent ? 'text-blue-900' : 'text-slate-800'}`}>
+                          {m.title}
+                        </p>
+                        <p className="text-[10px] mt-0.5 leading-tight text-slate-400">
+                          {m.sub}
+                        </p>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        isCurrent ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        {isCurrent ? '✓ เปิดอยู่' : 'เลือก'}
                       </span>
                     </div>
-                  )}
-                </div>
-
-                {/* Part 4 Toggle: Refusal Skills */}
-                <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">
-                      🛡️ ตอนที่ 4: แบบประเมินทักษะและความมั่นใจในการปฏิเสธ (20 ข้อ)
-                    </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      {admin.part4Enabled ? 'เปิดใช้งาน (ประเมินระดับความมั่นใจ 1-5 ครบ 20 ข้อ)' : 'ปิดใช้งาน (ข้ามส่วนนี้เพื่อลดเวลาทำข้อสอบลง 3-5 นาที)'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleToggleSetting('part4Enabled', !admin.part4Enabled)}
-                    className={`w-12 h-7 rounded-full p-0.5 transition-colors ${
-                      admin.part4Enabled ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 bg-white rounded-full shadow transform transition-transform ${
-                        admin.part4Enabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Part 5 Toggle: Chatbot Evaluation */}
-                <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">
-                      ⭐ ตอนที่ 5: แบบประเมินประโยชน์ของแชตบอต (7 ข้อ)
-                    </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      เปิดให้นักเรียนทำแบบประเมินความคิดเห็นหลังใช้แชตบอตในการทำ Post-test
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleToggleSetting('part5Enabled', !admin.part5Enabled)}
-                    className={`w-12 h-7 rounded-full p-0.5 transition-colors ${
-                      admin.part5Enabled ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 bg-white rounded-full shadow transform transition-transform ${
-                        admin.part5Enabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Group 3: In-Game Tests & Quizzes */}
-            <div className="bg-white rounded-3xl p-6 shadow-clay border border-slate-100 space-y-4">
-              <div className="border-b border-slate-100 pb-2.5">
-                <h2 className="text-sm font-display font-extrabold text-slate-900 flex items-center gap-2">
-                  <span>🎮 3.</span> แบบทดสอบและควิซอื่นๆ ในเกม
-                </h2>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  ควบคุมการเปิด-ปิดข้อสอบรวมและควิซรายวันในแอป
-                </p>
-              </div>
-
-              <div className="space-y-2.5">
-                {/* Final Exam */}
-                <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">
-                      🎓 แบบทดสอบรวมประจำหลักสูตร (Comprehensive Exam 15 ข้อ)
-                    </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      เปิดให้นักเรียนเข้าทำข้อสอบรวมในหน้า /exam เพื่อรับเหรียญตรา
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleToggleSetting('finalExamEnabled', !admin.finalExamEnabled)}
-                    className={`w-12 h-7 rounded-full p-0.5 transition-colors ${
-                      admin.finalExamEnabled ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 bg-white rounded-full shadow transform transition-transform ${
-                        admin.finalExamEnabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
+            {/* 4. ADVANCED SETTINGS ACCORDION (การตั้งค่าสวิตช์แบบละเอียด - พับเก็บได้ ไม่รกหน้าจอ) */}
+            <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-100 space-y-3">
+              <button
+                type="button"
+                onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+                className="w-full flex items-center justify-between text-left text-xs font-bold text-slate-700 hover:text-slate-900 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-base">⚙️</span>
+                  <span className="font-extrabold text-sm">การตั้งค่าสวิตช์แบบละเอียด (Fine-grained Controls)</span>
                 </div>
+                <span className="text-slate-400 font-mono text-xs">
+                  {showAdvancedSettings ? '▲ ซ่อนการตั้งค่า' : '▼ เปิดดูสวิตช์ (11 รายการ)'}
+                </span>
+              </button>
 
-                {/* Daily Challenge */}
-                <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">
-                      📅 ภารกิจควิซรายวัน (Daily Challenge 5 ข้อ)
+              {showAdvancedSettings && (
+                <div className="space-y-4 pt-3 border-t border-slate-100 animate-fade-in text-xs">
+                  {/* Group 1: Core Exam Access */}
+                  <div className="space-y-2">
+                    <p className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                      <span>📌 1.</span> การเข้าถึงแบบทดสอบวิจัย (Pre-test / Post-test)
                     </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      เปิดควิซรายวันสำหรับสะสมเหรียญและเล่นต่อเนื่อง
-                    </p>
+                    <div className="space-y-2">
+                      {/* Control 1: Pre-test */}
+                      <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-slate-50/50">
+                        <div>
+                          <p className="font-bold text-slate-800">📝 เปิดให้ทำแบบทดสอบก่อนเรียน (Pre-test)</p>
+                          <p className="text-[10px] text-slate-500">เปิดให้นักเรียนทำแบบทดสอบวัดผลก่อนเริ่มเล่นเนื้อหา</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSetting('preTestEnabled', !admin.preTestEnabled)}
+                          className={`w-11 h-6 rounded-full p-0.5 transition-colors ${
+                            admin.preTestEnabled ? 'bg-emerald-500' : 'bg-slate-300'
+                          }`}
+                        >
+                          <div
+                            className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
+                              admin.preTestEnabled ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {/* Control 1.1: Mandatory Pre-test Gatekeeping */}
+                      <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-slate-50/50">
+                        <div>
+                          <p className="font-bold text-slate-800">🔒 บังคับทำ Pre-test ก่อนเริ่มเกม</p>
+                          <p className="text-[10px] text-slate-500">นักเรียนต้องทำ Pre-test ให้เสร็จก่อนจึงจะปลดล็อกด่านแรก</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSetting('requirePreTestBeforePlaying', !admin.requirePreTestBeforePlaying)}
+                          className={`w-11 h-6 rounded-full p-0.5 transition-colors ${
+                            admin.requirePreTestBeforePlaying ? 'bg-indigo-600' : 'bg-slate-300'
+                          }`}
+                        >
+                          <div
+                            className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
+                              admin.requirePreTestBeforePlaying ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {/* Control 2: Post-test */}
+                      <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-slate-50/50">
+                        <div>
+                          <p className="font-bold text-slate-800">🎯 เปิดให้ทำแบบทดสอบหลังเรียน (Post-test)</p>
+                          <p className="text-[10px] text-slate-500">เปิดให้นักเรียนทำแบบทดสอบวัดผลหลังเรียนจบ</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSetting('postTestEnabled', !admin.postTestEnabled)}
+                          className={`w-11 h-6 rounded-full p-0.5 transition-colors ${
+                            admin.postTestEnabled ? 'bg-emerald-500' : 'bg-slate-300'
+                          }`}
+                        >
+                          <div
+                            className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
+                              admin.postTestEnabled ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {/* Control 3: Bypass stage requirement */}
+                      <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-slate-50/50">
+                        <div>
+                          <p className="font-bold text-slate-800">🔓 ปลดล็อกให้ข้ามด่านมาทำข้อสอบได้ทันที</p>
+                          <p className="text-[10px] text-slate-500">สามารถกดทำ Post-test ได้ทันทีแม้ยังเล่นไม่จบ 8 ด่าน</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSetting('allowBypassStages', !admin.allowBypassStages)}
+                          className={`w-11 h-6 rounded-full p-0.5 transition-colors ${
+                            admin.allowBypassStages ? 'bg-emerald-500' : 'bg-slate-300'
+                          }`}
+                        >
+                          <div
+                            className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
+                              admin.allowBypassStages ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => handleToggleSetting('dailyChallengeEnabled', !admin.dailyChallengeEnabled)}
-                    className={`w-12 h-7 rounded-full p-0.5 transition-colors ${
-                      admin.dailyChallengeEnabled ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 bg-white rounded-full shadow transform transition-transform ${
-                        admin.dailyChallengeEnabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-            </div>
 
-            {/* Group 4: Anti-Cheat & Display */}
-            <div className="bg-white rounded-3xl p-6 shadow-clay border border-slate-100 space-y-4">
-              <div className="border-b border-slate-100 pb-2.5">
-                <h2 className="text-sm font-display font-extrabold text-slate-900 flex items-center gap-2">
-                  <span>🛡️ 4.</span> การแสดงผลและการป้องกันการลอก
-                </h2>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  ตั้งค่าเฉลยและสลับข้อสอบเพื่อความเที่ยงตรงของข้อมูล
-                </p>
-              </div>
+                  {/* Group 2: Modular Test Sections */}
+                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                    <p className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                      <span>✂️ 2.</span> ปรับลด/เลือกตอนของแบบทดสอบ
+                    </p>
+                    <div className="space-y-2">
+                      {/* Part 2 Toggle */}
+                      <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-slate-50/50">
+                        <div>
+                          <p className="font-bold text-slate-800">🚬 ตอนที่ 2: แบบสำรวจพฤติกรรม (3 ข้อ)</p>
+                          <p className="text-[10px] text-slate-500">สำรวจประวัติการสูบบุหรี่ไฟฟ้า</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSetting('part2Enabled', !admin.part2Enabled)}
+                          className={`w-11 h-6 rounded-full p-0.5 transition-colors ${
+                            admin.part2Enabled ? 'bg-emerald-500' : 'bg-slate-300'
+                          }`}
+                        >
+                          <div
+                            className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
+                              admin.part2Enabled ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
 
-              <div className="space-y-2.5">
-                {/* Randomize Questions */}
-                <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">
-                      🔀 สลับลำดับข้อสอบอัตโนมัติ (Randomize Questions)
-                    </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      สลับลำดับข้อสอบแบบสุ่ม เพื่อป้องกันนักเรียนลอกข้อสอบกันในห้องเรียน
-                    </p>
+                      {/* Part 3 Toggle */}
+                      <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-slate-50/50">
+                        <div>
+                          <p className="font-bold text-slate-800">🧠 ตอนที่ 3: แบบทดสอบความรู้บุหรี่ไฟฟ้า</p>
+                          <p className="text-[10px] text-slate-500">แบบทดสอบวัดผลสัมฤทธิ์ความรู้</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSetting('part3Enabled', !admin.part3Enabled)}
+                          className={`w-11 h-6 rounded-full p-0.5 transition-colors ${
+                            admin.part3Enabled ? 'bg-emerald-500' : 'bg-slate-300'
+                          }`}
+                        >
+                          <div
+                            className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
+                              admin.part3Enabled ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => handleToggleSetting('randomizeQuestions', !admin.randomizeQuestions)}
-                    className={`w-12 h-7 rounded-full p-0.5 transition-colors ${
-                      admin.randomizeQuestions ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 bg-white rounded-full shadow transform transition-transform ${
-                        admin.randomizeQuestions ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
 
-                {/* Show Explanations */}
-                <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50">
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">
-                      📖 แสดงเฉลยและคำอธิบายหลังทำแบบทดสอบ
+                  {/* Group 3: Anti-Cheat & Display */}
+                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                    <p className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                      <span>🛡️ 3.</span> การแสดงผลและการป้องกันการลอก
                     </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      ค่าเริ่มต้นคือปิดไว้ตามหลักวิจัย แต่สามารถเปิดให้อ่านเฉลยละเอียดได้
-                    </p>
+                    <div className="space-y-2">
+                      {/* Randomize Questions */}
+                      <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-slate-50/50">
+                        <div>
+                          <p className="font-bold text-slate-800">🔀 สลับลำดับข้อสอบอัตโนมัติ (Randomize)</p>
+                          <p className="text-[10px] text-slate-500">สลับข้อสอบแบบสุ่ม ป้องกันการลอกกันในห้อง</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSetting('randomizeQuestions', !admin.randomizeQuestions)}
+                          className={`w-11 h-6 rounded-full p-0.5 transition-colors ${
+                            admin.randomizeQuestions ? 'bg-emerald-500' : 'bg-slate-300'
+                          }`}
+                        >
+                          <div
+                            className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
+                              admin.randomizeQuestions ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {/* Show Explanations */}
+                      <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-slate-50/50">
+                        <div>
+                          <p className="font-bold text-slate-800">📖 แสดงเฉลยและคำอธิบายหลังทำแบบทดสอบ</p>
+                          <p className="text-[10px] text-slate-500">แสดงเฉลยละเอียดเมื่อทำข้อสอบเสร็จ</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSetting('showExplanations', !admin.showExplanations)}
+                          className={`w-11 h-6 rounded-full p-0.5 transition-colors ${
+                            admin.showExplanations ? 'bg-emerald-500' : 'bg-slate-300'
+                          }`}
+                        >
+                          <div
+                            className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
+                              admin.showExplanations ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => handleToggleSetting('showExplanations', !admin.showExplanations)}
-                    className={`w-12 h-7 rounded-full p-0.5 transition-colors ${
-                      admin.showExplanations ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 bg-white rounded-full shadow transform transition-transform ${
-                        admin.showExplanations ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-
-              {/* Status Message */}
-              {saveSuccessMsg && (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 font-bold text-center flex items-center justify-center gap-1.5 animate-fade-in">
-                  <span>✅</span> บันทึกและซิงค์การตั้งค่าไปยังนักเรียนทุกคนแล้ว
                 </div>
               )}
             </div>
@@ -3544,218 +3276,226 @@ export default function TeacherAdmin() {
         )}
 
         {/* =================================================================== */}
-        {/* TAB 4: Cloud Database & Academic Export Hub                        */}
+        {/* TAB 4: Cloud Database & Academic Export Hub (Responsive Bento UI)   */}
         {/* =================================================================== */}
         {activeTab === 'sheets' && (
-          <div className="space-y-6">
-            {/* 1.1 HERO CARD: โทนสว่าง (Light Clay Tone) */}
-            <div className="bg-gradient-to-br from-emerald-50/70 via-sky-50/40 to-white rounded-[26px] p-6 md:p-8 shadow-clay border border-emerald-100 space-y-4">
-              {/* Live Status Pill */}
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>☁️ Supabase Cloud Database เชื่อมต่อสมบูรณ์ (Real-Time Auto Sync)</span>
+          <div className="space-y-4 sm:space-y-5 animate-fade-in">
+            {/* 1. COMPACT CLOUD STATUS BAR */}
+            <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center text-2xl flex-shrink-0">
+                  ☁️
                 </div>
-                <span className="px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold">
-                  ⚡ รองรับ 1,600+ คนพร้อมกัน
-                </span>
+                <div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <h2 className="text-sm sm:text-base font-display font-extrabold text-slate-900">
+                      ฐานข้อมูลคลาวด์ & ส่งออกงานวิจัย
+                    </h2>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Supabase Live
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    บันทึกอัตโนมัติระดับเสี้ยววินาที · ผู้เรียนในระบบ <b className="text-slate-800">{analytics.total} คน</b> · RLS ปลอดภัย 100%
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <h2 className="text-xl md:text-2xl font-display font-extrabold text-slate-900 leading-tight">
-                  ระบบฐานข้อมูลคลาวด์ความเร็วสูง (Supabase Cloud Database)
-                </h2>
-                <p className="text-xs md:text-sm text-slate-600 leading-relaxed max-w-2xl">
-                  บันทึกคะแนนสอบ พัฒนาการ และเกียรติบัตรของนักเรียนทุกคนเข้าสู่ระบบคลาวด์ PostgreSQL ความเร็วสูงระดับเสี้ยววินาที
-                  เสถียร ไม่ดีเลย์ ป้องกันข้อมูลสูญหาย และพร้อมส่งออกข้อมูลสำหรับงานวิจัยและวิทยานิพนธ์ได้ทันที
-                </p>
+              <button
+                type="button"
+                onClick={() => {
+                  sfx.click();
+                  handleRefreshData();
+                }}
+                disabled={isLoading}
+                className="px-3.5 py-2 rounded-2xl bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 self-stretch sm:self-center flex-shrink-0"
+              >
+                <span className={isLoading ? 'animate-spin' : ''}>🔄</span>
+                <span>{isLoading ? 'กำลังดึงข้อมูล...' : 'ดึงข้อมูลสดจากคลาวด์'}</span>
+              </button>
+            </div>
+
+            {/* 2. PRIMARY HERO CARD: 1-CLICK EXCEL (.XLSX) WORKBOOK */}
+            <div className="bg-gradient-to-br from-emerald-700 to-teal-800 rounded-3xl p-5 sm:p-6 text-white shadow-sm border border-emerald-500/30 space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1.5 max-w-xl">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-[10px] font-extrabold tracking-wide uppercase">
+                    ⭐ แนะนำสำหรับอาจารย์และงานวิจัย
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-display font-black leading-snug">
+                    📊 ดาวน์โหลดรายงานผลไฟล์ Excel (.xlsx)
+                  </h3>
+                  <p className="text-xs text-emerald-50/90 leading-relaxed">
+                    กดปุ่มเดียวได้ไฟล์ Excel แท้ลงเครื่องทันที (ทั้งในโทรศัพท์ ไอแพด และคอมพิวเตอร์) แยกแผ่นชีตพร้อมใช้งานครบทั้ง 4 แผ่น:
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleExportExcel}
+                  disabled={isExportingExcel}
+                  className="w-full md:w-auto px-5 py-3.5 rounded-2xl bg-white text-emerald-800 hover:bg-emerald-50 disabled:opacity-75 font-display font-black text-xs sm:text-sm shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2 flex-shrink-0"
+                >
+                  <span className={`text-lg ${isExportingExcel ? 'animate-spin' : ''}`}>
+                    {isExportingExcel ? '⏳' : '📥'}
+                  </span>
+                  <span>{isExportingExcel ? 'กำลังสร้างไฟล์ Excel...' : 'กดดาวน์โหลด Excel (.xlsx) ทันที'}</span>
+                </button>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-2.5 pt-2">
+              {/* 4 Sheets Preview Pills */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/20 text-[11px]">
+                <div className="bg-white/10 border border-white/10 rounded-xl px-3 py-2">
+                  <b className="block text-white">1. Players</b>
+                  <span className="text-emerald-100 text-[10px]">รายชื่อ & คะแนนรวม</span>
+                </div>
+                <div className="bg-white/10 border border-white/10 rounded-xl px-3 py-2">
+                  <b className="block text-white">2. Item_Binary</b>
+                  <span className="text-emerald-100 text-[10px]">คะแนนรายข้อ 1/0 (SPSS)</span>
+                </div>
+                <div className="bg-white/10 border border-white/10 rounded-xl px-3 py-2">
+                  <b className="block text-white">3. Research</b>
+                  <span className="text-emerald-100 text-[10px]">สถิติวิจัย บทที่ 4</span>
+                </div>
+                <div className="bg-white/10 border border-white/10 rounded-xl px-3 py-2">
+                  <b className="block text-white">4. Certificates</b>
+                  <span className="text-emerald-100 text-[10px]">ทะเบียนเกียรติบัตร</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. BENTO ACTION TILES (1 col on Phone, 3 cols on iPad/PC) */}
+            <div className="space-y-2.5">
+              <h3 className="text-xs font-extrabold text-slate-700 px-1">
+                🛠️ เครื่องมือส่งออกและจัดการข้อมูล (แตะเพื่อใช้งาน)
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Tile 1: SPSS CSV (1/0) */}
+                <button
+                  type="button"
+                  onClick={handleDownloadBinaryCsv}
+                  className="p-4 rounded-3xl bg-white border border-slate-200/80 shadow-sm hover:border-indigo-300 active:scale-95 transition-all text-left flex flex-col justify-between gap-3"
+                >
+                  <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl shadow-sm">
+                    📥
+                  </div>
+                  <div>
+                    <p className="font-display font-extrabold text-xs sm:text-sm text-slate-900 leading-snug">
+                      ดาวน์โหลด CSV (1/0)
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                      ไฟล์รหัส 1/0 สำหรับโปรแกรม SPSS
+                    </p>
+                  </div>
+                </button>
+
+                {/* Tile 2: 1-Tap TSV Copy */}
+                <button
+                  type="button"
+                  onClick={handleCopyTableToClipboard}
+                  className="p-4 rounded-3xl bg-white border border-slate-200/80 shadow-sm hover:border-amber-300 active:scale-95 transition-all text-left flex flex-col justify-between gap-3"
+                >
+                  <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl shadow-sm">
+                    📋
+                  </div>
+                  <div>
+                    <p className="font-display font-extrabold text-xs sm:text-sm text-slate-900 leading-snug">
+                      {copySuccess ? '✓ คัดลอกตารางแล้ว!' : 'คัดลอกตาราง (TSV)'}
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                      กดปุ่มเดียว แล้ววาง (Ctrl+V) ใน Excel
+                    </p>
+                  </div>
+                </button>
+
+                {/* Tile 3: Open Supabase Dashboard */}
                 <a
                   href="https://supabase.com/dashboard/project/yxljxtlgnjwqxhjgfhdv/editor"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-2xl shadow-clay active:scale-[0.98] transition-all flex items-center gap-2 text-xs sm:text-sm"
+                  className="p-4 rounded-3xl bg-white border border-slate-200/80 shadow-sm hover:border-blue-300 active:scale-95 transition-all text-left flex flex-col justify-between gap-3"
                 >
-                  <span>🌐 เปิด Supabase Database Dashboard ↗</span>
+                  <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl shadow-sm">
+                    🌐
+                  </div>
+                  <div>
+                    <p className="font-display font-extrabold text-xs sm:text-sm text-slate-900 leading-snug">
+                      เปิด Supabase Studio ↗
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                      ดูตารางฐานข้อมูลคลาวด์โดยตรง
+                    </p>
+                  </div>
                 </a>
+              </div>
+            </div>
 
-                <button
-                  type="button"
-                  onClick={handleDownloadBinaryCsv}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-2xl shadow-clay active:scale-[0.98] transition-all flex items-center gap-2 text-xs sm:text-sm"
+            {/* 4. COLLAPSIBLE GUIDES (พับเก็บได้ ไม่เกะกะหน้าจอมือถือ) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Guide 1 */}
+              <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200/80 space-y-3 self-start">
+                <div
+                  onClick={() => setShowExportGuide(!showExportGuide)}
+                  className="flex items-center justify-between cursor-pointer select-none"
                 >
-                  <span>📥 ดาวน์โหลด SPSS CSV (1/0)</span>
-                </button>
+                  <h3 className="font-display font-extrabold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+                    <span>📚</span> คู่มือการนำข้อมูลไปใช้งานวิจัย
+                  </h3>
+                  <span className="text-[11px] text-slate-400 font-mono">{showExportGuide ? '▲ ซ่อน' : '▼ เปิดดู'}</span>
+                </div>
 
-                <button
-                  type="button"
-                  onClick={handleCopyTableToClipboard}
-                  className="bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 font-bold px-4 py-2.5 rounded-2xl active:scale-[0.98] transition-all flex items-center gap-2 text-xs sm:text-sm shadow-sm"
-                >
-                  <span>📋</span>
-                  <span>{copySuccess ? 'คัดลอกตารางแล้ว!' : 'คัดลอกตาราง (1-Tap TSV)'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    sfx.click();
-                    handleRefreshData();
-                  }}
-                  disabled={isLoading}
-                  className="bg-white border-2 border-sky-200 text-sky-700 hover:bg-sky-50 font-bold px-4 py-2.5 rounded-2xl active:scale-[0.98] transition-all flex items-center gap-2 text-xs sm:text-sm shadow-sm"
-                >
-                  <span className={isLoading ? 'animate-spin' : ''}>🔄</span>
-                  <span>{isLoading ? 'กำลังดึงข้อมูล...' : 'ดึงข้อมูลสดลงเครื่อง'}</span>
-                </button>
-
-                {admin.googleSheetUrl && (
-                  <a
-                    href={admin.googleSheetUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-semibold text-slate-500 hover:text-slate-800 underline px-2 py-1"
-                    title="เปิดดูชีตสำรองเดิมบน Google Sheets"
-                  >
-                    เปิดชีตสำรองเดิม (Google Sheets) ↗
-                  </a>
+                {showExportGuide && (
+                  <div className="space-y-2.5 text-xs pt-2 border-t border-slate-100 animate-fade-in">
+                    <div className="p-3 rounded-2xl bg-emerald-50/60 border border-emerald-100 space-y-1">
+                      <p className="font-bold text-emerald-900">📊 1. ไฟล์ Excel (.xlsx) ครบ 4 ชีต</p>
+                      <p className="text-slate-600 text-[11px] leading-relaxed">
+                        กดปุ่มสีเขียวด้านบนเพื่อรับไฟล์ Excel ที่รวมรายชื่อนักเรียน, คะแนนรายข้อ 1/0, สรุปสถิติบทที่ 4 และทะเบียนเกียรติบัตรไว้ในไฟล์เดียว
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-indigo-50/60 border border-indigo-100 space-y-1">
+                      <p className="font-bold text-indigo-900">🔢 2. ไฟล์ CSV (1/0) สำหรับ SPSS</p>
+                      <p className="text-slate-600 text-[11px] leading-relaxed">
+                        แปลงข้อที่ตอบถูกเป็น 1 และตอบผิดเป็น 0 พร้อมตั้งชื่อตัวแปร Pre_K1 - Post_K8 สำหรับนำเข้าโปรแกรม SPSS หาค่า p, r และ Alpha ได้ทันที
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
 
-              {/* Footer Bar */}
-              <div className="pt-3 border-t border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-500 gap-1">
-                <span>🔒 ความปลอดภัย: Row Level Security (RLS) เปิดใช้งาน 100% นักเรียนแก้ไขคะแนนตนเองไม่ได้</span>
-                <span className="font-bold text-detective-700">
-                  นักเรียนทั้งหมดในระบบ: {analytics.total} คน
-                </span>
-              </div>
-            </div>
-
-            {/* 2.2 คู่มือแนะนำการส่งออกไฟล์ 4 ขั้นตอน (Step-by-Step Admin Guide) */}
-            <div className="bg-white rounded-3xl p-6 shadow-clay border border-slate-100 space-y-4">
-              <h3 className="font-display font-extrabold text-slate-900 text-base flex items-center gap-2">
-                <span>📚</span> คู่มือแนะนำการส่งออกรายงานและใช้งานฐานข้อมูล (4 ขั้นตอน)
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
-                {/* Step 1 */}
-                <div className="p-4 rounded-2xl bg-sky-50/60 border border-sky-100 space-y-1.5">
-                  <p className="font-bold text-sky-900 flex items-center gap-1.5">
-                    <span>💻 ขั้นที่ 1:</span> วิธีดาวน์โหลดบนคอมพิวเตอร์ (PC / Mac)
-                  </p>
-                  <ol className="list-decimal list-inside space-y-1 text-slate-700 leading-relaxed text-[11px]">
-                    <li>กดปุ่ม <b>"เปิด Google Sheets ตารางคะแนนสด"</b> ด้านบน</li>
-                    <li>ไปที่เมนู <b>ไฟล์ (File)</b> ที่มุมซ้ายบนของ Google Sheets</li>
-                    <li>เลือกเมนู <b>ดาวน์โหลด (Download)</b></li>
-                    <li>เลือกฟอร์แมต: <b>Excel (.xlsx)</b>, <b>PDF (.pdf)</b> หรือ <b>CSV (.csv)</b> สำหรับวิเคราะห์ใน SPSS</li>
-                  </ol>
+              {/* Guide 2: Data Dictionary */}
+              <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200/80 space-y-3 self-start">
+                <div
+                  onClick={() => setShowDataDictionary(!showDataDictionary)}
+                  className="flex items-center justify-between cursor-pointer select-none"
+                >
+                  <h3 className="font-display font-extrabold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+                    <span>📋</span> โครงสร้างข้อมูลหลัก 18 คอลัมน์
+                  </h3>
+                  <span className="text-[11px] text-slate-400 font-mono">{showDataDictionary ? '▲ ซ่อน' : '▼ เปิดดู'}</span>
                 </div>
 
-                {/* Step 2 */}
-                <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100 space-y-1.5">
-                  <p className="font-bold text-emerald-900 flex items-center gap-1.5">
-                    <span>📱 ขั้นที่ 2:</span> วิธีดาวน์โหลดบนมือถือ (iOS / Android)
-                  </p>
-                  <ol className="list-decimal list-inside space-y-1 text-slate-700 leading-relaxed text-[11px]">
-                    <li>เปิดลิงก์ชีตผ่านเว็บเบราว์เซอร์หรือแอป Google Sheets</li>
-                    <li>แตะที่ <b>จุดสามจุด ( ⠇ หรือ ... )</b> ที่มุมบนขวา</li>
-                    <li>เลือกเมนู <b>แชร์และส่งออก (Share & export)</b></li>
-                    <li>เลือก <b>บันทึกเป็น Excel (.xlsx)</b> หรือส่งสำเนาเข้า LINE / Email</li>
-                  </ol>
-                </div>
-
-                {/* Step 3 */}
-                <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100 space-y-1.5">
-                  <p className="font-bold text-indigo-900 flex items-center gap-1.5">
-                    <span>📊 ขั้นที่ 3:</span> คำอธิบาย 18 คอลัมน์ (Data Dictionary)
-                  </p>
-                  <p className="text-slate-700 leading-relaxed text-[11px]">
-                    ระบบจัดหมวดหมู่ข้อมูลรายงานออกเป็น 6 กลุ่มการเรียนรู้ (ดูรายละเอียดโครงสร้างด้านล่าง)
-                    พร้อมรองรับการส่งออกคะแนนไปใช้งานในรายงานวิจัยได้ทันที
-                  </p>
-                </div>
-
-                {/* Step 4 */}
-                <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-100 space-y-1.5">
-                  <p className="font-bold text-amber-900 flex items-center gap-1.5">
-                    <span>📋 ขั้นที่ 4:</span> เครื่องมือคัดลอกด่วน (1-Tap Clipboard Copy)
-                  </p>
-                  <p className="text-slate-700 leading-relaxed text-[11px]">
-                    เพียงกดปุ่ม <b>"คัดลอกด่วน (1-Tap TSV)"</b> ระบบจะก็อปปี้ตารางนักเรียนทุกคน จากนั้นอาจารย์สามารถเปิด Microsoft Excel ในเครื่อง แล้วกด <b>Ctrl+V (วาง)</b> ได้ทันที
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* 2.3 โครงสร้าง 18 คอลัมน์ในฐานข้อมูล (Data Dictionary Table) */}
-            <div className="bg-white rounded-3xl p-6 shadow-clay border border-slate-100 space-y-4">
-              <h3 className="font-display font-extrabold text-slate-900 text-base flex items-center gap-2">
-                <span>📋</span> โครงสร้างข้อมูลหลักในระบบคลาวด์ (Data Dictionary)
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
-                {/* Group 1 */}
-                <div className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/70 space-y-1">
-                  <p className="font-bold text-detective-800">1. ข้อมูลผู้เรียน</p>
-                  <ul className="list-disc list-inside text-slate-600 text-[11px] space-y-0.5">
-                    <li>ลำดับที่ (No.)</li>
-                    <li>รหัสประจำตัว (ID Code เช่น พร15)</li>
-                    <li>ชื่อ-นามสกุลจริง</li>
-                    <li>นามสมมุติในแอป (Nickname)</li>
-                    <li>ชื่อโปรไฟล์ LINE</li>
-                  </ul>
-                </div>
-
-                {/* Group 2 */}
-                <div className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/70 space-y-1">
-                  <p className="font-bold text-sky-800">2. ข้อมูลก่อนเรียน</p>
-                  <ul className="list-disc list-inside text-slate-600 text-[11px] space-y-0.5">
-                    <li>Pre-test ความรู้ (%)</li>
-                    <li>ทักษะก่อนเรียน (เต็ม 100)</li>
-                    <li>วันเวลาที่ทำ Pre-test</li>
-                  </ul>
-                </div>
-
-                {/* Group 3 */}
-                <div className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/70 space-y-1">
-                  <p className="font-bold text-indigo-800">3. การเล่นเกม</p>
-                  <ul className="list-disc list-inside text-slate-600 text-[11px] space-y-0.5">
-                    <li>ด่านที่ผ่าน (เช่น 10/10 ด่าน)</li>
-                    <li>คะแนนรวม (XP รวม)</li>
-                  </ul>
-                </div>
-
-                {/* Group 4 */}
-                <div className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/70 space-y-1">
-                  <p className="font-bold text-emerald-800">4. ข้อมูลหลังเรียน</p>
-                  <ul className="list-disc list-inside text-slate-600 text-[11px] space-y-0.5">
-                    <li>Post-test ความรู้ (%)</li>
-                    <li>ทักษะหลังเรียน (เต็ม 100)</li>
-                    <li>วันเวลาที่ทำ Post-test</li>
-                    <li>พัฒนาการ (Gain Delta %)</li>
-                  </ul>
-                </div>
-
-                {/* Group 5 */}
-                <div className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/70 space-y-1">
-                  <p className="font-bold text-amber-800">5. การประเมินแชตบอต (AI Evaluation)</p>
-                  <ul className="list-disc list-inside text-slate-600 text-[11px] space-y-0.5">
-                    <li>คะแนนเฉลี่ยตอนที่ 5 (1.00 - 5.00)</li>
-                  </ul>
-                </div>
-
-                {/* Group 6 */}
-                <div className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/70 space-y-1">
-                  <p className="font-bold text-slate-800">6. ข้อมูลเกียรติบัตร (Certificates)</p>
-                  <ul className="list-disc list-inside text-slate-600 text-[11px] space-y-0.5">
-                    <li>เลขที่เกียรติบัตร (เช่น WU-MEL-2569-0001)</li>
-                    <li>วันที่ออกเกียรติบัตรทางการ</li>
-                    <li>วันเวลาเข้าใช้งานล่าสุด</li>
-                  </ul>
-                </div>
+                {showDataDictionary && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs pt-2 border-t border-slate-100 animate-fade-in">
+                    <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                      <p className="font-bold text-slate-800">1. ข้อมูลผู้เรียน</p>
+                      <p className="text-[11px] text-slate-500">ลำดับ, รหัส ID, ชื่อ-นามสกุล, ชื่อเล่น, ชั้น, โรงเรียน</p>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                      <p className="font-bold text-sky-800">2. ก่อนเรียน & หลังเรียน</p>
+                      <p className="text-[11px] text-slate-500">Pre/Post ความรู้ (%), ทักษะปฏิเสธ (/100), พัฒนาการ (Delta %)</p>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                      <p className="font-bold text-indigo-800">3. ภารกิจเกม & แชตบอต</p>
+                      <p className="text-[11px] text-slate-500">ด่านที่ผ่าน (1-8), คะแนน XP, ประเมินความพึงพอใจบอท (1-5)</p>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                      <p className="font-bold text-amber-800">4. ทะเบียนเกียรติบัตร</p>
+                      <p className="text-[11px] text-slate-500">เลขที่เกียรติบัตร, วันที่ออกเกียรติบัตร, เวลาใช้งานล่าสุด</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -3767,18 +3507,18 @@ export default function TeacherAdmin() {
       {/* =================================================================== */}
       <AnimatePresence>
         {selectedStudent && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl p-5 sm:p-6 max-w-3xl w-full shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] flex flex-col"
+              className="bg-white rounded-3xl p-5 sm:p-6 max-w-3xl w-full shadow-xl border border-slate-200/90 space-y-4 max-h-[90vh] flex flex-col"
             >
               {/* Modal Header */}
               <div className="flex items-start justify-between border-b border-slate-100 pb-3 flex-shrink-0">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-detective-600 bg-detective-50 px-2.5 py-0.5 rounded-lg border border-detective-200">
+                    <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200">
                       ID: {selectedStudent.idCode || '-'}
                     </span>
                     {selectedStudent.certificateNo && (
@@ -3798,7 +3538,7 @@ export default function TeacherAdmin() {
                   <button
                     type="button"
                     onClick={() => handleOpenEdit(selectedStudent)}
-                    className="px-3 py-1.5 rounded-xl bg-detective-50 text-detective-700 hover:bg-detective-100 border border-detective-200 text-xs font-bold flex items-center gap-1 transition-colors shadow-sm"
+                    className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 text-xs font-bold flex items-center gap-1 transition-colors"
                     title="แก้ไขข้อมูลนักเรียนคนนี้"
                   >
                     <span>✏️</span> แก้ไขข้อมูล
@@ -3806,10 +3546,11 @@ export default function TeacherAdmin() {
                   <button
                     type="button"
                     onClick={() => handleDeleteStudent(selectedStudent)}
-                    className="p-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition-colors"
+                    className="px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs font-bold flex items-center gap-1 transition-colors"
                     title="ลบข้อมูลทดสอบ"
                   >
                     <span>🗑️</span>
+                    <span>ลบ</span>
                   </button>
                   <button
                     onClick={() => setSelectedStudent(null)}
@@ -3836,7 +3577,7 @@ export default function TeacherAdmin() {
                     }}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                       studentModalTab === mt.id
-                        ? 'bg-detective-600 text-white shadow-sm'
+                        ? 'bg-blue-600 text-white shadow-sm font-extrabold'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
@@ -4104,12 +3845,12 @@ export default function TeacherAdmin() {
       {/* =================================================================== */}
       <AnimatePresence>
         {editingStudent && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl p-5 sm:p-6 max-w-lg w-full shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] flex flex-col"
+              className="bg-white rounded-3xl p-5 sm:p-6 max-w-lg w-full shadow-xl border border-slate-200/90 space-y-4 max-h-[90vh] flex flex-col"
             >
               {/* Header */}
               <div className="flex items-start justify-between border-b border-slate-100 pb-3 flex-shrink-0">
@@ -4256,7 +3997,7 @@ export default function TeacherAdmin() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 text-xs font-bold flex items-center gap-2"
+            className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-lg border border-slate-700 text-xs font-bold flex items-center gap-2"
           >
             <span>{editSuccessToast}</span>
           </motion.div>

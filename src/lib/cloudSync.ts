@@ -284,16 +284,25 @@ export async function issueCertificate(userIdHash: string): Promise<CertResponse
     const now = new Date();
     const issueDate = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
 
-    const { data, error } = await supabase.rpc('issue_certificate_atomic', {
-      p_user_id_hash: userIdHash,
-      p_verify_code: verifyCode,
-      p_issue_date: issueDate,
-    });
+    // กำหนด Timeout 6 วินาที เพื่อป้องกันค้าง spinner นานหากมีผู้เรียนพร้อมกัน 1,600 คน
+    const timeoutPromise = new Promise<CertResponse>((_, reject) =>
+      setTimeout(() => reject(new Error('Certificate issuance timed out')), 6000)
+    );
 
-    if (error || !data) {
-      return { ok: false, error: 'rpc_error', message: error?.message || 'Failed to issue cert' };
-    }
-    return data as CertResponse;
+    const rpcPromise = (async (): Promise<CertResponse> => {
+      const { data, error } = await supabase.rpc('issue_certificate_atomic', {
+        p_user_id_hash: userIdHash,
+        p_verify_code: verifyCode,
+        p_issue_date: issueDate,
+      });
+
+      if (error || !data) {
+        return { ok: false, error: 'rpc_error', message: error?.message || 'Failed to issue cert' };
+      }
+      return data as CertResponse;
+    })();
+
+    return await Promise.race([rpcPromise, timeoutPromise]);
   } catch (err) {
     return { ok: false, error: 'network_error', message: String(err) };
   }
@@ -405,12 +414,12 @@ export async function fetchLeaderboard(
   try {
     let query = supabase
       .from('players')
-      .select('user_id_hash, nickname, total_xp, total_stages_count, level')
+      .select('user_id_hash, nickname, total_xp, total_stages_count, level', { count: 'exact' })
       .order('total_xp', { ascending: false })
       .order('total_stages_count', { ascending: false })
       .limit(limit);
 
-    const { data, error } = await query;
+    const { data, count, error } = await query;
     if (error || !data) return empty();
 
     let meEntry: LeaderboardEntry | undefined;
@@ -436,7 +445,7 @@ export async function fetchLeaderboard(
       groupLabel: 'ผู้เล่นทั้งหมด',
       entries,
       me: meEntry,
-      total: entries.length,
+      total: count ?? entries.length,
     };
   } catch (err) {
     console.warn('[cloudSync] fetchLeaderboard failed:', err);
@@ -463,14 +472,38 @@ export interface AdminStudentsResponse {
 export async function fetchAdminStudents(passcode = 'wu2535'): Promise<AdminStudentsResponse> {
   if (passcode !== 'wu2535') return { ok: false, error: 'unauthorized' };
   try {
-    const { data, error } = await supabase
-      .from('players')
-      .select('*')
-      .order('created_at', { ascending: true });
+    // รองรับผู้เรียนจำนวนมาก (เช่น 1,600+ คน) โดยดึงข้อมูลแบ่งหน้าละ 1,000 คนอัตโนมัติ
+    // เพื่อก้าวข้ามข้อจำกัด max-rows (1000 แถว) ของ Supabase PostgREST
+    let allData: any[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    let hasMore = true;
 
-    if (error || !data) return { ok: false, error: error?.message || 'failed_to_fetch' };
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .order('created_at', { ascending: true })
+        .range(from, from + pageSize - 1);
 
-    const students = data.map((r, i) => {
+      if (error) {
+        if (allData.length > 0) break; // หากดึงได้บางส่วนแล้ว ให้นำส่วนที่ได้มาใช้
+        return { ok: false, error: error?.message || 'failed_to_fetch' };
+      }
+
+      if (!data || data.length === 0) {
+        hasMore = false;
+      } else {
+        allData = allData.concat(data);
+        if (data.length < pageSize) {
+          hasMore = false;
+        } else {
+          from += pageSize;
+        }
+      }
+    }
+
+    const students = allData.map((r, i) => {
       const preK = r.pre_test_score != null ? Number(r.pre_test_score) : undefined;
       const postK = r.post_test_score != null ? Number(r.post_test_score) : undefined;
       const gainDelta = (preK !== undefined && postK !== undefined) ? (postK - preK) : undefined;
@@ -613,5 +646,34 @@ export async function deleteStudentCloud(
   } catch (err) {
     console.warn('[cloudSync] deleteStudentCloud failed:', err);
     return false;
+  }
+}
+
+/**
+ * ล้างข้อมูลจำลองจากการทดสอบโหลด 1,600 คนออกทั้งหมดอย่างปลอดภัย
+ * โดยลบเฉพาะแถวที่ขึ้นต้นด้วย 'loadtest_1600_' เท่านั้น ไม่แตะต้องข้อมูลนักเรียนจริง 100%
+ */
+export async function cleanupLoadTestStudents(passcode = 'wu2535'): Promise<{ ok: boolean; count?: number; error?: string }> {
+  if (passcode !== 'wu2535') return { ok: false, error: 'unauthorized' };
+  try {
+    const { count: testCount } = await supabase
+      .from('players')
+      .select('*', { count: 'exact', head: true })
+      .like('user_id_hash', 'loadtest_1600_%');
+
+    if (!testCount || testCount === 0) {
+      return { ok: true, count: 0 };
+    }
+
+    const { error } = await supabase
+      .from('players')
+      .delete()
+      .like('user_id_hash', 'loadtest_1600_%');
+
+    if (error) throw error;
+    return { ok: true, count: testCount };
+  } catch (err) {
+    console.warn('[cloudSync] cleanupLoadTestStudents failed:', err);
+    return { ok: false, error: String(err) };
   }
 }

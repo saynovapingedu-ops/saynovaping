@@ -8,6 +8,7 @@ import { useAdminStore } from '../store/adminStore';
 import { useCertNameStore } from '../store/certNameStore';
 import { useUIStore } from '../store/uiStore';
 import DialogueBubble from '../components/DialogueBubble';
+import InteractiveStageCard from '../components/InteractiveStageCard';
 import ChoiceCard from '../components/ChoiceCard';
 import CertNameDialog from '../components/CertNameDialog';
 import RunnerGame from '../components/minigames/RunnerGame';
@@ -637,11 +638,8 @@ export default function ScenarioPage() {
     ? Math.min(1, visitedMainNodes / totalMainNodes)
     : 0;
 
-  // บทสนทนาที่ผ่านมา — โชว์แค่ 2 รายการล่าสุด ที่เหลือซ่อนไว้ (กดดูได้) เพื่อไม่ให้หน้ายาว
+  // บทสนทนาที่ผ่านมา (เก็บไว้ย่อดูย้อนหลังได้)
   const pastNodes = history.slice(0, -1);
-  const RECENT = 2;
-  const olderNodes = pastNodes.slice(0, Math.max(0, pastNodes.length - RECENT));
-  const recentNodes = pastNodes.slice(Math.max(0, pastNodes.length - RECENT));
 
   // ---- Intro screen ----
   if (showIntro) {
@@ -921,30 +919,25 @@ export default function ScenarioPage() {
       </header>
 
       <main className="max-w-md md:max-w-2xl mx-auto p-4">
-        {/* แสดง history dialogue/feedback — ย่อรายการเก่าไว้ให้หน้าสั้น */}
-        <div className="space-y-1 mb-4">
-          {olderNodes.length > 0 && (
-            <div className="mb-2">
-              <button
-                onClick={() => { setShowOlder(v => !v); sfx.click(); }}
-                className="w-full text-xs font-semibold text-detective-500 bg-detective-50
-                           border border-detective-200 rounded-full py-1.5 active:scale-[0.98]"
-              >
-                {showOlder
-                  ? '▴ ซ่อนบทสนทนาก่อนหน้า'
-                  : `▾ ดูบทสนทนาก่อนหน้า (${olderNodes.length})`}
-              </button>
-              {showOlder && (
-                <div className="space-y-1 mt-2 opacity-80">
-                  {olderNodes.map(renderPastNode)}
-                </div>
-              )}
-            </div>
-          )}
-          <AnimatePresence>
-            {recentNodes.map(renderPastNode)}
-          </AnimatePresence>
-        </div>
+        {/* ประวัติบทสนทนาก่อนหน้า — เก็บไว้ในปุ่มย่อเพื่อไม่ให้รกหน้าจอและไม่แย่งสายตา */}
+        {pastNodes.length > 0 && (
+          <div className="mb-3">
+            <button
+              onClick={() => { setShowOlder(v => !v); sfx.click(); }}
+              className="w-full text-xs font-semibold text-detective-500 bg-detective-50/90 hover:bg-detective-100/80
+                         border border-detective-200 rounded-full py-1.5 transition-all active:scale-[0.98]"
+            >
+              {showOlder
+                ? '▴ ซ่อนบทสนทนาก่อนหน้า'
+                : `▾ ดูบทสนทนาก่อนหน้า (${pastNodes.length})`}
+            </button>
+            {showOlder && (
+              <div className="space-y-1.5 mt-2 opacity-90">
+                {pastNodes.map(renderPastNode)}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* current node */}
         {currentNode && (
@@ -952,13 +945,17 @@ export default function ScenarioPage() {
             <motion.div key={currentNode.id} ref={currentRef} className="scroll-mt-20"
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               {currentNode.type === 'dialogue' && (
-                <>
-                  <DialogueBubble speaker={currentNode.speaker} speakerName={currentNode.speakerName} speakerAvatar={currentNode.speakerAvatar} text={currentNode.text} />
-                  <button onClick={() => goToNext(currentNode.next)}
-                    className="btn-primary w-full mt-2 font-bold">
-                    🔎 สืบเบาะแสต่อ →
-                  </button>
-                </>
+                <InteractiveStageCard
+                  speaker={currentNode.speaker}
+                  speakerName={currentNode.speakerName}
+                  speakerAvatar={currentNode.speakerAvatar}
+                  title={currentNode.title || (currentNode.speaker === 'doctor' ? 'ภารกิจสืบหาความจริง' : undefined)}
+                  image={currentNode.image}
+                  imageBadge={currentNode.imageBadge || 'ภาพจำลองเพื่อการเรียนรู้'}
+                  text={currentNode.text}
+                  btnLabel={currentNode.btnLabel || 'ต่อไป →'}
+                  onNext={() => goToNext(currentNode.next)}
+                />
               )}
 
               {currentNode.type === 'choice' && (() => {

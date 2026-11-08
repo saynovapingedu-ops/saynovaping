@@ -14,15 +14,23 @@ export const scenario01: Scenario = {
   nodes: [
     {
       type: 'dialogue', id: 'intro1', speaker: 'doctor', next: 'intro2',
+      title: 'ข่าวสารบุหรี่ไฟฟ้าในโลกออนไลน์',
+      image: '/scenarios/stage1_banner.jpg',
+      imageBadge: 'ภาพจำลองเพื่อการเรียนรู้',
       text: 'สวัสดีนักสืบ! พี่หมอเก๋เอง วันนี้พี่มีโพสต์ในเฟซบุ๊กให้ดู — เป็นข้อความเกี่ยวกับบุหรี่ไฟฟ้าที่กำลังแชร์กันเยอะ',
+      btnLabel: 'ต่อไป →',
     },
     {
       type: 'dialogue', id: 'intro2', speaker: 'doctor', next: 'intro3',
+      title: 'ภารกิจของนักสืบสุขภาพ',
+      image: '/scenarios/stage1_banner.jpg',
+      imageBadge: 'ภารกิจสืบสวน',
       text: 'หน้าที่ของเราคือดูว่าแต่ละข่าวสาร — จริงหรือเท็จ พร้อมไหม?',
+      btnLabel: 'เริ่มสืบเบาะแส →',
     },
     {
       type: 'choice', id: 'intro3', speaker: 'player',
-      prompt: 'คุณตอบพี่หมอเก๋ว่า...',
+      prompt: 'พี่หมอเก๋ถาม: "หน้าที่ของเราคือดูว่าแต่ละข่าวสารจริงหรือเท็จ พร้อมไหม?" คุณตอบว่า...',
       choices: [
         { label: 'พร้อมแล้วครับ/ค่ะ! ลุยเลย', next: 'mg1', xp: 10 },
         { label: 'ขอดูก่อนค่อยตอบครับ/ค่ะ', next: 'mg1', xp: 5 },

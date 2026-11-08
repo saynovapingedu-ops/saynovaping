@@ -59,7 +59,7 @@ export function getPlayerCharacter(preset?: number): PlayerCharacter {
 
 // NPC speakers — มีรูป PNG จริง (หมอ / Vapor / กลุ่มเพื่อน / ใบเตย / น้องเอม ฯลฯ)
 export const NPC_CHARACTERS: Record<string, { src: string; label: string }> = {
-  doctor:        { src: asset('characters/doctor.png'),       label: 'พี่หมอเก๋' },
+  doctor:        { src: asset('characters/doctor_3d_avatar.png'), label: 'พี่หมอเก๋' },
   vapor:         { src: asset('characters/vapor.png'),        label: 'Vapor (ตัวร้าย)' },
   baitoey:       { src: asset('characters/baitoey.png'),      label: 'น้องใบเตย' },
   narrator:      { src: asset('characters/narrator.png'),     label: 'เล่าเรื่อง' },

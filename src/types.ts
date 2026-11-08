@@ -13,6 +13,10 @@ export interface DialogueNode {
   speaker: SpeakerKey;
   speakerName?: string;
   speakerAvatar?: string;
+  title?: string;
+  image?: string;
+  imageBadge?: string;
+  btnLabel?: string;
   text: string;
   next: string;
 }

@@ -329,11 +329,30 @@ export async function shareCertificateViaLiff(
   }
 }
 
-/** SHA-256 → hex string (web crypto API) */
+/** SHA-256 → hex string (web crypto API พร้อม fallback สำหรับ insecure contexts / legacy webviews) */
 export async function sha256Hex(input: string): Promise<string> {
-  const buf = new TextEncoder().encode(input);
-  const hashBuf = await crypto.subtle.digest('SHA-256', buf);
-  return Array.from(new Uint8Array(hashBuf))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+  try {
+    if (typeof crypto !== 'undefined' && crypto.subtle) {
+      const buf = new TextEncoder().encode(input);
+      const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+      return Array.from(new Uint8Array(hashBuf))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    }
+  } catch (err) {
+    console.warn('[LIFF] crypto.subtle failed, using fallback hash:', err);
+  }
+
+  // Fallback 64-bit FNV-1a variant hash สำหรับสภาพแวดล้อมที่ไม่มี Web Crypto API
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < input.length; i++) {
+    const ch = input.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  const part1 = (h1 >>> 0).toString(16).padStart(8, '0');
+  const part2 = (h2 >>> 0).toString(16).padStart(8, '0');
+  return `${part1}${part2}${part1}${part2}`;
 }

@@ -4,6 +4,7 @@ dist/
 *.log
 *.tsbuildinfo
 .claude/
+.agents/
 *.xlsx
 *.xls
 output/
