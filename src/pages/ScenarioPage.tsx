@@ -444,9 +444,10 @@ export default function ScenarioPage() {
   const currentNode = scenario.nodes.find(n => n.id === currentNodeId);
 
   const goToNext = (nextId: string) => {
+    if (currentNodeId === nextId) return;
     const next = scenario.nodes.find(n => n.id === nextId);
     if (!next) return;
-    setHistory(prev => [...prev, next]);
+    setHistory(prev => (prev[prev.length - 1]?.id === nextId ? prev : [...prev, next]));
     setCurrentNodeId(nextId);
   };
 
