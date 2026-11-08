@@ -122,6 +122,12 @@ export const useAdminStore = create<AdminState>()(
         if (sanitized.googleSheetUrl && sanitized.googleSheetUrl.includes('1ngfohj3IAImeSulWSi7yNijAj2dX4Ge1bqrMy9sPK18')) {
           sanitized.googleSheetUrl = DEFAULT_GOOGLE_SHEET_URL;
         }
+        // ความปลอดภัยสูงสุด: ห้ามไม่ให้ Cloud Sync หรือการอัปเดตใดๆ มาเขียนทับสถานะล็อกอินอาจารย์เด็ดขาด
+        delete (sanitized as any).isTeacherAuthenticated;
+        delete (sanitized as any).loginTeacher;
+        delete (sanitized as any).logoutTeacher;
+        delete (sanitized as any).updateSettings;
+        delete (sanitized as any).resetSettings;
         set((state) => ({ ...state, ...sanitized }));
       },
 

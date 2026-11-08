@@ -425,7 +425,23 @@ export default function TeacherAdmin() {
       title = 'โหมดทดสอบระบบอิสระ (Bypass All)';
     }
 
-    const nextSettings = { ...admin, ...updates };
+    const nextSettings = {
+      preTestEnabled: admin.preTestEnabled,
+      postTestEnabled: admin.postTestEnabled,
+      requirePreTestBeforePlaying: admin.requirePreTestBeforePlaying,
+      allowBypassStages: admin.allowBypassStages,
+      part2Enabled: admin.part2Enabled,
+      part3Enabled: admin.part3Enabled,
+      knowledgeQuestionCount: admin.knowledgeQuestionCount,
+      part4Enabled: admin.part4Enabled,
+      part5Enabled: admin.part5Enabled,
+      finalExamEnabled: admin.finalExamEnabled,
+      dailyChallengeEnabled: admin.dailyChallengeEnabled,
+      showExplanations: admin.showExplanations,
+      randomizeQuestions: admin.randomizeQuestions,
+      googleSheetUrl: admin.googleSheetUrl,
+      ...updates,
+    };
     admin.updateSettings(updates);
     const ok = await saveAppSettingsToCloud(nextSettings, 'wu2535');
     if (ok) {
@@ -1267,6 +1283,7 @@ export default function TeacherAdmin() {
               onClick={() => {
                 sfx.click();
                 admin.logoutTeacher();
+                setPasscode('');
               }}
               className="px-2 sm:px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 active:scale-95"
               title="ออกจากระบบอาจารย์"

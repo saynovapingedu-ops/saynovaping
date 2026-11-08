@@ -193,7 +193,7 @@ export default function Settings() {
               type="button"
               onClick={() => {
                 sfx.click();
-                if (admin.isTeacherAuthenticated) {
+                if (admin.isTeacherAuthenticated && sessionStorage.getItem('hd_teacher_auth') === '1') {
                   nav('/teacher-admin');
                 } else {
                   setShowAdminModal(true);
@@ -210,7 +210,7 @@ export default function Settings() {
                     แดชบอร์ดอาจารย์
                   </p>
                   <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                    {admin.isTeacherAuthenticated ? 'เข้าสู่ระบบแล้ว' : 'มีรหัสผ่าน'}
+                    {admin.isTeacherAuthenticated && sessionStorage.getItem('hd_teacher_auth') === '1' ? 'เข้าสู่ระบบแล้ว' : 'มีรหัสผ่าน'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">

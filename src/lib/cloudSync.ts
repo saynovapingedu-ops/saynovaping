@@ -596,11 +596,17 @@ export async function saveAppSettingsToCloud(
 ): Promise<boolean> {
   if (passcode !== 'wu2535') return false;
   try {
+    const cleanSettings = { ...settings };
+    delete cleanSettings.isTeacherAuthenticated;
+    delete cleanSettings.loginTeacher;
+    delete cleanSettings.logoutTeacher;
+    delete cleanSettings.updateSettings;
+    delete cleanSettings.resetSettings;
     const { error } = await supabase
       .from('app_settings')
       .upsert({
         key: 'exam_controls',
-        value: settings,
+        value: cleanSettings,
         updated_at: new Date().toISOString(),
       });
     return !error;
